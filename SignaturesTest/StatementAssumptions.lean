@@ -1,0 +1,154 @@
+import Signatures
+import Lean.Util.CollectAxioms
+
+-- Boolean predicate notation elaborates to the original signing-query selector exactly.
+example {L R α : Type} {spec : OracleSpec (L ⊕ R)} (oa : OracleComp spec α) (qS : Nat) :
+    OracleComp.IsQueryBoundP oa (·.isRight) qS ↔
+      OracleComp.IsQueryBoundP oa (fun i => Sum.isRight i = true) qS := Iff.rfl
+
+-- Uniform sampling already supplies finiteness; the collision denominator stays nonzero.
+example {F : Type} [Field F] [SampleableType F] : Nat.card F ≠ 0 :=
+  Nat.card_ne_zero.mpr ⟨inferInstance, inferInstance⟩
+
+-- The shorter nondegeneracy premise is equivalent, not stronger or weaker.
+example {F G : Type} [Field F] [AddCommGroup G] [Module F G] (g : G) :
+    Function.Injective (fun c : F => c • g) ↔ g ≠ 0 := by
+  constructor
+  · intro hinj hz
+    exact zero_ne_one (hinj (show (0 : F) • g = (1 : F) • g by simp [hz]))
+  · exact smul_left_injective F
+
+-- The former co-CDH premises imply the new ones. The statement's proof adapter
+-- checks the converse by reconstructing both former premises.
+example {F G₁ G₂ Gₜ : Type} [Field F]
+    [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
+    [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    (g₁ : G₁) (g₂ : G₂)
+    (hgen : Function.Bijective (fun c : F => c • g₁))
+    (hinj : Function.Injective
+      (fun z : G₁ => AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) z g₂)) :
+    Function.Surjective (fun c : F => c • g₁) ∧
+      (AlgebraicGroupModel.pairing (F := F) g₁ g₂ : Gₜ) ≠ 0 := by
+  refine ⟨hgen.2, ?_⟩
+  intro hz
+  apply zero_ne_one (α := F)
+  apply hgen.1
+  apply hinj
+  simp only [AlgebraicGroupModel.pairing_smul_left, hz, smul_zero]
+
+open Lean Meta Elab Command
+
+-- Inspect elaborated signatures: classical instance synthesis in application tests
+-- could otherwise conceal a redundant requirement.
+run_cmd liftTermElabM do
+  for name in #[`BLS.CoCDH.PaperAdversary, `BLS.CoCDH.paperExp,
+      `BLS.CoCDH.withPaperMap, `BLS.CoCDH.paperExp_withPaperMap,
+      `BLS.Statement.bls_eufcma_le_paper_cocdh] do
+    if (← getEnv).contains name then
+      throwError "Removed map-based BLS declaration remains imported: {name}"
+  for name in #[`BLS.Statement.bls_eufcma_le_dlog, `OOPS.Statement.oops_eufcma_le_dlog,
+      `Proximity.Statement.proximity_eufcma_le_dlog, `Model.Interactive.LinAlgAdv,
+      `BLS.Scheme.blsScheme, `OOPS.Scheme.oopsSchemeMulti, `Proximity.Scheme.proxScheme] do
+    if (← getEnv).contains name then
+      throwError "Removed public-table declaration remains imported: {name}"
+  for name in #[`BLS.Statement.bls_eufcma_le_cocdh,
+      `BLS.Statement.bls_eufcma_of_cocdh_hardness,
+      `BLS.Statement.bls_lazy_agm_le_dlog, `BLS.Statement.bls_lazy_agm_of_dlog_hardness,
+      `OOPS.Statement.oops_lazy_agm_le_dlog, `OOPS.Statement.oops_lazy_agm_of_dlog_hardness,
+      `Proximity.Statement.proximity_lazy_agm_le_dlog,
+      `Proximity.Statement.proximity_lazy_agm_of_dlog_hardness,
+      `OOPS.Statement.oops_call_eufcma_le_dlog, `Proximity.LazyAGM.Noncollision] do
+    if (← getEnv).contains name then
+      throwError "Removed weaker public security statement remains imported: {name}"
+
+-- Concrete endpoints must consume source certificates, not assume completed solver budgets.
+run_cmd liftTermElabM do
+  for name in #[``BLS.Statement.bls_eufcma_of_cocdh_machine_hardness,
+      ``BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness,
+      ``OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness,
+      ``Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness] do
+    let axioms ← collectAxioms name
+    let expected := #[``propext, ``Classical.choice, ``Quot.sound]
+    unless axioms.size == expected.size && axioms.all expected.contains do
+      throwError "{name}: unexpected axiom footprint {axioms}"
+    let coCDH := name == ``BLS.Statement.bls_eufcma_of_cocdh_machine_hardness
+    let proximity := name == ``Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness
+    forallTelescope (← getConstInfo name).type fun params conclusion => do
+      let mut sawSource := false
+      let mut hardnessCount := 0
+      let mut sawGenerator := false
+      let mut sawPairing := false
+      let mut sawSigningBound := false
+      let mut sawMessageFinite := false
+      let mut sawQueries := false
+      for param in params do
+        let binder ← param.fvarId!.getUserName
+        if #[`A, `adv, `cost, `randomBound, `localTime, `queries, `gammaLength, `xiLength].contains binder then
+          unless (← param.fvarId!.getDecl).binderInfo == .implicit do
+            throwError "{name}: source-certificate index {binder} should be inferred"
+        if #[`hbudget, `hgood, `hbad, `within, `goodBudget, `badBudget].contains binder then
+          throwError "{name}: caller-supplied finished-solver budget {binder}"
+        let type ← inferType param
+        if binder == `hgen then
+          sawGenerator := type.isAppOf ``Function.Surjective
+        if binder == `hpair then
+          sawPairing := type.isAppOf ``Ne
+        if binder == `queries then
+          sawQueries := true
+          unless ← isDefEq type (← Lean.Elab.Term.elabTerm (← `(Fin 3 → Nat)) none) do
+            throwError "{name}: expected random/hash/sign query budgets"
+        if coCDH && binder == `hqs then
+          sawSigningBound := true
+          let .forallE _ (.fvar scalar) body _ := type
+            | throwError "{name}: expected a scalar-indexed signing budget"
+          unless (← scalar.getUserName) == `F && body.isAppOf ``OracleComp.IsQueryBoundP do
+            throwError "{name}: signing budget must range over generated keys"
+        if coCDH && type.isAppOf ``Finite then
+          if let .fvar id := type.getAppArgs[0]! then
+            sawMessageFinite := (← id.getUserName) == `M
+        if type.isAppOf ``DecidableEq then
+          let .fvar id := type.getAppArgs[0]! | continue
+          if (← id.getUserName) == `Gₜ then
+            throwError "{name}: target-group equality belongs to the winning check"
+        if binder == `cert then
+          sawSource := true
+          let expected := if coCDH then ``Signatures.Runtime.Coron.SourceCertificate
+            else ``Signatures.Runtime.AGM.SourceCertificate
+          unless type.isAppOf expected do
+            throwError "{name}: missing concrete source certificate"
+        if type.isAppOf ``Model.HardWithin then
+          hardnessCount := hardnessCount + 1
+          let #[_, _, within, budget, _] := type.getAppArgs
+            | throwError "{name}: malformed budget-scoped hardness assumption"
+          let expectedClass := if coCDH then ``Signatures.Runtime.Coron.coCDHWithin
+            else ``Signatures.Runtime.AGM.dlogWithin
+          let expectedBudget := if coCDH then ``Signatures.Runtime.Coron.SourceCertificate.targetBudget
+            else if binder == `hgoodHard then ``Signatures.Runtime.AGM.SourceCertificate.goodBudget
+            else ``Signatures.Runtime.AGM.SourceCertificate.badBudget
+          unless within.isAppOf expectedClass && budget.isAppOf expectedBudget do
+            throwError "{name}: hardness must use the derived machine budget"
+        if #[`hnc, `hvand].contains binder then
+          throwError "{name}: symbolic noncollision must be proved or measured, not assumed"
+      unless sawSource && hardnessCount == (if coCDH then 1 else 2) do
+        throwError "{name}: incomplete source/hardness interface"
+      unless sawGenerator && sawPairing && sawQueries do
+        throwError "{name}: missing group hypotheses or source query budgets"
+      unless !coCDH || (sawSigningBound && sawMessageFinite) do
+        throwError "{name}: missing signing bound or finite-message premise"
+      if proximity then
+        let some (_, lhs, rhs) := conclusion.le? | throwError "{name}: expected a probability bound"
+        if lhs.find? (fun e => e.isAppOf ``Proximity.LazyAGM.collisionGame) |>.isSome then
+          throwError "{name}: collision must not restrict the original winning event"
+        unless (rhs.find? (fun e => e.isAppOf ``Proximity.LazyAGM.collisionGame)).isSome do
+          throwError "{name}: missing actual collision probability on the right-hand side"
+      if name == ``OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness then
+        let degrees ← params.filterM fun p => return (← p.fvarId!.getUserName) == `d
+        unless degrees.size == 1 && (← isDefEq (← inferType degrees[0]!) (mkConst ``Nat)) do
+          throwError "{name}: expected one fixed degree for the whole game"
+      let args ← params.filterM fun param => do
+        return (← param.fvarId!.getDecl).binderInfo.isExplicit
+      let application ← mkAppM name args
+      unless ← isDefEq (← inferType application) conclusion do
+        throwError "{name}: inferred application has the wrong conclusion"
+      if (← instantiateMVars application).hasExprMVar then
+        throwError "{name}: explicit arguments do not determine the inferred parameters"

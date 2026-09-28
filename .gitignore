@@ -1,0 +1,7 @@
+/.lake
+/build
+*.olean
+/.env
+/.env.*
+/RESUME.md
+.DS_Store
