@@ -25,6 +25,8 @@ import Signatures.Runtime.SeedTapeReset
 import Signatures.Runtime.BackendCoronSecurity
 import Signatures.Runtime.BackendCoronPolynomial
 import Signatures.Runtime.BackendCoronFamilySecurity
+import Signatures.Runtime.BackendWeightedTerms
+import Signatures.Runtime.BackendWeightedKeyEquality
 import Signatures.OperationBounds
 import Signatures.PaperStatements
 
@@ -84,8 +86,9 @@ probability bounds for arbitrary topic/slot types. Both branches use at most
 `qH + (qS + 1) * L` cache entries (`L = d + 1` or `ell + 1`); extraction is proved
 to reread cached entries without fresh sampling. The finite topic/slot covers
 are proof artifacts over generated keys and all reply paths; exact transport
-preserves each source game and Proximity's collision term. Complete native
-weighted runtime/code bounds remain open.
+preserves each source game and Proximity's collision term. The weighted term
+generators have actual native code, exact source semantics, and derived runtime,
+stored-code, and output-size bounds. Complete weighted solver composition remains open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;

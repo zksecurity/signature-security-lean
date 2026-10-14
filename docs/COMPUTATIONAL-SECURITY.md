@@ -126,8 +126,14 @@ The [OOPS arbitrary-topic theorem](../Signatures/OOPS/Proofs/LazyAGMArbitraryTop
 and [Proximity arbitrary-slot theorem](../Signatures/Proximity/Proofs/LazyAGMArbitrarySlots.lean)
 use finite covers only inside the proofs. Exact transport preserves all adaptive
 requests, the source games, and the actual Proximity collision term, without
-requiring a finite public-key type. Complete native weighted runtime/code bounds
-remain open; these results do not replace local-computation and encoding accounting.
+requiring a finite public-key type. The
+[weighted term generators](../Signatures/Runtime/BackendWeightedTerms.lean) now
+have actual native implementations and derived runtime, stored-code, and
+encoded-output bounds. Their unrolling and retained frames are charged in the
+numerical degree/dimension and input widths. Complete weighted cache, extraction,
+and general-caller composition remain open. Proximity's tuple width is derived
+from coordinate encodings, and the structured topic/degree and slot/coordinate
+comparisons have native runtime/code bounds too.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).

@@ -111,6 +111,16 @@ The [general adversary plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md#lazy-bls-agm-pr
 tracks the remaining schemes, family corollaries, and interface work.
 The complete AGM machine certificates documented below cover the older eager solvers.
 
+OOPS and Proximity now have [native term generators](../Signatures/Runtime/BackendWeightedTerms.lean)
+whose semantic indices are the original finite weighted term lists. Their
+runtime and stored-code bounds are derived from primitive and structural
+contracts, with explicit encoded-output bounds. They retain the constant term
+and every zero-weight term, and charge all retained frames. These are verified
+components. Proximity's tuple encoding is bounded from its coordinates, and
+[structured key equality](../Signatures/Runtime/BackendWeightedKeyEquality.lean)
+has native runtime/code bounds for both schemes. Complete weighted cache/extraction
+and general-caller composition remain in progress.
+
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
 simulation. No arbitrary semantic function is a free instruction. A separate
