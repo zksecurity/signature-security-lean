@@ -23,11 +23,19 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
 
-/-- At the declared curve, resource limits, and query allowances, any realized
-algebraic adversary has success bounded by the two DLog terms and `1 / |F|`. -/
-theorem security (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
+omit [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ] in
+/-- Construct both native implementations with the complete derived time, stored-code,
+and challenge-input bounds. Only component contracts and the attacker's own resources
+are inputs; no finished-reduction budget is assumed. -/
+theorem reductions_within
+    (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
     (A : AlgebraicAdversary P) :
-    𝒟[BLS.LazyAGM.game (Gₜ := Gₜ) P.generator P.keyGenerator A.source] {true} ≤ P.securityBound := by
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.goodTime
+      (BLS.LazyAGM.Reduction.goodReductionList A.source) ∧
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.badTime
+      (BLS.LazyAGM.Reduction.badReductionList A.source) := by
   have hchallenge : ∀ x : F,
       Q.size (P.rep.env inputTypes) (P.generator, x • P.generator, P.keyGenerator, x • P.keyGenerator, ()) ≤
         P.inputWidth := by
@@ -46,7 +54,17 @@ theorem security (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂)
     have h := A.storedCode
     dsimp only [programDescription]
     omega
-  exact security_of_resources P.rep P.bd P.ports P.sampler P.boundary P.data P.cost P.primitive P.sampling
+  have goodCertificate := goodProgram_within P.rep P.bd P.ports P.sampler P.boundary P.data P.cost P.primitive P.sampling
+    P.control P.queryCost P.sizes P.lists P.lengths P.laws P.dataLaws P.primitiveBound P.mono P.routing P.dispatch
+    A.caller P.execution A.runs P.recovery P.backend P.descriptionSizes P.factor P.description
+    P.allowance P.descriptionLaws P.descriptionData P.descriptionDispatch
+    P.inputWidth P.width P.outputWidth P.routeWidth P.queries.total P.queries.total P.messageWidth
+    P.comparisonTime P.scalarTime P.opTime P.handlerAdapterTime P.solverAdapterTime P.dynamicTime
+    P.callerTickTime P.extractionTickTime P.headerWidth le_rfl P.values P.ops P.handlerCaps P.solverCaps
+    P.dynamicSamples P.storeCapacity (by have h := P.handlerComparison; omega) P.extractionComparison P.requestWidth P.stateWidth P.headWidth
+    P.sampleTime P.callerTick P.extractionTick P.queryCapacity A.program A.realizes A.source A.corresponds
+    P.instructionSize P.handlerPortSize P.solverPortSize P.instructionDescriptions P.handlerDescriptions P.solverDescriptions
+  have badCertificate := badProgram_within P.rep P.bd P.ports P.sampler P.boundary P.data P.cost P.primitive P.sampling
     P.control P.queryCost P.sizes P.lists P.lengths P.laws P.dataLaws P.primitiveBound P.mono P.routing P.dispatch
     A.caller P.execution A.runs P.recovery P.backend P.descriptionSizes P.factor P.description
     P.allowance P.descriptionLaws P.descriptionData P.descriptionDispatch
@@ -56,9 +74,21 @@ theorem security (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂)
     P.dynamicSamples P.storeCapacity P.handlerComparison P.extractionComparison P.requestWidth P.stateWidth P.headWidth
     P.sampleTime P.callerTick P.extractionTick P.queryCapacity A.program A.realizes A.source A.corresponds
     P.instructionSize P.handlerPortSize P.solverPortSize P.instructionDescriptions P.handlerDescriptions P.solverDescriptions
-    P.generator P.keyGenerator P.generates P.pairingInjective hchallenge
-    P.solverCode P.goodTime P.badTime (P.dlogBound P.goodTime) (P.dlogBound P.badTime) hcode le_rfl le_rfl
-    (Model.hardWithin_advantageBound _ _ _) (Model.hardWithin_advantageBound _ _ _)
+  exact ⟨⟨hchallenge, Within.mono P.backend P.descriptionSizes P.factor P.description
+    goodCertificate hcode le_rfl⟩, ⟨hchallenge,
+    Within.mono P.backend P.descriptionSizes P.factor P.description badCertificate hcode le_rfl⟩⟩
+
+/-- At the declared curve, resource limits, and query allowances, any realized
+algebraic adversary has success bounded by the two DLog terms and `1 / |F|`. -/
+theorem security (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
+    (A : AlgebraicAdversary P) :
+    𝒟[BLS.LazyAGM.game (Gₜ := Gₜ) P.generator P.keyGenerator A.source] {true} ≤ P.securityBound := by
+  obtain ⟨goodFits, badFits⟩ := reductions_within P A
+  have goodBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ goodFits
+  have badBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ badFits
+  exact (BLS.LazyAGM.Reduction.security_arbitrary_messages_list
+    P.generator P.keyGenerator A.source P.generates P.pairingInjective).trans
+      (add_le_add (add_le_add goodBound badBound) le_rfl)
 
 end BLS.GeneralAGM
 

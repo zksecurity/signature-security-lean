@@ -105,8 +105,10 @@ which supply the DLog premises in the
 The [public statement](../Signatures/BLS/Statement.lean) takes the curve,
 security parameter, query allowances, and algebraic adversary. Its bound is the
 sum of maximum DLog advantages at the two derived budgets plus `1/|F|`. The
-[separate execution model](../Signatures/BLS/SecurityModel.lean) and
-[detailed records](../Signatures/BLS/GeneralAGMParameters.lean) expose per-kind
+execution/resource model and explicit DLog-success supremum appear beside the
+actual forgery experiment in the same public file. Its proof displays the
+probability bound, constructed resource witnesses, and supremum inclusions.
+The [detailed records](../Signatures/BLS/GeneralAGMParameters.lean) expose per-kind
 query limits, local resources, code/advice, encodings, and primitive contracts.
 They do not assume completed-solver efficiency. Arbitrary message types and
 noncanonical output encodings are supported via the charged output adapter and
@@ -139,7 +141,12 @@ now have derived runtime and stored-code bounds, including their implemented
 comparisons and independent pair sampling. The bounds depend on encountered
 entries and encoding widths. Exact laws preserve the answer, cache, and ambient
 state; hits execute no sampler, and Proximity's source-to-native index encoding
-preserves the whole cache behavior. Full weighted solver composition is still open.
+preserves the whole cache behavior. Native private-read adapters also have full
+runtime/code bounds, including executed fallback construction and state routing.
+The [native weighted evaluator](../Signatures/Runtime/BackendWeightedEvaluate.lean)
+preserves the source's ordered queries and joint value/cache law, with proved
+stored-code bounds. Its complete runtime bound and full weighted solver
+composition are still open.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).

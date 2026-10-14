@@ -33,13 +33,14 @@ run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``Model.le_advantageBound, ``Model.hardWithin_advantageBound, ``Model.advantageBound_le,
       ``challenge_size, ``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.Family.security,
-      ``BLS.security, ``BLS.AlgebraicAdversary.query_allowances] do
+      ``BLS.security, ``BLS.eufCmaGame_eq, ``BLS.GeneralAGM.reductions_within,
+      ``BLS.AlgebraicAdversary.query_allowances] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
 
 run_meta do
-  for name in #[``security_of_resources, ``BLS.GeneralAGM.security,
+  for name in #[``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.reductions_within,
       ``BLS.GeneralAGM.Family.security, ``BLS.GeneralAGM.Parameters.mk, ``BLS.GeneralAGM.AlgebraicAdversary.mk,
       ``BLS.security, ``BLS.SecurityModel.mk, ``Model.PairingCurve.mk] do
     forallTelescope (← getConstInfo name).type fun params _ => do
@@ -92,6 +93,14 @@ example (curve : Model.PairingCurve) [BLS.SecurityModel curve]
     (adversary : BLS.AlgebraicAdversary curve securityParameter queries) :
     BLS.eufCmaGame curve securityParameter adversary =
       BLS.LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
-        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := rfl
+        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source :=
+  BLS.eufCmaGame_eq curve securityParameter adversary
+
+-- The displayed supremum is the same resource-indexed hardness quantity used
+-- by the native solver certificates, for every time allowance.
+example (curve : Model.PairingCurve) [model : BLS.SecurityModel curve]
+    (securityParameter : Nat) (queries : BLS.QueryAllowance) (time : Nat) :
+    BLS.dlogSuccessBound curve securityParameter queries time =
+      (model.parameters securityParameter queries).dlogBound time := rfl
 
 end SignaturesTest.GeneralAGMStatement

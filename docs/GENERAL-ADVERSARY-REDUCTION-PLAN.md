@@ -200,7 +200,7 @@ This removes generic identity-conversion clutter without changing its restricted
 attacker class or eager implementation. The public replacement is now
 [`BLS.security`](../Signatures/BLS/Statement.lean), with four explicit inputs:
 curve, security parameter, query allowances, and algebraic adversary. The
-[`SecurityModel`](../Signatures/BLS/SecurityModel.lean) fixes the backend and
+[`SecurityModel`](../Signatures/BLS/Statement.lean) fixes the backend and
 resource class separately from the curve. Its
 [detailed records](../Signatures/BLS/GeneralAGMParameters.lean)
 keep backend contracts and actual attacker resources inspectable. The RHS is
@@ -227,6 +227,23 @@ pass in `SignaturesTest.GeneralAGMStatement`. The full
 `/private/tmp/agm-english-full-suite.log`. The public theorem has exactly four
 explicit inputs and one declared `SecurityModel`; no independent field/group,
 encoding, or cost parameters appear in its signature.
+
+Public-interface transparency revision, 2026-10-14: the short statement hid too
+much behind names. `Statement.lean` now contains the execution/resource model,
+attacker contract, actual EUF-CMA experiment, and an explicit DLog-success
+supremum beside the theorem. `eufCmaGame_eq` proves exact equality to the original
+lazy game. The RHS uses that one supremum at the visible `goodTime` and `badTime`
+budgets; the old named bounds remain compatibility definitions in
+`SecurityModel.lean`. The proof displays the probability inequality, the two
+constructed resource witnesses (`GeneralAGM.reductions_within`), and the two
+supremum inclusions. It no longer forwards the whole result to
+`GeneralAGM.security`. The public model documentation identifies attacker
+work/state/code limits and primitive/backend contracts, and distinguishes these
+from DLog hardness and additional asymptotic/conventional-machine obligations.
+Validation: `lake build Signatures SignaturesTest` passes (3988 jobs), log
+`/private/tmp/agm-public-transparent-full.log`. The new game-equivalence,
+resource-witness and supremum-correspondence checks pass with the existing
+public argument, allowance, axiom, and forbidden-premise guards.
 
 ## BLS AGM implementation
 
@@ -366,7 +383,36 @@ control code. The final branch bounds require only the individual operation,
 sampling, encoding and structural contracts; they accept no finished-cache or
 finished-comparator budget. Neither bound depends on the topic/slot universe size.
 
-Complete runtime/code accounting for weighted hash/sign dispatch, coefficient
+The [native private reads](../Signatures/Runtime/BackendWeightedRead.lean) now
+route `(index, cache)` to `(answer, updated cache)` with no transcript insertion.
+The [generic adapter](../Signatures/Runtime/BackendCacheRead.lean) explicitly
+constructs its fallback and packs cache arguments, invokes the cache and projects
+the returned state. Its complete [runtime bounds](../Signatures/Runtime/BackendWeightedReadBudget.lean)
+and [stored-code bounds](../Signatures/Runtime/BackendWeightedReadDescription.lean)
+charge zero construction even on hits, all structural work, and two independent
+scalar draws for the pair branch. Final read bounds are derived from individual
+primitive, sampling, encoding and structural contracts.
+
+The [weighted evaluator](../Signatures/Runtime/WeightedEvaluate.lean) computes
+its term count, scans to each indexed term, reads the private cache and accumulates
+the weighted scalar or pair value. Its [native implementation](../Signatures/Runtime/BackendWeightedEvaluate.lean)
+has exact joint value/cache correspondence to the source `evalTerms` computation.
+Repeated indices, zero coefficients, query order and an empty input's unused
+default row are preserved. The complete evaluator's
+[stored-code bounds](../Signatures/Runtime/BackendWeightedEvaluateDescription.lean)
+charge the read implementation, sampling, comparison, arithmetic and loop body.
+Complete evaluator runtime still needs the loop-body and cache-growth bounds
+composed; semantic correspondence and code size alone do not establish it.
+
+`SignaturesTest.WeightedEvaluate` checks ordered evaluation including zero-weight
+and repeated terms, both scalar/pair accumulation, empty inputs, actual compiled
+read/evaluator semantics, shadowed cache preservation, and sampler-independent
+costed hits. Its guards reject finite topic/slot domains and supplied completed
+component budgets, and check transitive standard axioms. The full suite passes
+(3988 jobs), log `/private/tmp/agm-public-transparent-full.log`; the new read and
+evaluation modules have no warnings, admissions, extra axioms, or resource overrides.
+
+Complete runtime accounting for weighted evaluation, and runtime/code accounting for hash/sign dispatch, coefficient
 expansion, extraction, and general callers remains open. The prior eager machine
 certificates still describe their original implementations and are retained.
 
@@ -1953,6 +1999,12 @@ parameter family polynomial, or complete the remaining signature routes.
   native runtime/code bounds for both structured cache-key comparisons.
 - [x] Compile both weighted private-cache branches with derived runtime/code
   bounds, exact source-index encoding laws, and no sampler execution on hits.
+- [x] Derive complete native weighted private-read runtime/code bounds, including
+  executed fallback construction and cache/state routing.
+- [x] Compile weighted scalar/pair evaluators with exact ordered source value/cache
+  semantics and complete stored-code bounds.
+- [ ] Derive complete weighted evaluator runtime bounds by composing the actual
+  loop body, cache growth, natural-index scans and scalar/pair reads.
 - [ ] Derive complete weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the

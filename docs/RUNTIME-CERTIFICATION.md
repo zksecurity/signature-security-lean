@@ -102,9 +102,11 @@ construct actual executables for both named list reductions, and the
 them to DLog hardness in the same fixed backend. No finite-message or
 finished-solver budget premise is added. The
 [public statement](../Signatures/BLS/Statement.lean) names the curve, security
-parameter, query allowances, and algebraic adversary. Its separate execution model
-keeps setup and attacker obligations inspectable. The original three-term bound
-uses DLog advantages indexed by the derived resource budgets. The theorem is
+parameter, query allowances, and algebraic adversary. The same file displays
+its execution/resource model, actual forgery experiment, and DLog-success
+supremum. The proof separates the probability inequality, the derived executable
+resource witnesses, and their inclusion in the two supremums. The original
+three-term bound uses those supremums at the visible derived time budgets. The theorem is
 concrete at each security parameter; an AGM negligible-success
 corollary still requires polynomial-family closure and asymptotic hardness.
 The [general adversary plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md#lazy-bls-agm-progress-2026-10-14)
@@ -125,8 +127,13 @@ and its input adapter, finite-list scan/insertion, and retained state. Exact
 source-index encoding laws preserve Proximity's constant/coordinate distinction
 and both cache branches. Cache hits preserve the entire costed run under
 sampler replacement. No finite topic/slot premise or completed-cache budget is
-assumed. Weighted hash/sign dispatch, extraction, and general-caller composition
-remain in progress.
+assumed. The [weighted private-read adapters](../Signatures/Runtime/BackendWeightedReadBudget.lean)
+also have complete runtime and stored-code bounds, including zero fallback
+construction on hits and state routing. The
+[native weighted evaluator](../Signatures/Runtime/BackendWeightedEvaluate.lean)
+preserves ordered source effects and the full value/cache distribution, and has
+complete stored-code bounds. Its loop runtime, weighted hash/sign dispatch,
+extraction, and general-caller composition remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
