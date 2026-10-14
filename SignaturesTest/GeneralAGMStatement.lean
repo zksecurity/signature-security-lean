@@ -1,4 +1,4 @@
-import Signatures.BLS.GeneralAGMStatement
+import Signatures.BLS.Security
 import Lean.Util.CollectAxioms
 
 /-! Guard the public statement and its underlying resource theorem. In
@@ -11,10 +11,11 @@ open Signatures.Runtime.LazyAGM.NativeSolver
 
 namespace SignaturesTest.GeneralAGMStatement
 
--- Keep the public signatures small: parameters/adversary, or a parameter
--- family/security parameter/adversary. Resource proofs belong in the records.
+-- Keep both lower-level wrappers small, and the public theorem aligned with
+-- curve/security parameter/query allowances/adversary. Resource proofs stay in the records.
 run_meta do
-  for (name, expected) in #[( ``BLS.GeneralAGM.security, 2), (``BLS.GeneralAGM.Family.security, 3)] do
+  for (name, expected) in #[( ``BLS.GeneralAGM.security, 2), (``BLS.GeneralAGM.Family.security, 3),
+      (``BLS.security, 4)] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       let mut explicitCount := 0
       for param in params do
@@ -26,14 +27,16 @@ run_meta do
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``Model.le_advantageBound, ``Model.hardWithin_advantageBound, ``Model.advantageBound_le,
-      ``challenge_size, ``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.Family.security] do
+      ``challenge_size, ``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.Family.security,
+      ``BLS.security, ``BLS.AlgebraicAdversary.query_allowances] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
 
 run_meta do
   for name in #[``security_of_resources, ``BLS.GeneralAGM.security,
-      ``BLS.GeneralAGM.Family.security, ``BLS.GeneralAGM.Parameters.mk, ``BLS.GeneralAGM.AlgebraicAdversary.mk] do
+      ``BLS.GeneralAGM.Family.security, ``BLS.GeneralAGM.Parameters.mk, ``BLS.GeneralAGM.AlgebraicAdversary.mk,
+      ``BLS.security, ``BLS.SecurityModel.mk, ``Model.PairingCurve.mk] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let type ← inferType param
@@ -59,5 +62,31 @@ run_meta do
   let info ← getConstInfo ``BLS.GeneralAGM.Parameters.dlogBound
   unless info.value?.isSome do
     throwError "dlogBound must expose its implementation/resource class"
+
+-- The public theorem has exactly the requested concepts, without a preamble
+-- of independently supplied fields/groups, encodings, and cost parameters.
+run_meta do
+  forallTelescope (← getConstInfo ``BLS.security).type fun params _ => do
+    unless params.size == 5 do
+      throwError "BLS.security must expose four inputs and one declared SecurityModel"
+    for (param, expected) in params.zip #[`curve, `inst, `securityParameter, `queries, `adversary] do
+      let declaration ← getFVarLocalDecl param
+      if expected != `inst && declaration.userName != expected then
+        throwError "BLS.security: expected public input {expected}, found {declaration.userName}"
+
+open OracleComp in
+example (curve : Model.PairingCurve) [BLS.SecurityModel curve]
+    (securityParameter : Nat) (queries : BLS.QueryAllowance)
+    (adversary : BLS.AlgebraicAdversary curve securityParameter queries) :
+    ∀ pk, IsQueryBoundP (adversary.source.main pk)
+      (fun i => BLS.GeneralAGM.queryKind i = 1) queries.hash :=
+  (BLS.AlgebraicAdversary.query_allowances curve securityParameter queries adversary).2.1
+
+example (curve : Model.PairingCurve) [BLS.SecurityModel curve]
+    (securityParameter : Nat) (queries : BLS.QueryAllowance)
+    (adversary : BLS.AlgebraicAdversary curve securityParameter queries) :
+    BLS.eufCmaGame curve securityParameter adversary =
+      BLS.LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
+        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := rfl
 
 end SignaturesTest.GeneralAGMStatement

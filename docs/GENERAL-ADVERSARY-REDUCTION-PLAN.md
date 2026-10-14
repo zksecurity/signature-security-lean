@@ -44,9 +44,10 @@ follow from the full returned encoding. Both complete native solver programs are
 assembled and exactly realize the named finite-list reductions. Complete solver
 runtime/code bounds and fixed-backend executable certificates are now proved.
 The concrete hardness endpoint covers general realized attackers over arbitrary
-message types. `BLS.GeneralAGM.security` now exposes a short bundled statement;
-its family version selects a security parameter. The bound uses resource-indexed
-DLog advantage suprema for the two derived solver budgets, plus `1/|F|`.
+message types. `BLS.security` now follows the requested English statement:
+curve, security parameter, query allowances, and algebraic adversary, with the
+named BLS game and two resource-indexed DLog bounds plus `1/|F|` in the conclusion.
+The declared execution model is separate from the mathematical curve.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; derive the BLS AGM polynomial-family corollary; complete the other
@@ -190,15 +191,36 @@ of the concrete theorem.
 The existing BLS source-machine endpoint now names its specialized certificate
 `ArithmeticAttackerCertificate` and explains the separate DLog success bounds.
 This removes generic identity-conversion clutter without changing its restricted
-attacker class or eager implementation. The separate replacement is now
-[`BLS.GeneralAGM.security`](../Signatures/BLS/GeneralAGMStatement.lean), with
-`BLS.GeneralAGM.Family.security` for selection by security parameter. The
-[`Parameters` and `AlgebraicAdversary` records](../Signatures/BLS/GeneralAGMParameters.lean)
+attacker class or eager implementation. The public replacement is now
+[`BLS.security`](../Signatures/BLS/Security.lean), with four explicit inputs:
+curve, security parameter, query allowances, and algebraic adversary. The
+[`SecurityModel`](../Signatures/BLS/SecurityModel.lean) fixes the backend and
+resource class separately from the curve. Its
+[detailed records](../Signatures/BLS/GeneralAGMParameters.lean)
 keep backend contracts and actual attacker resources inspectable. The RHS is
 `dlogBound goodTime + dlogBound badTime + 1/|F|`: `dlogBound` is the supremum over
 all solvers within the fixed backend's code/input/time limits, not an assumed
 advantage of the constructed reduction. Numerical hardness bounds are separate.
 Apply this simple interface consistently across the remaining routes.
+
+Public-interface revision, 2026-10-14: the earlier `BLS.GeneralAGM.security P A`
+bundling was still too opaque for the requested English description. The new
+`BLS.security` names the curve, security parameter, query allowances, and
+algebraic adversary directly, and displays the named EUF-CMA game and the two
+DLog terms plus inverse curve order. `Model.PairingCurve` contains only the
+mathematical data. `BLS.SecurityModel` separately fixes execution contracts and
+resource limits, with checked equalities tying its configured generators and
+query allowances to the public inputs. `AlgebraicAdversary.query_allowances`
+proves all three allowances bound the actual source computation. The short
+theorem is proved from the existing complete solver endpoint; no new reduction
+efficiency premise or hardness assumption is introduced. Other signature routes
+still require their concrete overhead work before receiving this interface.
+Validation: public signature, axiom, resource-premise, and allowance/game checks
+pass in `SignaturesTest.GeneralAGMStatement`. The full
+`lake build Signatures SignaturesTest` passes (3952 jobs), log
+`/private/tmp/agm-english-full-suite.log`. The public theorem has exactly four
+explicit inputs and one declared `SecurityModel`; no independent field/group,
+encoding, or cost parameters appear in its signature.
 
 ## BLS AGM implementation
 

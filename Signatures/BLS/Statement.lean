@@ -11,14 +11,14 @@ import Signatures.Runtime.CoronCertificate
 import Signatures.Runtime.AGMBadMachine
 import Signatures.Runtime.KeyEquality
 import Signatures.Runtime.ProximityWeight
-import Signatures.BLS.GeneralAGMStatement
+import Signatures.BLS.Security
 
 /-! # BLS security in the lazy random-oracle model
 
-The general-attacker AGM endpoint is `BLS.GeneralAGM.security`, with the
-security-parameter version `BLS.GeneralAGM.Family.security`. Its supporting
-records expose primitive contracts and attacker resources, and both lazy solver
-budgets are derived. The following legacy declarations remain available.
+The public general-attacker AGM endpoint is `BLS.security` in `BLS/Security.lean`:
+curve, security parameter, query allowances, and algebraic adversary. Its
+`SecurityModel` exposes primitive contracts and attacker resources; both lazy
+solver budgets are derived. The following legacy declarations remain available.
 
 Source-certified co-CDH and AGM security endpoints below derive solver budgets
 from attacker implementations and resource bounds. The AGM conclusion includes

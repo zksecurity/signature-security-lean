@@ -13,8 +13,10 @@ and a separate test review. The pairing-based routes are detailed below.
 Kernel checking proves each implication from its hypotheses; it does not establish paper/model alignment.
 
 For the new general-attacker BLS AGM endpoint, start at
-[`BLS.GeneralAGM.security`](../Signatures/BLS/GeneralAGMStatement.lean) and the
-[supporting records](../Signatures/BLS/GeneralAGMParameters.lean). The full
+[`BLS.security`](../Signatures/BLS/Security.lean): curve, security parameter,
+query allowances, and algebraic adversary, followed by the named game's probability
+bound. The [declared execution model](../Signatures/BLS/SecurityModel.lean) and
+[detailed resource records](../Signatures/BLS/GeneralAGMParameters.lean) remain inspectable. The full
 [resource-indexed theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean)
 constructs both native solver certificates before applying DLog hardness.
 The [plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md) distinguishes this completed

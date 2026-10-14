@@ -102,11 +102,11 @@ now compose setup, the caller, output adaptation, and extraction. Both actual
 executables have [fixed-backend resource certificates](../Signatures/Runtime/BackendLazyAGMSolverWithin.lean),
 which supply the DLog premises in the
 [concrete security theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean).
-The [short public statement](../Signatures/BLS/GeneralAGMStatement.lean) takes
-bundled parameters and a realized algebraic adversary; its family form selects
-a security parameter. Its bound is the sum of maximum DLog advantages at the
-two derived budgets plus `1/|F|`. The
-[supporting records](../Signatures/BLS/GeneralAGMParameters.lean) expose per-kind
+The [public statement](../Signatures/BLS/Security.lean) takes the curve,
+security parameter, query allowances, and algebraic adversary. Its bound is the
+sum of maximum DLog advantages at the two derived budgets plus `1/|F|`. The
+[separate execution model](../Signatures/BLS/SecurityModel.lean) and
+[detailed records](../Signatures/BLS/GeneralAGMParameters.lean) expose per-kind
 query limits, local resources, code/advice, encodings, and primitive contracts.
 They do not assume completed-solver efficiency. Arbitrary message types and
 noncanonical output encodings are supported via the charged output adapter and

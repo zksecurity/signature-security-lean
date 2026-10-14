@@ -101,10 +101,11 @@ construct actual executables for both named list reductions, and the
 [security endpoint](../Signatures/Runtime/BackendLazyAGMSecurity.lean) supplies
 them to DLog hardness in the same fixed backend. No finite-message or
 finished-solver budget premise is added. The
-[public statement](../Signatures/BLS/GeneralAGMStatement.lean) bundles the
-inspectable setup and attacker obligations and gives the original three-term
-bound, with DLog advantages indexed by the derived resource budgets. Its family
-version is concrete at each security parameter; an AGM negligible-success
+[public statement](../Signatures/BLS/Security.lean) names the curve, security
+parameter, query allowances, and algebraic adversary. Its separate execution model
+keeps setup and attacker obligations inspectable. The original three-term bound
+uses DLog advantages indexed by the derived resource budgets. The theorem is
+concrete at each security parameter; an AGM negligible-success
 corollary still requires polynomial-family closure and asymptotic hardness.
 The [general adversary plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md#lazy-bls-agm-progress-2026-10-14)
 tracks the remaining schemes, family corollaries, and interface work.

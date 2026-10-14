@@ -52,11 +52,12 @@ bounds preserve polynomial growth under fixed polynomial resource contracts.
 The concrete and nonuniform-family endpoints allow arbitrary message types.
 The BLS AGM route now has complete lazy native runtime/code certificates and
 `LazyAGM.NativeSolver.security_of_resources` in the same fixed backend. Its short
-public theorem is `BLS.GeneralAGM.security`; `BLS.GeneralAGM.Family.security`
-specializes concrete parameters at a selected security parameter. The bound is
+public theorem is `BLS.security`, with curve, security parameter, query allowances,
+and algebraic adversary as its four explicit inputs. The bound is
 the sum of two resource-indexed DLog advantage bounds and `1/|F|`. Parameters
-expose query/resource limits and primitive contracts, while the adversary supplies
-its actual general realization. The AGM asymptotic corollary remains separate.
+expose query/resource limits and primitive contracts in a separate `SecurityModel`,
+while the adversary supplies its actual general realization. The AGM asymptotic
+corollary remains separate.
 A conventional-machine adequacy theorem remains separate from this conditional
 fixed-backend result.
 `OperationBounds` supplies concrete operation ledgers for all four routes with exact solver
