@@ -71,8 +71,10 @@ field size. Groups and message types may vary with the security parameter.
 
 OOPS/Proximity now have complete native interaction-phase runtime and stored-code
 bounds for both AGM branches. Their capacity invariants charge the growing
-private cache and reply logs over arbitrary topic/slot types. Native extraction,
-caller-condition recovery, and whole-solver/security endpoints remain unfinished.
+private cache and reply logs over arbitrary topic/slot types. Both native extractors
+now have exact source/cache laws, complete stored-code bounds, and final-target-only
+cache growth. Their complete runtime, caller-condition recovery, and whole-solver/
+security endpoints remain unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete the other signature routes and expose their
@@ -94,8 +96,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches, evaluator and coefficient-expansion bounds are proved. Actual replies and the full native caller phase have derived runtime/stored-code bounds and preserved cache/log capacities. | Native extraction, recovery of caller conditions from general resources, and whole-solver certificates/endpoints. |
-| Proximity AGM | The same weighted components and complete native interaction bounds are proved, including original-index/cache transport and preserved cache/log capacities; the original collision term remains. | Native extraction, recovery of caller conditions from general resources, and whole-solver certificates/endpoints. |
+| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches, evaluator and coefficient-expansion bounds are proved. Actual replies and the full native caller phase have derived runtime/stored-code bounds and preserved cache/log capacities. Both native extractors have exact semantics, stored-code bounds and cache-growth proofs. | Complete extractor runtime, recovery of caller conditions from general resources, and whole-solver certificates/endpoints. |
+| Proximity AGM | The same weighted components and complete native interaction bounds are proved, including original-index/cache transport and preserved cache/log capacities. Both native extractors have exact semantics, stored-code bounds and cache-growth proofs; the original collision term remains. | Complete extractor runtime, recovery of caller conditions from general resources, and whole-solver certificates/endpoints. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -697,12 +699,32 @@ Complete native interaction composition is now checked:
   derives complete dispatcher/caller stored-code bounds, including both replies,
   term generation, samplers, ports, caller code, and bounded-loop syntax.
 
-Next: implement native extraction, derive the caller conditions from general
-resource bounds, and assemble complete solver certificates/security endpoints.
-The interaction bounds do not yet close the whole-solver goal.
+The [weighted extractor syntax](../Signatures/Runtime/WeightedExtraction.lean)
+now executes chronological coefficient expansion, ordered scalar/pair evaluation,
+final-target term construction and evaluation, and the source field formula.
+[Both compiled extractors](../Signatures/Runtime/BackendWeightedExtraction.lean)
+have exact joint output/cache laws. Hash replies use a singleton term of weight
+one through the same coefficient routine; its extra stored code is charged.
+Zero-weight terms still cause reads, missing coefficients are zero, and surplus
+coefficients do not create transcript entries. Division by zero is unchanged.
 
-Validation: `lake build Signatures SignaturesTest` passes (4053 jobs), log
-`/private/tmp/agm-weighted-full-interaction-full.log`. The
+[Complete extractor stored-code bounds](../Signatures/Runtime/BackendWeightedExtractionDescription.lean)
+count both term-generator occurrences, chronological matching, all evaluator/read
+bodies, samplers, executed defaults and final arithmetic. The
+[cached-transcript laws](../Signatures/Runtime/WeightedExtractionState.lean) prove
+that transcript evaluation draws no fresh masks and retains the complete cache,
+including shadowed bindings. The
+[native cache invariant](../Signatures/Runtime/BackendWeightedExtractionState.lean)
+preserves old bindings and key predicates and bounds growth by `degree/dimension + 1`
+for the final target alone, conditional on the transcript bases already being cached.
+
+Next: derive complete extractor runtime bounds, recover caller conditions from
+general resources, and assemble complete solver certificates/security endpoints.
+The interaction and extractor correspondence/code bounds do not yet close the
+whole-solver goal.
+
+Validation: `lake build Signatures SignaturesTest` passes (4057 jobs), log
+`/private/tmp/agm-weighted-extraction-full.log`. The
 [native reply regressions](../SignaturesTest/WeightedReply.lean) cover signing
 before explicit hashing, shadowed cache entries, both mask coordinates, zero
 degree, and a zero-weight unseen base that still samples and enters the cache.
@@ -715,6 +737,13 @@ also check an adaptive hash/sign/hash sequence with a shadowed cache entry,
 both reply logs, and all new state/runtime/code theorems' transitive axioms.
 They reject finite-domain and supplied completed-dispatcher/reply budgets; only
 caller composition accepts the attacker's own resource budget.
+The [native extraction regressions](../SignaturesTest/WeightedExtraction.lean)
+check OOPS chronological coefficients, missing and surplus coefficients, exact
+cached extraction, and an unseen final topic whose zero-weight base still draws
+and retains a mask. A Proximity case checks both mask coordinates and the final
+field division. All cases retain shadowed cache bindings. The new extraction
+semantic, stored-code and cache theorems have transitive axiom guards and reject
+finite-domain and supplied finished-extractor budget premises.
 
 The import blocker was macOS vnode exhaustion, confirmed by free vnodes reaching
 zero during a monitored Lean import. The user applied a temporary vnode-limit
@@ -2371,6 +2400,10 @@ additional axioms or proof-resource overrides.
   term/fallback generation, evaluator, response and retained-frame costs.
 - [x] Preserve native weighted challenge/cache/log invariants and compose the actual
   reply budgets into complete dispatcher/general-caller runtime and stored-code bounds.
+- [x] Implement both complete native weighted extractors with exact joint source/
+  cache correspondence, derived stored-code bounds and final-target-only cache growth.
+- [ ] Derive complete weighted extractor runtime from coefficient generation,
+  ordered evaluation, target terms, field arithmetic and retained-frame costs.
 - [ ] Recover weighted caller reachability, request/return widths, and coefficient
   lengths from general attacker resources and encoding contracts.
 - [ ] Derive whole weighted native solver runtime/code bounds, charging

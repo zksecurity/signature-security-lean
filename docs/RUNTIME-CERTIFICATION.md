@@ -178,8 +178,16 @@ and [general-caller composition](../Signatures/Runtime/BackendWeightedOracleCall
 now derive the full interaction cost from these reply bounds, primitive contracts,
 and the attacker's own resources and reachable encoding bounds.
 [Stored-code bounds](../Signatures/Runtime/BackendWeightedOracleDescription.lean)
-count the full dispatcher and caller phase. Native extraction, recovery of caller
-conditions from general resources, and whole-solver certificates remain in progress.
+count the full dispatcher and caller phase.
+Both [native extractors](../Signatures/Runtime/BackendWeightedExtraction.lean) now
+execute the source's ordered transcript and target evaluations in one cache.
+[Stored-code bounds](../Signatures/Runtime/BackendWeightedExtractionDescription.lean)
+include all generators, matching, samplers, defaults and field arithmetic.
+[Cache invariants](../Signatures/Runtime/BackendWeightedExtractionState.lean) show
+that only final-target evaluation can add entries for a valid cached transcript,
+and preserve the old bindings and encountered-key widths. Complete extractor
+runtime, recovery of caller conditions from general resources, and whole-solver
+certificates remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle

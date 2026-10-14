@@ -46,6 +46,8 @@ import Signatures.Runtime.BackendWeightedHashBudget
 import Signatures.Runtime.BackendWeightedSignBudget
 import Signatures.Runtime.BackendWeightedOracleCallerBudget
 import Signatures.Runtime.BackendWeightedOracleDescription
+import Signatures.Runtime.BackendWeightedExtractionDescription
+import Signatures.Runtime.BackendWeightedExtractionState
 import Signatures.Runtime.BackendWeightedScale
 import Signatures.OperationBounds
 import Signatures.PaperStatements
@@ -126,7 +128,9 @@ and derived routing/runtime/stored-code bounds. Both actual weighted hash/sign
 branches are installed, with exact general-caller/source correspondence, complete
 stored-code bounds, and complete reply runtime bounds. Preserved cache/log capacities
 now compose these with native dispatch and general-caller runtime/code bounds.
-Extraction and whole-solver certificates remain open.
+Both native extractors now have exact source/cache correspondence, complete
+stored-code bounds, and final-target-only cache growth. Complete extraction
+runtime and whole-solver certificates remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;
