@@ -115,6 +115,17 @@ general-attacker endpoints remain open.
 The existing AGM machine certificates
 below still concern the eager implementations.
 
+OOPS and Proximity now have shared
+[weighted lazy solver programs](../Signatures/LinearFunctional/Spec/LazyAGMReduction.lean),
+[joint eager/lazy distribution correspondence](../Signatures/LinearFunctional/Proofs/LazyAGMCoupling.lean),
+and probability bounds using those solvers for finite topic/slot types. Their
+complete program caches have at most `qH + (qS + 1) * L` entries, where `L = d + 1`
+or `ell + 1`; transcript extraction is proved to make no fresh draws. The
+cache/program definitions and entry-count theorems permit infinite domains.
+Removing the probability proofs' finite-topic/slot restriction and deriving full
+native weighted runtime/code bounds remain open. These structural results do
+not replace the local-computation and encoding accounting.
+
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).
 `BLS.Statement.bls_eufcma_of_cocdh_machine_hardness` derives the exact named Coron solver's

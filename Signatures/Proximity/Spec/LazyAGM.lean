@@ -23,6 +23,9 @@ def terms {F S : Type} [One F] {ℓ : Nat} (ms : (Fin ℓ → F) × S) :
   -- none selects the constant base; some k selects coordinate k, weighted by that message entry.
   ((none, ms.2), 1) :: List.ofFn (fun k : Fin ℓ => ((some k, ms.2), ms.1 k))
 
+@[simp] theorem terms_length {F S : Type} [One F] {ℓ : Nat} (ms : (Fin ℓ → F) × S) :
+    (terms ms).length = ℓ + 1 := by simp [terms]
+
 /-- A fresh output whose vector equals the signing-coefficient-weighted sum of signed vectors.
 All signed messages contribute, including repeats and messages from other slots.
 This event does not require the output signature to verify. -/

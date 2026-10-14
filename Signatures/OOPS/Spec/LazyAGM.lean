@@ -17,6 +17,9 @@ def terms {F T : Type} [Monoid F] (d : Nat) (mt : F × T) : List ((T × Fin (d +
   -- Enumerate j = 0,...,d: the base for (topic,j) receives weight message^j.
   List.ofFn fun j : Fin (d + 1) => ((mt.2, j), mt.1 ^ (j : Nat))
 
+@[simp] theorem terms_length {F T : Type} [Monoid F] (d : Nat) (mt : F × T) :
+    (terms d mt).length = d + 1 := by simp [terms]
+
 -- Equality lets the winning predicate select a topic and remove repeated scalar messages.
 def admissible {F T : Type} [DecidableEq F] [DecidableEq T]
     -- Compare the eventual forged pair mt against the actual signed-pair transcript.

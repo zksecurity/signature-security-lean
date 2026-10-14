@@ -69,8 +69,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, and short public concrete statements, including selection by security parameter. General realized callers, arbitrary messages, and the original probability loss are preserved. | Polynomial-family closure and the negligible-success corollary; conventional-machine instantiation only if claiming that stronger model. |
-| OOPS AGM | Same shared two-reduction machinery, with degree and topic parameters. | Generalize the lazy implementation; bound degree and encountered bases. |
-| Proximity AGM | Same machinery, with an additional fresh-collision probability in the security bound. | Generalize the lazy implementation; bound dimension and encountered bases. The collision term remains. |
+| OOPS AGM | Weighted lazy solvers, finite-topic probability correspondence, and encountered-base cache bounds are proved. | Remove proof-side topic finiteness; derive native degree-dependent runtime/code bounds and general caller composition. |
+| Proximity AGM | Weighted lazy solvers, finite-slot probability correspondence, and encountered-base cache bounds are proved; the original collision term remains. | Remove proof-side slot finiteness; derive native dimension-dependent runtime/code bounds and general caller composition. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -285,10 +285,45 @@ probability obligation; the lazy native resource/composition obligations remain.
 
 ## OOPS and Proximity extensions
 
-Generalize the cache and finite-support extraction to messages containing a list
-of weighted bases. If a message uses at most `L` bases, prove
-`K <= qH + (qS + 1)*L`, including internal signing and final target accesses.
-For BLS `L = 1`; for OOPS `L = d + 1`; for Proximity `L = ell + 1`.
+Checkpoint, 2026-10-14: the shared
+[`WeightedReduction` programs](../Signatures/LinearFunctional/Spec/LazyAGMReduction.lean)
+now use separate index/message types and one persistent scalar/pair cache.
+Signing evaluates each message's finite weighted base list. Extraction expands
+only actual signing-reply occurrences, keeps repeated replies, zero-extends
+missing coefficients, and ignores coefficients without a corresponding reply.
+The [fixed-table identities](../Signatures/LinearFunctional/Proofs/LazyAGMReduction.lean)
+and [joint coupling](../Signatures/LinearFunctional/Proofs/LazyAGMCoupling.lean)
+prove both lazy solvers have the exact existing eager distributions; list-cache
+refinement holds without any finite-domain premise. The probability replacements
+are [`security_lazy_finite_topics`](../Signatures/OOPS/Proofs/LazyAGMSecurity.lean)
+and [`security_lazy_finite_slots`](../Signatures/Proximity/Proofs/LazyAGMSecurity.lean).
+They retain the existing OOPS admissibility predicate and Proximity's actual
+fresh-collision experiment. These comparison theorems still require finite
+topics/slots; that restriction is the next probability-proof task.
+
+The [cache invariants](../Signatures/LinearFunctional/Proofs/LazyAGMCache.lean)
+prove all explicitly hashed bases and all bases used in signing are retained.
+Evaluation of cached terms is exactly a pure computation, preserving the entire
+cache and issuing no fresh draws. The
+[complete program cache bounds](../Signatures/LinearFunctional/Proofs/LazyAGMCacheBound.lean)
+therefore prove `K <= qH + (qS + 1) * L` for both branches, including an unseen
+final target, with no finite index/message/public-key premise. OOPS and Proximity
+have exact term-length lemmas `d + 1` and `ell + 1`.
+
+This establishes semantic/probability correspondence and entry counts. Complete
+runtime and code accounting for weighted term generation, coefficient expansion,
+key comparisons, and general callers remain open. The prior eager machine
+certificates still describe their original implementations and are retained.
+
+Validation: [`SignaturesTest.WeightedAGMReduction`](../SignaturesTest/WeightedAGMReduction.lean)
+passes checks for distinct index/message types over infinite domains, repeated
+hash/sign calls, signing before hashing, weighted unseen final targets, both
+branches, zero denominators, missing/extra coefficients, empty weighted sums,
+adaptive randomness/replies, and pure cache reuse with shadowed entries.
+The guards verify standard axioms and the absence of finite-domain premises on
+the lazy programs, cache refinements, and entry-count bounds. The full
+`lake build Signatures SignaturesTest` passes (3960 jobs), log
+`/private/tmp/agm-weighted-full-suite.log`; the new modules have no warnings or admissions.
 
 Charge generation of these terms, degree/coordinate computations, encoded key
 comparisons, and representation lengths. A bound polynomial in the numerical
@@ -1819,7 +1854,12 @@ parameter family polynomial, or complete the remaining signature routes.
 - [x] Derive complete native BLS AGM solver runtime/code certificates and hardness endpoints.
 - [x] Expose the short concrete BLS AGM statement, including a version indexed
   by security parameter, with transparent resources and hardness scope.
-- [ ] Generalize to OOPS and Proximity with degree/dimension and collision scope preserved.
+- [x] Implement shared weighted lazy OOPS/Proximity solvers with joint
+  eager/lazy correspondence, finite-list refinement, finite-topic/slot probability
+  bounds, and the encountered-base cache cap, preserving admissibility/collision scope.
+- [ ] Remove the proof-side finite topic/slot restrictions for weighted reductions.
+- [ ] Derive complete weighted native solver runtime/code bounds, charging
+  degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;

@@ -10,7 +10,10 @@ import Signatures.BLS.Statement
 import Signatures.BLS.Proofs.LazyAGMArbitraryMessages
 import Signatures.BLS.Proofs.LazyAGMList
 import Signatures.OOPS.Statement
+import Signatures.OOPS.Proofs.LazyAGMSecurity
 import Signatures.Proximity.Statement
+import Signatures.Proximity.Proofs.LazyAGMSecurity
+import Signatures.LinearFunctional.Proofs.LazyAGMCacheBound
 import Signatures.Schnorr.Statement
 import Signatures.Schnorr.BitStatement
 import Signatures.Schnorr.SeededBitStatement
@@ -75,6 +78,12 @@ finite-list cache refinement, structural query/storage bounds, and the same
 probability theorem for arbitrary messages, now composed with complete runtime/code
 certificates and general callers. The original AGM machine certificates
 above continue to apply to the eager solvers.
+OOPS and Proximity also have weighted lazy list-cache reductions, joint
+distribution equality with their existing eager solvers, and corresponding
+probability bounds for finite topic/slot types. Both branches use at most
+`qH + (qS + 1) * L` cache entries (`L = d + 1` or `ell + 1`); extraction is proved
+to reread cached entries without fresh sampling. Removing the proof-side
+topic/slot finiteness and deriving complete native runtime bounds remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;
