@@ -34,6 +34,7 @@ import Signatures.Runtime.BackendWeightedGoodEvaluate
 import Signatures.Runtime.BackendWeightedBadEvaluate
 import Signatures.Runtime.BackendWeightedEvaluateEncoding
 import Signatures.Runtime.BackendWeightedCoefficients
+import Signatures.Runtime.BackendWeightedCoefficientBudget
 import Signatures.Runtime.BackendWeightedScale
 import Signatures.OperationBounds
 import Signatures.PaperStatements
@@ -104,9 +105,10 @@ now have complete derived runtime/code and encoded-result/cache bounds, charging
 indexed row scans, cache growth, reads, arithmetic and loop control. Weighted
 evaluation preserves the original source indices and complete cache under
 injective encodings. Native signing-coefficient expansion has exact source
-semantics, stored-code and output-size bounds, and a proved scaling-loop runtime
-bound. Complete expansion runtime, hash/sign dispatch, extraction and complete
-solver composition remain open.
+semantics and complete runtime, stored-code and output-size bounds. Its runtime
+charges chronological matching, term generation in retained contexts, scaling,
+both expansion folds and final reversal. Weighted hash/sign dispatch, extraction
+and complete solver composition remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;

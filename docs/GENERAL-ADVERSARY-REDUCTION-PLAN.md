@@ -84,8 +84,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, and short public concrete statements, including selection by security parameter. General realized callers, arbitrary messages, and the original probability loss are preserved. | Polynomial-family closure and the negligible-success corollary; conventional-machine instantiation only if claiming that stronger model. |
-| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches and scalar/pair evaluator bounds are proved. Signing-coefficient expansion has exact source semantics, code/output bounds and an inner scaling-loop runtime bound. | Complete expansion runtime, weighted dispatch/extraction and native solver/general caller composition. |
-| Proximity AGM | The same weighted components and expansion bounds are proved, including original-index/cache transport; the original collision term remains. | Complete expansion runtime, weighted dispatch/extraction and native solver/general caller composition. |
+| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches and scalar/pair evaluator bounds are proved. Signing-coefficient expansion has exact source semantics and complete native runtime/code/output bounds. | Weighted dispatch/extraction and native solver/general caller composition. |
+| Proximity AGM | The same weighted components and complete expansion bounds are proved, including original-index/cache transport; the original collision term remains. | Weighted dispatch/extraction and native solver/general caller composition. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -477,9 +477,9 @@ builds pass. The full `lake build Signatures SignaturesTest` passes (4002 jobs),
 log `/private/tmp/agm-bls-routes-weighted-full.log`; the new evaluator modules
 have no warnings, admissions, additional axioms or proof-resource overrides.
 
-Complete runtime accounting for weighted hash/sign dispatch, coefficient
-expansion, extraction, and general-caller solvers remains open. Expansion's
-source, code, output-size and inner-loop results are recorded below. The prior
+Complete runtime accounting for weighted hash/sign dispatch, extraction, and
+general-caller solvers remains open. Expansion's complete native resource
+results are recorded below. The prior
 eager machine certificates describe their original implementations and are retained.
 
 For `N = rowCap`, `C = initialCacheCap + N`, let
@@ -536,14 +536,47 @@ cost contracts. With `T` input terms, an accumulator cap `A`, and atomic width `
 its bound is `T*(mulTime + 65*fee) + 64*fee`, where
 `fee = overhead (128*((16*(A+T)+32)*w))`. The proof charges the retained input and
 accumulator lists, the evolving output, every multiplication and fold control.
-This completes the inner fold; term generation in retained contexts, the outer
-fold, final reversal and chronological matching still need a combined runtime bound.
+This completes the inner fold; the composition below now also covers term
+generation in retained contexts, the outer fold, reversal and chronological matching.
 
 Integrated validation: `lake build Signatures SignaturesTest` passes (4013 jobs),
 log `/private/tmp/agm-weighted-coefficients-full.log`. The regressions include
 the expanded output-size and inner-loop axiom/interface guards. New modules have
-no warnings, admissions, additional axioms or proof-resource overrides. No
-complete expansion runtime or whole-weighted-solver certificate is claimed.
+no warnings, admissions, additional axioms or proof-resource overrides.
+
+Complete native coefficient-expansion runtime, 2026-10-14:
+[`BackendWeightedTermsContext.lean`](../Signatures/Runtime/BackendWeightedTermsContext.lean)
+extends both actual term generators to retained caller contexts. Their width
+includes the full retained environment and their recursion frames.
+[`BackendWeightedExpandStep.lean`](../Signatures/Runtime/BackendWeightedExpandStep.lean)
+composes term generation, native scaling and all intermediate routing.
+[`BackendWeightedExpandRows.lean`](../Signatures/Runtime/BackendWeightedExpandRows.lean)
+reserves `remainingReplies * termsPerReply` output cells, proves the outer fold
+runtime, and charges the final reversal. The original rows and growing
+accumulator stay in its encoded-state bounds.
+[`BackendWeightedCoefficientTime.lean`](../Signatures/Runtime/BackendWeightedCoefficientTime.lean)
+adds chronological matching, including coefficient scans, zero defaults and both
+matching reversals. Finally,
+[`BackendWeightedCoefficientBudget.lean`](../Signatures/Runtime/BackendWeightedCoefficientBudget.lean)
+proves `Coefficients.oopsCode_cost` and `Coefficients.proximityCode_cost` for the
+actual native source-indexed programs. These final theorems derive their generator
+and fold costs from individual primitive contracts. They have no finished-generator,
+expansion or solver budget premise, and no finite message/topic/slot premise.
+
+The explicit formulas are `oopsCoefficientTime` and `proximityCoefficientTime`.
+They depend on signing cap `N`, coefficient cap `C`, terms per reply `L`, encoded
+widths and primitive prices. The outer accumulator cap is `N*L`; every zero-weight
+term is retained and charged. `coefficientWidth(w,N,C,L)` is
+`(8*N*L + 8*N + 8*C + 64)*w`. Whole-solver dispatch, extraction and general-caller
+composition remain open. Targeted proof validation passes (3283 jobs), log
+`/private/tmp/agm-weighted-coefficient-budget2.log`. Expanded regressions pass
+(3335 jobs), log `/private/tmp/agm-weighted-coefficient-cost-tests.log`, and
+`lake build Signatures SignaturesTest` passes (4018 jobs), log
+`/private/tmp/agm-weighted-coefficient-cost-full.log`. The checks cover retained
+contexts, zero-weight rows with a nonempty accumulator, zero signing allowance,
+standard axioms, and absence of finite-domain or supplied component-budget
+premises on the final scheme bounds. The new modules have no warnings,
+admissions, additional axioms or proof-resource overrides.
 
 The import blocker was macOS vnode exhaustion, confirmed by free vnodes reaching
 zero during a monitored Lean import. The user applied a temporary vnode-limit
@@ -2148,7 +2181,7 @@ parameter family polynomial, or complete the remaining signature routes.
   representation, stored-code and encoded-output bounds.
 - [x] Derive the inner scaling fold's native runtime, including its retained
   input/accumulator lists and growing output.
-- [ ] Derive complete native signing-coefficient expansion runtime bounds,
+- [x] Derive complete native signing-coefficient expansion runtime bounds,
   composing chronological matching, term generation, both folds and reversal.
 - [ ] Derive complete weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.

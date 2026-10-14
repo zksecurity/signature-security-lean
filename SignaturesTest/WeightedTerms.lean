@@ -1,4 +1,5 @@
 import Signatures.Runtime.BackendWeightedTerms
+import Signatures.Runtime.BackendWeightedTermsContext
 import Signatures.Runtime.BackendWeightedKeyEquality
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
@@ -41,6 +42,13 @@ example : ((proximityFrom 3 2 2 (Γ := [scalar, key, .list scalar])).run arithme
 
 -- Dimension zero has a constant term; an empty term list is not a valid replacement.
 example : ((proximity 0).run arithmeticModel (((), 37), ())).value ≠ [] := by decide
+
+-- The complete generators also work inside retained lists and an unrelated key.
+example : (((oops 2).weakenTail [.list scalar, key]).run arithmeticModel
+    ((2, 37), [4, 4], 99, ())).value = [((37, 0), 1), ((37, 1), 2), ((37, 2), 4)] := by decide
+
+example : (((proximity 0).weakenTail [.list scalar, key]).run arithmeticModel
+    (((), 37), [2, 3], 99, ())).value = [((0, 37), 1)] := by decide
 
 section Compiled
 
@@ -98,6 +106,8 @@ run_meta do
       ``oops_steps_le, ``proximity_steps_le, ``oops_description, ``proximity_description,
       ``oopsFrom_output_size, ``proximityFrom_output_size, ``oops_output_size, ``proximity_output_size,
       ``oopsFrom_native_time, ``proximityFrom_native_time,
+      ``oopsFrom_weakenTail, ``proximityFrom_weakenTail, ``oops_weakenTail, ``proximity_weakenTail,
+      ``oops_weakenTail_time, ``proximity_weakenTail_time,
       ``oopsCode_size, ``proximityCode_size, ``oopsCode_cost, ``proximityCode_cost,
       ``tuple_size, ``proximityCode_cost_of_atoms,
       ``AGM.KeyEquality.oops_cost, ``AGM.KeyEquality.proximity_cost,
@@ -108,6 +118,7 @@ run_meta do
         throwError "{name}: unexpected axiom {axiomName}"
   for name in #[``oopsCode, ``proximityCode, ``oopsCode_size, ``proximityCode_size,
       ``oopsCode_cost, ``proximityCode_cost, ``proximityCode_cost_of_atoms,
+      ``oops_weakenTail_time, ``proximity_weakenTail_time,
       ``AGM.KeyEquality.oops_cost, ``AGM.KeyEquality.proximity_cost] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do

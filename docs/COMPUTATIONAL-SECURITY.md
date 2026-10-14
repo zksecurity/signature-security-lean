@@ -158,9 +158,12 @@ Injective index transport now connects both complete native evaluators to the
 original source indices and preserves the entire cache. Native
 [signing-coefficient expansion](../Signatures/Runtime/BackendWeightedCoefficients.lean)
 has exact source laws, stored-code and encoded-output bounds. Its
-[inner scaling fold](../Signatures/Runtime/BackendWeightedScale.lean) has a derived
-runtime bound including retained lists. Complete expansion runtime, weighted
-dispatch/extraction and full solver composition are still open.
+[complete native runtime bounds](../Signatures/Runtime/BackendWeightedCoefficientBudget.lean)
+now compose chronological matching, retained-context term generation, scaling,
+both expansion folds and final reversal. The final OOPS/Proximity theorems derive
+every generator and fold bound from individual primitive contracts; they do not
+assume a completed expansion budget. Weighted dispatch/extraction and full solver
+composition are still open.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).

@@ -2,8 +2,9 @@ import Signatures.Runtime.WeightedCoefficientsDescription
 import Signatures.Runtime.WeightedCoefficientsSize
 
 /-! Native signing-coefficient expansion with exact source representations and
-stored-code and output-size bounds. Runtime composition is a separate obligation;
-these definitions do not assume a completed expansion budget. -/
+stored-code and output-size bounds. Complete runtime bounds are derived in
+`BackendWeightedCoefficientBudget.lean`; these definitions do not assume a
+completed expansion budget. -/
 
 open PFunctor
 

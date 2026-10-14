@@ -1,6 +1,6 @@
 import Signatures.Runtime.BackendWeightedCoefficients
 import Signatures.Runtime.BackendWeightedEvaluateEncoding
-import Signatures.Runtime.BackendWeightedScale
+import Signatures.Runtime.BackendWeightedCoefficientBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -35,6 +35,20 @@ example : ((Coefficients.signedTerms (Terms.proximity 2)).run model
 
 example : ((Coefficients.signedTerms (Terms.proximity 0)).run model
     ([(((), 37), 4)], [3, 2], ())).value = [((0, 37), 3)] := by decide
+
+-- A zero coefficient retains every generated term and the earlier accumulator.
+-- The unrelated context contains a different key and scalar list.
+example : ((Coefficients.expandStep (Terms.oops 1) (Γ := [key, .list scalar])).run model
+    ((((2, 37), 4), 0), [((99, 1), 3)], 101, [4, 2], ())).value =
+      [((37, 1), 0), ((37, 0), 0), ((99, 1), 3)] := by decide
+
+-- With no signing replies the generated-term loop is never entered, including
+-- at nonzero degree. The concrete bound charges preparation and routing only.
+example (overhead : Nat → Nat) (w c d i m o e s a z : Nat) :
+    Coefficients.oopsCoefficientTime overhead w 0 c d i m o e s a z =
+      Coefficients.oopsCoefficientTime overhead w 0 c 0 i m o e s a z := by
+  simp [Coefficients.oopsCoefficientTime, Coefficients.coefficientTime,
+    Coefficients.coefficientWidth, Coefficients.expandRowsTime, Coefficients.expandRowsWidth]
 
 section Compiled
 
@@ -83,7 +97,9 @@ run_meta do
       ``Coefficients.proximityCode_description, ``Coefficients.source_signedTerms_length,
       ``Coefficients.signedTerms_output_size, ``Coefficients.oops_signedTerms_output_size,
       ``Coefficients.proximity_signedTerms_output_size,
-      ``Coefficients.scalePrepend_time, ``Coefficients.scalePrepend_cost] do
+      ``Coefficients.scalePrepend_time, ``Coefficients.scalePrepend_cost,
+      ``Coefficients.expandStep_time, ``Coefficients.expandRows_time, ``Coefficients.signedTerms_time,
+      ``Coefficients.oopsCode_cost, ``Coefficients.proximityCode_cost] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -93,7 +109,8 @@ run_meta do
       ``Coefficients.oopsCode_description, ``Coefficients.proximityCode_description,
       ``Coefficients.signedTerms_output_size, ``Coefficients.oops_signedTerms_output_size,
       ``Coefficients.proximity_signedTerms_output_size,
-      ``Coefficients.scalePrepend_time, ``Coefficients.scalePrepend_cost] do
+      ``Coefficients.scalePrepend_time, ``Coefficients.scalePrepend_cost,
+      ``Coefficients.oopsCode_cost, ``Coefficients.proximityCode_cost] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let type ← inferType param
@@ -102,5 +119,17 @@ run_meta do
         for forbidden in #[``Bounds, `Signatures.Runtime.GeneralCaller.Budget] do
           if type.find? (fun e => e.isConstOf forbidden) |>.isSome then
             throwError "{name}: supplied completed-program budget"
+
+-- The final scheme costs must derive generator/fold budgets, even though the
+-- shared composition helpers accept local component bounds.
+run_meta do
+  for name in #[``Coefficients.oopsCode_cost, ``Coefficients.proximityCode_cost] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let type ← inferType param
+        for forbidden in #[``Expression.compileBound, ``Terms.oopsCode, ``Terms.proximityCode,
+            ``Coefficients.scalePrepend, ``Coefficients.expandRows, ``Coefficients.signedTerms] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "{name}: supplied generator or expansion cost premise: {forbidden}"
 
 end SignaturesTest.WeightedCoefficients
