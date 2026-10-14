@@ -102,7 +102,7 @@ now compose setup, the caller, output adaptation, and extraction. Both actual
 executables have [fixed-backend resource certificates](../Signatures/Runtime/BackendLazyAGMSolverWithin.lean),
 which supply the DLog premises in the
 [concrete security theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean).
-The [public statement](../Signatures/BLS/Security.lean) takes the curve,
+The [public statement](../Signatures/BLS/Statement.lean) takes the curve,
 security parameter, query allowances, and algebraic adversary. Its bound is the
 sum of maximum DLog advantages at the two derived budgets plus `1/|F|`. The
 [separate execution model](../Signatures/BLS/SecurityModel.lean) and
@@ -137,7 +137,7 @@ includes adaptive simulation, lazy caches, final hashing, extraction, data loadi
 setup. `hbudget` is discharged by the compiler theorem, not supplied by the caller. Primitive
 arithmetic and sampling prices remain explicit model contracts. The weaker public wrappers
 have been deleted. The AGM statements in
-[BLS](../Signatures/BLS/Statement.lean), [OOPS](../Signatures/OOPS/Statement.lean), and
+[BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/Statement.lean), and
 [Proximity](../Signatures/Proximity/Statement.lean) also derive both solver budgets from source
 certificates and concrete primitive prices.
 
@@ -175,8 +175,8 @@ The hardness assertion is a theorem hypothesis, not a custom axiom or a proved p
 
 | Route | Conditional theorem | Numerical bound |
 | --- | --- | --- |
-| BLS co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/Statement.lean) | `coronFactor qS * epsilon` |
-| BLS AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/Statement.lean) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
+| BLS co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `coronFactor qS * epsilon` |
+| BLS AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
 | OOPS AGM | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/Statement.lean) | same two-branch bound |
 | Proximity AGM | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/Statement.lean) | two-branch bound plus actual fresh-collision probability |
 | Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | `delta * (delta/(qH+1) - 1/card F) <= epsilon`, where `delta = Adv - qS*(qS+qH)/card F` |

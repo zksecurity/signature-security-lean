@@ -13,7 +13,7 @@ and a separate test review. The pairing-based routes are detailed below.
 Kernel checking proves each implication from its hypotheses; it does not establish paper/model alignment.
 
 For the new general-attacker BLS AGM endpoint, start at
-[`BLS.security`](../Signatures/BLS/Security.lean): curve, security parameter,
+[`BLS.security`](../Signatures/BLS/Statement.lean): curve, security parameter,
 query allowances, and algebraic adversary, followed by the named game's probability
 bound. The [declared execution model](../Signatures/BLS/SecurityModel.lean) and
 [detailed resource records](../Signatures/BLS/GeneralAGMParameters.lean) remain inspectable. The full
@@ -74,18 +74,20 @@ does not supply an algebraic explanation.
 
 ## Results
 
-The final security statements are annotated line by line in
-[BLS/Statement.lean](../Signatures/BLS/Statement.lean),
+The short BLS AGM statement is [`BLS.security`](../Signatures/BLS/Statement.lean).
+Its model and adversary definitions expose the execution and resource assumptions.
+The detailed arithmetic-source security statements are annotated line by line in
+[BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean),
 [OOPS/Statement.lean](../Signatures/OOPS/Statement.lean), and
 [Proximity/Statement.lean](../Signatures/Proximity/Statement.lean).
-Start there for the quantified adversary, hypotheses, and probability bounds; use the
+Use those supporting files for the source-certified adversaries and detailed bounds; use the
 game/oracle reading map above to unfold what their winning events mean. Only the concrete
 machine-bounded endpoints are exposed: source certificates include hash/sign/random query
 budgets and local work. The earlier weaker wrappers are deleted, not retained as private endpoints.
 
 ### BLS: lazy ROM to co-CDH
 
-- [Statement](../Signatures/BLS/Statement.lean): `BLS.Statement.bls_eufcma_of_cocdh_machine_hardness`.
+- [Statement](../Signatures/BLS/ArithmeticStatement.lean): `BLS.Statement.bls_eufcma_of_cocdh_machine_hardness`.
 - [Source game](../Signatures/BLS/CoCDH/Spec/LazyGame.lean): `blsEufLazyPK`.
 - [Coron reduction](../Signatures/BLS/CoCDH/Spec/Coron.lean) and
   [query-budget proof](../Signatures/BLS/CoCDH/Proofs/QueryBound.lean).
@@ -96,7 +98,7 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 
 ### BLS: query-only lazy AGM
 
-- [Statement](../Signatures/BLS/Statement.lean): `BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness`.
+- [Statement](../Signatures/BLS/ArithmeticStatement.lean): `BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness`.
 - [Source game](../Signatures/BLS/Spec/LazyAGM.lean) and [proof](../Signatures/BLS/Proofs/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F|`, with hardness at each derived solver budget.
 - Finite message indices; certified all-path query/local-work and coefficient-size bounds.
@@ -147,14 +149,15 @@ Co-CDH gives `Adv_source <= coronFactor(qS) * epsilon`.
 **Concrete operation bounds now cover all four routes**, including both AGM branches; see
 [`OperationBounds.lean`](../Signatures/OperationBounds.lean). Erasing the ledgers gives the
 original solvers. Review the `qH`/`qS`, coefficient-size, finite-domain, and weight-cost factors.
-**The BLS co-CDH endpoint** in [BLS/Statement.lean](../Signatures/BLS/Statement.lean) uses
+**The arithmetic-source BLS co-CDH endpoint** in [BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean) uses
 the [Coron source certificate](../Signatures/Runtime/CoronCertificate.lean).
 Review its source certificate, all-key trace equality,
 adaptive source budget, and charged fixed data. The compiler proves the exact named solver's
 budget; no `hbudget` premise is required. Primitive operation/sampling prices are explicit
 contracts, not bit-runtime proofs.
 
-**All three AGM endpoints** live in their scheme's `Statement.lean` file linked above.
+**The three arithmetic-source AGM endpoints** live in BLS's `ArithmeticStatement.lean`
+and the OOPS and Proximity `Statement.lean` files linked above.
 The caller supplies an
 [AGM source certificate](../Signatures/Runtime/AGMSource.lean), not `hgood`/`hbad`.
 The [good package](../Signatures/Runtime/AGMGoodMachine.lean) and
@@ -170,7 +173,7 @@ as machine time or PPT.
 
 ## Paper-facing statements
 
-[BLS.Statement](../Signatures/BLS/Statement.lean) intentionally retains the **type-3**
+[BLS.Statement](../Signatures/BLS/ArithmeticStatement.lean) intentionally retains the **type-3**
 formulation, not the original paper's map-based setting. The co-CDH solver receives
 `(g1, g2, x*g1, x*g2, h)` and must output `x*h`. The explicit `x*g1` co-hint is part of
 the hardness challenge, not a map or a value supplied to the signature adversary.
@@ -258,7 +261,7 @@ the final colon hold, then the highlighted forgery-probability bound follows.**
    with arithmetic-machine costs, not a standard-model or bit-complexity theorem.
 
 The image omits the surrounding section's typeclass assumptions and the proof body;
-the [source file](../Signatures/BLS/Statement.lean) contains the full context.
+the [source file](../Signatures/BLS/ArithmeticStatement.lean) contains the full context.
 
 ### The machine and local time
 

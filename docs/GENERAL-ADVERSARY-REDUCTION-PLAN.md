@@ -49,6 +49,12 @@ curve, security parameter, query allowances, and algebraic adversary, with the
 named BLS game and two resource-indexed DLog bounds plus `1/|F|` in the conclusion.
 The declared execution model is separate from the mathematical curve.
 
+The canonical `Signatures/BLS/Statement.lean` now contains that short theorem
+itself. Detailed arithmetic-source statements moved to `ArithmeticStatement.lean`,
+preserving their declaration names and imports. `Security.lean` is a compatibility
+import. A regression guard checks the public theorem's defining module as well as
+its argument list, so the main review file cannot silently become the old interface.
+
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; derive the BLS AGM polynomial-family corollary; complete the other
 signature routes and expose their general-attacker statements in the same form.
@@ -192,7 +198,7 @@ The existing BLS source-machine endpoint now names its specialized certificate
 `ArithmeticAttackerCertificate` and explains the separate DLog success bounds.
 This removes generic identity-conversion clutter without changing its restricted
 attacker class or eager implementation. The public replacement is now
-[`BLS.security`](../Signatures/BLS/Security.lean), with four explicit inputs:
+[`BLS.security`](../Signatures/BLS/Statement.lean), with four explicit inputs:
 curve, security parameter, query allowances, and algebraic adversary. The
 [`SecurityModel`](../Signatures/BLS/SecurityModel.lean) fixes the backend and
 resource class separately from the curve. Its

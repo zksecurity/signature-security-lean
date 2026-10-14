@@ -26,7 +26,7 @@ for general realized attacker code in a fixed quantitative backend, with derived
 solver runtime/code bounds and a nonuniform asymptotic security corollary. It covers
 arbitrary message types under explicit primitive/encoding contracts.
 BLS AGM now also has complete lazy native solver runtime/code certificates and
-a [public statement](Signatures/BLS/Security.lean) following this sentence:
+a [public statement](Signatures/BLS/Statement.lean) following this sentence:
 given the curve, security parameter, query allowances, and any algebraic adversary
 in the declared execution model, its probability of winning BLS EUF-CMA is at most
 the two resource-indexed DLog bounds plus the inverse scalar-field order.

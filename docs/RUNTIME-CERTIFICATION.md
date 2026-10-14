@@ -101,7 +101,7 @@ construct actual executables for both named list reductions, and the
 [security endpoint](../Signatures/Runtime/BackendLazyAGMSecurity.lean) supplies
 them to DLog hardness in the same fixed backend. No finite-message or
 finished-solver budget premise is added. The
-[public statement](../Signatures/BLS/Security.lean) names the curve, security
+[public statement](../Signatures/BLS/Statement.lean) names the curve, security
 parameter, query allowances, and algebraic adversary. Its separate execution model
 keeps setup and attacker obligations inspectable. The original three-term bound
 uses DLog advantages indexed by the derived resource budgets. The theorem is
@@ -357,7 +357,7 @@ verification, extraction, fallback, and fixed-data loading are all charged. See 
   Both sampling passes, key construction, initialized store, adaptive execution, extraction,
   and fixed-data loading are charged. Exact `Model.LazyAGM.badReduction` erasure and
   `SourceCertificate.badWithin` are proved in the same general machine class as the good branch.
-- [BLS](../Signatures/BLS/Statement.lean), [OOPS](../Signatures/OOPS/Statement.lean), and
+- [BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/Statement.lean), and
   [Proximity](../Signatures/Proximity/Statement.lean): the public AGM machine-bounded statements,
   with compiled scheme-specific encodings, key comparisons,
   weights, and their bounds. Both solver-budget hypotheses are discharged. No original

@@ -23,9 +23,9 @@ See the [computational-security audit](COMPUTATIONAL-SECURITY.md).
 
 | Route | Statement | Source |
 | --- | --- | --- |
-| BLS to co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/Statement.lean) | [`blsEufLazyPK`](../Signatures/BLS/CoCDH/Spec/LazyGame.lean) |
-| BLS lazy AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/Statement.lean) | [BLS game](../Signatures/BLS/Spec/LazyAGM.lean) |
-| BLS AGM, general caller | [`BLS.security`](../Signatures/BLS/Security.lean) | Curve, security parameter, query allowances, algebraic adversary; same lazy game and complete solver budgets, arbitrary messages |
+| BLS to co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | [`blsEufLazyPK`](../Signatures/BLS/CoCDH/Spec/LazyGame.lean) |
+| BLS lazy AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | [BLS game](../Signatures/BLS/Spec/LazyAGM.lean) |
+| BLS AGM, general caller | [`BLS.security`](../Signatures/BLS/Statement.lean) | Curve, security parameter, query allowances, algebraic adversary; same lazy game and complete solver budgets, arbitrary messages |
 | BLS co-CDH, general caller | [`Coron.NativeSolver.security_of_resources`](../Signatures/Runtime/BackendCoronSecurity.lean) | Same lazy game; complete native solver budget, arbitrary messages |
 | OOPS lazy AGM | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/Statement.lean) | [OOPS game](../Signatures/OOPS/Spec/LazyAGM.lean) |
 | Proximity lazy AGM | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/Statement.lean) | [Proximity game](../Signatures/Proximity/Spec/LazyAGM.lean) |

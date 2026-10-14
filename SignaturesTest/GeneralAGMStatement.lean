@@ -1,4 +1,4 @@
-import Signatures.BLS.Security
+import Signatures.BLS.Statement
 import Lean.Util.CollectAxioms
 
 /-! Guard the public statement and its underlying resource theorem. In
@@ -10,6 +10,11 @@ open Signatures.Runtime Signatures.Runtime.BackendProgram
 open Signatures.Runtime.LazyAGM.NativeSolver
 
 namespace SignaturesTest.GeneralAGMStatement
+
+-- Keep the public theorem in the scheme's main statement file.
+run_meta do
+  unless (← findModuleOf? ``BLS.security) == some `Signatures.BLS.Statement do
+    throwError "BLS.security must be defined in Signatures.BLS.Statement"
 
 -- Keep both lower-level wrappers small, and the public theorem aligned with
 -- curve/security parameter/query allowances/adversary. Resource proofs stay in the records.
