@@ -150,8 +150,10 @@ encoded-output bounds. Their unrolling and retained frames are charged in the
 numerical degree/dimension and input widths. The
 [weighted request dispatcher](../Signatures/Runtime/BackendWeightedHandler.lean)
 now has exact general-caller semantics and derived routing/runtime/stored-code
-bounds with independent hash-index and signing-message types. Instantiating its
-weighted replies, extraction, and complete solver composition remain open.
+bounds with independent hash-index and signing-message types. Both actual
+[weighted reply branches](../Signatures/Runtime/BackendWeightedReply.lean) are now
+installed with exact adaptive source correspondence and complete stored-code
+bounds. Reply runtime assembly, extraction, and whole-solver certificates remain open.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.

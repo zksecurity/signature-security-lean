@@ -159,8 +159,14 @@ adaptive general-caller execution, complete private state, and fuel exhaustion.
 request decoding/retention, reply tagging, and branch selection from individual
 port and reply contracts. [Code bounds](../Signatures/Runtime/BackendWeightedHandlerDescription.lean)
 count both replies and one dynamic sampler, independently of domain cardinality.
-The weighted reply implementations, extraction, and whole-solver certificates
-remain in progress.
+Both actual [weighted reply implementations](../Signatures/Runtime/BackendWeightedReply.lean)
+are now installed in the [native oracle](../Signatures/Runtime/BackendWeightedOracle.lean).
+The good branch uses scalar masks and the bad branch uses independent paired masks.
+Hashing reads one private base; signing executes term generation and evaluation,
+then records one delivered signature. The exact adaptive source law preserves
+configuration, complete cache and reply logs. Complete stored-code bounds and
+local response/frame runtime and size bounds are checked. Reply runtime assembly,
+extraction, and whole-solver certificates remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
