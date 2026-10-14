@@ -157,7 +157,12 @@ bounds. Complete [hash](../Signatures/Runtime/BackendWeightedHashBudget.lean) an
 [signing](../Signatures/Runtime/BackendWeightedSignBudget.lean) runtime bounds now
 derive every reply cost from primitive, sampling, encoding and loop-control
 contracts, including term/fallback construction and retention of the original
-request, cache and logs. Dispatcher state invariants, extraction, and whole-solver
+request, cache and logs. Preserved [cache/log capacities](../Signatures/Runtime/BackendWeightedHandlerState.lean)
+now support complete [native interaction bounds](../Signatures/Runtime/BackendWeightedOracleCallerBudget.lean)
+and [stored-code bounds](../Signatures/Runtime/BackendWeightedOracleDescription.lean)
+for both branches. These compose the attacker's own local-work/query budget with
+derived reply/dispatch costs and charge caller control and retained state.
+Native extraction, automatic caller-condition recovery, and whole-solver
 certificates remain open.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
@@ -183,7 +188,7 @@ has exact source laws, stored-code and encoded-output bounds. Its
 now compose chronological matching, retained-context term generation, scaling,
 both expansion folds and final reversal. The final OOPS/Proximity theorems derive
 every generator and fold bound from individual primitive contracts; they do not
-assume a completed expansion budget. Weighted dispatch/extraction and full solver
+assume a completed expansion budget. Weighted extraction and full solver
 composition are still open.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers

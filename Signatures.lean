@@ -44,6 +44,8 @@ import Signatures.Runtime.BackendWeightedReplyCost
 import Signatures.Runtime.BackendWeightedReplySize
 import Signatures.Runtime.BackendWeightedHashBudget
 import Signatures.Runtime.BackendWeightedSignBudget
+import Signatures.Runtime.BackendWeightedOracleCallerBudget
+import Signatures.Runtime.BackendWeightedOracleDescription
 import Signatures.Runtime.BackendWeightedScale
 import Signatures.OperationBounds
 import Signatures.PaperStatements
@@ -122,8 +124,9 @@ both expansion folds and final reversal. Weighted request dispatch now supports
 distinct hash-index/signing-message types, with exact general-caller semantics
 and derived routing/runtime/stored-code bounds. Both actual weighted hash/sign
 branches are installed, with exact general-caller/source correspondence, complete
-stored-code bounds, and local response/frame cost and size bounds. Complete reply
-runtime assembly, extraction and whole-solver certificates remain open.
+stored-code bounds, and complete reply runtime bounds. Preserved cache/log capacities
+now compose these with native dispatch and general-caller runtime/code bounds.
+Extraction and whole-solver certificates remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;

@@ -69,6 +69,11 @@ both native reductions from component resources. It concludes negligible forgery
 success under nonuniform DLog hardness in one fixed backend and negligible inverse
 field size. Groups and message types may vary with the security parameter.
 
+OOPS/Proximity now have complete native interaction-phase runtime and stored-code
+bounds for both AGM branches. Their capacity invariants charge the growing
+private cache and reply logs over arbitrary topic/slot types. Native extraction,
+caller-condition recovery, and whole-solver/security endpoints remain unfinished.
+
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete the other signature routes and expose their
 general-attacker statements and family corollaries in the same form.
@@ -89,8 +94,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches, evaluator and coefficient-expansion bounds are proved. Actual hash/sign replies are installed with exact general-caller/source semantics and complete runtime/stored-code bounds derived from primitive contracts. | Dispatcher state invariants, extraction, and whole native solver/general caller certificates. |
-| Proximity AGM | The same weighted components, expansion bounds, complete reply budgets and source composition are proved, including original-index/cache transport; the original collision term remains. | Dispatcher state invariants, extraction, and whole native solver/general caller certificates. |
+| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches, evaluator and coefficient-expansion bounds are proved. Actual replies and the full native caller phase have derived runtime/stored-code bounds and preserved cache/log capacities. | Native extraction, recovery of caller conditions from general resources, and whole-solver certificates/endpoints. |
+| Proximity AGM | The same weighted components and complete native interaction bounds are proved, including original-index/cache transport and preserved cache/log capacities; the original collision term remains. | Native extraction, recovery of caller conditions from general resources, and whole-solver certificates/endpoints. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -669,12 +674,35 @@ Complete weighted reply runtime assembly is now checked:
   reply, generator or evaluator. Separate finite index and message universes are
   unnecessary; the native programs use only encountered entries.
 
-Next: prove preserved native dispatcher state invariants, compose its actual
-reply budgets with the general caller, then implement extraction and complete
-solver certificates. These reply bounds do not yet close the whole-solver goal.
+Complete native interaction composition is now checked:
 
-Validation: `lake build Signatures SignaturesTest` passes (4046 jobs), log
-`/private/tmp/agm-weighted-complete-reply-full.log`. The
+- [`BackendWeightedStateSize.lean`](../Signatures/Runtime/BackendWeightedStateSize.lean)
+  bounds the encoded challenge, cache, and both reply logs using separate
+  encountered-index/message widths and scalar/pair mask sizes.
+- [`BackendWeightedHandlerState.lean`](../Signatures/Runtime/BackendWeightedHandlerState.lean)
+  preserves the challenge and key/message bounds through every actual reply.
+  Each remaining request reserves `L = degree/dimension + 1` cache entries and
+  one explicit log entry. The aggregate store bound is `(32 * cap * L + 32) * w`.
+- [`BackendWeightedOracleBudget.lean`](../Signatures/Runtime/BackendWeightedOracleBudget.lean)
+  derives both full dispatcher budgets from the actual reply bounds and primitive,
+  sampling, port, and control contracts; no completed reply/dispatcher cost is supplied.
+- [`BackendWeightedCallerBudget.lean`](../Signatures/Runtime/BackendWeightedCallerBudget.lean)
+  proves indexed caller composition for distinct hash-index/signing-message types.
+  [`BackendWeightedOracleCallerBudget.lean`](../Signatures/Runtime/BackendWeightedOracleCallerBudget.lean)
+  applies it to both actual branches, retaining the final capacity/size invariant.
+  The bound is attacker local work plus per-kind query costs and charged caller
+  initialization, routing, and loop control. It currently takes caller reachability
+  and encoding conditions explicitly, alongside the attacker's own budget.
+- [`BackendWeightedOracleDescription.lean`](../Signatures/Runtime/BackendWeightedOracleDescription.lean)
+  derives complete dispatcher/caller stored-code bounds, including both replies,
+  term generation, samplers, ports, caller code, and bounded-loop syntax.
+
+Next: implement native extraction, derive the caller conditions from general
+resource bounds, and assemble complete solver certificates/security endpoints.
+The interaction bounds do not yet close the whole-solver goal.
+
+Validation: `lake build Signatures SignaturesTest` passes (4053 jobs), log
+`/private/tmp/agm-weighted-full-interaction-full.log`. The
 [native reply regressions](../SignaturesTest/WeightedReply.lean) cover signing
 before explicit hashing, shadowed cache entries, both mask coordinates, zero
 degree, and a zero-weight unseen base that still samples and enters the cache.
@@ -682,6 +710,11 @@ They check complete returned state and the standard axiom footprint, including
 all four complete runtime budgets and both signing-value compositions, and reject
 finite-domain or supplied complete-budget premises. The new modules/tests have
 no warnings, admissions, extra axioms, or proof-resource overrides.
+The [full-interaction regressions](../SignaturesTest/WeightedOracleBudget.lean)
+also check an adaptive hash/sign/hash sequence with a shadowed cache entry,
+both reply logs, and all new state/runtime/code theorems' transitive axioms.
+They reject finite-domain and supplied completed-dispatcher/reply budgets; only
+caller composition accepts the attacker's own resource budget.
 
 The import blocker was macOS vnode exhaustion, confirmed by free vnodes reaching
 zero during a monitored Lean import. The user applied a temporary vnode-limit
@@ -2336,6 +2369,10 @@ additional axioms or proof-resource overrides.
   transcript correspondence, complete stored-code bounds and local response/frame bounds.
 - [x] Compose complete weighted hash/sign reply runtime bounds, deriving actual
   term/fallback generation, evaluator, response and retained-frame costs.
+- [x] Preserve native weighted challenge/cache/log invariants and compose the actual
+  reply budgets into complete dispatcher/general-caller runtime and stored-code bounds.
+- [ ] Recover weighted caller reachability, request/return widths, and coefficient
+  lengths from general attacker resources and encoding contracts.
 - [ ] Derive whole weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the

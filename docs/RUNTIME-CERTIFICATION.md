@@ -170,8 +170,16 @@ local response/frame runtime and size bounds are checked. The complete
 [signing reply](../Signatures/Runtime/BackendWeightedSignBudget.lean) runtime
 bounds now compose the actual native operations, including generated terms,
 executed fallbacks, retained caches, group responses and transcript updates.
-They require no finished reply/evaluator efficiency assumption. Dispatcher state
-invariants, extraction, and whole-solver certificates remain in progress.
+They require no finished reply/evaluator efficiency assumption.
+[Reserved-state invariants](../Signatures/Runtime/BackendWeightedHandlerState.lean)
+preserve the challenge, encountered-key widths, and separate cache/log capacities
+through every reply. [Complete dispatcher bounds](../Signatures/Runtime/BackendWeightedOracleBudget.lean)
+and [general-caller composition](../Signatures/Runtime/BackendWeightedOracleCallerBudget.lean)
+now derive the full interaction cost from these reply bounds, primitive contracts,
+and the attacker's own resources and reachable encoding bounds.
+[Stored-code bounds](../Signatures/Runtime/BackendWeightedOracleDescription.lean)
+count the full dispatcher and caller phase. Native extraction, recovery of caller
+conditions from general resources, and whole-solver certificates remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
