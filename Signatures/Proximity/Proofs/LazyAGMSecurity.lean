@@ -2,8 +2,8 @@ import Signatures.Proximity.Proofs.LazyAGM
 import Signatures.LinearFunctional.Proofs.LazyAGMCoupling
 
 /-! Proximity's probability bound with lazy weighted solvers and the original
-fresh-collision probability. Finite slots remain a proof-side restriction here;
-the solver programs and caches do not enumerate the slot domain. -/
+fresh-collision probability. This finite-slot helper is transported to arbitrary
+slots in `LazyAGMArbitrarySlots`; no solver enumerates the slot domain. -/
 
 open OracleComp AlgebraicGroupModel Model.LazyAGM
 

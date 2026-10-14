@@ -69,8 +69,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, and short public concrete statements, including selection by security parameter. General realized callers, arbitrary messages, and the original probability loss are preserved. | Polynomial-family closure and the negligible-success corollary; conventional-machine instantiation only if claiming that stronger model. |
-| OOPS AGM | Weighted lazy solvers, finite-topic probability correspondence, and encountered-base cache bounds are proved. | Remove proof-side topic finiteness; derive native degree-dependent runtime/code bounds and general caller composition. |
-| Proximity AGM | Weighted lazy solvers, finite-slot probability correspondence, and encountered-base cache bounds are proved; the original collision term remains. | Remove proof-side slot finiteness; derive native dimension-dependent runtime/code bounds and general caller composition. |
+| OOPS AGM | Weighted lazy solvers, arbitrary-topic probability correspondence, and encountered-base cache bounds are proved. | Derive native degree-dependent runtime/code bounds and general caller composition. |
+| Proximity AGM | Weighted lazy solvers, arbitrary-slot probability correspondence, and encountered-base cache bounds are proved; the original collision term remains. | Derive native dimension-dependent runtime/code bounds and general caller composition. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -298,8 +298,17 @@ refinement holds without any finite-domain premise. The probability replacements
 are [`security_lazy_finite_topics`](../Signatures/OOPS/Proofs/LazyAGMSecurity.lean)
 and [`security_lazy_finite_slots`](../Signatures/Proximity/Proofs/LazyAGMSecurity.lean).
 They retain the existing OOPS admissibility predicate and Proximity's actual
-fresh-collision experiment. These comparison theorems still require finite
-topics/slots; that restriction is the next probability-proof task.
+fresh-collision experiment. These finite comparison helpers now support the
+[arbitrary-topic OOPS theorem](../Signatures/OOPS/Proofs/LazyAGMArbitraryTopics.lean)
+and [arbitrary-slot Proximity theorem](../Signatures/Proximity/Proofs/LazyAGMArbitrarySlots.lean).
+The [finite-label presentation](../Signatures/LinearFunctional/Proofs/LazyAGMFiniteLabels.lean)
+covers every query and final output along every reply path at generated keys.
+Separate index/message [renaming maps](../Signatures/LinearFunctional/Proofs/LazyAGMTransport.lean)
+preserve weighted term lists and both complete reductions. Exact
+[source-game transport](../Signatures/LinearFunctional/Proofs/LazyAGMGameTransport.lean)
+preserves OOPS's distinct-message condition and Proximity's actual collision event.
+No finite topic, slot, or public-key premise remains on the new probability
+endpoints. The potentially large finite cover is never constructed by the solvers.
 
 The [cache invariants](../Signatures/LinearFunctional/Proofs/LazyAGMCache.lean)
 prove all explicitly hashed bases and all bases used in signing are retained.
@@ -324,6 +333,17 @@ The guards verify standard axioms and the absence of finite-domain premises on
 the lazy programs, cache refinements, and entry-count bounds. The full
 `lake build Signatures SignaturesTest` passes (3960 jobs), log
 `/private/tmp/agm-weighted-full-suite.log`; the new modules have no warnings or admissions.
+
+Arbitrary-domain validation: `SignaturesTest.WeightedAGMTransport` verifies a
+finite cover for an adaptive attacker with infinite topic/public-key types,
+rejects covers omitting the final target or one reply-dependent signing branch,
+and proves exact program recovery including coefficient lists. Collision tests
+retain contributions from other slots and extra coefficient behavior; they also
+show why merging slots without injectivity can break freshness. The new theorem
+guards check standard axioms and reject finite index/message/topic/slot/public-key
+premises. The full `lake build Signatures SignaturesTest` passes (3969 jobs), log
+`/private/tmp/agm-arbitrary-weighted-full-suite.log`; the new transport modules
+have no warnings or admissions. Native weighted resource accounting is next.
 
 Charge generation of these terms, degree/coordinate computations, encoded key
 comparisons, and representation lengths. A bound polynomial in the numerical
@@ -1857,7 +1877,8 @@ parameter family polynomial, or complete the remaining signature routes.
 - [x] Implement shared weighted lazy OOPS/Proximity solvers with joint
   eager/lazy correspondence, finite-list refinement, finite-topic/slot probability
   bounds, and the encountered-base cache cap, preserving admissibility/collision scope.
-- [ ] Remove the proof-side finite topic/slot restrictions for weighted reductions.
+- [x] Remove the proof-side finite topic/slot restrictions for weighted reductions,
+  preserving generated-key scope, admissibility, and the exact collision term.
 - [ ] Derive complete weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the

@@ -2,8 +2,8 @@ import Signatures.OOPS.Proofs.LazyAGM
 import Signatures.LinearFunctional.Proofs.LazyAGMCoupling
 
 /-! The established OOPS probability bound with lazy weighted solvers.
-Finite topics are used in this comparison proof only. Removing that proof-side
-restriction and deriving native execution budgets are separate obligations. -/
+Finite topics are used in this comparison proof only. `LazyAGMArbitraryTopics`
+removes that restriction; deriving native execution budgets remains separate. -/
 
 open OracleComp AlgebraicGroupModel Model.LazyAGM
 
