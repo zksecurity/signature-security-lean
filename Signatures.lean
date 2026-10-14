@@ -7,6 +7,7 @@ import AlgebraicGroupModel
 import Signatures.Model.CoCDH
 import Signatures.Model.LazyAGM
 import Signatures.BLS.Statement
+import Signatures.BLS.GeneralAGMFamilyStatement
 import Signatures.BLS.Proofs.LazyAGMArbitraryMessages
 import Signatures.BLS.Proofs.LazyAGMList
 import Signatures.OOPS.Statement
@@ -74,7 +75,9 @@ time plus `1/|F|`; `BLS.agm_security_two_budgets` retains the sharper separate t
 Parameters expose query/resource limits and primitive contracts in separate
 `AGMSecurityModel` and `CoCDHSecurityModel` records,
 while the adversary supplies its actual general realization. The AGM asymptotic
-corollary remains separate.
+corollary `BLS.GeneralAGM.Family.security_asymptotic` derives polynomial solver
+time/code bounds from component resources, then applies nonuniform DLog hardness
+and negligible inverse field size in one backend fixed across parameters.
 A conventional-machine adequacy theorem remains separate from this conditional
 fixed-backend result.
 `OperationBounds` supplies concrete operation ledgers for all four routes with exact solver

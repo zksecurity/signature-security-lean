@@ -102,13 +102,20 @@ construct actual executables for both named list reductions, and the
 them to DLog hardness in the same fixed backend. No finite-message or
 finished-solver budget premise is added. The
 [public statement](../Signatures/BLS/Statement.lean) names the curve, security
-parameter, query allowances, and algebraic adversary. The same file displays
-its execution/resource model, actual forgery experiment, and DLog-success
-supremum. The proof separates the probability inequality, the derived executable
-resource witnesses, and their inclusion in the two supremums. The original
-three-term bound uses those supremums at the visible derived time budgets. The theorem is
-concrete at each security parameter; an AGM negligible-success
-corollary still requires polynomial-family closure and asymptotic hardness.
+parameter, query allowances, and algebraic adversary. Its
+[supporting definitions](../Signatures/BLS/GeneralSecurityModel.lean) expose
+the execution/resource model, actual forgery experiment, and DLog-success
+supremum. The separate proof combines the probability inequality, derived
+executable witnesses, and supremum inclusions. The main bound uses a common
+derived time allowance; `agm_security_two_budgets` preserves the sharper bound.
+[Polynomial-family closure](../Signatures/Runtime/BackendLazyAGMPolynomial.lean)
+now covers both full runtimes and stored-code bounds. The
+[family certificates](../Signatures/BLS/GeneralAGMFamilyResources.lean) use the
+pointwise implementations in one fixed backend and derive all challenge-input,
+time and code obligations. The [asymptotic corollary](../Signatures/BLS/GeneralAGMFamilyStatement.lean)
+concludes negligible forgery success under nonuniform DLog hardness and negligible
+inverse field size. Its assumptions bound components and attacker resources;
+they do not assume completed-solver efficiency.
 The [general adversary plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md#lazy-bls-agm-progress-2026-10-14)
 tracks the remaining schemes, family corollaries, and interface work.
 The complete AGM machine certificates documented below cover the older eager solvers.

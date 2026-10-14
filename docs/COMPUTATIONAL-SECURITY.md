@@ -117,8 +117,18 @@ The [detailed records](../Signatures/BLS/GeneralAGMParameters.lean) expose per-k
 query limits, local resources, code/advice, encodings, and primitive contracts.
 They do not assume completed-solver efficiency. Arbitrary message types and
 noncanonical output encodings are supported via the charged output adapter and
-its size contract. Polynomial-family closure for AGM and the other schemes'
-general-attacker endpoints remain open.
+its size contract. [Polynomial closure](../Signatures/Runtime/BackendLazyAGMPolynomial.lean)
+now covers both complete AGM solver runtime formulas and their stored-code bound.
+The [family resource theorem](../Signatures/BLS/GeneralAGMFamilyResources.lean)
+constructs both nonuniform solver certificates from these component bounds and
+the pointwise certificates. It fixes the backend, random-query costs and
+description measure across all security parameters. The
+[asymptotic statement](../Signatures/BLS/GeneralAGMFamilyStatement.lean), with its
+[separate proof](../Signatures/BLS/Proofs/GeneralAGMFamily.lean), concludes
+negligible forgery probability from DLog hardness in that family class and
+negligible `1/|F|`. Groups and messages may vary with the parameter; messages
+need not be finite. No uniform program generator or conventional-machine
+instantiation is claimed. The other schemes' general-attacker endpoints remain open.
 The existing AGM machine certificates
 below still concern the eager implementations.
 

@@ -64,9 +64,14 @@ old AGM-only names as compatibility imports. Regression guards check both public
 theorems' defining module and argument list, and reject algebraic requirements in
 the unrestricted co-CDH contracts.
 
+The BLS AGM family corollary now derives polynomial runtime and stored code for
+both native reductions from component resources. It concludes negligible forgery
+success under nonuniform DLog hardness in one fixed backend and negligible inverse
+field size. Groups and message types may vary with the security parameter.
+
 Remaining: instantiate the fixed backend in a conventional machine if making that
-stronger claim; derive the BLS AGM polynomial-family corollary; complete the other
-signature routes and expose their general-attacker statements in the same form.
+stronger claim; complete the other signature routes and expose their
+general-attacker statements and family corollaries in the same form.
 
 Establish security for general efficient attackers for the signature routes in
 this repository. Keep the reduction wrappers in our abstract arithmetic machine,
@@ -83,7 +88,7 @@ machine results, not completion of this broader objective.
 | Route | Existing result | Work needed for this plan |
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
-| BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, and short public concrete statements, including selection by security parameter. General realized callers, arbitrary messages, and the original probability loss are preserved. | Polynomial-family closure and the negligible-success corollary; conventional-machine instantiation only if claiming that stronger model. |
+| BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches and scalar/pair evaluator bounds are proved. Signing-coefficient expansion has exact source semantics and complete native runtime/code/output bounds. | Weighted dispatch/extraction and native solver/general caller composition. |
 | Proximity AGM | The same weighted components and complete expansion bounds are proved, including original-index/cache transport; the original collision term remains. | Weighted dispatch/extraction and native solver/general caller composition. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
@@ -2125,6 +2130,46 @@ This closes the concrete BLS AGM efficiency/composition task and its public
 interface. It does not instantiate a conventional machine, prove an arbitrary
 parameter family polynomial, or complete the remaining signature routes.
 
+### BLS AGM polynomial families, 2026-10-14
+
+[`BackendLazyAGMPolynomial`](../Signatures/Runtime/BackendLazyAGMPolynomial.lean)
+proves polynomial closure of the complete `goodProgramTime`, `badProgramTime`
+and `programDescription` formulas. The proof composes chronological coefficient
+processing, both extractors, handlers, setup and general caller execution. It
+uses fixed polynomial bounds on caller resources, encoded widths, primitive
+prices and component descriptions, plus a single jointly polynomial structural
+overhead bound. It assumes no completed solver's time or code bound.
+
+[`BackendConfiguration`](../Signatures/Runtime/BackendConfiguration.lean)
+bundles the backend, random interface, execution costs and description measure.
+The family requires this exact configuration to be constant across security
+parameters; group/message types and their encodings may vary.
+[`BackendLazyAGMDLogFamily`](../Signatures/Runtime/BackendLazyAGMDLogFamily.lean)
+defines nonuniform DLog hardness against all polynomial-time, polynomial-code
+families in that backend. One executable per parameter must realize its solver
+at every input, and every challenge must fit the polynomial input cap.
+
+[`GeneralAGMFamilyResources`](../Signatures/BLS/GeneralAGMFamilyResources.lean)
+derives both actual list-reduction family certificates from the pointwise
+implementations. It bounds the attacker's complete stored code/advice and the
+samplers/adapters/structural descriptions, and derives execution-query bounds
+from the three query allowances. No finite message or public-key assumption is
+introduced. The [family statement](../Signatures/BLS/GeneralAGMFamilyStatement.lean)
+and [separate proof](../Signatures/BLS/Proofs/GeneralAGMFamily.lean) conclude
+negligible forgery success from DLog hardness and negligible `1/|F|`, preserving
+the original two-reduction-plus-inverse-order loss. This is a nonuniform
+conditional-backend result; it asserts no uniform program generator or
+conventional-machine instantiation.
+
+Validation: `SignaturesTest.AGMFamilies` passes (3456 jobs), log
+`/private/tmp/agm-family-tests2.log`; `lake build Signatures SignaturesTest`
+passes (4025 jobs), log `/private/tmp/agm-family-full.log`. The new guards check
+standard transitive axioms, fixed-backend/family/field-growth scope, no finite
+message/public-key premise, and no supplied finished-solver budget, including
+inside the polynomial-resource record. Zero-query regressions exercise both
+complete runtime formulas. The new modules have no warnings, admissions,
+additional axioms or proof-resource overrides.
+
 - [x] Define the common execution, cost, encoding, and hardness interfaces,
   with an explicit polynomial code/advice convention for the fixed backend.
 - [x] Prove general caller/handler composition and instantiate BLS co-CDH first
@@ -2158,6 +2203,8 @@ parameter family polynomial, or complete the remaining signature routes.
 - [x] Expose short concrete BLS AGM/DLog and unrestricted co-CDH statements,
   indexed by security parameter, with transparent resources and hardness scope;
   keep supporting proof bodies in a separate proof file.
+- [x] Derive BLS AGM polynomial solver time/code bounds and the nonuniform
+  negligible-success corollary in a backend fixed across the parameter family.
 - [x] Implement shared weighted lazy OOPS/Proximity solvers with joint
   eager/lazy correspondence, finite-list refinement, finite-topic/slot probability
   bounds, and the encountered-base cache cap, preserving admissibility/collision scope.
@@ -2215,7 +2262,8 @@ follow from general caller resources and representation contracts. The nonunifor
 family convention, asymptotic success corollary, and arbitrary-message probability
 transport are now proved. Both lazy AGM solvers now have checked probability
 correspondence, list-cache refinements, full resource certificates, and the short
-general-caller concrete statement. Continue with the family and remaining scheme
-tasks above.
+general-caller concrete statement. The BLS AGM polynomial-family closure and
+nonuniform security corollary are also proved. Continue with the remaining
+scheme and family tasks above.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine/family claim. The broader plan remains open.

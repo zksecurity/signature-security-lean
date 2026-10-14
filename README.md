@@ -35,8 +35,12 @@ The [model and game definitions](Signatures/BLS/GeneralSecurityModel.lean) expos
 attacker resources, primitive/encoding contracts, and explicit hardness suprema.
 The [proofs](Signatures/BLS/Proofs/GeneralSecurity.lean) combine the original
 probability reductions with derived native solver runtime/code certificates.
-Conventional-machine instantiation, the BLS AGM asymptotic corollary, and
-general-attacker overhead for the other routes remain in progress.
+The [BLS AGM family corollary](Signatures/BLS/GeneralAGMFamilyStatement.lean)
+also gives negligible forgery success from polynomial component resources,
+nonuniform DLog hardness in one fixed backend, and negligible `1/|F|`.
+Both reduction families' time and stored-code bounds are derived.
+Conventional-machine instantiation and general-attacker overhead for the other
+routes remain in progress.
 
 Start with the [GitHub review guide](docs/review-guide.md) or the
 [security-game ledger](docs/SECURITY-GAMES.md). Reviews and checklists can be recorded with the
