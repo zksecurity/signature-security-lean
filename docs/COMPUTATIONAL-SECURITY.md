@@ -1,8 +1,119 @@
 # Computational-security status
 
 **Status: internal probability reductions, concrete operation ledgers,
-and public arithmetic-machine security statements for all four routes are proved,
-including both AGM branches. This is not a bit-complexity or asymptotic PPT theorem.**
+and public arithmetic-machine security statements for all five routes are proved,
+including both AGM branches and Schnorr's full replay reduction.
+Schnorr additionally has a precompiled bit-cell security theorem with explicit
+sampling error. No conventional-machine PPT or hardware-timing theorem is claimed.**
+
+BLS co-CDH additionally exposes
+[`Coron.NativeSolver.security_of_resources`](../Signatures/Runtime/BackendCoronSecurity.lean),
+imported by `Signatures`. It quantifies over general backend-realized attacker
+code, uses its actual `RunsWithin` resource bound, and constructs the completed
+native solver certificate before applying hardness. Request/result decoding has
+an explicit size-recovery contract; canonical message encodings satisfy it from
+the product/sum size laws. The attacker need not use the arithmetic language.
+The co-CDH hardness class uses the same fixed backend, separate input/code/time
+caps, and a bound covering every challenge in the experiment. The conclusion
+retains the exact Coron factor and now allows arbitrary message types.
+[`BackendCoronPolynomial`](../Signatures/Runtime/BackendCoronPolynomial.lean)
+proves polynomial growth of the derived runtime and description budgets under
+fixed polynomial resource contracts and jointly polynomial structural overhead.
+[`BackendCoronFamilySecurity`](../Signatures/Runtime/BackendCoronFamilySecurity.lean)
+now proves negligible BLS forgery success under co-CDH hardness against
+polynomial-time, polynomial-description nonuniform families in the same fixed
+backend. Scalar/group/message types may vary with the security parameter; each
+parameter chooses one program for all inputs. All fixed code/advice is charged.
+The solver's efficiency is derived from the general caller and primitive
+contracts. Every generated challenge fits the fixed input cap, and the exact
+Coron loss is bounded by `3*(qS+1)`, including zero signing queries.
+This remains conditional on the backend and its encoding/cost contracts; no
+uniform program generator or conventional-machine instantiation is claimed.
+[`ArbitraryMessages`](../Signatures/BLS/CoCDH/Proofs/ArbitraryMessages.lean)
+removes the finite-message assumption by exact transport of the original lazy
+game and solver. A finite cover of all adaptive requests and final outputs is
+used only inside the proof; no executable code enumerates it. The cover ranges
+over generated public keys, so the public-key type need not be finite either.
+The arithmetic-source endpoint also uses this stronger probability result.
+The other general-attacker routes remain open in the
+[current plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md).
+
+The new [lazy BLS AGM solvers](../Signatures/BLS/Spec/LazyAGMReduction.lean)
+now preserve the established two-reduction probability bound on arbitrary message
+types, with joint randomness correspondence and sparse transcript extraction.
+Their [association-list cache refinement](../Signatures/BLS/Proofs/LazyAGMList.lean)
+works over arbitrary message types and bounds stored entries by `2*q+1` for
+`q` attacker requests. The [probability transport](../Signatures/BLS/Proofs/LazyAGMArbitraryMessages.lean)
+uses a finite cover only inside the proof; the public-key type need not be finite.
+Their [native private-cache implementations](../Signatures/Runtime/BackendLazyAGMCache.lean)
+now have exact list-handler semantics and derived runtime/code bounds. Independent
+pair sampling is implemented with two charged scalar samplers; hits execute no
+sampler. The [native hash/sign replies](../Signatures/Runtime/BackendLazyAGMReply.lean)
+now have exact adaptive correspondence, stored-code bounds, encoded-store
+invariants, and [complete runtime bounds](../Signatures/Runtime/BackendLazyAGMReplyBudget.lean)
+derived from primitive costs. These include argument/store copying, transcript
+updates, arithmetic, and control. Native
+[chronological coefficient matching](../Signatures/Runtime/BackendTokenRows.lean)
+now has complete runtime/code and output-size bounds. These compose the actual
+coefficient scans, both reversals, zero initialization, and retained-context costs.
+[Coefficient lengths](../Signatures/Runtime/BackendLazyAGMOutputSize.lean) are
+bounded by encoded output size under an explicit positive-cell encoding law.
+The [native effectful evaluators](../Signatures/Runtime/BackendLazyAGMEvaluate.lean)
+and [complete extractors](../Signatures/Runtime/BackendLazyAGMExtraction.lean)
+now preserve the joint output/cache law, including final-target processing and
+zero denominators. Their [reachable-cache bounds](../Signatures/Runtime/BackendLazyAGMExtractionGrowth.lean)
+depend only on processed rows and the final target. Private extraction reads have
+[complete runtime bounds](../Signatures/Runtime/BackendLazyAGMReadBudget.lean)
+and [stored-code bounds](../Signatures/Runtime/BackendLazyAGMReadDescription.lean);
+the [executed length fold](../Signatures/Runtime/BackendLengthCost.lean) is charged.
+Whole-evaluator/extractor [stored-code bounds](../Signatures/Runtime/BackendLazyAGMExtractionDescription.lean)
+are now proved. Complete [good evaluator](../Signatures/Runtime/BackendLazyAGMGoodEvaluate.lean)
+and [bad evaluator](../Signatures/Runtime/BackendLazyAGMBadEvaluate.lean) runtime
+bounds are derived from primitive, encoding, and loop-control contracts. They
+charge length computation, row/cache scans, sampling, arithmetic, copying, and
+retained contexts, with no message-universe enumeration. Complete chronological
+[good](../Signatures/Runtime/BackendLazyAGMGoodTokens.lean) and
+[bad](../Signatures/Runtime/BackendLazyAGMBadTokens.lean) preparation/evaluation
+calls now compose these bounds, including coefficient processing and cache-state
+invariants. Complete [good extractor](../Signatures/Runtime/BackendLazyAGMGoodExtractionBudget.lean)
+and [bad extractor](../Signatures/Runtime/BackendLazyAGMBadExtractionBudget.lean)
+runtime bounds now compose default creation, every chronological call, final
+target access, and arithmetic, including retained output/transcript frames and
+changing cache capacities. They follow from individual primitive and encoding
+contracts, with no finished-extractor budget premise. The native general-request
+[dispatchers](../Signatures/Runtime/BackendLazyAGMHandler.lean) now preserve
+adaptive caller source semantics and have derived
+[runtime](../Signatures/Runtime/BackendLazyAGMHandlerBudget.lean) and
+[stored-code](../Signatures/Runtime/BackendLazyAGMHandlerDescription.lean) bounds.
+Their invariants reserve cache and transcript space for remaining requests.
+Both native [caller resource bounds](../Signatures/Runtime/BackendLazyAGMCallerResources.lean)
+now derive additive runtime and final-store bounds from the attacker's own
+execution resources and primitive contracts. Complete caller descriptions are
+also bounded. Request sizes, reachability, return sizes, and termination are
+derived, with no custom caller invariant or assumed whole-caller budget.
+The [returned AGM representation](../Signatures/Runtime/BackendLazyAGMCallerOutput.lean)
+also yields coefficient-length bounds under the canonical output encoding and
+positive-cell list law. Both complete [native solver programs](../Signatures/Runtime/BackendLazyAGMSolver.lean)
+are assembled, and their [source laws](../Signatures/Runtime/BackendLazyAGMSolverCorrectness.lean)
+identify them with the named lazy list reductions at every challenge. Complete
+[runtime](../Signatures/Runtime/BackendLazyAGMSolverBudget.lean) and
+[stored-code](../Signatures/Runtime/BackendLazyAGMSolverDescription.lean) bounds
+now compose setup, the caller, output adaptation, and extraction. Both actual
+executables have [fixed-backend resource certificates](../Signatures/Runtime/BackendLazyAGMSolverWithin.lean),
+which supply the DLog premises in the
+[concrete security theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean).
+The [short public statement](../Signatures/BLS/GeneralAGMStatement.lean) takes
+bundled parameters and a realized algebraic adversary; its family form selects
+a security parameter. Its bound is the sum of maximum DLog advantages at the
+two derived budgets plus `1/|F|`. The
+[supporting records](../Signatures/BLS/GeneralAGMParameters.lean) expose per-kind
+query limits, local resources, code/advice, encodings, and primitive contracts.
+They do not assume completed-solver efficiency. Arbitrary message types and
+noncanonical output encodings are supported via the charged output adapter and
+its size contract. Polynomial-family closure for AGM and the other schemes'
+general-attacker endpoints remain open.
+The existing AGM machine certificates
+below still concern the eager implementations.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).
@@ -16,7 +127,7 @@ have been deleted. The AGM statements in
 [Proximity](../Signatures/Proximity/Statement.lean) also derive both solver budgets from source
 certificates and concrete primitive prices.
 
-In all four concrete corollaries, Lean infers the adversary, primitive-cost model, local time,
+In all five concrete corollaries, Lean infers the adversary, primitive-cost model, local time,
 query budgets, and random-arity bound from `cert`; the AGM coefficient-length bounds are inferred
 as well. These remain parameters of the claim, not removed assumptions. Sampling costs and the
 hardness hypotheses remain explicit; no runtime or security premise is silently discharged by inference.
@@ -54,6 +165,16 @@ The hardness assertion is a theorem hypothesis, not a custom axiom or a proved p
 | BLS AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/Statement.lean) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
 | OOPS AGM | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/Statement.lean) | same two-branch bound |
 | Proximity AGM | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/Statement.lean) | two-branch bound plus actual fresh-collision probability |
+| Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | `delta * (delta/(qH+1) - 1/card F) <= epsilon`, where `delta = Adv - qS*(qS+qH)/card F` |
+| Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | same left side, bounded by `epsilon + targetBudget * 2^(-k)` at proved bit budget `(targetBudget+4)*bitFactor` |
+
+Schnorr has a complete first-order two-pass controller, not a presumed constant-cost
+continuation snapshot. Its source-derived budget includes cache/tape storage and scans,
+re-execution, verification, extraction, fallback sampling, and fixed-data loading.
+The erased machine equals the upstream `Schnorr.dlogReduction` exactly. See the
+[Schnorr runtime review](SCHNORR.md).
+The current replay codec charges linearly in the range parameter of a finite
+random request, not its bit length; see [the efficiency qualification](SCHNORR.md#what-efficiency-is-certified).
 
 The existing reduction supplies the lower bound on solver success. `HardWithin`, applied with
 the solver's certificate, supplies the upper bound. For AGM, the two solvers may have different
@@ -181,8 +302,15 @@ implementation evidence; importing it is not itself an efficiency proof.
 
 ## Scope Beyond These Bounds
 
-- A bit-level backend needs encodings and implementations of the priced primitives. Atomic
-  field/group operations and key equality are model contracts, not proved bit costs.
+- The arithmetic-machine endpoints use atomic field/group/equality cost contracts.
+  Schnorr's additional [bit-machine endpoint](../Signatures/Schnorr/BitStatement.lean)
+  connects the concrete instruction backend, full program, heap, and fair-bit
+  sampling implementation to the security inequality. Its cost model is explicit
+  bit-cell execution, not a proved correspondence to Lean VM or hardware time.
+- The bit endpoint also restricts stored code/data to the actual compiled
+  artifact's size. The arithmetic-machine endpoints restrict online work only,
+  not static code size. An enormous lookup tree can have short execution paths;
+  their hardness assumptions are stronger than bounded-size circuit hardness.
 - Applying a concrete corollary requires a source-code certificate for the adversary. Arbitrary
   extensional Lean functions are not automatically efficient; source local work and all-path
   coefficient sizes remain explicit. Proximity message dimension is enforced by its tuple type.

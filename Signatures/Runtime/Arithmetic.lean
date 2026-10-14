@@ -54,6 +54,7 @@ inductive CryptoOp : Ty CryptoAtom → Ty CryptoAtom → Type
   | natLt : CryptoOp (.pair .nat .nat) .bool
   | finVal (n : Nat) : CryptoOp (boundedNat n) .nat
   | finZero (n : Nat) : CryptoOp .unit (boundedNat n)
+  | finOfNat (n : Nat) : CryptoOp .nat (boundedNat n)
 
 structure PrimitiveCosts where
   field : Nat
@@ -83,7 +84,7 @@ def CryptoOp.price (c : PrimitiveCosts) {a b : Ty CryptoAtom} : CryptoOp a b →
   | .point₁Eq => c.point₁Eq
   | .point₂Eq => c.point₂Eq
   | .natAdd | .natSub | .natEq | .natLt => c.natOp
-  | .finVal _ | .finZero _ => c.natOp
+  | .finVal _ | .finZero _ | .finOfNat _ => c.natOp
 
 def arithmetic (F G₁ G₂ K M : Type) [Field F]
     [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
@@ -117,6 +118,7 @@ def arithmetic (F G₁ G₂ K M : Type) [Field F]
     | .natLt => decide (x.1 < x.2)
     | .finVal _ => x.val
     | .finZero _ => 0
+    | .finOfNat n => ⟨x % (n + 1), Nat.mod_lt _ (Nat.zero_lt_succ n)⟩
   cost instr _ := instr.price costs
 
 end Signatures.Runtime

@@ -38,6 +38,46 @@ example {F G₁ G₂ Gₜ : Type} [Field F]
 
 open Lean Meta Elab Command
 
+-- The native BLS endpoint consumes general caller resources and derives the
+-- completed solver certificate. Hardness covers that same backend and explicit
+-- input/code/time caps. The probability transport admits arbitrary messages.
+run_cmd liftTermElabM do
+  let name := ``Signatures.Runtime.Coron.NativeSolver.security_of_resources
+  let axioms ← collectAxioms name
+  let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
+  unless axioms.all allowed.contains do
+    throwError "{name}: unexpected axiom footprint {axioms}"
+  forallTelescope (← getConstInfo name).type fun params _ => do
+    let mut sawResources := false
+    let mut sawHardness := false
+    let mut sawFiniteMessage := false
+    let mut sawChallenge := false
+    let mut sawDerivedTime := false
+    for param in params do
+      let binder ← param.fvarId!.getUserName
+      let type ← inferType param
+      if type.isAppOf ``Signatures.Runtime.BackendProgram.Within ||
+          type.isAppOf ``Signatures.Runtime.Coron.SourceCertificate then
+        throwError "{name}: finished-solver or arithmetic-source certificate became a premise"
+      if binder == `hrun then
+        sawResources := type.isAppOf ``PFunctor.DynSystem.DynComputation.QuantitativeRealization.RunsWithin
+      if binder == `htime then
+        sawDerivedTime := (type.find? (fun e =>
+          e.isAppOf ``Signatures.Runtime.Coron.NativeSolver.nativeSolverTime)).isSome
+      if binder == `hchallenge then
+        sawChallenge := true
+      if type.isAppOf ``Fintype || type.isAppOf ``Finite then
+        if let .fvar id := type.getAppArgs[0]! then
+          if (← id.getUserName) == `M then sawFiniteMessage := true
+      if type.isAppOf ``Model.HardWithin then
+        let #[_, _, within, _, _] := type.getAppArgs
+          | throwError "{name}: malformed hardness assumption"
+        sawHardness := within.isAppOf ``Signatures.Runtime.Coron.NativeSolver.coCDHWithin
+    if sawFiniteMessage then
+      throwError "{name}: finite-message assumption returned"
+    unless sawResources && sawHardness && sawChallenge && sawDerivedTime do
+      throwError "{name}: incomplete general-caller/resource/hardness scope"
+
 -- Inspect elaborated signatures: classical instance synthesis in application tests
 -- could otherwise conceal a redundant requirement.
 run_cmd liftTermElabM do
@@ -103,7 +143,7 @@ run_cmd liftTermElabM do
             | throwError "{name}: expected a scalar-indexed signing budget"
           unless (← scalar.getUserName) == `F && body.isAppOf ``OracleComp.IsQueryBoundP do
             throwError "{name}: signing budget must range over generated keys"
-        if coCDH && type.isAppOf ``Finite then
+        if coCDH && (type.isAppOf ``Finite || type.isAppOf ``Fintype) then
           if let .fvar id := type.getAppArgs[0]! then
             sawMessageFinite := (← id.getUserName) == `M
         if type.isAppOf ``DecidableEq then
@@ -114,7 +154,8 @@ run_cmd liftTermElabM do
           sawSource := true
           let expected := if coCDH then ``Signatures.Runtime.Coron.SourceCertificate
             else ``Signatures.Runtime.AGM.SourceCertificate
-          unless type.isAppOf expected do
+          -- Public scheme-specific aliases must still reduce to the concrete certificate.
+          unless (← whnf type).isAppOf expected do
             throwError "{name}: missing concrete source certificate"
         if type.isAppOf ``Model.HardWithin then
           hardnessCount := hardnessCount + 1
@@ -133,8 +174,8 @@ run_cmd liftTermElabM do
         throwError "{name}: incomplete source/hardness interface"
       unless sawGenerator && sawPairing && sawQueries do
         throwError "{name}: missing group hypotheses or source query budgets"
-      unless !coCDH || (sawSigningBound && sawMessageFinite) do
-        throwError "{name}: missing signing bound or finite-message premise"
+      unless !coCDH || (sawSigningBound && !sawMessageFinite) do
+        throwError "{name}: missing signing bound or finite-message assumption returned"
       if proximity then
         let some (_, lhs, rhs) := conclusion.le? | throwError "{name}: expected a probability bound"
         if lhs.find? (fun e => e.isAppOf ``Proximity.LazyAGM.collisionGame) |>.isSome then
@@ -152,3 +193,49 @@ run_cmd liftTermElabM do
         throwError "{name}: inferred application has the wrong conclusion"
       if (← instantiateMVars application).hasExprMVar then
         throwError "{name}: explicit arguments do not determine the inferred parameters"
+
+-- The bit endpoint must use the actual heap runner, derive its budget, and
+-- retain the accumulated sampling allowance in the conclusion.
+run_cmd liftTermElabM do
+  let name := ``Schnorr.Statement.schnorr_eufcma_of_dlog_bit_hardness
+  let axioms ← collectAxioms name
+  let expected := #[``propext, ``Classical.choice, ``Quot.sound]
+  unless axioms.size == expected.size && axioms.all expected.contains do
+    throwError "{name}: unexpected axiom footprint {axioms}"
+  forallTelescope (← getConstInfo name).type fun params conclusion => do
+    let mut sawSource := false
+    let mut sawHardness := false
+    for param in params do
+      let binder ← param.fvarId!.getUserName
+      let type ← inferType param
+      if #[`hbudget, `herror, `hgood, `hbad, `within, `samplingCount].contains binder then
+        throwError "{name}: derived implementation obligation became a premise: {binder}"
+      if binder == `cert then
+        sawSource := type.isAppOf ``Signatures.Runtime.Schnorr.SourceCertificate
+      if type.isAppOf ``Model.HardWithin then
+        let #[solver, advantage, within, budget, _] := type.getAppArgs
+          | throwError "{name}: malformed hardness assumption"
+        unless solver.isConstOf ``Signatures.Runtime.HeapMachine.Package &&
+            advantage.isAppOf ``Signatures.Runtime.HeapMachine.dlogAdvantage &&
+            within.isAppOf ``Signatures.Runtime.HeapMachine.dlogWithin do
+          throwError "{name}: hardness must concern executable bit packages"
+        unless (budget.find? (·.isAppOf ``Signatures.Runtime.Schnorr.SourceCertificate.targetBudget)).isSome &&
+            (budget.find? (·.isAppOf ``Signatures.Runtime.Schnorr.SourceCertificate.bitFactor)).isSome do
+          throwError "{name}: missing derived bit-runtime budget"
+        let codeBudget := within.getAppArgs.back!
+        unless codeBudget.isAppOf ``Signatures.Runtime.HeapMachine.Package.cells &&
+            codeBudget.getAppArgs.back!.isAppOf ``Signatures.Runtime.Schnorr.SourceCertificate.bitCode do
+          throwError "{name}: static budget must count the actual compiled package"
+        for other in params do
+          if #[`H₂, `encodeK, `encodeM].contains (← other.fvarId!.getUserName) then
+            let id := other.fvarId!
+            if advantage.containsFVar id || within.getAppArgs.pop.any (·.containsFVar id) then
+              throwError "{name}: DLog challenge interface depends on an unrelated source parameter"
+        sawHardness := true
+    unless sawSource && sawHardness do
+      throwError "{name}: incomplete implementation interface"
+    let conclusion ← zetaReduce conclusion
+    let some (_, _, rhs) := conclusion.le? | throwError "{name}: expected a probability inequality"
+    unless (rhs.find? (·.isAppOf ``Signatures.Runtime.Schnorr.SourceCertificate.targetBudget)).isSome &&
+        (rhs.find? (·.isAppOf ``HPow.hPow)).isSome do
+      throwError "{name}: missing accumulated bounded-rejection error"

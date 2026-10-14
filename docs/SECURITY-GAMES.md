@@ -1,6 +1,6 @@
 # Current security games
 
-Four supported security endpoints, all with lazy random-oracle source games.
+Five supported security endpoints, all with lazy random-oracle source games.
 Each bound names explicit reduction algorithms. Their axiom footprints are exactly
 `[propext, Classical.choice, Quot.sound]`.
 
@@ -10,8 +10,10 @@ The [paper-facing OOPS corollary](review-guide.md#paper-facing-statements) uses 
 fixed-degree signing-call limit. BLS intentionally retains the type-3 co-CDH formulation
 with an explicit co-hint and no G2-to-G1 map. The core games and runtime endpoints are unchanged.
 
-Each public statement uses a source-code certificate to derive the named solvers' machine
-budgets, and assumes universal hardness within those budgets. Weaker endpoint wrappers are deleted.
+The legacy machine statements use source-code certificates to derive solver
+budgets. The general BLS co-CDH and AGM statements instead accept general
+backend-realized callers and derive the complete native solver budgets.
+Hardness always ranges over the specified implementation/resource class.
 The numerical bounds are `coronFactor(qS) * epsilon` for co-CDH and
 `goodEpsilon + badEpsilon + 1/|F|` for AGM, plus the fresh-collision probability for Proximity.
 Both AGM solver budgets are derived, not assumed.
@@ -23,8 +25,18 @@ See the [computational-security audit](COMPUTATIONAL-SECURITY.md).
 | --- | --- | --- |
 | BLS to co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/Statement.lean) | [`blsEufLazyPK`](../Signatures/BLS/CoCDH/Spec/LazyGame.lean) |
 | BLS lazy AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/Statement.lean) | [BLS game](../Signatures/BLS/Spec/LazyAGM.lean) |
+| BLS AGM, general caller | [`BLS.GeneralAGM.security`](../Signatures/BLS/GeneralAGMStatement.lean) | Same lazy game; complete lazy solver budgets, arbitrary messages |
+| BLS co-CDH, general caller | [`Coron.NativeSolver.security_of_resources`](../Signatures/Runtime/BackendCoronSecurity.lean) | Same lazy game; complete native solver budget, arbitrary messages |
 | OOPS lazy AGM | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/Statement.lean) | [OOPS game](../Signatures/OOPS/Spec/LazyAGM.lean) |
 | Proximity lazy AGM | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/Statement.lean) | [Proximity game](../Signatures/Proximity/Spec/LazyAGM.lean) |
+| Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | [Schnorr game](../Signatures/Schnorr/Spec/ROM.lean) |
+| Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | Same game, compiled solver with explicit accumulated sampling error |
+
+Schnorr uses no algebraicity restriction. Its programmable-ROM reduction simulates
+signatures, then replays a recorded prefix with a new challenge. The theorem bounds
+`delta * (delta/(qH+1) - 1/|F|)` by budget-bounded DLog hardness, where
+`delta = Adv - qS*(qS+qH)/|F|` uses truncated subtraction. Both full runs are charged;
+see [Schnorr's game and runtime review](SCHNORR.md).
 
 The old public-table schemes, adversary interface, security wrappers, and source-game bridges
 are removed. This is an interface retirement, not an assertion that public-table and query-only
@@ -42,8 +54,10 @@ In particular, `queries 1` is the hash-query bound `qH`.
 The signing-call bound's implication for the distinct-message count
 is proved. Both the reduction's scalar cache and its Coron-coin cache are lazy.
 
-The message type must be finite (`Finite M`), but the source game and reduction do not enumerate
-messages. The proof constructs a `Fintype M` internally for its counting argument.
+The message type may be infinite. The probability proof restricts the attacker's
+adaptive tree to a finite proof domain and transports the original lazy game and
+solver exactly. That cover includes final forgeries and all generated public keys;
+it is never enumerated by the executable reduction.
 
 The bound is `Adv_ROM <= C(qS) * epsilon`, assuming co-CDH hardness up to the derived
 `cert.targetBudget`. The loss is

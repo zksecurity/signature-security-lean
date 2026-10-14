@@ -6,18 +6,25 @@ Authors: Kobi Gurkan
 import Signatures.Model.CoCDH
 import Signatures.Model.Hardness
 import Signatures.BLS.Proofs.LazyAGM
-import Signatures.BLS.CoCDH.Proofs.QueryBound
+import Signatures.BLS.CoCDH.Proofs.ArbitraryMessages
 import Signatures.Runtime.CoronCertificate
 import Signatures.Runtime.AGMBadMachine
 import Signatures.Runtime.KeyEquality
 import Signatures.Runtime.ProximityWeight
+import Signatures.BLS.GeneralAGMStatement
 
 /-! # BLS security in the lazy random-oracle model
 
-One machine-bounded co-CDH security endpoint, and query-only AGM bounds with both DLog
-branches plus `1/|F|`. The co-CDH source certificate includes hash/sign/random query budgets
-and local work. The AGM solvers use private finite tables, not a public-table source variant.
-Both BLS routes below derive their target solver budgets from source certificates.
+The general-attacker AGM endpoint is `BLS.GeneralAGM.security`, with the
+security-parameter version `BLS.GeneralAGM.Family.security`. Its supporting
+records expose primitive contracts and attacker resources, and both lazy solver
+budgets are derived. The following legacy declarations remain available.
+
+Source-certified co-CDH and AGM security endpoints below derive solver budgets
+from attacker implementations and resource bounds. The AGM conclusion includes
+both DLog branches plus `1/|F|`; these existing machine solvers charge full-domain
+private tables even though the security game uses a lazy random oracle. The
+general-attacker endpoint above uses the proved lazy general-caller replacement.
 -/
 
 open OracleComp AlgebraicGroupModel
@@ -41,8 +48,8 @@ variable {F M G₁ G₂ Gₜ : Type} [Field F] [SampleableType F]
 The co-CDH challenge is (g1, g2, x*g1, x*g2, h); no G2-to-G1 map is assumed.
 The source certificate bounds local work and all three query kinds, including qH = queries 1.
 The compiler derives the named Coron solver's budget; the caller supplies hardness at that budget. -/
--- Messages are finite; equality instances support executable scalar/group operations.
-theorem bls_eufcma_of_cocdh_machine_hardness [Finite M]
+-- Messages may be infinite; equality supports cache lookup and freshness.
+theorem bls_eufcma_of_cocdh_machine_hardness
     [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
     -- Fix the public base points and signing-call limit used in the Coron loss.
     (g₁ : G₁) (g₂ : G₂) (qS : Nat)
@@ -82,10 +89,9 @@ theorem bls_eufcma_of_cocdh_machine_hardness [Finite M]
           (BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv)) := by
      classical
     let : Fintype F := Fintype.ofFinite F
-    let : Fintype M := Fintype.ofFinite M
     let : Fintype G₁ := Fintype.ofSurjective (fun r : F => r • g₁) hgen
     have hscalar := smul_left_injective F hpair
-    refine BLS.CoCDH.Proofs.security g₁ g₂ qS adv
+    refine BLS.CoCDH.Proofs.security_arbitrary_messages g₁ g₂ qS adv
       ⟨smul_left_injective_of_pairing g₁ g₂ hscalar, hgen⟩ ?_ hqs
     intro x y h
     obtain ⟨a, rfl⟩ := hgen x
@@ -100,7 +106,25 @@ open Signatures.Runtime.AGM
 
 variable [DecidableEq F] [Fintype M] [DecidableEq G₁] [DecidableEq G₂]
 
-/-- BLS AGM with complete runtime certificates for both exact DLog reductions. -/
+/-- An implementation of the BLS algebraic attacker in the arithmetic source
+language, with semantic equality at every public key and all-path bounds on
+local work, random/hash/sign calls, and output coefficient lengths.
+
+BLS uses the message type for both hash indices and signed messages. The generic
+AGM certificate's two identity conversions and internal `key` type tags are
+fixed here; `key` is a machine type tag, not a signing secret key. This alias
+does not claim coverage of unrestricted efficient attackers. -/
+abbrev ArithmeticAttackerCertificate (cost : PrimitiveCosts)
+    (randomBound localTime : Nat) (queries : Fin 3 → Nat) (gammaLength xiLength : Nat)
+    (A : Model.LazyAGM.Adversary F M M G₁ G₂) :=
+  SourceCertificate (F := F) (K := M) (M := M) (indexTy := key) (messageTy := key)
+    cost (Equiv.refl M) (Equiv.refl M) randomBound localTime queries gammaLength xiLength A
+
+/-- BLS AGM for a certified arithmetic-source attacker. Both exact DLog solver
+budgets are derived, and hardness at those budgets bounds their success by
+`goodEpsilon` and `badEpsilon`. The resulting forgery bound is their sum plus
+`1/|F|`. These existing solver implementations charge full finite-domain tables;
+the lazy general-caller replacement is tracked in the general-adversary plan. -/
 -- This is the machine-bounded security endpoint; no separate unbounded wrapper is exposed.
 theorem bls_lazy_agm_of_dlog_machine_hardness
     -- Fix public base points; the certified adaptive algebraic adversary A is inferred from cert.
@@ -116,11 +140,10 @@ theorem bls_lazy_agm_of_dlog_machine_hardness
     -- queries 1 is qH; queries 0 and 2 bound random and signing calls on all adaptive paths.
     -- gammaLength/xiLength bound output hash/signing coefficient-list lengths.
     {randomBound localTime : Nat} {queries : Fin 3 → Nat} {gammaLength xiLength : Nat}
-    -- Supply executable source code, all-key semantic equality to A, and all-path resource bounds.
-    (cert : SourceCertificate (F := F) (K := M) (M := M) (indexTy := key) (messageTy := key)
-      -- These equivalences connect the source's machine values to the game's index/message types.
-      cost (Equiv.refl M) (Equiv.refl M) randomBound localTime queries gammaLength xiLength A)
-    -- Allow separate assumed success bounds for the two DLog reductions.
+    -- Actual arithmetic-source code implementing A, together with proofs of these bounds.
+    (cert : ArithmeticAttackerCertificate cost randomBound localTime queries gammaLength xiLength A)
+    -- Maximum DLog success probabilities at the two derived budgets below.
+    -- ENNReal is the nonnegative extended reals. Separate bounds allow different solver costs.
     (goodEpsilon badEpsilon : ENNReal)
     -- Assume every DLog solver in the following machine class and budget has success <= goodEpsilon...
     (hgoodHard : Model.HardWithin (Model.dlog11Advantage g₁ g₂)

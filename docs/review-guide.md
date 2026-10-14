@@ -1,7 +1,24 @@
 # Signature security review
 
-Four lazy random-oracle security endpoints for BLS, OOPS, and Proximity.
+Five lazy random-oracle security routes for BLS, OOPS, Proximity, and Schnorr.
+
+For Schnorr, follow the separate [game, rewinding, and cost review](SCHNORR.md).
+Its [bit-machine endpoint](../Signatures/Schnorr/BitStatement.lean) uses the same
+source game and a fully costed compiled solver, with explicit rejection-sampling
+error and a separate static code/data budget. Follow
+[the implementation evidence](BIT-COMPLEXITY.md) for its memory,
+arithmetic, randomness, and probability refinements.
+It includes the source certificate, exact reduction bridge, public costed theorem,
+and a separate test review. The pairing-based routes are detailed below.
 Kernel checking proves each implication from its hypotheses; it does not establish paper/model alignment.
+
+For the new general-attacker BLS AGM endpoint, start at
+[`BLS.GeneralAGM.security`](../Signatures/BLS/GeneralAGMStatement.lean) and the
+[supporting records](../Signatures/BLS/GeneralAGMParameters.lean). The full
+[resource-indexed theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean)
+constructs both native solver certificates before applying DLog hardness.
+The [plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md) distinguishes this completed
+concrete route from the remaining scheme and family work.
 
 [Game ledger](SECURITY-GAMES.md) · [Source tree](../Signatures) ·
 [Regression tests](../SignaturesTest) ·
@@ -195,14 +212,17 @@ specialization of that revision, not a mixed-degree game. A deployment can fix i
 degree in advance, and the formalization retains that convention. This comparison
 is against the local PDF, not a claim about an unverified newer revision.
 
-Remaining differences are intentional and visible: finite message/topic domains;
+Remaining differences are intentional and visible: finite topic/slot domains in
+the current OOPS/Proximity endpoints;
 the exact Coron factor instead of the paper's `e*(qS+1)` relaxation; arithmetic-machine
 costs instead of a proved translation to the paper's time units; and the explicit
-fresh-collision probability term for Proximity. The AGM reductions still initialize private
-full-domain tables. Our DLog challenge samples from all of `F`, including zero;
+fresh-collision probability term for Proximity. The legacy AGM reductions initialize private
+full-domain tables; the general BLS AGM endpoint uses the proved lazy implementation
+over arbitrary message types. Our DLog challenge samples from all of `F`, including zero;
 the local OOPS paper defines its hardness challenge over nonzero scalars. These
 adapters do not change that distribution or prove an equivalence between them.
-No unrestricted-message, PPT, or small Proximity forgery bound without controlling collisions is asserted.
+No conventional-machine PPT coverage or small Proximity forgery bound without
+controlling collisions is asserted.
 
 ## Read the co-CDH runtime statement
 
