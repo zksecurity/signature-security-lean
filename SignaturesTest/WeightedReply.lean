@@ -2,6 +2,8 @@ import Signatures.Runtime.BackendWeightedOracle
 import Signatures.Runtime.BackendWeightedReplyDescription
 import Signatures.Runtime.BackendWeightedReplyCost
 import Signatures.Runtime.BackendWeightedReplySize
+import Signatures.Runtime.BackendWeightedHashBudget
+import Signatures.Runtime.BackendWeightedSignBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -107,6 +109,12 @@ run_meta do
       ``NativeHandler.goodCaller_source, ``NativeHandler.badCaller_source,
       ``Reply.replyFrame_size, ``Reply.cacheArgs_size, ``Reply.replyResult_size,
       ``Reply.cacheArgs_cost, ``Reply.goodReplyResult_cost, ``Reply.badReplyResult_cost,
+      ``Reply.backendReply_bound, ``Reply.signValue_bound,
+      ``Index.terms_length, ``Index.terms_rows_size, ``Index.terms_size,
+      ``Index.default_size, ``Index.default_cost, ``Index.terms_cost,
+      ``Reply.goodHash_bound, ``Reply.badHash_bound,
+      ``Reply.goodSignValue_bound, ``Reply.badSignValue_bound,
+      ``Reply.goodSign_bound, ``Reply.badSign_bound,
       ``Reply.signValue_description, ``Reply.backendReply_description,
       ``Reply.goodHash_description, ``Reply.goodSign_description,
       ``Reply.badHash_description, ``Reply.badSign_description] do

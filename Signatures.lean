@@ -42,6 +42,8 @@ import Signatures.Runtime.BackendWeightedOracle
 import Signatures.Runtime.BackendWeightedReplyDescription
 import Signatures.Runtime.BackendWeightedReplyCost
 import Signatures.Runtime.BackendWeightedReplySize
+import Signatures.Runtime.BackendWeightedHashBudget
+import Signatures.Runtime.BackendWeightedSignBudget
 import Signatures.Runtime.BackendWeightedScale
 import Signatures.OperationBounds
 import Signatures.PaperStatements

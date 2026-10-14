@@ -89,8 +89,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches, evaluator and coefficient-expansion bounds are proved. Actual hash/sign replies are installed in the dispatcher with exact general-caller/source semantics, complete stored-code bounds and local response/frame bounds. | Complete reply runtime assembly, extraction, and whole native solver/general caller certificates. |
-| Proximity AGM | The same weighted components, expansion bounds, native replies and source composition are proved, including original-index/cache transport; the original collision term remains. | Complete reply runtime assembly, extraction, and whole native solver/general caller certificates. |
+| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches, evaluator and coefficient-expansion bounds are proved. Actual hash/sign replies are installed with exact general-caller/source semantics and complete runtime/stored-code bounds derived from primitive contracts. | Dispatcher state invariants, extraction, and whole native solver/general caller certificates. |
+| Proximity AGM | The same weighted components, expansion bounds, complete reply budgets and source composition are proved, including original-index/cache transport; the original collision term remains. | Dispatcher state invariants, extraction, and whole native solver/general caller certificates. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -604,7 +604,7 @@ remain available for cache growth and transcript invariants. The
 counts both reply programs, one sampler, all four adapter realizers, and explicit
 structural code. The general caller is stored once with the dispatcher and its
 loop fuel. These are composition lemmas. The actual reply programs are now
-installed as described below; complete reply runtime assembly, extraction and
+installed and given complete runtime bounds below; dispatcher state invariants, extraction and
 the full solver remain.
 
 Validation: `lake build Signatures SignaturesTest` passes (4031 jobs), log
@@ -641,16 +641,45 @@ charge each sampler, generated term program, fallback, response, transcript upda
 and retained frame. [Local response costs](../Signatures/Runtime/BackendWeightedReplyCost.lean)
 are derived from individual group/structural contracts, and
 [encoded frame/result bounds](../Signatures/Runtime/BackendWeightedReplySize.lean)
-charge both logs and the shared cache. These local results still need composition
-with the existing private-read/evaluator budgets to obtain full reply runtime
-bounds, followed by extraction and complete solver certificates.
+charge both logs and the shared cache.
 
-Validation: `lake build Signatures SignaturesTest` passes (4040 jobs), log
-`/private/tmp/agm-weighted-reply-full.log`. The
+Complete weighted reply runtime assembly is now checked:
+
+- [`BackendWeightedReplyAssembly.lean`](../Signatures/Runtime/BackendWeightedReplyAssembly.lean)
+  derives the reply wrapper overhead from a private value computation. Its frame
+  width `32 * width + valueWidth` includes the entire original request/store
+  retained across that computation. It charges argument construction, local
+  calls, sequence edges, retention, response computation and the log update.
+- [`BackendWeightedSignAssembly.lean`](../Signatures/Runtime/BackendWeightedSignAssembly.lean)
+  charges the signing prefix's actual term and fallback generators and both
+  retained-cache frames. The fallback executes even when all real rows exist.
+- [`BackendWeightedSignInputs.lean`](../Signatures/Runtime/BackendWeightedSignInputs.lean)
+  derives generated term count, row/list/default sizes, and generator/default
+  runtime from primitive contracts. There are `index.bound + 1` rows, each at
+  most `5 * width`, and the list is at most `(6 * (index.bound + 1) + 1) * width`.
+  The topic/slot bound concerns the supplied message only.
+- [`BackendWeightedSignValueBudget.lean`](../Signatures/Runtime/BackendWeightedSignValueBudget.lean)
+  composes these actual generators with the complete scalar/pair evaluator
+  budgets, including private sampling, coefficient arithmetic, index scans,
+  loop ticks and cache growth.
+- [`BackendWeightedHashBudget.lean`](../Signatures/Runtime/BackendWeightedHashBudget.lean)
+  and [`BackendWeightedSignBudget.lean`](../Signatures/Runtime/BackendWeightedSignBudget.lean)
+  derive all four finished reply runtime/output-width bounds from primitive,
+  sampler, width and loop-control contracts. None assumes an efficient finished
+  reply, generator or evaluator. Separate finite index and message universes are
+  unnecessary; the native programs use only encountered entries.
+
+Next: prove preserved native dispatcher state invariants, compose its actual
+reply budgets with the general caller, then implement extraction and complete
+solver certificates. These reply bounds do not yet close the whole-solver goal.
+
+Validation: `lake build Signatures SignaturesTest` passes (4046 jobs), log
+`/private/tmp/agm-weighted-complete-reply-full.log`. The
 [native reply regressions](../SignaturesTest/WeightedReply.lean) cover signing
 before explicit hashing, shadowed cache entries, both mask coordinates, zero
 degree, and a zero-weight unseen base that still samples and enters the cache.
-They check complete returned state and the standard axiom footprint, and reject
+They check complete returned state and the standard axiom footprint, including
+all four complete runtime budgets and both signing-value compositions, and reject
 finite-domain or supplied complete-budget premises. The new modules/tests have
 no warnings, admissions, extra axioms, or proof-resource overrides.
 
@@ -2305,8 +2334,9 @@ additional axioms or proof-resource overrides.
   exact general-caller semantics, and derived routing/runtime/stored-code bounds.
 - [x] Install actual weighted hash/sign replies with exact adaptive source/cache/
   transcript correspondence, complete stored-code bounds and local response/frame bounds.
-- [ ] Compose complete reply runtime bounds and derive whole weighted native
-  solver runtime/code bounds, charging
+- [x] Compose complete weighted hash/sign reply runtime bounds, deriving actual
+  term/fallback generation, evaluator, response and retained-frame costs.
+- [ ] Derive whole weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.

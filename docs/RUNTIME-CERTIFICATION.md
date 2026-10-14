@@ -165,8 +165,13 @@ The good branch uses scalar masks and the bad branch uses independent paired mas
 Hashing reads one private base; signing executes term generation and evaluation,
 then records one delivered signature. The exact adaptive source law preserves
 configuration, complete cache and reply logs. Complete stored-code bounds and
-local response/frame runtime and size bounds are checked. Reply runtime assembly,
-extraction, and whole-solver certificates remain in progress.
+local response/frame runtime and size bounds are checked. The complete
+[hash reply](../Signatures/Runtime/BackendWeightedHashBudget.lean) and
+[signing reply](../Signatures/Runtime/BackendWeightedSignBudget.lean) runtime
+bounds now compose the actual native operations, including generated terms,
+executed fallbacks, retained caches, group responses and transcript updates.
+They require no finished reply/evaluator efficiency assumption. Dispatcher state
+invariants, extraction, and whole-solver certificates remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
