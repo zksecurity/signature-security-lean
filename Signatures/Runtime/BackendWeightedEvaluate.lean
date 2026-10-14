@@ -5,7 +5,8 @@ import Signatures.Runtime.BackendLanguageCorrectness
 /-! Native evaluation of weighted term lists with actual private-cache reads.
 The correctness law preserves the complete value/cache distribution and the
 source's query order, including repeated keys and zero coefficients. Complete
-evaluator time bounds are a separate obligation from this semantic refinement. -/
+evaluator time bounds are derived separately in `BackendWeightedGoodEvaluate`
+and `BackendWeightedBadEvaluate` from individual operation contracts. -/
 
 open OracleComp OracleSpec PFunctor Model.LazyAGM
 

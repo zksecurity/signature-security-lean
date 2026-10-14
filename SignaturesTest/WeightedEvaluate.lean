@@ -1,5 +1,7 @@
 import Signatures.Runtime.BackendWeightedEvaluateDescription
 import Signatures.Runtime.BackendWeightedReadBudget
+import Signatures.Runtime.BackendWeightedGoodEvaluate
+import Signatures.Runtime.BackendWeightedBadEvaluate
 import Signatures.LinearFunctional.Proofs.LazyAGMCache
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
@@ -108,13 +110,20 @@ run_meta do
       ``selectRow_denote, ``evalUpdate_denote, ``evalBody_denote, ``evaluateRows_denote,
       ``foldTerms_simulate, ``evaluateRows_source, ``evaluateGood_source, ``evaluateBad_source,
       ``backendEvaluate_source, ``backendGood_source, ``backendBad_source,
-      ``backendEvaluate_description, ``backendGood_description, ``backendBad_description] do
+      ``backendEvaluate_description, ``backendGood_description, ``backendBad_description,
+      ``compileRead_denote, ``evalBody_source, ``backendRead_state, ``evalBody_state, ``evalBody_remaining,
+      ``evaluationRow_key_size, ``evaluationSelected_size, ``evaluationRows_size, ``evaluationFrame_size,
+      ``evaluationUpdateFrame_size, ``evaluationCache_size, ``selectRow_time_bound,
+      ``goodUpdate_time_bound, ``badUpdate_time_bound, ``evalKey_cost, ``evalBody_bound,
+      ``evaluateInit_cost, ``backendEvaluate_bound, ``goodBody_budget, ``badBody_budget,
+      ``backendGood_bound, ``backendBad_bound] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
   for name in #[``goodRead, ``badRead, ``goodRead_bound, ``badRead_bound,
       ``goodRead_description, ``badRead_description, ``backendGood, ``backendBad,
-      ``backendGood_source, ``backendBad_source, ``backendGood_description, ``backendBad_description] do
+      ``backendGood_source, ``backendBad_source, ``backendGood_description, ``backendBad_description,
+      ``goodBody_budget, ``badBody_budget, ``backendGood_bound, ``backendBad_bound] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let declaration ← getFVarLocalDecl param
@@ -124,7 +133,7 @@ run_meta do
         for forbidden in #[``Bounds, `Signatures.Runtime.GeneralCaller.Budget] do
           if type.find? (fun e => e.isConstOf forbidden) |>.isSome then
             throwError "{name}: cannot assume a completed read/evaluator budget"
-        if #[`reader, `hreader, `comparison, `hcomparison].contains declaration.userName then
-          throwError "{name}: the reader/comparator implementation must be derived"
+        if #[`reader, `hreader, `comparison, `hcomparison, `hread, `hbody, `inv, `hcount, `hinit].contains declaration.userName then
+          throwError "{name}: reader, body, and loop budgets must be derived from primitive contracts"
 
 end SignaturesTest.WeightedEvaluate
