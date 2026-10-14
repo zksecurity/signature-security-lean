@@ -13,12 +13,17 @@ and a separate test review. The pairing-based routes are detailed below.
 Kernel checking proves each implication from its hypotheses; it does not establish paper/model alignment.
 
 For the new general-attacker BLS AGM endpoint, start at
-[`BLS.security`](../Signatures/BLS/Statement.lean): curve, security parameter,
+[`BLS.agm_security`](../Signatures/BLS/Statement.lean): curve, security parameter,
 query allowances, and algebraic adversary, followed by the named game's probability
-bound. The [declared execution model](../Signatures/BLS/SecurityModel.lean) and
+bound. The [declared execution model](../Signatures/BLS/GeneralSecurityModel.lean) and
 [detailed resource records](../Signatures/BLS/GeneralAGMParameters.lean) remain inspectable. The full
 [resource-indexed theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean)
 constructs both native solver certificates before applying DLog hardness.
+The same public file also contains `BLS.cocdh_security`, with an unrestricted
+attacker and the co-CDH success bound. Its resources are in
+[`GeneralCoCDHParameters.lean`](../Signatures/BLS/GeneralCoCDHParameters.lean).
+The public proof bodies are in
+[`Proofs/GeneralSecurity.lean`](../Signatures/BLS/Proofs/GeneralSecurity.lean).
 The [plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md) distinguishes this completed
 concrete route from the remaining scheme and family work.
 
@@ -74,8 +79,8 @@ does not supply an algebraic explanation.
 
 ## Results
 
-The short BLS AGM statement is [`BLS.security`](../Signatures/BLS/Statement.lean).
-Its model and adversary definitions expose the execution and resource assumptions.
+The short BLS statements are [`BLS.agm_security` and `BLS.cocdh_security`](../Signatures/BLS/Statement.lean).
+Their model and adversary definitions expose the distinct execution and resource assumptions.
 The detailed arithmetic-source security statements are annotated line by line in
 [BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean),
 [OOPS/Statement.lean](../Signatures/OOPS/Statement.lean), and

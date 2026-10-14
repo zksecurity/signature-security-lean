@@ -105,9 +105,12 @@ which supply the DLog premises in the
 The [public statement](../Signatures/BLS/Statement.lean) takes the curve,
 security parameter, query allowances, and algebraic adversary. Its bound is the
 sum of maximum DLog advantages at the two derived budgets plus `1/|F|`. The
-execution/resource model and explicit DLog-success supremum appear beside the
-actual forgery experiment in the same public file. Its proof displays the
-probability bound, constructed resource witnesses, and supremum inclusions.
+execution/resource model, actual forgery experiment and explicit DLog-success
+supremum are in [GeneralSecurityModel.lean](../Signatures/BLS/GeneralSecurityModel.lean).
+The [separate proof file](../Signatures/BLS/Proofs/GeneralSecurity.lean) displays
+the probability bound, constructed resource witnesses and supremum inclusions.
+`Statement.lean` distinguishes `agm_security` from `cocdh_security`; the latter
+uses an unrestricted message/signature output and the co-CDH success supremum.
 The [detailed records](../Signatures/BLS/GeneralAGMParameters.lean) expose per-kind
 query limits, local resources, code/advice, encodings, and primitive contracts.
 They do not assume completed-solver efficiency. Arbitrary message types and
@@ -145,8 +148,11 @@ preserves the whole cache behavior. Native private-read adapters also have full
 runtime/code bounds, including executed fallback construction and state routing.
 The [native weighted evaluator](../Signatures/Runtime/BackendWeightedEvaluate.lean)
 preserves the source's ordered queries and joint value/cache law, with proved
-stored-code bounds. Its complete runtime bound and full weighted solver
-composition are still open.
+stored-code bounds. Complete scalar/pair runtime and encoded-result/cache bounds
+are now proved in `BackendWeightedGoodEvaluate.lean` and
+`BackendWeightedBadEvaluate.lean`. They charge count/init/loop code, row scans,
+private reads, arithmetic and cache growth under individual component contracts.
+Weighted dispatch/extraction and full solver composition are still open.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).

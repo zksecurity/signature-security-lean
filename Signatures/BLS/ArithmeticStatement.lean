@@ -14,9 +14,9 @@ import Signatures.Runtime.ProximityWeight
 
 /-! # Detailed arithmetic-source BLS security statements
 
-The public general-attacker AGM endpoint is `BLS.security` in `BLS/Statement.lean`:
+The public general-attacker AGM endpoint is `BLS.agm_security` in `BLS/Statement.lean`:
 curve, security parameter, query allowances, and algebraic adversary. Its
-`SecurityModel` exposes primitive contracts and attacker resources; both lazy
+`AGMSecurityModel` exposes primitive contracts and attacker resources; both lazy
 solver budgets are derived. The declarations below retain their existing names.
 
 Source-certified co-CDH and AGM security endpoints below derive solver budgets
@@ -123,7 +123,7 @@ abbrev ArithmeticAttackerCertificate (cost : PrimitiveCosts)
 budgets are derived, and hardness at those budgets bounds their success by
 `goodEpsilon` and `badEpsilon`. The resulting forgery bound is their sum plus
 `1/|F|`. These existing solver implementations charge full finite-domain tables;
-the lazy general-caller replacement is exposed by `BLS.security` in `Statement.lean`. -/
+the lazy general-caller replacement is exposed by `BLS.agm_security` in `Statement.lean`. -/
 -- This is the machine-bounded security endpoint; no separate unbounded wrapper is exposed.
 theorem bls_lazy_agm_of_dlog_machine_hardness
     -- Fix public base points; the certified adaptive algebraic adversary A is inferred from cert.

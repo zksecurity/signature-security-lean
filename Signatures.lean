@@ -30,6 +30,8 @@ import Signatures.Runtime.BackendWeightedKeyEquality
 import Signatures.Runtime.BackendWeightedCache
 import Signatures.Runtime.BackendWeightedReadBudget
 import Signatures.Runtime.BackendWeightedEvaluateDescription
+import Signatures.Runtime.BackendWeightedGoodEvaluate
+import Signatures.Runtime.BackendWeightedBadEvaluate
 import Signatures.OperationBounds
 import Signatures.PaperStatements
 
@@ -60,10 +62,12 @@ bounds preserve polynomial growth under fixed polynomial resource contracts.
 The concrete and nonuniform-family endpoints allow arbitrary message types.
 The BLS AGM route now has complete lazy native runtime/code certificates and
 `LazyAGM.NativeSolver.security_of_resources` in the same fixed backend. Its short
-public theorem is `BLS.security`, with curve, security parameter, query allowances,
-and algebraic adversary as its four explicit inputs. The bound is
-the sum of two resource-indexed DLog advantage bounds and `1/|F|`. Parameters
-expose query/resource limits and primitive contracts in a separate `SecurityModel`,
+public theorem is `BLS.agm_security`, with curve, security parameter, query allowances,
+and algebraic adversary as its four explicit inputs. `BLS.cocdh_security` gives
+the unrestricted co-CDH route in the same form, with its own attacker/model class.
+The AGM bound is the sum of two resource-indexed DLog advantage bounds and `1/|F|`.
+Parameters expose query/resource limits and primitive contracts in separate
+`AGMSecurityModel` and `CoCDHSecurityModel` records,
 while the adversary supplies its actual general realization. The AGM asymptotic
 corollary remains separate.
 A conventional-machine adequacy theorem remains separate from this conditional
@@ -91,7 +95,10 @@ to reread cached entries without fresh sampling. The finite topic/slot covers
 are proof artifacts over generated keys and all reply paths; exact transport
 preserves each source game and Proximity's collision term. The weighted term
 generators have actual native code, exact source semantics, and derived runtime,
-stored-code, and output-size bounds. Complete weighted solver composition remains open.
+stored-code, and output-size bounds. Both native weighted scalar/pair evaluators
+now have complete derived runtime/code and encoded-result/cache bounds, charging
+indexed row scans, cache growth, reads, arithmetic and loop control. Weighted
+hash/sign dispatch, extraction and complete solver composition remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;

@@ -1,4 +1,4 @@
-import Signatures.BLS.Statement
+import Signatures.BLS.SecurityModel
 
-/-! Compatibility import. The public `BLS.security` theorem is defined in
-`Signatures/BLS/Statement.lean`, the scheme's main statement file. -/
+/-! Compatibility import for the old AGM-only names. The public `BLS.agm_security`
+and `BLS.cocdh_security` theorems are defined in `Signatures/BLS/Statement.lean`. -/

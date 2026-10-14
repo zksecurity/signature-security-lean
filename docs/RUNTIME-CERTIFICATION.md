@@ -132,8 +132,10 @@ also have complete runtime and stored-code bounds, including zero fallback
 construction on hits and state routing. The
 [native weighted evaluator](../Signatures/Runtime/BackendWeightedEvaluate.lean)
 preserves ordered source effects and the full value/cache distribution, and has
-complete stored-code bounds. Its loop runtime, weighted hash/sign dispatch,
-extraction, and general-caller composition remain in progress.
+complete stored-code bounds. Both complete evaluator runtime and encoded-output/cache
+bounds are now derived from primitive and control contracts, using a cache cap of
+`initialCacheCap + rowCap`. Weighted hash/sign dispatch, extraction and complete
+general-caller composition remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle

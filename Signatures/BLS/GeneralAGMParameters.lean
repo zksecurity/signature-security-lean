@@ -1,5 +1,6 @@
 import Signatures.Runtime.BackendLazyAGMSecurity
 import Signatures.Model.AdvantageBound
+import Signatures.BLS.QueryAllowance
 
 /-! Supporting records for the concrete general-attacker BLS AGM statement.
 `Parameters` fixes the curve, backend, query/resource allowances, and individual
@@ -19,10 +20,7 @@ open Signatures.Runtime.LazyAGM.NativeSolver
 
 namespace BLS.GeneralAGM
 
-structure QueryAllowance where
-  random : Nat
-  hash : Nat
-  sign : Nat
+abbrev QueryAllowance := BLS.QueryAllowance
 
 def QueryAllowance.total (q : QueryAllowance) : Nat := q.random + q.hash + q.sign
 

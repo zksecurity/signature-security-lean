@@ -25,13 +25,14 @@ records the broader efficiency work. BLS co-CDH now has a public security theore
 for general realized attacker code in a fixed quantitative backend, with derived
 solver runtime/code bounds and a nonuniform asymptotic security corollary. It covers
 arbitrary message types under explicit primitive/encoding contracts.
-BLS AGM now also has complete lazy native solver runtime/code certificates and
-a [public statement](Signatures/BLS/Statement.lean) following this sentence:
-given the curve, security parameter, query allowances, and any algebraic adversary
-in the declared execution model, its probability of winning BLS EUF-CMA is at most
-the two resource-indexed DLog bounds plus the inverse scalar-field order.
-The [supporting model](Signatures/BLS/SecurityModel.lean) exposes general attacker
-resources and primitive/encoding contracts separately from the mathematical curve.
+The [public BLS statements](Signatures/BLS/Statement.lean) now distinguish
+`agm_security` (an algebraic attacker, two DLog bounds plus `1/|F|`) from
+`cocdh_security` (an unrestricted attacker, Coron factor times a co-CDH bound).
+Each takes the curve, security parameter, query allowances, and adversary.
+The [model and game definitions](Signatures/BLS/GeneralSecurityModel.lean) expose
+attacker resources, primitive/encoding contracts, and explicit hardness suprema.
+The [proofs](Signatures/BLS/Proofs/GeneralSecurity.lean) combine the original
+probability reductions with derived native solver runtime/code certificates.
 Conventional-machine instantiation, the BLS AGM asymptotic corollary, and
 general-attacker overhead for the other routes remain in progress.
 

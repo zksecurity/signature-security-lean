@@ -44,16 +44,23 @@ follow from the full returned encoding. Both complete native solver programs are
 assembled and exactly realize the named finite-list reductions. Complete solver
 runtime/code bounds and fixed-backend executable certificates are now proved.
 The concrete hardness endpoint covers general realized attackers over arbitrary
-message types. `BLS.security` now follows the requested English statement:
+message types. The public BLS statements now distinguish AGM/DLog from
+unrestricted co-CDH. `BLS.agm_security` follows the requested English statement:
 curve, security parameter, query allowances, and algebraic adversary, with the
 named BLS game and two resource-indexed DLog bounds plus `1/|F|` in the conclusion.
 The declared execution model is separate from the mathematical curve.
+`BLS.cocdh_security` has the same four-input shape with an unrestricted attacker,
+the actual lazy ROM game, and the Coron factor times the resource-indexed co-CDH
+success bound. Only the AGM route uses `GeneralAGM.Parameters`.
 
-The canonical `Signatures/BLS/Statement.lean` now contains that short theorem
-itself. Detailed arithmetic-source statements moved to `ArithmeticStatement.lean`,
-preserving their declaration names and imports. `Security.lean` is a compatibility
-import. A regression guard checks the public theorem's defining module as well as
-its argument list, so the main review file cannot silently become the old interface.
+The canonical `Signatures/BLS/Statement.lean` contains both short theorem
+statements. Their proof bodies are in `BLS/Proofs/GeneralSecurity.lean`; the
+inspectable models, game definitions and explicit hardness suprema are in
+`BLS/GeneralSecurityModel.lean`. Detailed arithmetic-source statements remain in
+`ArithmeticStatement.lean`. `Security.lean` and `SecurityModel.lean` preserve the
+old AGM-only names as compatibility imports. Regression guards check both public
+theorems' defining module and argument list, and reject algebraic requirements in
+the unrestricted co-CDH contracts.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; derive the BLS AGM polynomial-family corollary; complete the other
@@ -75,8 +82,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, and short public concrete statements, including selection by security parameter. General realized callers, arbitrary messages, and the original probability loss are preserved. | Polynomial-family closure and the negligible-success corollary; conventional-machine instantiation only if claiming that stronger model. |
-| OOPS AGM | Weighted lazy solvers, arbitrary-topic probability correspondence, encountered-base cache bounds, native polynomial-term generation, and complete native private-cache bounds are proved. | Complete native weighted runtime/code bounds and general caller composition. |
-| Proximity AGM | Weighted lazy solvers, arbitrary-slot probability correspondence, encountered-base cache bounds, native coordinate-term generation, and complete native private-cache bounds are proved; the original collision term remains. | Complete native weighted runtime/code bounds and general caller composition. |
+| OOPS AGM | Weighted lazy solvers, arbitrary-topic probability correspondence, encountered-base cache bounds, native polynomial-term generation, complete native private-cache bounds, and complete scalar/pair evaluator runtime/code bounds are proved. | Weighted dispatch/extraction and complete native solver/general caller composition. |
+| Proximity AGM | Weighted lazy solvers, arbitrary-slot probability correspondence, encountered-base cache bounds, native coordinate-term generation, complete native private-cache bounds, and complete scalar/pair evaluator runtime/code bounds are proved; the original collision term remains. | Weighted dispatch/extraction and complete native solver/general caller composition. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -198,9 +205,9 @@ The existing BLS source-machine endpoint now names its specialized certificate
 `ArithmeticAttackerCertificate` and explains the separate DLog success bounds.
 This removes generic identity-conversion clutter without changing its restricted
 attacker class or eager implementation. The public replacement is now
-[`BLS.security`](../Signatures/BLS/Statement.lean), with four explicit inputs:
+[`BLS.agm_security`](../Signatures/BLS/Statement.lean), with four explicit inputs:
 curve, security parameter, query allowances, and algebraic adversary. The
-[`SecurityModel`](../Signatures/BLS/Statement.lean) fixes the backend and
+[`AGMSecurityModel`](../Signatures/BLS/GeneralSecurityModel.lean) fixes the backend and
 resource class separately from the curve. Its
 [detailed records](../Signatures/BLS/GeneralAGMParameters.lean)
 keep backend contracts and actual attacker resources inspectable. The RHS is
@@ -211,10 +218,10 @@ Apply this simple interface consistently across the remaining routes.
 
 Public-interface revision, 2026-10-14: the earlier `BLS.GeneralAGM.security P A`
 bundling was still too opaque for the requested English description. The new
-`BLS.security` names the curve, security parameter, query allowances, and
+`BLS.agm_security` names the curve, security parameter, query allowances, and
 algebraic adversary directly, and displays the named EUF-CMA game and the two
 DLog terms plus inverse curve order. `Model.PairingCurve` contains only the
-mathematical data. `BLS.SecurityModel` separately fixes execution contracts and
+mathematical data. `BLS.AGMSecurityModel` separately fixes execution contracts and
 resource limits, with checked equalities tying its configured generators and
 query allowances to the public inputs. `AlgebraicAdversary.query_allowances`
 proves all three allowances bound the actual source computation. The short
@@ -228,8 +235,8 @@ pass in `SignaturesTest.GeneralAGMStatement`. The full
 explicit inputs and one declared `SecurityModel`; no independent field/group,
 encoding, or cost parameters appear in its signature.
 
-Public-interface transparency revision, 2026-10-14: the short statement hid too
-much behind names. `Statement.lean` now contains the execution/resource model,
+Earlier public-interface transparency revision, 2026-10-14: the short statement hid too
+much behind names. At that stage, `Statement.lean` contained the execution/resource model,
 attacker contract, actual EUF-CMA experiment, and an explicit DLog-success
 supremum beside the theorem. `eufCmaGame_eq` proves exact equality to the original
 lazy game. The RHS uses that one supremum at the visible `goodTime` and `badTime`
@@ -244,6 +251,33 @@ Validation: `lake build Signatures SignaturesTest` passes (3988 jobs), log
 `/private/tmp/agm-public-transparent-full.log`. The new game-equivalence,
 resource-witness and supremum-correspondence checks pass with the existing
 public argument, allowance, axiom, and forbidden-premise guards.
+
+Public-route and proof-file revision, 2026-10-14: `BLS.agm_security` and
+`BLS.cocdh_security` now explicitly separate the AGM/DLog and unrestricted
+co-CDH claims. The shared `ExecutionModel` contains the local computation and
+message-type interface; each route has its own resource contracts and native
+solver. `GeneralCoCDH.Adversary` returns a plain message/signature pair, with
+no coefficient representation. `GeneralCoCDH.reduction_within` constructs its
+native Coron executable and derives code/time bounds, including caller work,
+query simulation, final hashing and extraction. The public co-CDH theorem uses
+`coronFactor queries.sign * coCDHSuccessBound solverTime`.
+
+At the user's request, the proof bodies moved to
+[`BLS/Proofs/GeneralSecurity.lean`](../Signatures/BLS/Proofs/GeneralSecurity.lean).
+[`Statement.lean`](../Signatures/BLS/Statement.lean) contains the two complete
+statements with one-line references to those proofs.
+[`GeneralSecurityModel.lean`](../Signatures/BLS/GeneralSecurityModel.lean) keeps
+the model fields, attacker classes, expanded games and hardness suprema
+inspectable. Exact game-equality lemmas preserve the original source experiments.
+The old `security`/`SecurityModel` names remain AGM-only compatibility aliases;
+they are not the canonical entry point for co-CDH. The public interface guards
+cover both route signatures, query allowances, source-game equality, standard
+axioms, and absence of finished-reduction or arithmetic-attacker premises.
+Validation: `lake build Signatures SignaturesTest` passes (4002 jobs), log
+`/private/tmp/agm-bls-routes-weighted-full.log`. The public signatures, expanded
+games and their separate proof bodies all pass the standard-axiom checks.
+The compatibility import also builds separately (3502 jobs), log
+`/private/tmp/agm-bls-compatibility3.log`.
 
 ## BLS AGM implementation
 
@@ -401,20 +435,48 @@ Repeated indices, zero coefficients, query order and an empty input's unused
 default row are preserved. The complete evaluator's
 [stored-code bounds](../Signatures/Runtime/BackendWeightedEvaluateDescription.lean)
 charge the read implementation, sampling, comparison, arithmetic and loop body.
-Complete evaluator runtime still needs the loop-body and cache-growth bounds
-composed; semantic correspondence and code size alone do not establish it.
+Complete [scalar runtime](../Signatures/Runtime/BackendWeightedGoodEvaluate.lean)
+and [pair runtime](../Signatures/Runtime/BackendWeightedBadEvaluate.lean) bounds
+now compose the actual indexed scans, private reads, arithmetic, count/init/loop
+code and evolving cache. Encoded result/cache widths are proved on every supported
+run. The maximum cache length is `initialCacheCap + rowCap`, with no topic/slot
+universe-size term. Both bounds are derived from individual primitive, sampler,
+encoding and control contracts; no completed-reader or evaluator budget is supplied.
 
 `SignaturesTest.WeightedEvaluate` checks ordered evaluation including zero-weight
 and repeated terms, both scalar/pair accumulation, empty inputs, actual compiled
 read/evaluator semantics, shadowed cache preservation, and sampler-independent
 costed hits. Its guards reject finite topic/slot domains and supplied completed
-component budgets, and check transitive standard axioms. The full suite passes
-(3988 jobs), log `/private/tmp/agm-public-transparent-full.log`; the new read and
-evaluation modules have no warnings, admissions, extra axioms, or resource overrides.
+component budgets, and check transitive standard axioms. The complete evaluator
+runtime results have the same guards; body invariants, row-selection/count costs
+and reader bounds must be derived, not supplied. Targeted runtime and regression
+builds pass. The full `lake build Signatures SignaturesTest` passes (4002 jobs),
+log `/private/tmp/agm-bls-routes-weighted-full.log`; the new evaluator modules
+have no warnings, admissions, additional axioms or proof-resource overrides.
 
-Complete runtime accounting for weighted evaluation, and runtime/code accounting for hash/sign dispatch, coefficient
-expansion, extraction, and general callers remains open. The prior eager machine
+Runtime/code accounting for weighted hash/sign dispatch, coefficient expansion,
+extraction, and complete general-caller solvers remains open. The prior eager machine
 certificates still describe their original implementations and are retained.
+
+For `N = rowCap`, `C = initialCacheCap + N`, let
+`E(w,N,C) = (4*N + 8*C + 64)*w`. In the scalar branch,
+`W = E(w,N,C)` and `fee = overhead (32 * frameWidth W C)`. The full runtime bound is:
+
+```text
+N * (N*(natEqTime + natSubTime + 257*fee)
+     + C*(topicTime + 2*indexTime + natEqTime + 391*fee)
+     + 2*natAddTime + addTime + mulTime + scalarTime + zeroTime
+     + 516*fee + tickTime)
+  + zeroTime + tickTime + 128*fee
+```
+
+The pair branch uses `W = E(3*w,N,C)` and
+`fee = overhead (32 * frameWidth (3*W) C)`, doubles the add/multiply/sample/zero
+prices, and uses `600*fee` inside the loop. Its final initialization charges
+`2*zeroTime`. The repeated row scans contribute an `N*N` term; the total runtime
+also depends on the encoding widths and the structural overhead function.
+The proofs track at most one new cache entry per evaluated row and retain the
+original ordered semantics for zero weights, repeats and empty inputs.
 
 `SignaturesTest.WeightedCache` checks native scalar/pair caches over infinite
 topics, both components of each key, cached zero, shadowed keys, empty caches,
@@ -1986,8 +2048,9 @@ parameter family polynomial, or complete the remaining signature routes.
 - [x] Assemble both complete native BLS AGM solver programs and prove exact
   correspondence to the named lazy reductions, with resource-derived termination.
 - [x] Derive complete native BLS AGM solver runtime/code certificates and hardness endpoints.
-- [x] Expose the short concrete BLS AGM statement, including a version indexed
-  by security parameter, with transparent resources and hardness scope.
+- [x] Expose short concrete BLS AGM/DLog and unrestricted co-CDH statements,
+  indexed by security parameter, with transparent resources and hardness scope;
+  keep supporting proof bodies in a separate proof file.
 - [x] Implement shared weighted lazy OOPS/Proximity solvers with joint
   eager/lazy correspondence, finite-list refinement, finite-topic/slot probability
   bounds, and the encountered-base cache cap, preserving admissibility/collision scope.
@@ -2003,7 +2066,7 @@ parameter family polynomial, or complete the remaining signature routes.
   executed fallback construction and cache/state routing.
 - [x] Compile weighted scalar/pair evaluators with exact ordered source value/cache
   semantics and complete stored-code bounds.
-- [ ] Derive complete weighted evaluator runtime bounds by composing the actual
+- [x] Derive complete weighted evaluator runtime bounds by composing the actual
   loop body, cache growth, natural-index scans and scalar/pair reads.
 - [ ] Derive complete weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
