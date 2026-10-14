@@ -27,6 +27,7 @@ import Signatures.Runtime.BackendCoronPolynomial
 import Signatures.Runtime.BackendCoronFamilySecurity
 import Signatures.Runtime.BackendWeightedTerms
 import Signatures.Runtime.BackendWeightedKeyEquality
+import Signatures.Runtime.BackendWeightedCache
 import Signatures.OperationBounds
 import Signatures.PaperStatements
 

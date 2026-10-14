@@ -75,8 +75,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, and short public concrete statements, including selection by security parameter. General realized callers, arbitrary messages, and the original probability loss are preserved. | Polynomial-family closure and the negligible-success corollary; conventional-machine instantiation only if claiming that stronger model. |
-| OOPS AGM | Weighted lazy solvers, arbitrary-topic probability correspondence, encountered-base cache bounds, and native polynomial-term generation bounds are proved. | Complete native weighted runtime/code bounds and general caller composition. |
-| Proximity AGM | Weighted lazy solvers, arbitrary-slot probability correspondence, encountered-base cache bounds, and native coordinate-term generation bounds are proved; the original collision term remains. | Complete native weighted runtime/code bounds and general caller composition. |
+| OOPS AGM | Weighted lazy solvers, arbitrary-topic probability correspondence, encountered-base cache bounds, native polynomial-term generation, and complete native private-cache bounds are proved. | Complete native weighted runtime/code bounds and general caller composition. |
+| Proximity AGM | Weighted lazy solvers, arbitrary-slot probability correspondence, encountered-base cache bounds, native coordinate-term generation, and complete native private-cache bounds are proved; the original collision term remains. | Complete native weighted runtime/code bounds and general caller composition. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -343,9 +343,43 @@ instead of assuming a dimension-independent vector width. The
 also have native runtime and stored-code bounds, charging topic/slot equality,
 both finite-tag reads, the natural comparison, and branch/encoding operations.
 
-Complete runtime/code accounting for weighted cache dispatch, coefficient
+The [native private caches](../Signatures/Runtime/BackendWeightedCache.lean)
+now implement both scalar and independent-scalar-pair branches for both index
+encodings. The [comparison adapter](../Signatures/Runtime/BackendComparison.lean)
+and [compiled comparison routines](../Signatures/Runtime/BackendWeightedComparison.lean)
+feed the existing finite-list cache compiler; the internal call label is backed
+by that actual code. There is no new assumed structured-comparison primitive.
+The [generic cache law](../Signatures/Runtime/BackendStructuredCache.lean)
+preserves the joint answer/cache/state distribution. Hits preserve even the
+costed execution under sampler replacement, including cached zero and shadowed
+entries. Proximity's source `Option (Fin ell)` keys are connected to native
+`Fin (ell + 1)` tags by exact injective-encoding laws for both cache branches.
+These encoding maps relate states in the proof and are not runtime table construction.
+
+For `fee = overhead (32 * frameWidth width cap)` and
+`compare = topicTime + 2 * indexTime + natTime`, the scalar access bound is
+`cap * (compare + 391 * fee) + scalarTime + 133 * fee`.
+The pair branch uses width `3 * width`, charges two scalar draws and twelve
+additional structural fees. Actual stored-code bounds include both scalar
+sampler occurrences, the full compiled comparison and its adapter, and all cache
+control code. The final branch bounds require only the individual operation,
+sampling, encoding and structural contracts; they accept no finished-cache or
+finished-comparator budget. Neither bound depends on the topic/slot universe size.
+
+Complete runtime/code accounting for weighted hash/sign dispatch, coefficient
 expansion, extraction, and general callers remains open. The prior eager machine
 certificates still describe their original implementations and are retained.
+
+`SignaturesTest.WeightedCache` checks native scalar/pair caches over infinite
+topics, both components of each key, cached zero, shadowed keys, empty caches,
+degree/dimension zero, pair sampling, and costed sampler replacement on hits.
+It checks Proximity's original coordinate encoding and demonstrates the false
+hit that a noninjective encoding would introduce. Interface guards reject
+finite-domain, finished-cache, and supplied-comparator assumptions on the final
+component bounds; transitive axiom checks allow only Lean's standard axioms.
+Validation: `lake build Signatures SignaturesTest` passes (3980 jobs), including
+the final cache regressions, log `/private/tmp/agm-weighted-cache-full.log`.
+The new modules have no warnings, admissions, extra axioms, or proof-resource overrides.
 
 `SignaturesTest.WeightedTerms` checks source and compiled generators over infinite
 topic/slot types, distinct topic and message atoms, power order, zero scalar and
@@ -1917,6 +1951,8 @@ parameter family polynomial, or complete the remaining signature routes.
   derived native runtime, stored-code, and encoded-output bounds, including retained frames.
 - [x] Derive the Proximity tuple input width from coordinate encodings and prove
   native runtime/code bounds for both structured cache-key comparisons.
+- [x] Compile both weighted private-cache branches with derived runtime/code
+  bounds, exact source-index encoding laws, and no sampler execution on hits.
 - [ ] Derive complete weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the

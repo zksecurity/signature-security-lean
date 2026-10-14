@@ -118,8 +118,15 @@ contracts, with explicit encoded-output bounds. They retain the constant term
 and every zero-weight term, and charge all retained frames. These are verified
 components. Proximity's tuple encoding is bounded from its coordinates, and
 [structured key equality](../Signatures/Runtime/BackendWeightedKeyEquality.lean)
-has native runtime/code bounds for both schemes. Complete weighted cache/extraction
-and general-caller composition remain in progress.
+has native runtime/code bounds for both schemes. The
+[native weighted private caches](../Signatures/Runtime/BackendWeightedCache.lean)
+now charge both scalar and independent-pair sampling, the compiled comparison
+and its input adapter, finite-list scan/insertion, and retained state. Exact
+source-index encoding laws preserve Proximity's constant/coordinate distinction
+and both cache branches. Cache hits preserve the entire costed run under
+sampler replacement. No finite topic/slot premise or completed-cache budget is
+assumed. Weighted hash/sign dispatch, extraction, and general-caller composition
+remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle

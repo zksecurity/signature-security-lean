@@ -130,10 +130,16 @@ requiring a finite public-key type. The
 [weighted term generators](../Signatures/Runtime/BackendWeightedTerms.lean) now
 have actual native implementations and derived runtime, stored-code, and
 encoded-output bounds. Their unrolling and retained frames are charged in the
-numerical degree/dimension and input widths. Complete weighted cache, extraction,
-and general-caller composition remain open. Proximity's tuple width is derived
+numerical degree/dimension and input widths. Weighted hash/sign dispatch,
+extraction, and general-caller composition remain open. Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.
+Both [native private-cache branches](../Signatures/Runtime/BackendWeightedCache.lean)
+now have derived runtime and stored-code bounds, including their implemented
+comparisons and independent pair sampling. The bounds depend on encountered
+entries and encoding widths. Exact laws preserve the answer, cache, and ambient
+state; hits execute no sampler, and Proximity's source-to-native index encoding
+preserves the whole cache behavior. Full weighted solver composition is still open.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).
