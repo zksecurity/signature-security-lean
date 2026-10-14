@@ -83,6 +83,13 @@ Its local computation is general backend code, not restricted to our arithmetic 
 abbrev AlgebraicAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
   GeneralAGM.AlgebraicAdversary (model.parameters securityParameter queries)
 
+/-- A common time allowance for the two constructed DLog solvers: the maximum
+of their proved complete runtimes. This is computed from the fixed primitive
+contracts and attacker limits, not supplied as an efficiency assumption. -/
+def agmReductionTime (securityParameter : Nat) (queries : QueryAllowance) : Nat :=
+  let resources := model.parameters securityParameter queries
+  max resources.goodTime resources.badTime
+
 /-- The actual EUF-CMA experiment. Hash and signing calls share one initially empty,
 lazy random oracle: `hash(m) = H(m)` and `sign(m) = secret • H(m)`.
 The certified AGM runner records signed messages and returns the candidate group point.
@@ -140,6 +147,12 @@ Its local computation is general backend code and its output is an arbitrary
 message/signature pair; no algebraic representation is supplied or inspected. -/
 abbrev UnrestrictedAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
   GeneralCoCDH.Adversary (model.parameters securityParameter queries)
+
+/-- The constructed Coron solver's proved complete runtime, including attacker
+execution, lazy oracle simulation, setup and extraction. The detailed formula
+is `GeneralCoCDH.Parameters.solverTime`; no completed-solver budget is assumed. -/
+def cocdhReductionTime (securityParameter : Nat) (queries : QueryAllowance) : Nat :=
+  (model.parameters securityParameter queries).solverTime
 
 /-- The ordinary BLS EUF-CMA experiment. The real oracle samples a fresh scalar
 only when a message is first encountered, hashes it to `scalar • generator`, and

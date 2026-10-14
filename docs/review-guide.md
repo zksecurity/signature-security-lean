@@ -15,12 +15,16 @@ Kernel checking proves each implication from its hypotheses; it does not establi
 For the new general-attacker BLS AGM endpoint, start at
 [`BLS.agm_security`](../Signatures/BLS/Statement.lean): curve, security parameter,
 query allowances, and algebraic adversary, followed by the named game's probability
-bound. The [declared execution model](../Signatures/BLS/GeneralSecurityModel.lean) and
+bound: `2 * dlogSuccessBound(agmReductionTime) + 1/groupOrder`.
+`agmReductionTime` is the maximum of the two proved reduction times. Use
+`agm_security_two_budgets` for the sharper bound with separate times.
+The [declared execution model](../Signatures/BLS/GeneralSecurityModel.lean) and
 [detailed resource records](../Signatures/BLS/GeneralAGMParameters.lean) remain inspectable. The full
 [resource-indexed theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean)
 constructs both native solver certificates before applying DLog hardness.
 The same public file also contains `BLS.cocdh_security`, with an unrestricted
-attacker and the co-CDH success bound. Its resources are in
+attacker and `coronFactor(signingQueries) * coCDHSuccessBound(cocdhReductionTime)`.
+The time allowance is the complete proved Coron runtime. Its resources are in
 [`GeneralCoCDHParameters.lean`](../Signatures/BLS/GeneralCoCDHParameters.lean).
 The public proof bodies are in
 [`Proofs/GeneralSecurity.lean`](../Signatures/BLS/Proofs/GeneralSecurity.lean).

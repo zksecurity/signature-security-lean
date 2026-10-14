@@ -12,8 +12,8 @@ set_option linter.checkUnivs false in
 `AGMSecurityModel` or `CoCDHSecurityModel` explicitly. -/
 abbrev SecurityModel := AGMSecurityModel
 
-/-- Compatibility name for the AGM-to-DLog theorem. -/
-alias security := agm_security
+/-- Compatibility name preserving the original two-budget AGM-to-DLog theorem. -/
+alias security := agm_security_two_budgets
 
 /-- Compatibility name for the AGM game. -/
 noncomputable abbrev eufCmaGame := agmEufCmaGame

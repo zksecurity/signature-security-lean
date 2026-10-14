@@ -103,8 +103,10 @@ executables have [fixed-backend resource certificates](../Signatures/Runtime/Bac
 which supply the DLog premises in the
 [concrete security theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean).
 The [public statement](../Signatures/BLS/Statement.lean) takes the curve,
-security parameter, query allowances, and algebraic adversary. Its bound is the
-sum of maximum DLog advantages at the two derived budgets plus `1/|F|`. The
+security parameter, query allowances, and algebraic adversary. Its main bound is
+twice the maximum DLog advantage at the larger derived reduction time plus `1/|F|`.
+`agm_security_two_budgets` preserves the sharper sum at the two separate times.
+The common time bound changes neither the backend nor its input/code limits. The
 execution/resource model, actual forgery experiment and explicit DLog-success
 supremum are in [GeneralSecurityModel.lean](../Signatures/BLS/GeneralSecurityModel.lean).
 The [separate proof file](../Signatures/BLS/Proofs/GeneralSecurity.lean) displays

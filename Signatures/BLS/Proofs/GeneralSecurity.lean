@@ -78,6 +78,39 @@ theorem Proofs.agm_security
     Model.PairingCurve.order] using
     probabilityBound.trans (add_le_add (add_le_add goodBound badBound) le_rfl)
 
+/-- Increasing only the time allowance enlarges the same fixed-backend solver
+class. Its input and stored-code bounds are unchanged. -/
+theorem dlogSuccessBound_mono (securityParameter : Nat) (queries : QueryAllowance) :
+    Monotone (dlogSuccessBound curve securityParameter queries) := by
+  intro time largerTime ht
+  let resources := model.parameters securityParameter queries
+  refine iSup_le fun solver => iSup_le fun fits => ?_
+  have largerFits : Signatures.Runtime.LazyAGM.NativeSolver.dlogWithin
+      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
+      resources.generator resources.keyGenerator resources.inputWidth resources.solverCode largerTime solver :=
+    ⟨fits.1, Within.mono resources.backend resources.descriptionSizes resources.factor resources.description
+      fits.2 le_rfl ht⟩
+  exact le_iSup_of_le solver (le_iSup_of_le largerFits le_rfl)
+
+/-- Both DLog solvers fit the maximum of their derived runtimes, yielding one
+hardness quantity with a factor of two. The separate-budget theorem is sharper. -/
+theorem Proofs.agm_security_common_budget
+    (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
+    (securityParameter : Nat) (queries : QueryAllowance)
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    𝒟[agmEufCmaGame curve securityParameter adversary] {true} ≤
+      2 * dlogSuccessBound curve securityParameter queries
+        (agmReductionTime curve securityParameter queries) +
+      1 / (curve.order securityParameter : ENNReal) := by
+  let resources := model.parameters securityParameter queries
+  have goodBound := dlogSuccessBound_mono curve securityParameter queries
+    (Nat.le_max_left resources.goodTime resources.badTime)
+  have badBound := dlogSuccessBound_mono curve securityParameter queries
+    (Nat.le_max_right resources.goodTime resources.badTime)
+  have bound := (Proofs.agm_security curve securityParameter queries adversary).trans
+    (add_le_add (add_le_add goodBound badBound) le_rfl)
+  simpa only [two_mul, agmReductionTime, resources] using bound
+
 end AGM
 
 section CoCDH

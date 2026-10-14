@@ -47,7 +47,9 @@ The concrete hardness endpoint covers general realized attackers over arbitrary
 message types. The public BLS statements now distinguish AGM/DLog from
 unrestricted co-CDH. `BLS.agm_security` follows the requested English statement:
 curve, security parameter, query allowances, and algebraic adversary, with the
-named BLS game and two resource-indexed DLog bounds plus `1/|F|` in the conclusion.
+named BLS game and twice one resource-indexed DLog bound plus `1/|F|` in the conclusion.
+The shared time allowance is the maximum of the two proved solver times;
+`agm_security_two_budgets` preserves the sharper two-budget statement.
 The declared execution model is separate from the mathematical curve.
 `BLS.cocdh_security` has the same four-input shape with an unrestricted attacker,
 the actual lazy ROM game, and the Coron factor times the resource-indexed co-CDH
@@ -210,13 +212,15 @@ curve, security parameter, query allowances, and algebraic adversary. The
 [`AGMSecurityModel`](../Signatures/BLS/GeneralSecurityModel.lean) fixes the backend and
 resource class separately from the curve. Its
 [detailed records](../Signatures/BLS/GeneralAGMParameters.lean)
-keep backend contracts and actual attacker resources inspectable. The RHS is
-`dlogBound goodTime + dlogBound badTime + 1/|F|`: `dlogBound` is the supremum over
+keep backend contracts and actual attacker resources inspectable. The main RHS is
+`2 * dlogSuccessBound(agmReductionTime) + 1/|F|`, using the maximum of the two
+derived solver times. The sharper sum of the two separately budgeted terms is
+`agm_security_two_budgets`. The DLog bound is the supremum over
 all solvers within the fixed backend's code/input/time limits, not an assumed
 advantage of the constructed reduction. Numerical hardness bounds are separate.
 Apply this simple interface consistently across the remaining routes.
 
-Public-interface revision, 2026-10-14: the earlier `BLS.GeneralAGM.security P A`
+Earlier public-interface revision, 2026-10-14: the earlier `BLS.GeneralAGM.security P A`
 bundling was still too opaque for the requested English description. The new
 `BLS.agm_security` names the curve, security parameter, query allowances, and
 algebraic adversary directly, and displays the named EUF-CMA game and the two
@@ -252,7 +256,7 @@ Validation: `lake build Signatures SignaturesTest` passes (3988 jobs), log
 resource-witness and supremum-correspondence checks pass with the existing
 public argument, allowance, axiom, and forbidden-premise guards.
 
-Public-route and proof-file revision, 2026-10-14: `BLS.agm_security` and
+Earlier public-route and proof-file revision, 2026-10-14: `BLS.agm_security` and
 `BLS.cocdh_security` now explicitly separate the AGM/DLog and unrestricted
 co-CDH claims. The shared `ExecutionModel` contains the local computation and
 message-type interface; each route has its own resource contracts and native
@@ -278,6 +282,25 @@ Validation: `lake build Signatures SignaturesTest` passes (4002 jobs), log
 games and their separate proof bodies all pass the standard-axiom checks.
 The compatibility import also builds separately (3502 jobs), log
 `/private/tmp/agm-bls-compatibility3.log`.
+
+Public-statement simplification, 2026-10-14: the main `agm_security` now states
+`Pr[forgery] <= 2 * DLogSuccess(agmReductionTime) + 1/groupOrder`.
+`agmReductionTime` is exactly the maximum of the good and bad native solver
+times. Monotonicity of the DLog success supremum is proved by enlarging only the
+runtime allowance of the same executable; the backend, input cap and stored-code
+cap stay fixed. `agm_security_two_budgets` preserves the sharper original bound,
+and the compatibility name `BLS.security` retains that original type.
+Both main public statements omit the internal resource-record binding; co-CDH
+uses `cocdhReductionTime`, exactly the already-proved complete Coron runtime.
+The games and hardness suprema remain explicit named terms in the inequalities,
+and the separate proof file contains all new proofs. The original four public
+inputs and route-specific model assumptions are preserved. Validation of the
+statements and compatibility imports passes (3502 jobs), log
+`/private/tmp/agm-simple-statement-api.log`. The full
+`lake build Signatures SignaturesTest` passes (4013 jobs), log
+`/private/tmp/agm-simple-statement-full.log`, including public argument,
+game/hardness visibility, derived-budget and standard-axiom guards. The changed
+Lean modules have no new warnings, admissions or proof-resource overrides.
 
 ## BLS AGM implementation
 
