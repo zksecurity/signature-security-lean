@@ -32,6 +32,9 @@ import Signatures.Runtime.BackendWeightedReadBudget
 import Signatures.Runtime.BackendWeightedEvaluateDescription
 import Signatures.Runtime.BackendWeightedGoodEvaluate
 import Signatures.Runtime.BackendWeightedBadEvaluate
+import Signatures.Runtime.BackendWeightedEvaluateEncoding
+import Signatures.Runtime.BackendWeightedCoefficients
+import Signatures.Runtime.BackendWeightedScale
 import Signatures.OperationBounds
 import Signatures.PaperStatements
 
@@ -98,7 +101,11 @@ generators have actual native code, exact source semantics, and derived runtime,
 stored-code, and output-size bounds. Both native weighted scalar/pair evaluators
 now have complete derived runtime/code and encoded-result/cache bounds, charging
 indexed row scans, cache growth, reads, arithmetic and loop control. Weighted
-hash/sign dispatch, extraction and complete solver composition remain open.
+evaluation preserves the original source indices and complete cache under
+injective encodings. Native signing-coefficient expansion has exact source
+semantics, stored-code and output-size bounds, and a proved scaling-loop runtime
+bound. Complete expansion runtime, hash/sign dispatch, extraction and complete
+solver composition remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;

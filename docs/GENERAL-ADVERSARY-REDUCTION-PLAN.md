@@ -82,8 +82,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, and short public concrete statements, including selection by security parameter. General realized callers, arbitrary messages, and the original probability loss are preserved. | Polynomial-family closure and the negligible-success corollary; conventional-machine instantiation only if claiming that stronger model. |
-| OOPS AGM | Weighted lazy solvers, arbitrary-topic probability correspondence, encountered-base cache bounds, native polynomial-term generation, complete native private-cache bounds, and complete scalar/pair evaluator runtime/code bounds are proved. | Weighted dispatch/extraction and complete native solver/general caller composition. |
-| Proximity AGM | Weighted lazy solvers, arbitrary-slot probability correspondence, encountered-base cache bounds, native coordinate-term generation, complete native private-cache bounds, and complete scalar/pair evaluator runtime/code bounds are proved; the original collision term remains. | Weighted dispatch/extraction and complete native solver/general caller composition. |
+| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches and scalar/pair evaluator bounds are proved. Signing-coefficient expansion has exact source semantics, code/output bounds and an inner scaling-loop runtime bound. | Complete expansion runtime, weighted dispatch/extraction and native solver/general caller composition. |
+| Proximity AGM | The same weighted components and expansion bounds are proved, including original-index/cache transport; the original collision term remains. | Complete expansion runtime, weighted dispatch/extraction and native solver/general caller composition. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -454,9 +454,10 @@ builds pass. The full `lake build Signatures SignaturesTest` passes (4002 jobs),
 log `/private/tmp/agm-bls-routes-weighted-full.log`; the new evaluator modules
 have no warnings, admissions, additional axioms or proof-resource overrides.
 
-Runtime/code accounting for weighted hash/sign dispatch, coefficient expansion,
-extraction, and complete general-caller solvers remains open. The prior eager machine
-certificates still describe their original implementations and are retained.
+Complete runtime accounting for weighted hash/sign dispatch, coefficient
+expansion, extraction, and general-caller solvers remains open. Expansion's
+source, code, output-size and inner-loop results are recorded below. The prior
+eager machine certificates describe their original implementations and are retained.
 
 For `N = rowCap`, `C = initialCacheCap + N`, let
 `E(w,N,C) = (4*N + 8*C + 64)*w`. In the scalar branch,
@@ -477,6 +478,56 @@ prices, and uses `600*fee` inside the loop. Its final initialization charges
 also depends on the encoding widths and the structural overhead function.
 The proofs track at most one new cache entry per evaluated row and retain the
 original ordered semantics for zero weights, repeats and empty inputs.
+
+Whole-evaluator index representation, 2026-10-14:
+[`WeightedCacheEncoding.lean`](../Signatures/Runtime/WeightedCacheEncoding.lean)
+proves that injective index maps preserve each private read and the complete
+ordered weighted evaluation, including the joint returned value/cache distribution.
+[`BackendWeightedEvaluateEncoding.lean`](../Signatures/Runtime/BackendWeightedEvaluateEncoding.lean)
+connects both actual native branches to Proximity's original `Option (Fin ell)`
+indices and proves exact native cache preservation when all terms are cached.
+The maps relate finite states in the proof; they are not runtime table construction.
+Validation: the target builds (3307 jobs), log
+`/private/tmp/agm-weighted-native-encoding.log`, with no new warnings.
+
+Signing-coefficient expansion is now implemented in
+[`WeightedCoefficients.lean`](../Signatures/Runtime/WeightedCoefficients.lean)
+and [`BackendWeightedCoefficients.lean`](../Signatures/Runtime/BackendWeightedCoefficients.lean):
+chronological matching, per-occurrence scaling, nested cons folds and final
+reversal. Exact source representation laws and stored-code bounds pass, as do
+regressions for repeated messages, zero/missing/surplus coefficients, dimension
+zero, original Proximity indices and full shadowed cache preservation.
+Validation: `SignaturesTest.WeightedCoefficients` passes (3324 jobs), log
+`/private/tmp/agm-weighted-coefficients-tests2.log`.
+
+[`WeightedCoefficientsSize.lean`](../Signatures/Runtime/WeightedCoefficientsSize.lean)
+proves exact output length and encoded-size bounds. With at most `N` signing
+replies and degree/dimension `d`, the output uses at most
+`(6*N*(d+1)+1)*width` under the stated atomic representation bounds. These bounds
+include all zero terms and constrain only encountered topics/slots. The module
+passes (3261 jobs), log `/private/tmp/agm-weighted-coefficients-size3.log`.
+
+[`BackendWeightedScale.lean`](../Signatures/Runtime/BackendWeightedScale.lean)
+derives the actual scaling fold's native runtime from multiplication and structural
+cost contracts. With `T` input terms, an accumulator cap `A`, and atomic width `w`,
+its bound is `T*(mulTime + 65*fee) + 64*fee`, where
+`fee = overhead (128*((16*(A+T)+32)*w))`. The proof charges the retained input and
+accumulator lists, the evolving output, every multiplication and fold control.
+This completes the inner fold; term generation in retained contexts, the outer
+fold, final reversal and chronological matching still need a combined runtime bound.
+
+Integrated validation: `lake build Signatures SignaturesTest` passes (4013 jobs),
+log `/private/tmp/agm-weighted-coefficients-full.log`. The regressions include
+the expanded output-size and inner-loop axiom/interface guards. New modules have
+no warnings, admissions, additional axioms or proof-resource overrides. No
+complete expansion runtime or whole-weighted-solver certificate is claimed.
+
+The import blocker was macOS vnode exhaustion, confirmed by free vnodes reaching
+zero during a monitored Lean import. The user applied a temporary vnode-limit
+increase from 263168 to 524288, which restored proof checking. Descriptor limits
+were also temporarily raised; their original values are recorded for restoration.
+No compiler checking settings changed. The remaining runtime, solver and replay
+obligations below stay incomplete.
 
 `SignaturesTest.WeightedCache` checks native scalar/pair caches over infinite
 topics, both components of each key, cached zero, shadowed keys, empty caches,
@@ -2068,6 +2119,14 @@ parameter family polynomial, or complete the remaining signature routes.
   semantics and complete stored-code bounds.
 - [x] Derive complete weighted evaluator runtime bounds by composing the actual
   loop body, cache growth, natural-index scans and scalar/pair reads.
+- [x] Connect complete native weighted evaluation to injectively encoded source
+  indices, including Proximity's original optional coordinate and exact cache state.
+- [x] Implement native signing-coefficient expansion with exact source
+  representation, stored-code and encoded-output bounds.
+- [x] Derive the inner scaling fold's native runtime, including its retained
+  input/accumulator lists and growing output.
+- [ ] Derive complete native signing-coefficient expansion runtime bounds,
+  composing chronological matching, term generation, both folds and reversal.
 - [ ] Derive complete weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the

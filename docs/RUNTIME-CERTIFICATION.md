@@ -134,8 +134,16 @@ construction on hits and state routing. The
 preserves ordered source effects and the full value/cache distribution, and has
 complete stored-code bounds. Both complete evaluator runtime and encoded-output/cache
 bounds are now derived from primitive and control contracts, using a cache cap of
-`initialCacheCap + rowCap`. Weighted hash/sign dispatch, extraction and complete
-general-caller composition remain in progress.
+`initialCacheCap + rowCap`. Injective index transport connects both complete
+evaluators to Proximity's original optional coordinates and preserves full cache
+states. Native [coefficient expansion](../Signatures/Runtime/BackendWeightedCoefficients.lean)
+has exact chronological source semantics, stored-code bounds, and output size at
+most `(6*N*(d+1)+1)*width` for signing cap `N` and degree/dimension `d`.
+The [inner scaling fold](../Signatures/Runtime/BackendWeightedScale.lean) has a
+derived native runtime bound charging retained lists and the growing accumulator.
+Complete expansion runtime, weighted hash/sign dispatch, extraction and complete
+general-caller composition remain in progress. The integrated source, size,
+runtime and axiom regressions pass in the full 4013-job build.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle

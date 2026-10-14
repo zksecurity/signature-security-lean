@@ -152,7 +152,13 @@ stored-code bounds. Complete scalar/pair runtime and encoded-result/cache bounds
 are now proved in `BackendWeightedGoodEvaluate.lean` and
 `BackendWeightedBadEvaluate.lean`. They charge count/init/loop code, row scans,
 private reads, arithmetic and cache growth under individual component contracts.
-Weighted dispatch/extraction and full solver composition are still open.
+Injective index transport now connects both complete native evaluators to the
+original source indices and preserves the entire cache. Native
+[signing-coefficient expansion](../Signatures/Runtime/BackendWeightedCoefficients.lean)
+has exact source laws, stored-code and encoded-output bounds. Its
+[inner scaling fold](../Signatures/Runtime/BackendWeightedScale.lean) has a derived
+runtime bound including retained lists. Complete expansion runtime, weighted
+dispatch/extraction and full solver composition are still open.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).
