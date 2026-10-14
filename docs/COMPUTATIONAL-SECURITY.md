@@ -147,8 +147,12 @@ requiring a finite public-key type. The
 [weighted term generators](../Signatures/Runtime/BackendWeightedTerms.lean) now
 have actual native implementations and derived runtime, stored-code, and
 encoded-output bounds. Their unrolling and retained frames are charged in the
-numerical degree/dimension and input widths. Weighted hash/sign dispatch,
-extraction, and general-caller composition remain open. Proximity's tuple width is derived
+numerical degree/dimension and input widths. The
+[weighted request dispatcher](../Signatures/Runtime/BackendWeightedHandler.lean)
+now has exact general-caller semantics and derived routing/runtime/stored-code
+bounds with independent hash-index and signing-message types. Instantiating its
+weighted replies, extraction, and complete solver composition remain open.
+Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.
 Both [native private-cache branches](../Signatures/Runtime/BackendWeightedCache.lean)

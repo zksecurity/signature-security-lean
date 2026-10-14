@@ -89,8 +89,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches and scalar/pair evaluator bounds are proved. Signing-coefficient expansion has exact source semantics and complete native runtime/code/output bounds. | Weighted dispatch/extraction and native solver/general caller composition. |
-| Proximity AGM | The same weighted components and complete expansion bounds are proved, including original-index/cache transport; the original collision term remains. | Weighted dispatch/extraction and native solver/general caller composition. |
+| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches and scalar/pair evaluator bounds are proved. Signing-coefficient expansion has complete native runtime/code/output bounds. A dispatcher for separate hash/sign types has exact general-caller semantics and routing/runtime/code bounds. | Install weighted reply implementations, extraction, and complete native solver/general caller certificates. |
+| Proximity AGM | The same weighted components, expansion bounds and dispatcher are proved, including original-index/cache transport; the original collision term remains. | Install weighted reply implementations, extraction, and complete native solver/general caller certificates. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -582,6 +582,39 @@ contexts, zero-weight rows with a nonempty accumulator, zero signing allowance,
 standard axioms, and absence of finite-domain or supplied component-budget
 premises on the final scheme bounds. The new modules have no warnings,
 admissions, additional axioms or proof-resource overrides.
+
+Native weighted request dispatch now has its own
+[general interface](../Signatures/Runtime/GeneralWeighted.lean) and
+[represented ports](../Signatures/Runtime/BackendWeightedInterface.lean).
+Hash indices and signing messages can have different, infinite types. Only the
+randomness arity is bounded by the interface; one dynamically selected sampler
+implements every allowed arity. The [dispatcher](../Signatures/Runtime/BackendWeightedHandler.lean)
+executes request decoding, retains the original request during the stateful
+reply, attaches its exact dependent reply tag, and selects the appropriate
+branch. Its exact general-caller law preserves private state and `none` on
+fuel exhaustion. Factoring the indexed reply into a typed semantic handler
+preserves the actual executed costs; it adds no unpriced runtime decoder.
+
+The [routing bound](../Signatures/Runtime/BackendWeightedHandlerBudget.lean) is
+`replyTime + dynamicTime + 2*adapterTime + 40*overhead(32*frameWidth)`, where
+`replyTime` bounds both actual reply branches. Separate input-width predicates
+and port contracts cover hash indices and signing messages. Store predicates
+remain available for cache growth and transcript invariants. The
+[stored-code bound](../Signatures/Runtime/BackendWeightedHandlerDescription.lean)
+counts both reply programs, one sampler, all four adapter realizers, and explicit
+structural code. The general caller is stored once with the dispatcher and its
+loop fuel. These are composition lemmas: the next step must instantiate the
+reply programs and their component bounds from the weighted readers, term
+generators and evaluators, then assemble extraction and the full solver.
+
+Validation: `lake build Signatures SignaturesTest` passes (4031 jobs), log
+`/private/tmp/agm-weighted-dispatch-full.log`. The
+[regressions](../SignaturesTest/WeightedHandler.lean) exercise distinct infinite
+query domains, exact native reply tags and store updates, adaptive hash/sign/hash
+composition, and observable fuel exhaustion. They also check the standard axiom
+footprint and reject finite-domain or completed-dispatcher/caller certificate
+premises. The new modules and tests have no warnings, admissions, extra axioms,
+or proof-resource overrides.
 
 The import blocker was macOS vnode exhaustion, confirmed by free vnodes reaching
 zero during a monitored Lean import. The user applied a temporary vnode-limit
@@ -2230,7 +2263,10 @@ additional axioms or proof-resource overrides.
   input/accumulator lists and growing output.
 - [x] Derive complete native signing-coefficient expansion runtime bounds,
   composing chronological matching, term generation, both folds and reversal.
-- [ ] Derive complete weighted native solver runtime/code bounds, charging
+- [x] Implement native dispatch with distinct hash-index/signing-message types,
+  exact general-caller semantics, and derived routing/runtime/stored-code bounds.
+- [ ] Install the weighted hash/sign replies in that dispatcher, then derive
+  complete weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.

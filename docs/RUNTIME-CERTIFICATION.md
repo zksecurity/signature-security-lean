@@ -152,7 +152,14 @@ folds and final reversal. The retained transcript, coefficient list, current
 message and growing accumulator contribute to structural costs. Bounds depend
 on signing/coefficient caps, encoded widths and numerical degree/dimension;
 neither a message-domain enumeration nor a completed-generator budget is supplied.
-Weighted hash/sign dispatch, extraction and complete general-caller composition
+The [native weighted dispatcher](../Signatures/Runtime/BackendWeightedHandler.lean)
+now separates hash-index and signing-message types. Its exact semantics preserve
+adaptive general-caller execution, complete private state, and fuel exhaustion.
+[Runtime bounds](../Signatures/Runtime/BackendWeightedHandlerBudget.lean) charge
+request decoding/retention, reply tagging, and branch selection from individual
+port and reply contracts. [Code bounds](../Signatures/Runtime/BackendWeightedHandlerDescription.lean)
+count both replies and one dynamic sampler, independently of domain cardinality.
+The weighted reply implementations, extraction, and whole-solver certificates
 remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
