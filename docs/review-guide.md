@@ -85,13 +85,19 @@ does not supply an algebraic explanation.
 
 The short BLS statements are [`BLS.agm_security` and `BLS.cocdh_security`](../Signatures/BLS/Statement.lean).
 Their model and adversary definitions expose the distinct execution and resource assumptions.
+The short [OOPS](../Signatures/OOPS/Statement.lean) and
+[Proximity](../Signatures/Proximity/Statement.lean) statements additionally take
+the degree or dimension. They preserve their original source games and derive
+both native reduction budgets from general caller resources. Their models and
+expanded games are in `GeneralSecurityModel.lean`; their proof bodies are in
+`Proofs/GeneralSecurity.lean`.
 The detailed arithmetic-source security statements are annotated line by line in
 [BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean),
-[OOPS/Statement.lean](../Signatures/OOPS/Statement.lean), and
-[Proximity/Statement.lean](../Signatures/Proximity/Statement.lean).
+[OOPS/ArithmeticStatement.lean](../Signatures/OOPS/ArithmeticStatement.lean), and
+[Proximity/ArithmeticStatement.lean](../Signatures/Proximity/ArithmeticStatement.lean).
 Use those supporting files for the source-certified adversaries and detailed bounds; use the
-game/oracle reading map above to unfold what their winning events mean. Only the concrete
-machine-bounded endpoints are exposed: source certificates include hash/sign/random query
+game/oracle reading map above to unfold what their winning events mean. These legacy
+machine-bounded endpoints use source certificates with hash/sign/random query
 budgets and local work. The earlier weaker wrappers are deleted, not retained as private endpoints.
 
 ### BLS: lazy ROM to co-CDH
@@ -101,7 +107,7 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 - [Coron reduction](../Signatures/BLS/CoCDH/Spec/Coron.lean) and
   [query-budget proof](../Signatures/BLS/CoCDH/Proofs/QueryBound.lean).
 - Bound: `Adv_ROM <= coronFactor(qS) * epsilon`, assuming co-CDH hardness at the derived solver budget.
-- Finite messages, without a caller-supplied enumeration. The budget counts all signing calls,
+- Arbitrary message types. The budget counts all signing calls,
   including repeats, on every generated key. The source certificate additionally bounds all
   hash (`queries 1`), random (`queries 0`), and signing (`queries 2`) calls and local computation.
 
@@ -118,10 +124,11 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 
 ### OOPS: query-only lazy AGM
 
-- [Statement](../Signatures/OOPS/Statement.lean): `OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness`.
+- [Arithmetic-source statement](../Signatures/OOPS/ArithmeticStatement.lean): `OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness`.
+- [General-caller statement](../Signatures/OOPS/Statement.lean): `OOPS.agm_security`, with arbitrary topics and complete lazy solver budgets.
 - [Source game and degree rule](../Signatures/OOPS/Spec/LazyAGM.lean) and
   [proof](../Signatures/OOPS/Proofs/LazyAGM.lean).
-- Same two-reduction bound. Oracle-derived topic bases, finite topic type.
+- Same two-reduction bound and oracle-derived topic bases. Only the older arithmetic-source endpoint requires a finite topic type.
 - At most `d` distinct signed scalar messages on the eventual forgery topic. Repetitions and
   other topics do not consume this cap. Freshness concerns the entire message/topic pair.
 - Freshness and this winning degree rule imply a nonzero symbolic coefficient by Vandermonde.
@@ -131,11 +138,12 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 
 ### Proximity: query-only lazy AGM, with collisions
 
-- [Statement](../Signatures/Proximity/Statement.lean): `Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness`.
+- [Arithmetic-source statement](../Signatures/Proximity/ArithmeticStatement.lean): `Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness`.
+- [General-caller statement](../Signatures/Proximity/Statement.lean): `Proximity.agm_security`, with arbitrary slots and complete lazy solver budgets.
 - [Source game and collision event](../Signatures/Proximity/Spec/LazyAGM.lean) and
   [proof](../Signatures/Proximity/Proofs/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F| + Pr[fresh collision]`.
-  Oracle-derived coordinate bases, finite slot/topic type.
+  Oracle-derived coordinate bases; only the older arithmetic-source endpoint requires a finite slot type.
 - `Collision out signed` means the full vector/slot output is fresh and its vector equals
   the sum of signed vectors weighted by the output's signing coefficients. Repeats and other
   slots contribute; missing coefficients are zero. Signature validity is not required by this event.

@@ -211,8 +211,17 @@ and [fixed-backend certificates](../Signatures/Runtime/BackendWeightedSolverWith
 The certificates derive setup, caller, adaptation, cutoff, and extraction costs
 from primitive contracts and measured attacker resources. They require no
 supplied complete component budget or cached-transcript invariant, and no finite
-topic/slot/message domain. Scheme-specific security endpoints and polynomial
-family closure remain open.
+topic/slot/message domain. Shared
+[weighted parameter contracts](../Signatures/Runtime/GeneralWeightedParameters.lean)
+and [certificate assembly](../Signatures/Runtime/GeneralWeightedCertificates.lean)
+now give the [OOPS](../Signatures/OOPS/Proofs/GeneralAGM.lean) and
+[Proximity](../Signatures/Proximity/Proofs/GeneralAGM.lean) concrete security
+endpoints. The original source games, admissibility rule and collision term are
+preserved. [Proximity's original interface](../Signatures/Proximity/Proofs/GeneralAGMEncoding.lean)
+is transported exactly, including adaptive per-kind query counts. Short public
+statements live in [OOPS](../Signatures/OOPS/Statement.lean) and
+[Proximity](../Signatures/Proximity/Statement.lean), with proof bodies in separate
+files. Polynomial family closure remains open for these weighted schemes.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
@@ -460,8 +469,8 @@ verification, extraction, fallback, and fixed-data loading are all charged. See 
   Both sampling passes, key construction, initialized store, adaptive execution, extraction,
   and fixed-data loading are charged. Exact `Model.LazyAGM.badReduction` erasure and
   `SourceCertificate.badWithin` are proved in the same general machine class as the good branch.
-- [BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/Statement.lean), and
-  [Proximity](../Signatures/Proximity/Statement.lean): the public AGM machine-bounded statements,
+- [BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/ArithmeticStatement.lean), and
+  [Proximity](../Signatures/Proximity/ArithmeticStatement.lean): the public AGM machine-bounded statements,
   with compiled scheme-specific encodings, key comparisons,
   weights, and their bounds. Both solver-budget hypotheses are discharged. No original
   degree/freshness condition is changed, and the full domain size is retained. Proximity adds

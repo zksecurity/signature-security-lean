@@ -35,7 +35,7 @@ game and solver. A finite cover of all adaptive requests and final outputs is
 used only inside the proof; no executable code enumerates it. The cover ranges
 over generated public keys, so the public-key type need not be finite either.
 The arithmetic-source endpoint also uses this stronger probability result.
-The other general-attacker routes remain open in the
+The general-attacker results and remaining Schnorr/family work are tracked in the
 [current plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md).
 
 The new [lazy BLS AGM solvers](../Signatures/BLS/Spec/LazyAGMReduction.lean)
@@ -191,8 +191,19 @@ now have [exact source semantics](../Signatures/Runtime/BackendWeightedSolverCor
 and [executable certificates](../Signatures/Runtime/BackendWeightedSolverWithin.lean)
 in the fixed backend. These charge setup, samplers, output adaptation, cutoff,
 retained frames, and extraction alongside the general caller. Their internal
-cache/transcript conditions follow from execution. The scheme-specific concrete
-security statements and polynomial family closure remain open.
+cache/transcript conditions follow from execution. The shared
+[resource contracts](../Signatures/Runtime/GeneralWeightedParameters.lean) and
+[derived certificates](../Signatures/Runtime/GeneralWeightedCertificates.lean)
+now connect them to concrete OOPS and Proximity security. The public
+[OOPS](../Signatures/OOPS/Statement.lean) and
+[Proximity](../Signatures/Proximity/Statement.lean) statements take the curve,
+security parameter, degree/dimension, query allowances and algebraic adversary.
+Their separate proofs preserve the exact source games, including OOPS's
+distinct-message rule and Proximity's actual fresh-collision probability.
+[Proximity transport](../Signatures/Proximity/Proofs/GeneralAGMEncoding.lean)
+preserves the original optional-coordinate/function-vector interface and each
+query allowance. No finite topic/slot domain or completed solver budget is assumed.
+Polynomial family closure remains open for these two schemes.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.
@@ -217,8 +228,8 @@ has exact source laws, stored-code and encoded-output bounds. Its
 now compose chronological matching, retained-context term generation, scaling,
 both expansion folds and final reversal. The final OOPS/Proximity theorems derive
 every generator and fold bound from individual primitive contracts; they do not
-assume a completed expansion budget. Complete weighted extraction runtime and
-full solver composition are still open.
+assume a completed expansion budget. These bounds now compose into the complete
+solver certificates and concrete general-attacker endpoints described above.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).
@@ -228,8 +239,8 @@ includes adaptive simulation, lazy caches, final hashing, extraction, data loadi
 setup. `hbudget` is discharged by the compiler theorem, not supplied by the caller. Primitive
 arithmetic and sampling prices remain explicit model contracts. The weaker public wrappers
 have been deleted. The AGM statements in
-[BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/Statement.lean), and
-[Proximity](../Signatures/Proximity/Statement.lean) also derive both solver budgets from source
+[BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/ArithmeticStatement.lean), and
+[Proximity](../Signatures/Proximity/ArithmeticStatement.lean) also derive both solver budgets from source
 certificates and concrete primitive prices.
 
 In all five concrete corollaries, Lean infers the adversary, primitive-cost model, local time,
@@ -268,8 +279,8 @@ The hardness assertion is a theorem hypothesis, not a custom axiom or a proved p
 | --- | --- | --- |
 | BLS co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `coronFactor qS * epsilon` |
 | BLS AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
-| OOPS AGM | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/Statement.lean) | same two-branch bound |
-| Proximity AGM | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/Statement.lean) | two-branch bound plus actual fresh-collision probability |
+| OOPS AGM | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/ArithmeticStatement.lean) | same two-branch bound |
+| Proximity AGM | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/ArithmeticStatement.lean) | two-branch bound plus actual fresh-collision probability |
 | Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | `delta * (delta/(qH+1) - 1/card F) <= epsilon`, where `delta = Adv - qS*(qS+qH)/card F` |
 | Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | same left side, bounded by `epsilon + targetBudget * 2^(-k)` at proved bit budget `(targetBudget+4)*bitFactor` |
 
@@ -424,6 +435,10 @@ implementation evidence; importing it is not itself an efficiency proof.
 - For asymptotic security also supply a uniform parameterized group family, polynomial resource
   bounds, and negligible target advantage/collision terms. Fixed finite types do not supply these.
 
-Only the concrete-machine security endpoints remain. They derive the solver budgets from source
-certificates; no `hbudget`, `hgood`, or `hbad` is assumed. The original games and underlying
-reduction proofs are unchanged. No standard-model OOPS or concrete-hash claim is added.
+The legacy BLS, OOPS and Proximity arithmetic-machine endpoints remain available
+in their `ArithmeticStatement.lean` files; Schnorr's remain in `Statement.lean`.
+They derive solver budgets from source certificates;
+no `hbudget`, `hgood`, or `hbad` is assumed. The general-attacker BLS, OOPS and
+Proximity endpoints instead use the backend realization and measured resources
+of the attacker. Both routes preserve their original source games. No
+standard-model OOPS or concrete-hash claim is added.

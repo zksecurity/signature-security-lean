@@ -80,8 +80,12 @@ extractor input bounds now follow from the attacker's measured resources and
 encoding contracts. The native interaction supplies the cached-transcript invariant.
 Both complete native solvers now have exact source correspondence, runtime and
 stored-code bounds, and executable certificates in the fixed backend. Setup,
-output adaptation, cutoff handling, and extraction are all charged. The
-scheme-specific security and family endpoints remain unfinished.
+output adaptation, cutoff handling, and extraction are all charged. Both schemes
+now connect these certificates to the original concrete security bounds. Their
+short public statements take the curve, security parameter, degree/dimension,
+query allowances and algebraic adversary. OOPS retains its distinct-message
+admissibility rule; Proximity retains its actual fresh-collision probability.
+The weighted polynomial-family corollaries remain unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete the other signature routes and expose their
@@ -103,8 +107,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| OOPS AGM | Weighted lazy probability correspondence and complete native solver runtime/code certificates are proved. Exact source semantics and caller/cache/output invariants connect setup, general attacker execution, and extraction over arbitrary topic types. | Connect the certificates to concrete security, public statements, and polynomial families. |
-| Proximity AGM | The same complete weighted native solver certificates are proved, with separate index/message types and original-index/cache transport. The source probability proof retains its collision term. | Connect the certificates and index transport to concrete security, public statements, and polynomial families. |
+| OOPS AGM | Complete native solver runtime/code certificates, concrete DLog security, and short public statements for general realized algebraic attackers over arbitrary topic types. The original admissibility rule is preserved. | Derive polynomial-family resource bounds and asymptotic security. |
+| Proximity AGM | Complete native solver certificates, concrete DLog security, and short public statements, with exact original optional-coordinate/function-vector source transport. The original collision term is preserved. | Derive polynomial-family resource bounds and asymptotic security, retaining the collision probability. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -830,8 +834,52 @@ zero-fuel cutoff and retained bad-branch sampling with arbitrary natural topics.
 Transitive axiom guards cover the new proofs. Final-endpoint guards reject finite
 domains, supplied complete component/certificate bounds, restricted source
 certificates and internal state invariants; they require both measured execution
-and source realization. Scheme-specific concrete security, public interfaces and
-polynomial family closure remain open.
+and source realization.
+
+The shared [weighted parameter interface](../Signatures/Runtime/GeneralWeightedParameters.lean)
+now fixes the backend, representation/primitive contracts, query allowances and
+attacker execution/code limits before choosing the attacker. The attacker
+supplies its general native realization, measured resources and actual source
+query counts. [Certificate assembly](../Signatures/Runtime/GeneralWeightedCertificates.lean)
+derives both complete reduction certificates and their resource-indexed DLog
+bounds. Input width covers every generated challenge; solver code charges all
+stored native code, and the two time bounds include degree/dimension work.
+
+The [OOPS concrete proof](../Signatures/OOPS/Proofs/GeneralAGM.lean) uses the
+original scalar/topic source game and its target-topic distinct-message rule.
+The [Proximity concrete proof](../Signatures/Proximity/Proofs/GeneralAGM.lean)
+uses the original function-vector/optional-coordinate source interface and
+retains the actual fresh-collision probability. Its
+[encoding proof](../Signatures/Proximity/Proofs/GeneralAGMEncoding.lean) identifies
+both entire source solvers with the native tuple/finite-index versions and
+preserves all three query counts through adaptive interaction. This is a proof
+relabeling; the attacker's actual implementation, including its encoded output,
+is still charged by the native resource contract.
+
+The public [OOPS](../Signatures/OOPS/Statement.lean) and
+[Proximity](../Signatures/Proximity/Statement.lean) statements now have five explicit
+inputs: curve, security parameter, degree/dimension, query allowances and algebraic
+adversary. The conclusion displays the game, twice a DLog success bound at the
+maximum derived solver time, and the inverse-field-size loss; Proximity also
+displays its collision probability. Separate two-budget statements retain the
+sharper bound. Game definitions and hardness suprema are inspectable in each
+`GeneralSecurityModel.lean`, and proof bodies live in `Proofs/GeneralSecurity.lean`.
+Older arithmetic-source declarations remain available under their existing
+names via `ArithmeticStatement.lean` compatibility imports.
+
+[Public-interface regressions](../SignaturesTest/WeightedGeneralSecurity.lean)
+check the five-input declarations, proof locations, transitive axiom footprints,
+resource contracts and visible loss terms. An adaptive Proximity test checks
+hash/sign replies, both coordinate tags and the returned vector encoding with
+natural slots and a distinct unused machine message atom. Polynomial family
+closure remains open for both weighted schemes.
+
+Concrete/public validation: `lake build Signatures SignaturesTest` passed
+(4111 jobs), log `/private/tmp/agm-weighted-general-security-full.log`.
+The new modules and regression have no warnings, admissions, extra axioms or
+proof-resource overrides. All 692 local links across the five changed status
+and review documents were checked. The former arithmetic-source declarations
+retain their statements and proofs; only their file locations and scope comments changed.
 
 Whole-solver validation: `lake build Signatures SignaturesTest` passed (4096 jobs),
 log `/private/tmp/agm-weighted-solver-full.log`. The eleven new solver modules and
@@ -2534,6 +2582,11 @@ additional axioms or proof-resource overrides.
   lengths from general attacker resources and encoding contracts.
 - [x] Derive whole weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
+- [x] Connect weighted certificates to the original OOPS/Proximity concrete
+  security bounds, including exact Proximity source-interface and query-count transport.
+- [x] Expose short OOPS/Proximity public statements with separate proof files,
+  original admissibility/collision conditions and explicit resource-indexed DLog bounds.
+- [ ] Derive weighted polynomial-family resources and asymptotic security.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;
