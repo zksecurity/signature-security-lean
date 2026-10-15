@@ -6,6 +6,12 @@ adversary. It bounds forgery by DLog success at the proved native runtime plus
 the original query losses. Its game, hardness class and backend contracts are
 [inspectable](../Signatures/Schnorr/GeneralSecurityModel.lean); proofs are separate.
 
+The [general-caller ROM theorem](../Signatures/Runtime/BackendSchnorrROMSecurity.lean)
+now proves the original quadratic security bound from DLog hardness in the same
+fixed backend as the unrestricted attacker. Its complete replaying solver has a
+derived executable certificate, runtime/code bounds and polynomial resource
+formulas. The short public wrapper and nonuniform family security corollary remain open.
+
 The [arithmetic-source ROM statement](../Signatures/Schnorr/ArithmeticStatement.lean)
 proves ordinary programmable-ROM EUF-CMA security from fixed-generator DLog
 hardness within a derived arithmetic-machine budget. It does not assume algebraicity.
@@ -29,8 +35,9 @@ delta * (delta / (qH + 1) - 1/|F|) <= epsilon.
 
 Here `epsilon` bounds every DLog solver in the general closed machine class at
 the certified target budget. `qS` and `qH` bound signing and hash calls on every
-reply path, for every public key. Repeated calls count again. The source-code
-certificate separately bounds private-random calls, hash calls, signing calls,
+reply path, for every public key. Repeated calls count again. The general-caller
+endpoint uses measured implementation resources; the arithmetic-source endpoint's
+source-code certificate separately bounds private-random calls, hash calls, signing calls,
 and local work. Both sets of query bounds are premises; neither is inferred
 from a bound on distinct messages. The extra hash slot covers the final forgery.
 
@@ -403,8 +410,27 @@ covers the exact complete runtime formula from original numerical resource
 families, with no finished pass/fork/extractor efficiency premise. Curve and
 message types may vary with the security parameter. Regression guards inspect
 the whole theorem and primitive-operation contracts for those restrictions.
-Stored-code polynomial closure, the fixed-backend executable certificate and
-concrete/public/family security endpoints remain open.
+The [stored-code family theorem](../Signatures/Runtime/BackendSchnorrROMDescriptionPolynomial.lean)
+now proves polynomial closure from the original caller, sampler, primitive and
+port descriptions. Its [numerical inputs](../Signatures/Runtime/BackendSchnorrROMDescriptionInputs.lean)
+equal the existing complete code budget exactly; they assume no finished component
+has polynomial stored code. Generic [structural closure](../Signatures/Runtime/BackendDescriptionPolynomial.lean)
+counts fixed reduction expressions, effectful bodies and argument frames while
+leaving the caller unrestricted.
+
+The [fixed-backend executable certificate](../Signatures/Runtime/BackendSchnorrROMSolverWithin.lean)
+combines source equality, runtime and complete description accounting internally.
+It realizes the [general DLog algorithm](../Signatures/Runtime/BackendSchnorrROMReduction.lean)
+at every input. That algorithm uses the supplied generator; at the scheme
+generator, its entire DLog experiment equals the named lazy reduction's experiment.
+The [concrete security theorem](../Signatures/Runtime/BackendSchnorrROMSecurity.lean)
+applies hardness in the [same execution class](../Signatures/Runtime/BackendSchnorrROMDLog.lean)
+and preserves the original quadratic forking and signing-simulation losses.
+Every DLog challenge must fit the encoded input cap. No finished solver efficiency
+or executable witness is assumed. [Resource guards](../SignaturesTest/SchnorrROMResources.lean)
+check this scope, exact description and experiment connections, and standard axioms.
+The short public interface and nonuniform family security theorem remain open;
+polynomial resource formulas alone do not constitute the family security theorem.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
