@@ -193,8 +193,13 @@ budget. Hits preserve the store; misses may advance its invariant. The result
 bounds returned entry widths and at most one extra cache entry.
 [Signing's pure cache update](../Signatures/Runtime/BackendSchnorrROMProgrammingCost.lean)
 also has a derived runtime and width/capacity bound. Both formulas have polynomial
-closure without a message-domain factor. Managed-cache and complete signing
-runtime, sampler installation and general-caller assembly remain open.
+closure without a message-domain factor.
+[Managed-cache runtime](../Signatures/Runtime/BackendSchnorrROMManagedBudget.lean)
+now includes both caches and every hit/miss path.
+[Complete signing runtime](../Signatures/Runtime/BackendSchnorrROMSigningBudget.lean)
+charges both sequential draws, commitment arithmetic, programming and return
+construction. Its three store invariants account for each draw's state change;
+the cache-width allowance remains fixed across repeated signing calls.
 [Native private sampling](../Signatures/Runtime/BackendSchnorrPrivateSampling.lean)
 now transforms the actual scalar sampler to share the raw tape with attacker
 draws, with exact source correspondence even on malformed input tapes. Its
@@ -214,8 +219,15 @@ all internal draws. Its time is original local work plus executed visits times
 a derived routing allowance plus internal queries times the proved handler cost.
 The saved tape grows by at most the internal query allowance, and the remaining
 tape stays within its initial capacity. Polynomial closure is proved without
-enumerating numeric arities or loop counters. Its composition with managed-cache
-access and both signing draws, and general-caller pass/selector assembly, remain open.
+enumerating numeric arities or loop counters.
+[The installed-kernel theorem](../Signatures/Runtime/BackendSchnorrROMPrivateBudget.lean)
+now derives live-cache, managed-cache and full signing budgets with this actual
+sampler from its original execution profile and primitive laws. It assumes no
+completed sampler or kernel budget. Signing reserves twice the internal query
+allowance and charges the second draw at the increased saved capacity. All three
+installed runtime formulas have proved polynomial closure.
+Common-store caller adapters, dispatch and general-caller pass/selector assembly,
+then complete solver/public/family endpoints, remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
