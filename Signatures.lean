@@ -28,6 +28,8 @@ import Signatures.Runtime.BackendSchnorrAGMFlattenBudget
 import Signatures.Runtime.BackendSchnorrAGMHashBudget
 import Signatures.Runtime.BackendListSingleton
 import Signatures.Runtime.BackendSchnorrAGMHashDispatchBudget
+import Signatures.Runtime.BackendListSnoc
+import Signatures.Runtime.BackendSchnorrAGMProgramming
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset

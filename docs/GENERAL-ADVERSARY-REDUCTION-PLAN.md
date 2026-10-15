@@ -98,7 +98,9 @@ correspondence and the original probability bound. Its storage capacities are
 messages, with no finite message/group-domain assumption. Its native cache core,
 complete read, representation flattening and all-shape hash dispatcher now
 have exact encoded-state semantics and derived time/code bounds. Hash dispatch
-charges both singleton scans and the malformed-request path. Random/signing
+charges both singleton scans and the malformed-request path. Chronological
+history append and first-entry-preserving signing-cache programming now have
+native implementations and derived time/code bounds. Complete random/signing
 handlers, final extraction, complete solver overhead and general-caller
 composition, including external request/reply packing, remain open.
 
@@ -125,7 +127,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and native read, coefficient-flattening and all-shape hash-dispatch time/code certificates. | Random/signing handlers, final extraction, complete solver overhead and general caller composition, including external request/reply packing. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and native read, coefficient-flattening, all-shape hash-dispatch, history-append and signing-cache-programming time/code certificates. | Complete random/signing handlers, final extraction, complete solver overhead and general caller composition, including external request/reply packing. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1238,7 +1240,40 @@ Validation: the dispatcher regression target passed (3408 jobs), and
 parameter cleanup. No new warnings or nonstandard transitive axioms occur in
 these declarations. All 424 local links in the two edited guides resolve.
 
-Next, implement and charge random/signing handlers and final extraction, then derive
+The [history append](../Signatures/Runtime/BackendListSnoc.lean) now executes two
+reversals and a cons. It preserves every chronological coefficient position,
+including duplicates. For cell/context width `w` and history cap `N`, its derived
+time is `(34*N+113) * overhead (128*((4*N+12)*((8*N+32)*w)))`; stored code is at most
+`96*structuralAllowance`, independent of `N`. Both traversals, intermediate lists
+and the retained input/context are charged; no append primitive is assumed.
+
+The [cache-programming compiler](../Signatures/Runtime/BackendCacheProgramming.lean)
+scans an association list and inserts the supplied value only on a miss.
+Existing entries, cached zero and shadowed duplicates remain unchanged. Its time
+bound is `K*(comparisonTime+257*fee)+160*fee`, where
+`fee = overhead (128*((4*K+16)*w))`; it needs only comparison and representation
+contracts, and adds at most one bounded entry.
+The [Schnorr specialization](../Signatures/Runtime/BackendSchnorrAGMProgramming.lean)
+implements comparison from message/group primitives, includes the local-call
+charge, and exactly realizes the cache part of `signedState`. It has no sampling
+command. Its stored code is bounded by the two comparison primitives plus
+`264*structuralAllowance+1`.
+[Regressions](../SignaturesTest/BackendSchnorrAGMSigningStorage.lean) check
+chronological duplicates, empty histories, cached zero, shadowed entries, fresh
+insertion and independence of query costs in the full costed programming run.
+They also check transitive axioms and exclude completed-component efficiency or
+finite-domain premises from the public bounds.
+
+These are signing components. The sampled response arithmetic, both history
+updates, cache programming, state/reply packing and malformed-request branch
+still need a composed signing-handler certificate.
+
+Validation: `SignaturesTest.BackendSchnorrAGMSigningStorage` passed (3378 jobs),
+and `lake build Signatures SignaturesTest` passed (4161 jobs). The new modules
+have no warnings or nonstandard transitive axioms. All 430 local links in the
+two edited guides resolve.
+
+Next, compose and charge complete random/signing handlers and final extraction, then derive
 complete solver time/code bounds from general attacker resources and connect them to the probability
 theorem. Charge all incoming coefficient/group encodings, including ignored
 malformed data. The proof-side encoding and metadata-restoration maps are not
@@ -2869,6 +2904,9 @@ additional axioms or proof-resource overrides.
 - [x] Connect both singleton scans to the all-shape native hash dispatcher, with
   exact source scalar/reply-state correspondence, no sampling on rejection,
   full malformed-input size charges and derived all-path runtime/code bounds.
+- [x] Implement chronological history append and first-entry-preserving signing
+  cache programming, with derived native time/code bounds and an exact source
+  signing-cache correspondence. Complete signing-handler composition remains open.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;

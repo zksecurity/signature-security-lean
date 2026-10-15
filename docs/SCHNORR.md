@@ -240,7 +240,18 @@ all control transitions. Every coefficient row and all group elements contribute
 to the input-size bound, even if the request is rejected. Its stored code is
 independent of these runtime list lengths.
 
-This dispatcher uses an internal scalar/state interface. Random/signing handlers,
+The [history append](../Signatures/Runtime/BackendListSnoc.lean) preserves the
+chronological order of received representations and signed messages, with costs
+for both list reversals, construction and retained inputs. The
+[signing-cache programmer](../Signatures/Runtime/BackendSchnorrAGMProgramming.lean)
+inserts a supplied challenge only on a miss, preserving the first cached
+challenge and explanation even when the challenge is zero. It exactly matches
+the cache component of `signedState` and has derived time/code bounds from the
+implemented message/group comparisons and storage contracts. It performs no
+sampling. These components still need to be composed with response arithmetic,
+both scalar draws and the complete signing request/reply path.
+
+The hash dispatcher uses an internal scalar/state interface. Complete random/signing handlers,
 final extraction, full solver accounting and general-caller composition,
 including external request/reply packing, remain open; these component certificates
 are not yet a certificate for the full solver.
