@@ -85,11 +85,16 @@ now connect these certificates to the original concrete security bounds. Their
 short public statements take the curve, security parameter, degree/dimension,
 query allowances and algebraic adversary. OOPS retains its distinct-message
 admissibility rule; Proximity retains its actual fresh-collision probability.
-The weighted polynomial-family corollaries remain unfinished.
+Both weighted routes now have derived polynomial time/code bounds and
+nonuniform family corollaries in one fixed backend. Degree and dimension must
+grow polynomially in the security parameter. OOPS concludes negligible forgery
+under DLog hardness and negligible inverse field size. Proximity bounds forgery
+by its original collision probability plus negligible error; a separate corollary
+requires that collision probability to be negligible too.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
-stronger claim; complete the other signature routes and expose their
-general-attacker statements and family corollaries in the same form.
+stronger claim; complete Schnorr's general-caller overhead/replay routes and
+their public statements and family corollaries, then finish API/documentation retirement.
 
 Establish security for general efficient attackers for the signature routes in
 this repository. Keep the reduction wrappers in our abstract arithmetic machine,
@@ -107,8 +112,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| OOPS AGM | Complete native solver runtime/code certificates, concrete DLog security, and short public statements for general realized algebraic attackers over arbitrary topic types. The original admissibility rule is preserved. | Derive polynomial-family resource bounds and asymptotic security. |
-| Proximity AGM | Complete native solver certificates, concrete DLog security, and short public statements, with exact original optional-coordinate/function-vector source transport. The original collision term is preserved. | Derive polynomial-family resource bounds and asymptotic security, retaining the collision probability. |
+| OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
+| Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -871,8 +876,45 @@ names via `ArithmeticStatement.lean` compatibility imports.
 check the five-input declarations, proof locations, transitive axiom footprints,
 resource contracts and visible loss terms. An adaptive Proximity test checks
 hash/sign replies, both coordinate tags and the returned vector encoding with
-natural slots and a distinct unused machine message atom. Polynomial family
-closure remains open for both weighted schemes.
+natural slots and a distinct unused machine message atom.
+
+[Weighted polynomial closure](../Signatures/Runtime/BackendWeightedPolynomial.lean)
+now derives polynomial growth of the complete good/bad runtime formulas and the
+stored-code formula. The proof composes handler and extractor lemmas, including
+term construction and coefficient expansion. One polynomial bounds degree or
+dimension across the security parameter; a bound polynomial in its numerical
+value is not silently treated as polynomial in its binary encoding length.
+Both branch choices are covered, even for an index family that changes schemes.
+
+[Shared family resources](../Signatures/Runtime/GeneralWeightedFamilyResources.lean)
+contain only polynomial caller, query, encoding, primitive, sampler and stored
+component-code bounds. Completed solver efficiency is derived. One fixed
+`Configuration` determines execution and description costs across all parameters.
+Groups, topics, slots and message atoms may vary with the parameter; no finite
+label/message/public-key domain is assumed. The
+[DLog family class](../Signatures/Runtime/BackendWeightedDLogFamily.lean) charges
+polynomial code/advice and time and covers every generated challenge.
+
+The [OOPS family statement](../Signatures/OOPS/GeneralAGMFamilyStatement.lean)
+uses the original source game and distinct-message rule and concludes negligible
+forgery under this nonuniform DLog hardness and negligible inverse field size.
+The [Proximity family statements](../Signatures/Proximity/GeneralAGMFamilyStatement.lean)
+first give the original collision probability plus a negligible error. Their
+negligible-forgery corollary has an explicit negligible-collision hypothesis for
+that same source adversary. Proof bodies remain separate. These are conditional
+fixed-backend results; they do not construct a uniform program generator or a
+conventional-machine instantiation.
+
+[Family regressions](../SignaturesTest/WeightedFamilies.lean) exercise growing
+degrees/dimensions and both complete solver formulas, check transitive standard
+axioms and forbid assumed completed-solver efficiency or finite label domains.
+They require varying group/label/dimension families, fixed-backend hardness and
+the original Proximity collision qualification.
+
+Weighted-family validation: `lake build Signatures SignaturesTest` passed
+(4119 jobs), log `/private/tmp/agm-weighted-family-full.log`. The eight new
+modules/tests have no warnings, admissions, extra axioms or proof-limit overrides.
+All 710 local links in the five changed status/review documents were checked.
 
 Concrete/public validation: `lake build Signatures SignaturesTest` passed
 (4111 jobs), log `/private/tmp/agm-weighted-general-security-full.log`.
@@ -2586,7 +2628,8 @@ additional axioms or proof-resource overrides.
   security bounds, including exact Proximity source-interface and query-count transport.
 - [x] Expose short OOPS/Proximity public statements with separate proof files,
   original admissibility/collision conditions and explicit resource-indexed DLog bounds.
-- [ ] Derive weighted polynomial-family resources and asymptotic security.
+- [x] Derive weighted polynomial-family resources and asymptotic security,
+  with explicit polynomial degree/dimension and Proximity's original collision loss.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;
@@ -2617,8 +2660,10 @@ follow from general caller resources and representation contracts. The nonunifor
 family convention, asymptotic success corollary, and arbitrary-message probability
 transport are now proved. Both lazy AGM solvers now have checked probability
 correspondence, list-cache refinements, full resource certificates, and the short
-general-caller concrete statement. The BLS AGM polynomial-family closure and
-nonuniform security corollary are also proved. Continue with the remaining
-scheme and family tasks above.
+general-caller concrete statement. BLS, OOPS and Proximity AGM now also have
+polynomial-family closure and nonuniform security corollaries; Proximity retains
+its collision qualification. Continue with Schnorr's general-caller overhead,
+replay and separate nonzero-nonce work, followed by public statements/families and
+API/documentation retirement.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine/family claim. The broader plan remains open.

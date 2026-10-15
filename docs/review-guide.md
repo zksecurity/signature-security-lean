@@ -91,6 +91,11 @@ the degree or dimension. They preserve their original source games and derive
 both native reduction budgets from general caller resources. Their models and
 expanded games are in `GeneralSecurityModel.lean`; their proof bodies are in
 `Proofs/GeneralSecurity.lean`.
+The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and
+[Proximity](../Signatures/Proximity/GeneralAGMFamilyStatement.lean) family statements
+derive polynomial solver time/code under one fixed backend and polynomial
+component/degree/dimension bounds. Proximity's collision-relative statement
+does not assume negligible collisions; its negligible-forgery corollary does.
 The detailed arithmetic-source security statements are annotated line by line in
 [BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean),
 [OOPS/ArithmeticStatement.lean](../Signatures/OOPS/ArithmeticStatement.lean), and

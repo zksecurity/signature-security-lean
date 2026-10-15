@@ -203,7 +203,17 @@ distinct-message rule and Proximity's actual fresh-collision probability.
 [Proximity transport](../Signatures/Proximity/Proofs/GeneralAGMEncoding.lean)
 preserves the original optional-coordinate/function-vector interface and each
 query allowance. No finite topic/slot domain or completed solver budget is assumed.
-Polynomial family closure remains open for these two schemes.
+[Polynomial closure](../Signatures/Runtime/BackendWeightedPolynomial.lean) now
+derives both whole runtime bounds and stored-code bounds, including polynomial
+degree/dimension. [Family resources](../Signatures/Runtime/GeneralWeightedFamilyResources.lean)
+then construct both polynomial reduction families in one fixed backend. The
+[OOPS corollary](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) gives negligible
+forgery under nonuniform DLog hardness and negligible inverse field size. The
+[Proximity corollaries](../Signatures/Proximity/GeneralAGMFamilyStatement.lean)
+give collision probability plus negligible error, and negligible forgery only
+with an explicit negligible-collision hypothesis. Types may vary with the
+security parameter; no uniform program generator or conventional-machine
+instantiation is claimed.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.

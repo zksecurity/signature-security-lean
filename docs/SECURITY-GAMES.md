@@ -34,6 +34,14 @@ See the [computational-security audit](COMPUTATIONAL-SECURITY.md).
 | Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | [Schnorr game](../Signatures/Schnorr/Spec/ROM.lean) |
 | Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | Same game, compiled solver with explicit accumulated sampling error |
 
+The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and
+[Proximity](../Signatures/Proximity/GeneralAGMFamilyStatement.lean) family endpoints
+derive polynomial solver code and time from component resources in one fixed
+backend, including polynomial degree/dimension. OOPS gives negligible forgery
+under DLog hardness and negligible inverse field size. Proximity gives the
+original collision probability plus negligible error; negligible forgery also
+requires negligible collisions for the same source-adversary family.
+
 Schnorr uses no algebraicity restriction. Its programmable-ROM reduction simulates
 signatures, then replays a recorded prefix with a new challenge. The theorem bounds
 `delta * (delta/(qH+1) - 1/|F|)` by budget-bounded DLog hardness, where

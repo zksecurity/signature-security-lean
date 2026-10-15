@@ -11,8 +11,10 @@ import Signatures.BLS.GeneralAGMFamilyStatement
 import Signatures.BLS.Proofs.LazyAGMArbitraryMessages
 import Signatures.BLS.Proofs.LazyAGMList
 import Signatures.OOPS.Statement
+import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics
 import Signatures.Proximity.Statement
+import Signatures.Proximity.GeneralAGMFamilyStatement
 import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
 import Signatures.LinearFunctional.Proofs.LazyAGMCacheBound
 import Signatures.Schnorr.Statement

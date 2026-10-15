@@ -221,7 +221,15 @@ preserved. [Proximity's original interface](../Signatures/Proximity/Proofs/Gener
 is transported exactly, including adaptive per-kind query counts. Short public
 statements live in [OOPS](../Signatures/OOPS/Statement.lean) and
 [Proximity](../Signatures/Proximity/Statement.lean), with proof bodies in separate
-files. Polynomial family closure remains open for these weighted schemes.
+files. [Polynomial family closure](../Signatures/Runtime/BackendWeightedPolynomial.lean)
+now derives complete solver time and stored-code growth from primitive, caller,
+encoding and degree/dimension bounds. The
+[shared family interface](../Signatures/Runtime/GeneralWeightedFamilyResources.lean)
+fixes the backend and transports the pointwise certificates into polynomial
+nonuniform solver families. The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean)
+and [Proximity](../Signatures/Proximity/GeneralAGMFamilyStatement.lean) asymptotic
+statements apply DLog hardness and negligible inverse field size; Proximity keeps
+its actual collision term and requires its negligibility for negligible forgery.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
