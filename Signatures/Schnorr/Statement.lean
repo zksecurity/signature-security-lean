@@ -18,7 +18,8 @@ own implemented general local code, resource evidence and algebraic outputs.
 Proofs are in `Proofs/GeneralSecurity.lean` and `Proofs/GeneralAGM.lean`.
 The supporting contracts are in `GeneralAGMParameters.lean`. The existing
 arithmetic-source ROM theorem remains available through `ArithmeticStatement.lean`;
-general-caller ROM replay and the AGM polynomial-family corollary remain separate. -/
+the derived AGM polynomial-family corollary is in `GeneralAGMFamilyStatement.lean`.
+General-caller ROM replay remains separate work. -/
 
 namespace Schnorr
 

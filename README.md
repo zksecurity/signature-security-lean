@@ -47,9 +47,11 @@ certificates and a [short public theorem](Signatures/Schnorr/Statement.lean),
 with exact finite-list execution, arbitrary messages and query-dependent storage.
 It takes a single-group curve, security parameter, query allowances and algebraic
 adversary, and displays DLog success plus the original query losses.
-Its polynomial-family corollary and Schnorr's general-caller ROM replay remain
-in progress. A conventional machine instantiation is separate from the
-conditional fixed-backend results.
+Its [polynomial-family corollary](Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
+derives negligible forgery from polynomial component resources, DLog hardness
+and negligible inverse field size in one fixed backend. Schnorr's general-caller
+ROM replay and the nonzero-nonce variant remain in progress. A conventional
+machine instantiation is separate from the conditional fixed-backend results.
 
 Start with the [GitHub review guide](docs/review-guide.md) or the
 [security-game ledger](docs/SECURITY-GAMES.md). Reviews and checklists can be recorded with the

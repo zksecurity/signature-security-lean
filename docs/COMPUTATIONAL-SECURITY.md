@@ -128,7 +128,7 @@ description measure across all security parameters. The
 negligible forgery probability from DLog hardness in that family class and
 negligible `1/|F|`. Groups and messages may vary with the parameter; messages
 need not be finite. No uniform program generator or conventional-machine
-instantiation is claimed. The other schemes' general-attacker endpoints remain open.
+instantiation is claimed. The weighted and Schnorr AGM endpoints are described below.
 The existing AGM machine certificates
 below still concern the eager implementations.
 
@@ -217,6 +217,7 @@ instantiation is claimed.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.
+
 Both [native private-cache branches](../Signatures/Runtime/BackendWeightedCache.lean)
 now have derived runtime and stored-code bounds, including their implemented
 comparisons and independent pair sampling. The bounds depend on encountered
@@ -240,6 +241,18 @@ both expansion folds and final reversal. The final OOPS/Proximity theorems deriv
 every generator and fold bound from individual primitive contracts; they do not
 assume a completed expansion budget. These bounds now compose into the complete
 solver certificates and concrete general-attacker endpoints described above.
+
+Schnorr AGM now has a [short general-attacker theorem](../Signatures/Schnorr/Statement.lean)
+with complete native runtime/code certificates and the original losses
+`(qH+1)/|F| + qS*(qS+qH)/|F|`. The displayed game is exactly the source game.
+[Polynomial closure](../Signatures/Runtime/BackendSchnorrAGMPolynomial.lean)
+covers the actual complete solver formulas; [family resources](../Signatures/Schnorr/GeneralAGMFamilyResources.lean)
+derive its nonuniform executable family in one fixed backend. The
+[asymptotic corollary](../Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
+concludes negligible forgery under DLog hardness and negligible inverse field
+size. Messages may be arbitrary, and numerical random ranges need not be
+polynomial. General-caller Schnorr ROM replay and its nonzero-nonce extension
+remain open; these results do not claim a conventional-machine instantiation.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).

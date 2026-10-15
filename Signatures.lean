@@ -18,6 +18,7 @@ import Signatures.Proximity.GeneralAGMFamilyStatement
 import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
 import Signatures.LinearFunctional.Proofs.LazyAGMCacheBound
 import Signatures.Schnorr.Statement
+import Signatures.Schnorr.GeneralAGMFamilyStatement
 import Signatures.Schnorr.BitStatement
 import Signatures.Schnorr.SeededBitStatement
 import Signatures.Schnorr.Proofs.NonzeroSecurity
@@ -223,11 +224,14 @@ bounds. The complete terminal and solver runtime now follow from primitive and
 representation contracts and measured caller resources. A fixed-backend executable
 witness combines runtime, full stored-code accounting and exact source behavior;
 the concrete security theorem applies DLog hardness to this witness with the
-original probability losses. The short public statement and polynomial-family
-corollary remain open.
+original probability losses. `Schnorr.agm_security` exposes the short public
+statement. Polynomial closure of the complete native time/code formulas and
+`Schnorr.GeneralAGM.Family.security_asymptotic` are proved in one fixed backend,
+under polynomial component resources, DLog hardness and negligible inverse field
+size. General-caller ROM replay and the nonzero-nonce variant remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
-No PPT preservation, standard-model OOPS result, concrete-hash instantiation, or equivalence
+No conventional-machine PPT preservation, standard-model OOPS result, concrete-hash instantiation, or equivalence
 to ArkLib's experimental runner is claimed. See `docs/review-guide.md` for the GitHub review path.
 -/

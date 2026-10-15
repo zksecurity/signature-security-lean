@@ -141,10 +141,13 @@ to this derived witness, retaining the original probability losses. The short
 public statement now takes a single-group curve, security parameter, query
 allowances and algebraic adversary. The displayed game equals the original game;
 the DLog supremum uses the derived complete runtime and stored-code bounds.
-Its proofs are separate from the statement. The polynomial-family corollary remains open.
+Its proofs are separate from the statement. Polynomial closure of the actual
+runtime/code formulas and a nonuniform family corollary are now proved. The
+family theorem keeps one fixed backend and derives negligible forgery from
+polynomial component resources, DLog hardness and negligible inverse field size.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
-stronger claim; complete Schnorr's general-caller overhead/replay routes and
+stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
 their public statements and family corollaries, then finish API/documentation retirement.
 
 Establish security for general efficient attackers for the signature routes in
@@ -166,7 +169,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Complete native runtime/code certificates, concrete DLog security and a short public statement from measured general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Add the derived polynomial-family corollary; instantiate a conventional machine only for that stronger claim. |
+| Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1784,6 +1787,49 @@ test, existing `SchnorrReduction` and `StatementAssumptions` tests, and the
 aggregate `Signatures` import passed without warnings. The full parallel Lake
 build was not rerun after the machine's memory-pressure crashes. All 550 local
 links in the README and the two edited guides resolve.
+
+### Schnorr AGM polynomial family, 2026-10-15
+
+[`BackendSchnorrAGMPolynomial`](../Signatures/Runtime/BackendSchnorrAGMPolynomial.lean)
+now proves polynomial growth of the actual complete runtime and stored-code
+formulas. Component lemmas cover flattening, cache reads, hashing, extraction,
+the full handler and the terminal before assembling the whole solver result.
+Each component resource has a fixed polynomial across parameters; structural
+overhead is jointly polynomial in the parameter and encoded frame size.
+
+[`GeneralAGMFamilyResources`](../Signatures/Schnorr/GeneralAGMFamilyResources.lean)
+derives total/measured query bounds, complete solver time/code polynomiality and
+the native nonuniform executable witness. Only caller work, query allowances,
+encoding widths, primitive/sampling/adapter prices and component descriptions
+are polynomial premises. The numerical random arity and message-domain size
+are absent. Equality of the full backend configuration fixes execution,
+random-query costs and description accounting across the family.
+
+The [hardness class](../Signatures/Runtime/BackendSchnorrAGMDLogFamily.lean)
+covers all polynomial-time, polynomial-code solver families in that same backend.
+Every challenge fits the input cap; one program per parameter handles all inputs.
+The [family statement](../Signatures/Schnorr/GeneralAGMFamilyStatement.lean), with
+its [separate proof](../Signatures/Schnorr/Proofs/GeneralAGMFamily.lean), concludes
+negligible forgery under this DLog hardness and negligible inverse field size.
+The two original losses, `(qH+1)/|F|` and `qS*(qS+qH)/|F|`, are proved negligible
+using the query polynomials. Fields, groups and arbitrary message types can vary
+with the parameter; no uniform program generator is asserted.
+
+[Regression guards](../SignaturesTest/SchnorrAGMFamilies.lean) check the standard
+transitive axiom footprint, fixed-backend hardness and family convention,
+absence of finished-solver efficiency or polynomial-raw-arity premises, separate
+proof/statement locations and preservation of the actual source game. A zero-query
+regression retains setup/terminal costs and verifies polynomial closure.
+
+Schnorr AGM's agreed conditional-backend route is complete. General Schnorr ROM
+replay and its nonzero-nonce extension remain open as listed below.
+
+Validation: all five new source modules and `SchnorrAGMFamilies` passed, along
+with the existing `SchnorrGeneralStatement` regressions and the aggregate
+`Signatures` import. Checks used one direct Lean process at a time with
+`-j1 -M8192`, package implicit-variable settings and default proof limits.
+The modules are warning-free, with no admissions or nonstandard axioms.
+All 674 local links in the four edited Markdown guides resolve.
 
 ### Schnorr general ROM replay remaining work
 
@@ -3457,9 +3503,10 @@ additional axioms or proof-resource overrides.
   nonzero-nonce variant separately.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
   and derived resources; keep proofs separate and preserve the original query losses.
-- [ ] Add the Schnorr AGM polynomial-family corollary; complete the corresponding
-  general ROM concrete and family endpoints.
-- [ ] Present those endpoints through the simple public scheme/parameter,
+- [x] Derive the Schnorr AGM polynomial solver resources and nonuniform family
+  corollary in one fixed backend, preserving both original query losses.
+- [ ] Complete the general Schnorr ROM concrete and family endpoints.
+- [ ] Present the new ROM endpoints through the simple public scheme/parameter,
   qualified-adversary, query-allowance, game, and bound interface described above;
   keep execution/encoding certificates internal and hardness scope explicit.
 - [ ] Update status documentation and retire superseded eager runtime endpoints
@@ -3488,8 +3535,8 @@ correspondence, list-cache refinements, full resource certificates, and the shor
 general-caller concrete statement. BLS, OOPS and Proximity AGM now also have
 polynomial-family closure and nonuniform security corollaries; Proximity retains
 its collision qualification. Schnorr AGM now also has its complete native resource
-certificate, concrete DLog security theorem and short public statement. Continue
-with its polynomial-family corollary, general Schnorr ROM replay and separate
+certificate, short concrete security theorem and derived polynomial-family
+corollary. Continue with general Schnorr ROM replay and separate
 nonzero-nonce work, then API/documentation retirement.
 Preserve the distinction between the proved conditional native endpoint and
-an instantiated conventional-machine/family claim. The broader plan remains open.
+an instantiated conventional-machine claim. The broader plan remains open.

@@ -410,7 +410,20 @@ contain only local contracts and attacker allowances. The
 [resource proof](../Signatures/Schnorr/Proofs/GeneralAGM.lean) constructs the
 complete solver witness, while the [public proof](../Signatures/Schnorr/Proofs/GeneralSecurity.lean)
 connects the displayed game exactly to the source game and its DLog supremum.
-The derived polynomial-family corollary remains open.
+The [polynomial closure proof](../Signatures/Runtime/BackendSchnorrAGMPolynomial.lean)
+now covers the actual complete runtime and stored-code formulas, through cache
+reads, coefficient processing, the full handler, final extraction and solver
+composition. [Family resources](../Signatures/Schnorr/GeneralAGMFamilyResources.lean)
+construct a polynomial DLog solver family from those component bounds and the
+pointwise executable witnesses. The backend, cost convention and description
+measure remain fixed across parameters. Fields, groups and messages may vary;
+neither the message universe nor numerical random arity must be polynomial.
+The [family theorem](../Signatures/Schnorr/GeneralAGMFamilyStatement.lean), with
+its [separate proof](../Signatures/Schnorr/Proofs/GeneralAGMFamily.lean), gives
+negligible forgery under nonuniform DLog hardness and negligible inverse field
+size. Both original query losses are polynomial multiples of that inverse.
+This remains a conditional fixed-backend result; general ROM replay and the
+nonzero-nonce runtime extension remain separate work.
 
 ## What Efficiency Is Certified
 
