@@ -138,7 +138,10 @@ runtime certificates now combine those costs with measured caller work and query
 overhead. A fixed-backend executable witness includes exact source semantics and
 the entire stored program. The concrete security theorem applies DLog hardness
 to this derived witness, retaining the original probability losses. The short
-public statement and polynomial-family corollary remain open.
+public statement now takes a single-group curve, security parameter, query
+allowances and algebraic adversary. The displayed game equals the original game;
+the DLog supremum uses the derived complete runtime and stored-code bounds.
+Its proofs are separate from the statement. The polynomial-family corollary remains open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
@@ -163,7 +166,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Complete native runtime/code certificates and concrete DLog security from measured general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Add the short public statement and derived polynomial-family corollary; instantiate a conventional machine only for that stronger claim. |
+| Schnorr AGM | Complete native runtime/code certificates, concrete DLog security and a short public statement from measured general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Add the derived polynomial-family corollary; instantiate a conventional machine only for that stronger claim. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1744,6 +1747,43 @@ Validation: targeted solver regressions passed (3513 jobs), and
 regressions have no warnings, admissions, nonstandard transitive axioms or
 proof-resource/transparency overrides. All 525 local links in the two edited
 guides resolve.
+
+### Schnorr public AGM statement, 2026-10-15
+
+[`Schnorr.agm_security`](../Signatures/Schnorr/Statement.lean) now takes the four
+requested inputs: curve, security parameter, query allowances and algebraic
+adversary. It displays the actual EUF-CMA probability bounded by the DLog success
+supremum at the derived reduction time, plus `(qH+1)/|F| + qS*(qS+qH)/|F|`.
+
+- [`CyclicCurve`](../Signatures/Model/CyclicCurve.lean) supplies one scalar field,
+  one group and a generator at each parameter. It has no pairing requirements.
+- [`GeneralAGMParameters`](../Signatures/Schnorr/GeneralAGMParameters.lean) fixes
+  primitive/encoding/backend contracts and attacker resource limits. The attacker
+  supplies general backend code realizing the source on all inputs, its own
+  execution/code bounds, and query allowances. No finished-reduction budget is assumed.
+- [`reduction_within`](../Signatures/Schnorr/Proofs/GeneralAGM.lean) derives
+  challenge-size, whole-program runtime and stored-code bounds. It uses measured
+  caller work and query-dependent cache/history capacities, with no finite message domain.
+- [`GeneralSecurityModel`](../Signatures/Schnorr/GeneralSecurityModel.lean) writes
+  out the game and DLog supremum. The [public proofs](../Signatures/Schnorr/Proofs/GeneralSecurity.lean)
+  establish exact source-game equality, public query allowances, the security
+  inequality and monotonicity in the DLog time allowance.
+- The existing certified arithmetic-source ROM theorem retains its name and is
+  re-exported from [`ArithmeticStatement`](../Signatures/Schnorr/ArithmeticStatement.lean).
+- [Regression guards](../SignaturesTest/SchnorrGeneralStatement.lean) check the
+  public argument shape, proof locations, transitive axioms, explicit game and
+  hardness terms, and absence of pairing, finite message-domain, arithmetic-attacker
+  or assumed completed-solver premises.
+
+The polynomial-family closure/corollary remains open. General ROM replay and the
+nonzero-nonce variant also remain separate; this checkpoint does not claim those results.
+
+Validation used one direct Lean process at a time with `-j1 -M8192` and the
+package's implicit-variable settings. All new modules, the public regression
+test, existing `SchnorrReduction` and `StatementAssumptions` tests, and the
+aggregate `Signatures` import passed without warnings. The full parallel Lake
+build was not rerun after the machine's memory-pressure crashes. All 550 local
+links in the README and the two edited guides resolve.
 
 ### Schnorr general ROM replay remaining work
 
@@ -3415,8 +3455,10 @@ additional axioms or proof-resource overrides.
   the original probability losses and checking every challenge's encoded input size.
 - [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
-- [ ] Add the Schnorr AGM public statement and polynomial-family corollary;
-  complete the corresponding general ROM concrete and family endpoints.
+- [x] Add the short Schnorr AGM public statement with inspectable game, hardness
+  and derived resources; keep proofs separate and preserve the original query losses.
+- [ ] Add the Schnorr AGM polynomial-family corollary; complete the corresponding
+  general ROM concrete and family endpoints.
 - [ ] Present those endpoints through the simple public scheme/parameter,
   qualified-adversary, query-allowance, game, and bound interface described above;
   keep execution/encoding certificates internal and hardness scope explicit.
@@ -3446,8 +3488,8 @@ correspondence, list-cache refinements, full resource certificates, and the shor
 general-caller concrete statement. BLS, OOPS and Proximity AGM now also have
 polynomial-family closure and nonuniform security corollaries; Proximity retains
 its collision qualification. Schnorr AGM now also has its complete native resource
-certificate and concrete DLog security theorem. Continue with its short public
-statement and polynomial-family corollary, general Schnorr ROM replay and separate
+certificate, concrete DLog security theorem and short public statement. Continue
+with its polynomial-family corollary, general Schnorr ROM replay and separate
 nonzero-nonce work, then API/documentation retirement.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine/family claim. The broader plan remains open.

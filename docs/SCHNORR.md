@@ -1,8 +1,14 @@
 # Schnorr: Game, Rewinding, and Cost
 
-The [public statement](../Signatures/Schnorr/Statement.lean) proves ordinary
-programmable-ROM EUF-CMA security from fixed-generator DLog hardness within a
-derived arithmetic-machine budget. It does not assume algebraicity.
+The [public AGM statement](../Signatures/Schnorr/Statement.lean) takes a single-group
+curve, security parameter, query allowances and general realized algebraic
+adversary. It bounds forgery by DLog success at the proved native runtime plus
+the original query losses. Its game, hardness class and backend contracts are
+[inspectable](../Signatures/Schnorr/GeneralSecurityModel.lean); proofs are separate.
+
+The [arithmetic-source ROM statement](../Signatures/Schnorr/ArithmeticStatement.lean)
+proves ordinary programmable-ROM EUF-CMA security from fixed-generator DLog
+hardness within a derived arithmetic-machine budget. It does not assume algebraicity.
 The [bit-machine statement](../Signatures/Schnorr/BitStatement.lean) additionally
 implements all online operations and includes bounded-rejection sampling loss.
 
@@ -396,7 +402,15 @@ uses that witness in DLog hardness and retains the original bound
 `epsilon + (qH+1)/|F| + qS*(qS+qH)/|F|`. Every DLog challenge must fit the input cap.
 No finite message domain or arithmetic-language attacker is required. This remains
 conditional on the fixed backend and its local implementation/encoding contracts.
-The short public statement and derived polynomial-family corollary remain open.
+The [short public statement](../Signatures/Schnorr/Statement.lean) now exposes
+that result as `Schnorr.agm_security curve securityParameter queries adversary`.
+Its [single-group curve](../Signatures/Model/CyclicCurve.lean) requires no pairing.
+The [supporting parameters](../Signatures/Schnorr/GeneralAGMParameters.lean)
+contain only local contracts and attacker allowances. The
+[resource proof](../Signatures/Schnorr/Proofs/GeneralAGM.lean) constructs the
+complete solver witness, while the [public proof](../Signatures/Schnorr/Proofs/GeneralSecurity.lean)
+connects the displayed game exactly to the source game and its DLog supremum.
+The derived polynomial-family corollary remains open.
 
 ## What Efficiency Is Certified
 

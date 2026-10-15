@@ -15,8 +15,8 @@ are included, along with both AGM branches.
 Schnorr also has a concrete bit-heap-machine theorem, charging both replay runs,
 input loading, arithmetic, memory scans, and sampling, with explicit rejection error
 and a separate stored-code/data bound;
-see the [Schnorr review path](docs/SCHNORR.md). The Schnorr AGM and nonzero-nonce theorems
-are probability reductions, with no machine-time certificate claimed for those variants.
+see the [Schnorr review path](docs/SCHNORR.md). The nonzero-nonce ROM theorem remains
+a probability reduction; the general-caller Schnorr AGM endpoint is described below.
 Operation ledgers also cover the four pairing-based routes. See
 [computational-security status](docs/COMPUTATIONAL-SECURITY.md).
 
@@ -42,10 +42,14 @@ Both reduction families' time and stored-code bounds are derived.
 OOPS and Proximity also have general-caller concrete statements and nonuniform
 family corollaries, with derived solver time/code bounds. Their degree/dimension
 must grow polynomially; OOPS retains admissibility and Proximity retains its
-fresh-collision probability. Schnorr AGM now has exact finite-list execution and
-query-dependent storage bounds, preserving its original probability theorem.
-Schnorr's general-caller runtime/replay routes remain in progress. A conventional
-machine instantiation is separate from the conditional fixed-backend results.
+fresh-collision probability. Schnorr AGM now has complete native runtime/code
+certificates and a [short public theorem](Signatures/Schnorr/Statement.lean),
+with exact finite-list execution, arbitrary messages and query-dependent storage.
+It takes a single-group curve, security parameter, query allowances and algebraic
+adversary, and displays DLog success plus the original query losses.
+Its polynomial-family corollary and Schnorr's general-caller ROM replay remain
+in progress. A conventional machine instantiation is separate from the
+conditional fixed-backend results.
 
 Start with the [GitHub review guide](docs/review-guide.md) or the
 [security-game ledger](docs/SECURITY-GAMES.md). Reviews and checklists can be recorded with the
