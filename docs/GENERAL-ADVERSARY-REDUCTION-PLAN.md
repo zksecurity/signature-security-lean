@@ -177,7 +177,13 @@ correspondence, stored-code and both-list encoding bounds, a derived complete
 runtime budget and polynomial closure. It scans the saved tape, preserves every
 private draw, trims the selected challenge family and charges both resulting
 tape copies. The numeric reset position does not enter its iteration bound.
-Native controller assembly and general-caller composition are unfinished.
+The native controller now assembles both executions, selection, replacement
+sampling, old-challenge lookup, reset and acceptance/rejection. It has exact
+computation correspondence to the raw fork from source laws for the first pass
+and reached replay states, and a stored-code bound counting both pass/selector
+occurrences. The direct selected-challenge lookup also has complete native
+runtime and polynomial closure without building a prefix. Complete controller
+adapter/routing runtime and general-caller composition are unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -201,7 +207,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances, with reference coverage derived internally. Its raw finite-list controller/extractor has exact computation correspondence. Both native draw families and reset have full-state correspondence, stored-code bounds, preserved encoding bounds, complete runtime budgets and polynomial closure from primitive/sampler resources. Code and runtime do not enumerate numeric arities or reset positions. Raw tape growth and live-query bounds are proved. Earlier certified-source arithmetic/bit endpoints remain available. | Complete native controller and general caller composition, then whole-replay/solver resource certificates. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances, with reference coverage derived internally. Its raw finite-list controller/extractor has exact computation correspondence. Both native draw families, reset and selected-challenge lookup have source, code, encoding and complete runtime bounds with polynomial closure. The native fork is assembled, has exact computation correspondence from reached-pass source laws, and counts both passes/selectors in its stored code. No numeric-arity or reset-position enumeration is introduced. Earlier certified-source endpoints remain available. | Derive complete controller adapter/routing runtime and general-caller pass/selector composition, then whole-replay/solver resource certificates. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2262,13 +2268,60 @@ challenge-prefix selection, both output copies, discarded old remaining state,
 empty tapes and a `2^64` reset position. Guards check source computation equality,
 standard axioms, complete runtime conclusions, capacity-independent stored code,
 absence of a numeric reset-position runtime factor and absence of assumed
-completed-adapter budgets. Whole controller/caller/solver composition is still open.
+completed-adapter budgets. The following checkpoint assembles the native
+controller; its runtime and full caller/solver composition remain open.
 
 Validation: all four new source modules, the expanded `SchnorrRawTape`
 regression and the aggregate `Signatures` import passed serially with
 `-j1 -M8192` and default proof limits, without warnings, admissions, nonstandard
 axioms or proof-option overrides. All 628 local links in the updated guides
 resolve; `git diff --check` passes.
+
+### Native fork assembly and selected-challenge lookup, 2026-10-15
+
+[BackendSchnorrRawLookup](../Signatures/Runtime/BackendSchnorrRawLookup.lean)
+implements a direct fold over the saved tape with a counter, found flag and field
+value. It returns the selected challenge with exact source correspondence and
+distinguishes an absent entry from a stored zero. It builds no prefix and never
+iterates over the numeric position. Its stored-code bound covers the actual
+program. [BackendSchnorrRawLookupCost](../Signatures/Runtime/BackendSchnorrRawLookupCost.lean)
+derives accumulator/input sizes, every body/loop cost, initialization, framing and
+the complete all-path native budget from primitive/backend laws. Its runtime
+formula has polynomial closure in encoded widths, tape capacity and primitive
+times, with no numeric-position factor or completed-lookup budget premise.
+
+[BackendSchnorrRawFork](../Signatures/Runtime/BackendSchnorrRawFork.lean) assembles
+an actual native controller around supplied pass code, selector realizer and
+scalar-sampling code. The controller runs from the pass entry point twice with
+the same retained configuration, checks first selection, samples the replacement,
+looks up the prior challenge, executes native reset and checks second selection.
+It does not assume a free snapshot of the attacker's mutable state. A missing old
+challenge still permits replay; an unchanged present challenge rejects. Its
+execution law is proved, and `source` gives exact computation equality to the
+named raw-tape fork after scalar interpretation. The pass laws are required only
+for the first run and selected restart states reached by that run; malformed and
+unreachable input tapes need not be handled by a pass-source premise.
+
+[BackendSchnorrRawForkDescription](../Signatures/Runtime/BackendSchnorrRawForkDescription.lean)
+counts both actual pass descriptions, both selector descriptions, the scalar
+sampler, native lookup/reset, all adapters, result injections and control nodes.
+The general-caller pass, source cache/signing implementation and selector still
+need to be installed and certified. The controller's complete adapter/routing
+runtime and whole-solver resources are not claimed by this checkpoint.
+
+[Regressions](../SignaturesTest/BackendSchnorrRawFork.lean) execute the controller
+with actual compiled pass/selector fixtures. They check selection failure,
+costed-execution independence of an unreachable sampler, missing entry versus
+stored zero, acceptance after missing-entry replay, second-selector mismatch,
+interleaved lookup and a `2^64` position. The guards check exact computation
+correspondence, standard axioms, actual code/realizer inputs, static-description
+scope and primitive-derived complete lookup budgets.
+
+Validation: all four new source modules, the new native-controller regression,
+the existing `SchnorrRawTape` regression and the aggregate `Signatures` import
+passed serially with `-j1 -M8192` and default proof limits. There are no warnings,
+admissions, nonstandard axioms or proof-option overrides. All 638 local links in
+the updated guides resolve; `git diff --check` passes.
 
 ### Schnorr general ROM replay remaining work
 
@@ -2279,16 +2332,16 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Use measured attacker resources for native replay storage and sampling costs.
   Probability-level private-family coverage is now derived without inspecting
   source syntax, but this finite existence argument supplies no efficiency bound.
-- Complete native caller/controller assembly on top of
-  the raw finite-list semantics. Exact list-controller and extraction equality
-  are now proved, and both raw draw families plus reset have native semantics, code/runtime
-  certificates, encoding invariants and polynomial runtime closure from their
-  primitive and scalar-sampler contracts.
+- Implement and certify the native general-caller pass, source cache/signing
+  handling and selector, then install them in the assembled native controller.
+  Exact raw-fork/extraction equality and native-controller source composition
+  are proved. Draws, reset and selected-challenge lookup have complete component
+  resources; the full controller runtime still needs to be composed.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
   do not assume free snapshots of an arbitrary attacker state.
-- Complete native encoded-width and runtime bounds for the
-  whole replay controller. Reset and both draw handlers are accounted for and generate no
+- Complete native encoded-width and runtime bounds for the controller's
+  adapters/routing and both executions. Lookup, reset and both draw handlers are accounted for and generate no
   arity-sized codec code; older fixed-arity endpoints
   retain their linear-range accounting. If bounded
   sampling introduces error, prove and include its probability contribution.
@@ -3970,8 +4023,12 @@ additional axioms or proof-resource overrides.
   and encoding bounds, complete runtime and polynomial closure from sampler resources.
 - [x] Implement native reset with exact full-state semantics, stored-code and
   both-list encoding bounds, complete primitive-derived runtime and polynomial closure.
-- [ ] Complete native controller assembly and derive native encoding,
-  replay and general-caller costs from measured resources.
+- [x] Implement direct selected-challenge lookup with exact source semantics,
+  code/encoding bounds, complete primitive-derived runtime and polynomial closure.
+- [x] Assemble the native fork around actual pass/selector/sampler code, prove
+  exact source correspondence at reached restart states, and count its entire stored code.
+- [ ] Derive complete native controller adapter/routing runtime and install the
+  general-caller pass/selector, with replay costs recovered from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness

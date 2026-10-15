@@ -155,8 +155,21 @@ charges traversal, decrement/comparison operations, reversal and retained contex
 The [complete reset budget](../Signatures/Runtime/BackendSchnorrRawResetBudget.lean)
 also charges argument construction and both output tape copies. Its runtime
 has polynomial closure in encoded widths, capacities and primitive costs, with
-no iteration factor for the numeric reset position. Native controller assembly
-and full general-caller composition are still open.
+no iteration factor for the numeric reset position.
+
+The [native fork controller](../Signatures/Runtime/BackendSchnorrRawFork.lean) now
+assembles both executions, selection, replacement sampling, old-challenge lookup,
+reset and acceptance checks. Its source law equals the named raw-tape fork after
+scalar interpretation, requiring pass laws only at the initial and reached
+selected restart states. Its
+[stored-code bound](../Signatures/Runtime/BackendSchnorrRawForkDescription.lean)
+counts both pass/selector occurrences and all supplied sampling code. The
+[selected-challenge lookup](../Signatures/Runtime/BackendSchnorrRawLookup.lean)
+uses a small accumulator and preserves the distinction between absent entries
+and field zero. Its [complete runtime and polynomial closure](../Signatures/Runtime/BackendSchnorrRawLookupCost.lean)
+charge the stored-tape scan and retained input, without constructing a prefix or
+iterating over the numeric position. Complete controller adapter/routing runtime
+and installation of the general-caller pass and selector remain open.
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
 exact computation equality and the native theorem/axiom scope. Cost guards
@@ -166,6 +179,9 @@ interleaved private/field cells, first-hit consumption and chronological append;
 the only supplied component budget is the scalar sampler's. Reset regressions
 check empty tapes, retained private suffixes, both identical output lists, and a
 `2^64` reset position. Its runtime theorem takes no completed reset-cost premise.
+[Controller regressions](../SignaturesTest/BackendSchnorrRawFork.lean) additionally
+check selection failure, sampler independence of that costed path, missing versus
+unchanged challenges, replay acceptance and second-selector disagreement.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape
