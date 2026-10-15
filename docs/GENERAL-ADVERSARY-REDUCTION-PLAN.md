@@ -182,8 +182,13 @@ sampling, old-challenge lookup, reset and acceptance/rejection. It has exact
 computation correspondence to the raw fork from source laws for the first pass
 and reached replay states, and a stored-code bound counting both pass/selector
 occurrences. The direct selected-challenge lookup also has complete native
-runtime and polynomial closure without building a prefix. Complete controller
-adapter/routing runtime and general-caller composition are unfinished.
+runtime and polynomial closure without building a prefix. The complete native
+controller now has an all-path runtime bound and polynomial closure, charging
+adapters, both passes, both selector calls, sampling, lookup/reset and every
+control/retention cost. Frame invariants count duplicated configurations, both
+tapes and the first output retained during replay. The pass budgets distinguish
+the empty initial tape from the reset tape. General-caller pass/selector
+implementation and their resource derivation remain unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -2323,6 +2328,58 @@ passed serially with `-j1 -M8192` and default proof limits. There are no warning
 admissions, nonstandard axioms or proof-option overrides. All 638 local links in
 the updated guides resolve; `git diff --check` passes.
 
+### Complete native fork-controller runtime, 2026-10-15
+
+[BackendSchnorrRawForkSize](../Signatures/Runtime/BackendSchnorrRawForkSize.lean)
+tracks pass validity, encoded configuration/output widths and separate saved and
+remaining tape capacities. Product frames count every retained copy; sum frames
+charge their tags. The complete controller uses a frame-width allowance
+`(16 * (firstCap + secondCap) + 64) * width`. This bounds the encoded values at
+controller boundaries; it is not a peak-memory theorem for arbitrary pass code.
+
+[BackendSchnorrRawForkLocalCost](../Signatures/Runtime/BackendSchnorrRawForkLocalCost.lean)
+derives the costs of all ten compiled adapters, branch selection and rejection.
+Structural adapters require no supplied expression budget. The comparison
+adapters use only scalar/natural equality primitive bounds. The
+[composition rules](../Signatures/Runtime/BackendSchnorrRawForkComposition.lean)
+charge atomic invocation, sequencing, branching and retained frames using the
+proved encoded footprints.
+
+[BackendSchnorrRawForkBudget](../Signatures/Runtime/BackendSchnorrRawForkBudget.lean)
+now proves `Bounds` for the actual complete native controller. Its bound adds
+the first and second pass times, twice the selector time, fresh sampling,
+the derived lookup/reset times, the two comparison costs, and
+`6000 * overhead (256 * frameWidth)`. This conservative structural allowance
+covers all adapters and control costs. The reset, lookup and controller budgets
+contain no numeric-position iteration factor.
+
+The theorem takes actual pass, selector and sampler implementations. Only the
+two actual pass executions and the fresh sampler have supplied `Bounds`
+premises; selector work is bounded as an actual local realizer. The first pass
+starts with zero saved/remaining capacity. The replay starts with both capacities
+`firstCap + 1`, and its returned saved capacity is independently `secondCap`.
+Lookup and reset budgets are derived internally from primitive/backend laws.
+Result sum-injection costs are explicit backend operation contracts.
+`runtimeBound_polynomial` derives polynomial growth from the component resources
+and a single joint polynomial backend overhead.
+
+[Regression guards](../SignaturesTest/BackendSchnorrRawFork.lean) check standard
+axioms, the complete all-path conclusion, the allowed three component-budget
+premises, both pass invariants, absence of assumed internal controller/lookup/reset
+costs, and absence of a numeric-position or domain-cardinality runtime parameter.
+The existing executed semantic edge cases remain in place.
+
+The general-caller pass, source cache/signing implementation and selector still
+need to be installed and their resources derived from measured attacker work.
+This controller theorem does not yet certify the complete ROM DLog solver or
+replace the pending public/family endpoints.
+
+Validation: all four new source modules, the expanded native-controller
+regression, the existing raw-tape regression and the aggregate `Signatures`
+import passed serially with `-j1 -M8192` and default proof limits. The checks
+reported no warnings or nonstandard axioms; no admissions or proof-option
+overrides were introduced. Local guide links and whitespace checks pass.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -2335,13 +2392,15 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Implement and certify the native general-caller pass, source cache/signing
   handling and selector, then install them in the assembled native controller.
   Exact raw-fork/extraction equality and native-controller source composition
-  are proved. Draws, reset and selected-challenge lookup have complete component
-  resources; the full controller runtime still needs to be composed.
+  are proved. Draws, reset, selected-challenge lookup and the complete controller
+  have derived runtime resources; pass/selector resources still need deriving
+  from the actual general caller.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
   do not assume free snapshots of an arbitrary attacker state.
-- Complete native encoded-width and runtime bounds for the controller's
-  adapters/routing and both executions. Lookup, reset and both draw handlers are accounted for and generate no
+- Complete the source cache/signing and general-caller execution bounds, then
+  compose the complete solver's extraction and fallback. Controller adapters,
+  routing, lookup, reset and both draw handlers are accounted for and generate no
   arity-sized codec code; older fixed-arity endpoints
   retain their linear-range accounting. If bounded
   sampling introduces error, prove and include its probability contribution.
@@ -4027,8 +4086,10 @@ additional axioms or proof-resource overrides.
   code/encoding bounds, complete primitive-derived runtime and polynomial closure.
 - [x] Assemble the native fork around actual pass/selector/sampler code, prove
   exact source correspondence at reached restart states, and count its entire stored code.
-- [ ] Derive complete native controller adapter/routing runtime and install the
-  general-caller pass/selector, with replay costs recovered from measured resources.
+- [x] Derive complete native controller adapter/routing runtime, including both
+  pass budgets, retained output/configuration copies, lookup/reset and polynomial closure.
+- [ ] Install and certify the general-caller pass/selector, with replay costs
+  recovered from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness

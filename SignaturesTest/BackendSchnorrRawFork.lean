@@ -1,11 +1,12 @@
 import Signatures.Runtime.BackendSchnorrRawForkDescription
-import Signatures.Runtime.BackendSchnorrRawLookupCost
+import Signatures.Runtime.BackendSchnorrRawForkBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
 /-! Executed controller cases distinguish a missing challenge from a stored
 zero, preserve selection failures, and reject a changed second selector. The
-whole-controller runtime is separate from the complete lookup resource bound. -/
+whole-controller runtime guard permits supplied budgets only for the actual two
+pass executions and fresh sampler, and checks the primitive-derived adapters. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram
@@ -103,7 +104,15 @@ run_meta do
       ``NativeLookup.expression_time, ``NativeLookup.bound, ``NativeLookup.runtimeBound_polynomial,
       ``NativeFork.replay_denote, ``NativeFork.selected_denote, ``NativeFork.denote,
       ``NativeFork.source, ``NativeFork.compileLocal_description, ``NativeFork.chooseLocal_description,
-      ``NativeFork.reject_description, ``NativeFork.description] do
+      ``NativeFork.reject_description, ``NativeFork.description,
+      ``NativeFork.both_size, ``NativeFork.either_size,
+      ``NativeFork.Frame.atomic, ``NativeFork.Frame.seq, ``NativeFork.Frame.first,
+      ``NativeFork.Frame.branch, ``NativeFork.Frame.widen,
+      ``NativeFork.start_cost, ``NativeFork.firstSelection_cost, ``NativeFork.firstChoice_cost,
+      ``NativeFork.fresh_cost, ``NativeFork.lookup_cost, ``NativeFork.collision_cost,
+      ``NativeFork.reset_cost, ``NativeFork.second_cost, ``NativeFork.secondSelection_cost,
+      ``NativeFork.finish_cost, ``NativeFork.chooseLocal_cost, ``NativeFork.reject_cost,
+      ``NativeFork.bound, ``NativeFork.runtimeBound_polynomial] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -136,7 +145,36 @@ run_meta do
           ``Expression.compile, ``Expression.compileBound] do
         if (type.find? (fun e => e.isConstOf forbidden)).isSome then
           throwError "lookup runtime must be derived from primitive and backend laws"
-  for name in #[``NativeFork.code, ``NativeFork.source] do
+  forallTelescope (← getConstInfo ``NativeFork.runtimeBound).type fun params _ => do
+    for param in params do
+      if (← inferType param).isConstOf ``Nat then
+        unless #[`width, `firstCap, `secondCap, `firstTime, `secondTime, `selectorTime,
+            `sampleTime, `comparisonTime, `scalarComparisonTime, `subtractTime, `zeroTime].contains
+            (← getFVarLocalDecl param).userName do
+          throwError "fork runtime must depend on stored capacities, not numeric positions or domains"
+  forallTelescope (← getConstInfo ``NativeFork.bound).type fun params conclusion => do
+    unless conclusion.isAppOf ``Bounds do
+      throwError "fork runtime must cover the whole native controller on all paths"
+    let mut componentBudgets := #[]
+    for param in params do
+      let type ← inferType param
+      let name := (← getFVarLocalDecl param).userName
+      if type.isAppOf ``Bounds then
+        unless #[`hfirst, `hsecond, `hsample].contains name do
+          throwError "fork runtime assumes an unproved controller component: {name}"
+        componentBudgets := componentBudgets.push name
+        if name != `hsample then
+          let args := type.getAppArgs
+          unless args[args.size - 3]!.isAppOf ``NativeFork.Incoming &&
+              args[args.size - 2]!.isAppOf ``NativeFork.Returned do
+            throwError "both passes must carry encoded inputs, outputs and separate tape capacities"
+      for forbidden in #[``NativeFork.code, ``NativeFork.replay, ``NativeFork.selected,
+          ``NativeLookup.code, ``NativeReset.code, ``Expression.compile, ``Expression.compileBound] do
+        if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+          throwError "fork runtime assumes completed internal code costs: {name}"
+    unless componentBudgets == #[`hfirst, `hsecond, `hsample] do
+      throwError "fork must account for both actual pass executions and the actual fresh sampler"
+  for name in #[``NativeFork.code, ``NativeFork.source, ``NativeFork.bound] do
     let type := (← getConstInfo name).type
     for forbidden in #[``Program, `Signatures.Runtime.Schnorr.SourceCertificate] do
       if (type.find? (fun e => e.isConstOf forbidden)).isSome then

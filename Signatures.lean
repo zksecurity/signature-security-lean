@@ -62,6 +62,7 @@ import Signatures.Runtime.BackendSchnorrRawChallengeBudget
 import Signatures.Runtime.BackendSchnorrRawResetBudget
 import Signatures.Runtime.BackendSchnorrRawLookupCost
 import Signatures.Runtime.BackendSchnorrRawForkDescription
+import Signatures.Runtime.BackendSchnorrRawForkBudget
 import Signatures.Runtime.BackendCoronSecurity
 import Signatures.Runtime.BackendCoronPolynomial
 import Signatures.Runtime.BackendCoronFamilySecurity

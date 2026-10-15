@@ -168,8 +168,14 @@ counts both pass/selector occurrences and all supplied sampling code. The
 uses a small accumulator and preserves the distinction between absent entries
 and field zero. Its [complete runtime and polynomial closure](../Signatures/Runtime/BackendSchnorrRawLookupCost.lean)
 charge the stored-tape scan and retained input, without constructing a prefix or
-iterating over the numeric position. Complete controller adapter/routing runtime
-and installation of the general-caller pass and selector remain open.
+iterating over the numeric position. The
+[complete controller runtime](../Signatures/Runtime/BackendSchnorrRawForkBudget.lean)
+now charges both executions, both selector calls, replacement sampling,
+lookup/reset, all adapters, branches and retained copies. Its frame invariants
+include the first output and configuration retained during replay. The runtime
+formula has proved polynomial closure from separate pass budgets, tape capacities,
+encoded widths and backend operation costs. Implementing the general-caller pass
+and selector and deriving their budgets from measured attacker resources remain open.
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
 exact computation equality and the native theorem/axiom scope. Cost guards
@@ -181,7 +187,9 @@ check empty tapes, retained private suffixes, both identical output lists, and a
 `2^64` reset position. Its runtime theorem takes no completed reset-cost premise.
 [Controller regressions](../SignaturesTest/BackendSchnorrRawFork.lean) additionally
 check selection failure, sampler independence of that costed path, missing versus
-unchanged challenges, replay acceptance and second-selector disagreement.
+unchanged challenges, replay acceptance and second-selector disagreement. Runtime
+guards permit supplied whole-code budgets only for the two actual passes and
+fresh sampler; no completed controller, lookup, reset or adapter budget is assumed.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape
