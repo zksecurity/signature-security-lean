@@ -248,10 +248,20 @@ inserts a supplied challenge only on a miss, preserving the first cached
 challenge and explanation even when the challenge is zero. It exactly matches
 the cache component of `signedState` and has derived time/code bounds from the
 implemented message/group comparisons and storage contracts. It performs no
-sampling. These components still need to be composed with response arithmetic,
-both scalar draws and the complete signing request/reply path.
+sampling.
 
-The hash dispatcher uses an internal scalar/state interface. Complete random/signing handlers,
+The [accepted signing core](../Signatures/Runtime/BackendSchnorrAGMSigning.lean)
+now composes those components with both scalar draws and response arithmetic.
+It exactly realizes the source's accepted signing branch, preserving cache
+entries on collisions and appending both histories in order. Its
+[derived budget](../Signatures/Runtime/BackendSchnorrAGMSigningBudget.lean)
+charges the full internal path, including retained state, adapters and control.
+The stored-code bound is independent of cache and history lengths. This uses an
+internal generator/public-key/message/state interface: request parsing,
+malformed-signing rejection, ignored coefficient-row transfer and external
+reply construction still require their complete handler/caller costs.
+
+The hash dispatcher also uses an internal scalar/state interface. Signing dispatch, the random handler,
 final extraction, full solver accounting and general-caller composition,
 including external request/reply packing, remain open; these component certificates
 are not yet a certificate for the full solver.
