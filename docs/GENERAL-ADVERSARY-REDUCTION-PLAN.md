@@ -203,8 +203,12 @@ and polynomial runtime closure from original resources, including setup,
 extraction and fallback. Stored-code polynomial closure now follows from original
 caller/sampler/primitive/port descriptions. The fixed-backend executable certificate
 and concrete DLog-hardness theorem are proved, preserving the original losses.
-The short public interface and nonuniform family security theorem remain open. The finite-cache ROM
-pass now handles arbitrary source attacker computations, has exact trace
+The short public interface and nonuniform family security theorem are now proved.
+The public theorem takes the curve, security parameter, query allowances and
+unrestricted adversary. The family theorem derives negligible original-game
+forgery from polynomial original resources, nonuniform DLog hardness in one fixed
+backend and negligible inverse field size. The finite-cache ROM
+pass handles arbitrary source attacker computations, has exact trace
 correspondence and query-derived cache capacities, and its complete fork plus
 extraction equals the named reduction. Native live/managed-cache and signing
 kernels have exact state-passing semantics and stored-code bounds. Their runtime
@@ -261,12 +265,12 @@ and fallback now compose into the complete solver with exact source corresponden
 and full stored-code accounting. Complete solver runtime and returned-scalar bounds
 now follow from original resources, and the actual runtime formula has polynomial
 closure. Stored-code polynomial closure, fixed-backend executable certification
-and concrete hardness transport are now proved. The public interface and
-nonuniform family security theorem remain open.
+and concrete hardness transport are now proved. The short public interface and
+nonuniform family security theorem now complete the full-field ROM route.
 
-Remaining: instantiate the fixed backend in a conventional machine if making that
-stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
-their public statements and family corollaries, then finish API/documentation retirement.
+Remaining: connect the separate nonzero-nonce Schnorr ROM variant to the general
+replay/cost framework, then finish API/documentation retirement. A conventional
+machine instantiation is needed only if making that stronger coverage claim.
 
 Establish security for general efficient attackers for the signature routes in
 this repository. Keep the reduction wrappers in our abstract arithmetic machine,
@@ -286,7 +290,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. All four shared-store components now have exact source laws, stored-code bounds, complete primitive-derived runtime, preserved encoding/capacity invariants and polynomial closure. Indexed dispatch also has complete primitive-derived runtime, polynomial closure and adaptive capacity reservations. Arbitrary caller composition has exact source/stored-code bounds, measured-resource runtime, returned-output bounds and polynomial runtime closure. The complete native pass has exact source correspondence on every tape, measured completion, complete stored-code and runtime bounds, output/tape invariants and polynomial runtime closure. The actual selector has exact source correspondence, complete stored-code/runtime bounds and polynomial closure. The installed fork has complete runtime/code bounds and polynomial runtime closure from original resources, with separate tape-entry/output widths. The complete native solver installs setup and guarded extraction/fallback, exactly equals the named lazy reduction, and has full stored-code and runtime/output-size bounds. Its exact runtime and stored-code formulas have polynomial closure from original resources. The fixed-backend executable witness and concrete DLog-hardness theorem are proved with the original probability losses. | Add the short public interface and complete nonuniform family security. |
+| Schnorr ROM | Complete native replaying solver with exact source correspondence, derived runtime/code certificate, short public concrete statement and nonuniform polynomial-family security. The original quadratic forking bound is retained; the public bound exposes its square-root consequence. General unrestricted callers and arbitrary messages are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional full-field nonce route is complete. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -3408,53 +3412,63 @@ forking bound. The nonzero-nonce variant and final API/documentation retirement
 remain separate. A conventional-machine instantiation remains a stronger claim
 than these conditional fixed-backend theorems.
 
-### Schnorr general ROM replay remaining work
+### Schnorr ROM public statement and nonuniform family security, 2026-10-15
 
-Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
-and [costed controller](../Signatures/Runtime/SchnorrSeededMachineCorrectness.lean).
-The existing fixed-tape proof is not invalidated by widening the caller interface.
+The [public ROM theorem](../Signatures/Schnorr/Statement.lean) now takes exactly
+four explicit inputs: curve, security parameter, query allowances and unrestricted
+adversary. Its conclusion displays the original lazy EUF-CMA game, signing loss,
+`(qH+1)/|F|`, and the square root of `(qH+1)` times the DLog success bound at the
+derived runtime. The [quadratic theorem](../Signatures/Schnorr/Proofs/GeneralROM.lean)
+is retained. [Forking inversion](../Signatures/Model/ForkingLoss.lean) proves the
+convenient direct inequality, including zero hash queries and infinite upper bounds.
 
-- Use measured attacker resources for native replay storage and sampling costs.
-  Probability-level private-family coverage is now derived without inspecting
-  source syntax, but this finite existence argument supplies no efficiency bound.
-- Use the complete measured-resource pass runtime, stored-code bounds and output
-  invariants for both executions. Its runtime formula has polynomial closure;
-  initial/replay tape capacities and adaptive reservations remain explicit.
-- Use the proved polynomial closure of the fully instantiated fork runtime when
-  deriving whole-solver polynomial resources. Both pass budgets, selection and
-  sampling follow from original resources; separate tape/output widths are proved.
-  The finite-cache general pass, its capacity
-  bounds and exact fork/extraction correspondence are proved; native cache/signing
-  kernels have semantics, stored-code and complete runtime bounds. Draws, reset,
-  lookup and the complete controller also have derived runtime resources. Indexed
-  dispatch and whole-caller execution now have complete runtime. The assembled
-  pass and selector have exact source correspondence, complete stored-code and
-  runtime bounds, and polynomial runtime closure. Their installed native fork
-  has exact source correspondence and complete stored-code/runtime bounds.
-  The generic native fork accepts the implemented `.list cachePassOutput` output:
-  empty for cutoff, singleton for completion. The implemented selector rejects
-  empty results and agrees with the source selector on singleton results.
-  The pass source law and singleton completion hold from measured fuel on every
-  raw tape, and the embedding now commutes with the complete installed fork.
-- Charge both runs, seed/tape creation, access, reset, cache operations, checking,
-  extraction, and fallback. Restarting from the initial state is sufficient;
-  do not assume free snapshots of an arbitrary attacker state.
-- Use the proved complete solver runtime and its polynomial closure. Setup,
-  guarded extraction and both fallback paths now compose with the installed fork;
-  full source equality and complete stored-code accounting are also proved.
-  Polynomial stored code and the fixed-backend executable certificate are now
-  proved from original descriptions and complete runtime/source bounds. Controller adapters,
-  routing, lookup, reset and both draw handlers are accounted for and generate no
-  arity-sized codec code; older fixed-arity endpoints
-  retain their linear-range accounting. If bounded
-  sampling introduces error, prove and include its probability contribution.
-- Use the proved concrete DLog-hardness endpoint and exact experiment equality
-  in the short public statement. Derive the nonuniform family certificate in one
-  fixed backend and negligible forgery from the original quadratic forking bound.
-  The source probability law is already connected to the fixed-tape security argument.
-- Separately adapt the ROM accounting to the
-  [nonzero-nonce variant](../Signatures/Schnorr/Proofs/NonzeroSecurity.lean).
-  Schnorr AGM's single-pass overhead and family theorem are already complete.
+The [ROM parameters](../Signatures/Schnorr/GeneralROMParameters.lean) fix only
+original backend/encoding/sampler/primitive contracts and attacker allowances.
+They impose no AGM or restricted arithmetic-source requirement. The attacker
+provides its arbitrary local implementation, source correspondence, measured
+execution and query bounds, and stored-code allowance. A
+[description monotonicity proof](../Signatures/Runtime/BackendSchnorrROMDescriptionAllowance.lean)
+derives the entire solver's uniform code bound from that caller allowance.
+The [execution model and game](../Signatures/Schnorr/GeneralROMSecurityModel.lean)
+are independently declared for ROM; the
+[curve's group sampler](../Signatures/Model/CyclicCurveSampling.lean) follows from
+its existing scalar sampler and generator bijection. Supporting public proofs
+stay in [their own file](../Signatures/Schnorr/Proofs/GeneralROMSecurity.lean).
+
+The [nonuniform DLog class](../Signatures/Runtime/BackendSchnorrROMDLogFamily.lean)
+uses one fixed backend and polynomial time, full stored code/advice and input
+bounds. [Family resources](../Signatures/Schnorr/GeneralROMFamilyResources.lean)
+bound original caller work, queries, widths, sampling profiles, primitive costs
+and stored descriptions; complete solver time/code and actual family membership
+are derived. No numerical random-arity, message-universe or finished-solver
+polynomial premise is added. Curve, group and message types can vary with the
+security parameter.
+
+The [family theorem](../Signatures/Schnorr/GeneralROMFamilyStatement.lean) now
+concludes negligible original-game forgery from these resources, nonuniform DLog
+hardness and negligible inverse field size. Its
+[separate proof](../Signatures/Schnorr/Proofs/GeneralROMFamily.lean) uses the actual
+native solver family and exact DLog experiment correspondence.
+[Square-root negligibility](../Signatures/Model/ForkingNegligible.lean) closes the
+asymptotic implication of the original quadratic forking bound.
+
+[Public/family regressions](../SignaturesTest/SchnorrGeneralROMStatement.lean)
+check the four-input API, visible losses/budgets, original-game correspondence,
+standard axioms, varying family types and fixed-backend hardness. They reject
+AGM restrictions, finite message/group premises and supplied finished solver
+budgets. The existing AGM public regression and aggregate import are also checked
+serially under default proof limits.
+
+### Remaining Schnorr variant work
+
+The conditional general-caller full-field ROM and AGM routes are complete.
+Separately connect the [nonzero-nonce variant](../Signatures/Schnorr/Proofs/NonzeroSecurity.lean)
+to an implemented reduction with derived complete replay/runtime/code bounds,
+then expose concrete and family endpoints. Its signing simulator changes the
+commitment law and collision denominator; the full-field certificate does not
+implicitly prove this variant. Finish API/documentation retirement after the
+replacement callers pass. A conventional-machine instantiation remains a stronger
+claim than the conditional fixed-backend endpoints.
 
 ## Implementation order and completion checks
 
@@ -5191,16 +5205,16 @@ additional axioms or proof-resource overrides.
   resource families, without assuming finished component efficiency.
 - [x] Derive whole-solver stored-code polynomial closure and construct the
   fixed-backend executable certificate from its source/runtime/code theorems.
-- [ ] Complete general Schnorr ROM replay; cover the
-  nonzero-nonce variant separately.
+- [x] Complete general Schnorr full-field ROM replay and security.
+- [ ] Complete the separate nonzero-nonce ROM efficiency and security endpoints.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
   and derived resources; keep proofs separate and preserve the original query losses.
 - [x] Derive the Schnorr AGM polynomial solver resources and nonuniform family
   corollary in one fixed backend, preserving both original query losses.
 - [x] Complete the general Schnorr ROM concrete DLog-hardness endpoint using the
   derived fixed-backend witness and the original probability losses.
-- [ ] Complete the general Schnorr ROM nonuniform family security endpoint.
-- [ ] Present the new ROM endpoints through the simple public scheme/parameter,
+- [x] Complete the general Schnorr ROM nonuniform family security endpoint.
+- [x] Present the full-field ROM endpoints through the simple public scheme/parameter,
   qualified-adversary, query-allowance, game, and bound interface described above;
   keep execution/encoding certificates internal and hardness scope explicit.
 - [ ] Update status documentation and retire superseded eager runtime endpoints
@@ -5230,7 +5244,8 @@ general-caller concrete statement. BLS, OOPS and Proximity AGM now also have
 polynomial-family closure and nonuniform security corollaries; Proximity retains
 its collision qualification. Schnorr AGM now also has its complete native resource
 certificate, short concrete security theorem and derived polynomial-family
-corollary. Continue with general Schnorr ROM replay and separate
-nonzero-nonce work, then API/documentation retirement.
+corollary. General Schnorr full-field ROM now also has its complete native
+certificate, short concrete statement and derived nonuniform family theorem.
+Continue with the separate nonzero-nonce variant, then API/documentation retirement.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine claim. The broader plan remains open.

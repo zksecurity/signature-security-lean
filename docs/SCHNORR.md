@@ -6,11 +6,16 @@ adversary. It bounds forgery by DLog success at the proved native runtime plus
 the original query losses. Its game, hardness class and backend contracts are
 [inspectable](../Signatures/Schnorr/GeneralSecurityModel.lean); proofs are separate.
 
-The [general-caller ROM theorem](../Signatures/Runtime/BackendSchnorrROMSecurity.lean)
-now proves the original quadratic security bound from DLog hardness in the same
-fixed backend as the unrestricted attacker. Its complete replaying solver has a
-derived executable certificate, runtime/code bounds and polynomial resource
-formulas. The short public wrapper and nonuniform family security corollary remain open.
+The [public ROM statement](../Signatures/Schnorr/Statement.lean) has the same four
+inputs and permits an unrestricted attacker. Its full-field nonce bound is signing
+loss plus `(qH+1)/|F|` plus the square root of `(qH+1)` times DLog success at the
+derived reduction budget. The [original quadratic bound](../Signatures/Schnorr/Proofs/GeneralROM.lean)
+is also available. The complete replaying solver has a derived executable
+certificate and runtime/code bounds in the same fixed backend as the attacker.
+The [family corollary](../Signatures/Schnorr/GeneralROMFamilyStatement.lean) concludes
+negligible forgery for polynomial unrestricted attacker families under nonuniform
+DLog hardness and negligible inverse field size. The separate nonzero-nonce
+variant still needs its general efficiency endpoint.
 
 The [arithmetic-source ROM statement](../Signatures/Schnorr/ArithmeticStatement.lean)
 proves ordinary programmable-ROM EUF-CMA security from fixed-generator DLog
@@ -429,8 +434,27 @@ and preserves the original quadratic forking and signing-simulation losses.
 Every DLog challenge must fit the encoded input cap. No finished solver efficiency
 or executable witness is assumed. [Resource guards](../SignaturesTest/SchnorrROMResources.lean)
 check this scope, exact description and experiment connections, and standard axioms.
-The short public interface and nonuniform family security theorem remain open;
-polynomial resource formulas alone do not constitute the family security theorem.
+The [public interface](../Signatures/Schnorr/Statement.lean) now displays the
+original game, query losses and DLog success at the derived budget. Its
+[execution model](../Signatures/Schnorr/GeneralROMSecurityModel.lean) is independent
+of the AGM model. Group sampling is derived from the curve's scalar sampler and
+generator bijection. The model fixes original component contracts and a caller
+code allowance before the attacker is chosen; the attacker supplies arbitrary
+implemented local code, measured execution resources and query bounds.
+
+The [family resource proof](../Signatures/Schnorr/GeneralROMFamilyResources.lean)
+derives polynomial complete solver time/code and membership in the common
+nonuniform class. It bounds original work, queries, widths, sampler profiles and
+primitive/port descriptions, with one backend and cost convention fixed across
+security parameters. No finished solver efficiency certificate is assumed.
+The [family security proof](../Signatures/Schnorr/Proofs/GeneralROMFamily.lean)
+applies nonuniform DLog hardness and proves negligible original-game forgery;
+[square-root closure](../Signatures/Model/ForkingNegligible.lean) handles the
+quadratic forking loss. [Public/family guards](../SignaturesTest/SchnorrGeneralROMStatement.lean)
+check unrestricted scope, original-game correspondence, varying curve/message
+types, derived budgets and standard axioms. This completes the conditional
+full-field ROM route; a conventional-machine instantiation and the nonzero-nonce
+variant are separate claims.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

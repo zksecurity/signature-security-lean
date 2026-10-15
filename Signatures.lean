@@ -19,6 +19,7 @@ import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
 import Signatures.LinearFunctional.Proofs.LazyAGMCacheBound
 import Signatures.Schnorr.Statement
 import Signatures.Schnorr.GeneralAGMFamilyStatement
+import Signatures.Schnorr.GeneralROMFamilyStatement
 import Signatures.Schnorr.BitStatement
 import Signatures.Schnorr.SeededBitStatement
 import Signatures.Schnorr.Proofs.NonzeroSecurity

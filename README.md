@@ -49,9 +49,14 @@ It takes a single-group curve, security parameter, query allowances and algebrai
 adversary, and displays DLog success plus the original query losses.
 Its [polynomial-family corollary](Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
 derives negligible forgery from polynomial component resources, DLog hardness
-and negligible inverse field size in one fixed backend. Schnorr's general-caller
-ROM replay and the nonzero-nonce variant remain in progress. A conventional
-machine instantiation is separate from the conditional fixed-backend results.
+and negligible inverse field size in one fixed backend. The same public file now
+also exposes `Schnorr.rom_security` for unrestricted attackers, with the full-field
+nonce signing/forking losses and a square-root DLog bound. Its complete replaying
+solver has derived runtime/code bounds, and its
+[nonuniform family corollary](Signatures/Schnorr/GeneralROMFamilyStatement.lean)
+concludes negligible forgery from polynomial original resources in one fixed
+backend. The nonzero-nonce variant still needs its general efficiency endpoint.
+A conventional machine instantiation is separate from these conditional results.
 
 Start with the [GitHub review guide](docs/review-guide.md) or the
 [security-game ledger](docs/SECURITY-GAMES.md). Reviews and checklists can be recorded with the
