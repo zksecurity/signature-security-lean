@@ -45,6 +45,10 @@ import Signatures.Runtime.BackendWeightedReplySize
 import Signatures.Runtime.BackendWeightedHashBudget
 import Signatures.Runtime.BackendWeightedSignBudget
 import Signatures.Runtime.BackendWeightedOracleCallerBudget
+import Signatures.Runtime.BackendWeightedOracleCallerResources
+import Signatures.Runtime.BackendWeightedExtractionOutput
+import Signatures.Runtime.BackendWeightedExtractionEntry
+import Signatures.Runtime.BackendWeightedOracleCache
 import Signatures.Runtime.BackendWeightedOracleDescription
 import Signatures.Runtime.BackendWeightedExtractionDescription
 import Signatures.Runtime.BackendWeightedExtractionState
@@ -139,7 +143,10 @@ calls now have derived runtime bounds for hash/sign transcripts and both final-t
 branches. Complete outer extractor runtime bounds now compose these calls with
 default construction, final arithmetic, and the retained output and transcripts.
 They derive all component costs from primitive contracts and the cached-transcript
-invariant. Automatic caller-condition recovery and whole-solver certificates remain open.
+invariant. Request sizes, caller reachability, returned-output/coefficient bounds,
+and the extractor's input widths now follow from general attacker resources and
+encoding contracts. Exact native interaction semantics supplies the cached-transcript
+invariant from an empty store. Whole-solver certificates remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;

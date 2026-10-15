@@ -196,8 +196,14 @@ Complete [good](../Signatures/Runtime/BackendWeightedGoodExtractionBudget.lean) 
 bounds now include all phases, default construction, final arithmetic and the
 retained full output/transcripts. All component budgets are discharged; cached
 transcript calls preserve the exact cache, so subsequent calls retain its original
-bounds. Automatic recovery of these input state/encoding conditions from general
-caller resources, and whole-solver certificates, remain in progress.
+bounds. [General caller resources](../Signatures/Runtime/BackendWeightedOracleCallerResources.lean)
+now derive the native interaction's reachability, request widths and local/query
+budget. [Output recovery](../Signatures/Runtime/BackendWeightedExtractionOutput.lean)
+and [entry bounds](../Signatures/Runtime/BackendWeightedExtractionEntry.lean) supply
+coefficient lengths and the full retained input frame. The
+[native cache laws](../Signatures/Runtime/BackendWeightedOracleCache.lean) derive the
+cached-transcript condition from actual execution starting empty. Native whole-solver
+setup/termination composition and certificates remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle

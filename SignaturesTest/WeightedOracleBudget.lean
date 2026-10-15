@@ -1,5 +1,9 @@
 import Signatures.Runtime.BackendWeightedOracleCallerBudget
 import Signatures.Runtime.BackendWeightedOracleDescription
+import Signatures.Runtime.BackendWeightedOracleCallerResources
+import Signatures.Runtime.BackendWeightedExtractionOutput
+import Signatures.Runtime.BackendWeightedExtractionEntry
+import Signatures.Runtime.BackendWeightedOracleCache
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -68,6 +72,23 @@ example : (simulateQ (NativeHandler.goodSource rep (.oops 1) data PrimitiveCosts
 
 end Native
 
+section OutputRecovery
+
+variable {C : StepClass} [C.HasProd] [C.HasSum] [C.HasOption]
+  {Q : QuantitativeStepClass C}
+  (rep : LanguageRepresentation C (cryptoBase field field field Nat Bool))
+  {header : Nat} (sizes : SizeLaws Q header) (lengths : ListLengthLaws Q rep.data)
+
+-- Even an unused suffix consisting entirely of zeros must occupy output space.
+-- The target uses Proximity's tuple encoding and an unrestricted natural slot.
+example (n : Nat) : n ≤ Q.size (rep.ty (AGM.outputTy (Index.proximity 1).messageTy))
+    ((((0 : field), ()), (99 : Nat)), (0, List.replicate n 0, [])) := by
+  have h := coefficient_lengths_le_output rep sizes lengths (messageTy := (Index.proximity 1).messageTy)
+    ((((0 : field), ()), (99 : Nat)), (0, List.replicate n 0, []))
+  simpa only [List.length_replicate] using h.1
+
+end OutputRecovery
+
 open Lean Meta
 
 run_meta do
@@ -81,7 +102,18 @@ run_meta do
     ``NativeHandler.badSign_reserved, ``NativeHandler.goodCode_bound,
     ``NativeHandler.badCode_bound, ``NativeHandler.goodCode_description,
     ``NativeHandler.badCode_description, ``NativeHandler.goodCaller_description,
-    ``NativeHandler.badCaller_description] ++ callers
+    ``NativeHandler.badCaller_description,
+    ``NativeHandler.RequestRecovery.canonical, ``NativeHandler.reachable_request,
+    ``NativeHandler.reachable_output, ``NativeHandler.resource_step,
+    ``NativeHandler.goodCaller_bound_of_resources, ``NativeHandler.badCaller_bound_of_resources,
+    ``NativeHandler.caller_reference_denote, ``NativeHandler.caller_output_invariant,
+    ``NativeHandler.caller_output_size_of_resources, ``NativeHandler.caller_source_of_resources,
+    ``NativeHandler.caller_no_cutoff_of_resources, ``coefficient_lengths_le_output,
+    ``coefficient_lengths_of_output_cap, ``caller_output_bounds_of_resources,
+    ``extractionEntryWidth_ge, ``extractionEntry_bounds,
+    ``listOracle_cached, ``listSimulation_cached,
+    ``NativeHandler.goodCaller_cached_of_resources, ``NativeHandler.badCaller_cached_of_resources,
+    ``NativeHandler.goodCaller_cached_from_empty, ``NativeHandler.badCaller_cached_from_empty] ++ callers
   for name in names do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
@@ -96,5 +128,34 @@ run_meta do
         if !callers.contains name &&
             (type.find? (fun e => e.isConstOf ``GeneralCaller.Budget)).isSome then
           throwError "{name}: supplied caller budget outside caller composition"
+
+-- Final resource-recovery APIs must derive caller budgets and invariants, retain
+-- the attacker's measured execution contract, and never ask for coefficient caps.
+run_meta do
+  for name in #[``NativeHandler.goodCaller_bound_of_resources, ``NativeHandler.badCaller_bound_of_resources,
+      ``caller_output_bounds_of_resources, ``NativeHandler.goodCaller_cached_from_empty,
+      ``NativeHandler.badCaller_cached_from_empty] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      let mut measured := false
+      for param in params do
+        let binder ← param.fvarId!.getUserName
+        let type ← inferType param
+        if binder == `hrun then
+          measured := (type.find? (fun e => e.isConstOf
+            ``PFunctor.DynSystem.DynComputation.QuantitativeRealization.RunsWithin)).isSome
+        if #[`callerInv, `hcallerStep, `hcallerWidth, `hbudget, `hng, `hnx].contains binder then
+          throwError "{name}: caller/coefficient condition was assumed instead of recovered"
+        for forbidden in #[``GeneralCaller.Budget, ``Bounds, ``GeneralCaller.Reachable,
+            ``Model.LazyAGM.WeightedReduction.TranscriptCached] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "{name}: supplied caller budget or state invariant"
+        forallTelescope type fun _ conclusion => do
+          if conclusion.isAppOf ``LE.le then
+            for forbidden in #[``List.length, ``NativeHandler.goodCode, ``NativeHandler.badCode,
+                ``NativeHandler.goodCaller, ``NativeHandler.badCaller] do
+              if (conclusion.find? (fun e => e.isConstOf forbidden)).isSome then
+                throwError "{name}: supplied coefficient length or completed native runtime"
+      unless measured do
+        throwError "{name}: missing the attacker's measured resource bound"
 
 end SignaturesTest.WeightedOracleBudget

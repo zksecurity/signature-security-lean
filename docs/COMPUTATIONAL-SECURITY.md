@@ -177,8 +177,14 @@ primitive contracts. Complete
 now compose those calls, default construction, final arithmetic and the retained
 full output/transcripts. Intermediate cache equality recovers each later call's
 cache bounds from a cached-transcript invariant; no finished runtime is supplied.
-Automatic recovery of these input conditions from the preceding general interaction,
-and whole-solver certificates, remain open.
+[Caller resource recovery](../Signatures/Runtime/BackendWeightedOracleCallerResources.lean)
+now derives reachability, request widths and local/query budgets from measured
+attacker execution. [Returned-output recovery](../Signatures/Runtime/BackendWeightedExtractionOutput.lean)
+and [entry bounds](../Signatures/Runtime/BackendWeightedExtractionEntry.lean) charge
+all coefficients and retained logs under explicit encoding laws. The
+[native interaction](../Signatures/Runtime/BackendWeightedOracleCache.lean) supplies
+the cached-transcript condition from an empty store once fuel covers the attacker's
+query bound. Whole-solver certificates and security endpoints remain open.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.
