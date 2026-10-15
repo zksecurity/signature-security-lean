@@ -119,9 +119,12 @@ shared state invariant grows only the cache capacity. Indexed routing/tagging,
 including retention of the complete original request, now has a derived
 primitive/port runtime bound. Capacity reservations support repeated adaptive
 calls at one fixed maximum budget. Caller runtime now adds this proved handler
-and routing overhead to the attacker's own local-work/query budget. Recovery of
-the caller's request/size conditions from measured execution resources and
-encoding laws, final extraction and complete solver overhead remain open.
+and routing overhead to the attacker's own local-work/query budget. Request and
+return widths, every coefficient-row length, random arities, reachability and
+termination now follow from measured attacker resources and explicit encoding
+laws. The caller budget uses these derived conditions without a separate caller
+invariant or supplied caller budget. Final extraction and complete solver
+overhead remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
@@ -146,7 +149,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, complete native indexed-handler runtime/code bounds, and additive adaptive caller overhead with capacity reservations. | Recover caller conditions from measured resources/encoding laws, finish extraction and complete solver overhead, then expose security/family endpoints. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, complete native indexed-handler runtime/code bounds, and additive caller overhead derived from measured resources and encoding laws. All request/return rows and random arities are accounted for; measured query bounds rule out cutoff. | Finish native extraction and complete solver overhead, then expose security/family endpoints. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1460,11 +1463,59 @@ Validation: targeted handler regressions passed (3439 jobs), and
 have no warnings or nonstandard transitive axioms. All 462 local links in the
 two edited guides resolve. No proof-resource or transparency overrides were added.
 
-Next, derive composed handler/caller runtime and implement final extraction, then derive
-complete solver time/code bounds from general attacker resources and connect them to the probability
-theorem. Charge all incoming coefficient/group encodings, including ignored
-malformed data. The proof-side encoding and metadata-restoration maps are not
-free runtime operations; their actual routing must be installed and charged.
+The composed handler/caller runtime and general resource recovery are now proved.
+Next, implement final extraction, derive complete solver time/code bounds and
+connect them to the probability theorem. The final output encoding map is still
+a proof relation; its actual conversion must be installed and charged.
+
+### Schnorr measured caller resources, 2026-10-15
+
+[Request recovery](../Signatures/Runtime/BackendSchnorrAGMRequestRecovery.lean)
+derives data widths, group/row counts and every nested coefficient-row length
+from the complete request encoding. Positive list-cell accounting bounds list
+lengths; the additional [payload law](../Signatures/Runtime/BackendListPayload.lean)
+bounds each stored row's encoding by its enclosing list. Both laws follow from
+an additive list encoding with positive cell headers. Conversion may have an
+explicit monotone size expansion; equal-size encodings give identity recovery.
+The actual decoder and taggers retain their separately charged execution costs.
+
+[Natural-value recovery](../Signatures/Runtime/BackendNatValue.lean) separates
+random arity from encoded width. For binary encodings, width `b` permits values
+up to `2^b - 1`. Conversely, all values in that range fit `b + header` encoded
+units under the binary upper-size law. No polynomial numeric-arity premise or
+iteration over that numeric range is added to the handler bound.
+
+[Caller resource substitution](../Signatures/Runtime/BackendSchnorrAGMCallerResources.lean)
+uses `RunsWithin` to derive reachable state/head sizes, bounded requests and
+closure under every typed reply. It instantiates the native caller bound with
+local allowance `work + 2*queries + 2` and conservative per-kind query allowance
+`queries`. All handler costs remain derived from primitive and local port
+contracts. No custom caller invariant, supplied `GeneralCaller.Budget`, finite
+message/group universe or arithmetic attacker implementation is assumed.
+
+[Return and termination laws](../Signatures/Runtime/BackendSchnorrAGMCallerOutput.lean)
+transfer the measured head bound to the entire actual returned encoding, including
+terminal readout at zero remaining fuel. Fuel at least the measured query bound
+excludes cutoff and yields exact joint output/state correspondence with the
+finite-list source execution. No extra termination certificate is required.
+
+[Forgery recovery](../Signatures/Runtime/BackendSchnorrAGMOutputSize.lean)
+then bounds the encoded forgery, message, scalar, group count, row count and every
+row length, including malformed and unused rows. Output conversion may have an
+explicit monotone size expansion; equal-size encodings again give identity
+recovery. The actual output adapter and final native extractor remain to be
+implemented and charged by the complete solver.
+
+[Regressions](../SignaturesTest/BackendSchnorrAGMResources.lean) cover ignored
+signing rows, malformed final outputs, infinite natural message types and binary
+arities reaching the full exponential range. They check transitive standard
+axioms and reject finite-domain, supplied whole-program-budget and restricted
+attacker premises, including in the contract record constructors.
+
+Validation: targeted resource regressions passed (3466 jobs), and
+`lake build Signatures SignaturesTest` passed (4203 jobs). The new declarations
+have no warnings or nonstandard transitive axioms. All 480 local links in the
+two edited guides resolve. No proof-resource or transparency overrides were added.
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
 and [costed controller](../Signatures/Runtime/SchnorrSeededMachineCorrectness.lean).
@@ -3114,7 +3165,7 @@ additional axioms or proof-resource overrides.
   contracts, charging the original request, reply tags, decoder and routing.
   Prove capacity reservations and additive caller overhead using the attacker's
   own local-work/query budget; no finished-handler budget is assumed.
-- [ ] Recover request/return widths, coefficient lengths, random arities,
+- [x] Recover request/return widths, coefficient lengths, random arities,
   reachability and termination from measured attacker resources and explicit
   encoding laws, then instantiate the native caller bound with those results.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the

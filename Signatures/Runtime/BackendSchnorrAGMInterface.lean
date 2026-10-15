@@ -15,12 +15,14 @@ open BackendProgram
 abbrev SourceRequest (F G M : Type) := Explained F (Request M) (Group G)
 abbrev sourceSpec (F G M : Type) := explainedSpec F (Group G) (Request M) (Reply F M)
 abbrev SourceIndex (F G M : Type) := Σ i : SourceRequest F G M, (sourceSpec F G M).Range i
+abbrev SourceForgery (F G M : Type) := Explained F (M × F) (Group G)
 abbrev Args (A F G : Type) := A × List G × List (List F)
 abbrev NativeRequest (F G M : Type) := Args Nat F G ⊕ (Args M F G ⊕ Args M F G)
 
 abbrev argsTy (value : Ty CryptoAtom) : Ty CryptoAtom := .pair value (.pair (.list point₁) (.list (.list scalar)))
 abbrev randomArgsTy : Ty CryptoAtom := argsTy .nat
 abbrev groupArgsTy : Ty CryptoAtom := argsTy message
+abbrev forgeryTy : Ty CryptoAtom := argsTy (.pair message scalar)
 abbrev configTy : Ty CryptoAtom := .pair point₁ point₁
 abbrev storeTy : Ty CryptoAtom := .pair configTy stateTy
 
@@ -37,6 +39,20 @@ def decodeRequest {F G M : Type} : NativeRequest F G M → SourceRequest F G M
   | .inl (n, groups, rows) => request (.random n) groups rows
   | .inr (.inl (m, groups, rows)) => request (.hash m) groups rows
   | .inr (.inr (m, groups, rows)) => request (.sign m) groups rows
+
+/-- A proof relation for the final output boundary; executable conversion is
+provided and charged separately by the solver's output adapter. -/
+def encodeForgery {F G M : Type} (out : SourceForgery F G M) : Args (M × F) F G :=
+  (out.value.data, out.value.groups (), out.coefficients ())
+
+def decodeForgery {F G M : Type} (out : Args (M × F) F G) : SourceForgery F G M :=
+  ⟨⟨out.1, fun _ => out.2.1⟩, fun _ => out.2.2⟩
+
+@[simp] theorem decode_encodeForgery {F G M : Type} (out : SourceForgery F G M) :
+    decodeForgery (encodeForgery out) = out := by cases out; rfl
+
+@[simp] theorem encode_decodeForgery {F G M : Type} (out : Args (M × F) F G) :
+    encodeForgery (decodeForgery out) = out := rfl
 
 @[simp] theorem decode_encodeRequest {F G M : Type} (q : SourceRequest F G M) :
     decodeRequest (encodeRequest q) = q := by

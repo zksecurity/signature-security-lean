@@ -330,11 +330,26 @@ adds the proved handler and routing costs to the attacker's own realized work
 and query allowances. These runtime reserves conservatively allow one new cell
 in each list per request; the sharper source-game capacities remain unchanged.
 
-Recovering request/return sizes, row lengths and random arities from measured
-attacker resources and encoding laws remains open. The current caller theorem
-still takes reachable-request and state/head-size conditions explicitly. Final
-extraction and full solver accounting also remain open; this is not yet a
-resource certificate for the full solver.
+[Measured-resource substitution](../Signatures/Runtime/BackendSchnorrAGMCallerResources.lean)
+now derives reachable-request conditions and state/head sizes from the attacker's
+own `RunsWithin` bound. The instantiated caller bound requires no custom caller
+invariant or separate caller budget. Its local allowance is
+`work + 2*queries + 2`, with a conservative `queries` allowance per request kind.
+[Request recovery](../Signatures/Runtime/BackendSchnorrAGMRequestRecovery.lean)
+accounts for every group, row and nested coefficient, including ignored values,
+using positive list-cell and list-payload size laws. Binary random arities may
+reach `2^b - 1` at width `b`; the budget does not enumerate that range.
+
+[Return and termination bounds](../Signatures/Runtime/BackendSchnorrAGMCallerOutput.lean)
+cover the full actual return encoding, including zero-fuel terminal readout.
+Fuel covering the measured queries excludes cutoff and preserves the joint
+finite-list source distribution. [Forgery recovery](../Signatures/Runtime/BackendSchnorrAGMOutputSize.lean)
+bounds the message, scalar, group/row counts and each coefficient-row length
+from that return, including malformed outputs. Equal-size boundary encodings
+give identity size recovery; actual conversion code still requires charging.
+
+Final extraction, the executable output adapter and full solver accounting
+remain open; this is not yet a resource certificate for the full solver.
 
 ## What Efficiency Is Certified
 
