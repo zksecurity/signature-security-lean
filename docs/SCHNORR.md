@@ -176,9 +176,10 @@ include the first output and configuration retained during replay. The runtime
 formula has proved polynomial closure from separate pass budgets, tape capacities,
 encoded widths and backend operation costs. The general-caller pass is now
 assembled with exact source correspondence, complete stored-code/runtime bounds
-and polynomial runtime closure. Selector source, stored code and complete
-chronological-lookup costs are proved; complete selector runtime composition
-remains open.
+and polynomial runtime closure. The selector now also has complete runtime,
+stored-code and polynomial bounds. Both are installed in the native controller,
+with exact source correspondence and a complete stored-code bound; installed
+fork runtime composition remains open.
 
 The [general finite-cache pass](../Signatures/Runtime/SchnorrROMListPass.lean)
 now has exact adaptive source/trace correspondence for arbitrary attacker
@@ -336,13 +337,29 @@ The [complete lookup runtime](../Signatures/Runtime/BackendSchnorrROMLiveIndexBu
 charges reversal, the scan, growing ordinal, original/reversed caches and trailing
 environments. It derives scan and reversal costs from actual primitive bounds
 and encountered-cache capacity, without iterating over the message space.
+[Complete selector runtime](../Signatures/Runtime/BackendSchnorrROMSelectionBudget.lean)
+now composes verification, lookup, guard, the empty/singleton outer fold and input
+framing, deriving every component from pass encodings and primitive contracts.
+With `W = (32*(managedCap+liveCap)+128)*width`, its bound is the complete lookup
+cost at `W`, plus `2*scaleTime+addTime+pointTime+comparisonTime` and
+`1280*overhead(512*W)`.
 [Polynomial closure](../Signatures/Runtime/BackendSchnorrROMSelectionPolynomial.lean)
-covers lookup runtime and the complete selector's description.
+covers the entire selector runtime and description.
 [Selector regressions](../SignaturesTest/SchnorrROMSelection.lean) exercise the
 final-query slot, chronological order, cutoff, failed verification, missing live
 entries, duplicate keys and malformed multi-result lists, and guard theorem scope.
-Complete verification/guard/outer-fold runtime composition, controller installation
-and complete solver/public/family endpoints remain open.
+The [installed native fork](../Signatures/Runtime/BackendSchnorrROMFork.lean)
+now uses the actual pass and selector. Its source law derives both runs from
+measured caller resources and equals the original finite-cache/raw-tape fork,
+with singleton output encoding. Every supported costed result rejects or contains
+two singleton completed passes. Its
+[complete stored-code bound](../Signatures/Runtime/BackendSchnorrROMForkDescription.lean)
+counts both pass/selector occurrences and all controller components.
+[Fork guards](../SignaturesTest/SchnorrROMFork.lean) check those installed components,
+source scope, measured-resource premises and axiom footprint.
+Installed fork runtime composition still needs separate tape-entry and complete
+output widths in the controller invariant. Whole-solver extraction/fallback,
+resource certificates and public/family endpoints remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

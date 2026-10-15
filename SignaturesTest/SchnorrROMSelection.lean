@@ -75,7 +75,11 @@ run_meta do
       ``NativeSelection.liveIndexBody_time, ``NativeSelection.liveIndexFold_time,
       ``NativeSelection.liveIndex_time, ``NativeSelection.liveIndex_cost,
       ``NativeSelection.selector_description, ``NativeSelection.indexTime_polynomial,
-      ``NativeSelection.description_polynomial] do
+      ``NativeSelection.description_polynomial, ``NativeSelection.verifyExpression_time,
+      ``NativeSelection.guardExpression_time, ``NativeSelection.indexExpressionWith_time,
+      ``NativeSelection.oneExpressionWith_time, ``NativeSelection.choice_size,
+      ``NativeSelection.oneValue_index_le, ``NativeSelection.oneExpression_time,
+      ``NativeSelection.selector_cost, ``NativeSelection.timeBudget_polynomial] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -97,5 +101,29 @@ run_meta do
         (conclusion.find? (fun e => e.isConstOf ``Expression.compile)).isSome &&
         (conclusion.find? (fun e => e.isConstOf ``liveIndex)).isSome do
       throwError "charge the actual compiled chronological lookup"
+  forallTelescope (← getConstInfo ``NativeSelection.selector_cost).type fun params conclusion => do
+    let mut completed := false
+    let mut primitives := false
+    for param in params do
+      let type ← inferType param
+      if (type.find? (fun e => e.isConstOf ``NativePass.CompletedBound)).isSome then
+        completed := true
+      if (type.find? (fun e => e.isConstOf ``NativeSelection.Operations)).isSome then
+        primitives := true
+      for forbidden in #[``Bounds, ``GeneralCaller.Budget, ``Program, ``SourceCertificate,
+          ``Fintype, ``Finite, ``Inhabited, ``Expression.compile, ``Expression.compileBound] do
+        if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+          throwError "derive complete selector runtime from pass encodings and primitive operations"
+    unless completed && primitives &&
+        (conclusion.find? (fun e => e.isConstOf ``QuantitativeStepClass.cost)).isSome &&
+        (conclusion.find? (fun e => e.isConstOf ``NativeSelection.selector)).isSome do
+      throwError "certify the actual complete selector and retain pass/primitive contracts"
+  for name in #[``NativeSelection.Operations.scale, ``NativeSelection.Operations.add,
+      ``NativeSelection.Operations.point, ``NativeSelection.Operations.message,
+      ``NativeSelection.Operations.increment, ``NativeSelection.Operations.compare] do
+    let type := (← getConstInfo name).type
+    for forbidden in #[``Bounds, ``Expression.compile, ``Expression.compileBound, ``NativeSelection.selector] do
+      if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+        throwError "primitive contracts must not hide a completed selector/component budget"
 
 end SignaturesTest.SchnorrROMSelection
