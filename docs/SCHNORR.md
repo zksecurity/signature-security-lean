@@ -267,8 +267,7 @@ Acceptance constructs the scalar response and singleton commitment list. The
 charges the scan, retained input, routing and both reply constructors, and the
 input-size bound includes every coefficient row even though signing ignores
 their values. The tuple/list result has an exact correspondence to the source
-reply. Its conversion to the caller's indexed request/reply interface remains
-part of general-caller composition.
+reply. The common handler described below installs its indexed caller adapter.
 
 The [randomness handler](../Signatures/Runtime/BackendSchnorrAGMRandom.lean)
 uses one [dynamic uniform query](../Signatures/Runtime/BackendUniformSampling.lean)
@@ -281,12 +280,26 @@ empty group list. Its [complete budget](../Signatures/Runtime/BackendSchnorrAGMR
 charges conversions, the external query and its control cost, scans, retained
 data, state updates and reply construction. Ignored rows are included in input
 size. Its exact source correspondence relates the natural-number result to the
-source's dependent `Fin (n+1)` reply; caller-index tagging remains separate.
+source's dependent `Fin (n+1)` reply.
 
-The hash dispatcher still uses an internal scalar/state interface. Final
-extraction, full solver accounting and general-caller composition,
-including external request/reply packing, remain open; these component certificates
-are not yet a certificate for the full solver.
+The [native dispatcher](../Signatures/Runtime/BackendSchnorrAGMHandler.lean)
+now installs all three components. Its common store contains the generator,
+public key and encoded reduction state. Compiled adapters retain this config,
+construct the hash reply's empty group list, and rearrange component arguments.
+The original request is retained across each call and passed to an implemented
+dependent reply tagger. Every group and coefficient row remains part of that
+request. Random tagging restores the exact `Fin (n+1)` reply on reachable outputs.
+
+[Adaptive source correspondence](../Signatures/Runtime/BackendSchnorrAGMHandlerSource.lean)
+proves that a general quantitative caller sees the same joint replies and states
+as the established finite-list reduction. It preserves arbitrary output types
+and observable query-fuel cutoff; the implementation/termination contract rules
+out cutoff for the source program. The
+[stored-code bound](../Signatures/Runtime/BackendSchnorrAGMHandlerDescription.lean)
+includes all installed components, request conversion, reply tagging and caller
+routing, without tables over messages or random arities. Composed handler/caller
+runtime, final extraction and full solver accounting remain open; these results
+are not yet a resource certificate for the full solver.
 
 ## What Efficiency Is Certified
 

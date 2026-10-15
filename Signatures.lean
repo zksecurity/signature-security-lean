@@ -33,6 +33,7 @@ import Signatures.Runtime.BackendSchnorrAGMProgramming
 import Signatures.Runtime.BackendSchnorrAGMSigningBudget
 import Signatures.Runtime.BackendSchnorrAGMSigningDispatchBudget
 import Signatures.Runtime.BackendSchnorrAGMRandomBudget
+import Signatures.Runtime.BackendSchnorrAGMHandlerDescription
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -196,9 +197,11 @@ handler at its scalar/state interface, and rejection never calls the sampler.
 The signing dispatcher now handles every request shape, constructs scalar/group-list
 replies and charges both accepted and rejected paths, including ignored coefficient
 rows. Random handling makes one runtime-selected uniform query even for malformed
-requests, with derived conversion, scan, state and reply costs. Final extraction,
-complete solver runtime and general-caller
-composition (including external request/reply packing) remain open.
+requests, with derived conversion, scan, state and reply costs. The complete native
+dispatcher now installs all three handlers with request retention and indexed
+reply tagging. General callers have exact adaptive source correspondence and
+complete stored-code bounds. Composed handler/caller runtime, final extraction
+and complete solver accounting remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
