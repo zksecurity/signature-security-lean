@@ -279,8 +279,22 @@ call within fixed maximum capacities. The actual dispatcher preserves this
 invariant with the same proved time allowance.
 [Polynomial closure](../Signatures/Runtime/BackendSchnorrROMHandlerPolynomial.lean)
 covers the complete formula without numeric-arity/counter or message-domain
-factors. Whole-caller runtime remains open, followed by final pass/selector
-and complete solver/public/family endpoints.
+factors. [Request recovery](../Signatures/Runtime/BackendSchnorrROMRequestRecovery.lean)
+now derives native request bounds from measured caller encodings, with identity
+recovery for equal-size representations.
+[Whole-caller composition](../Signatures/Runtime/BackendSchnorrROMCallerBudget.lean)
+charges original caller work, every dispatcher call, initialization, retained
+state and loop/control work. The
+[measured-resource endpoint](../Signatures/Runtime/BackendSchnorrROMCallerResources.lean)
+derives all caller invariants and budgets from `RunsWithin`; it assumes no
+completed handler/caller efficiency certificate or arithmetic attacker program.
+[Return bounds](../Signatures/Runtime/BackendSchnorrROMCallerOutput.lean) cover the
+entire output encoding, including zero-fuel returns.
+[Polynomial closure](../Signatures/Runtime/BackendSchnorrROMCallerPolynomial.lean)
+now covers the full caller runtime.
+[Caller regressions](../SignaturesTest/SchnorrROMCaller.lean) check zero-fuel
+return/cutoff behavior and guard the measured-resource scope and axiom footprint.
+Final pass/selector assembly and complete solver/public/family endpoints remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

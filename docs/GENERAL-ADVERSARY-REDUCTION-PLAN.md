@@ -228,8 +228,10 @@ derived local runtime and encoding bounds. All four wrapped components have
 complete runtime, shared-state invariants and polynomial closure derived from
 primitive contracts and original sampler profiles. The complete indexed dispatcher
 now has a primitive-derived runtime bound, polynomial closure and reservations
-for future adaptive calls. Whole-caller runtime remains open, followed by final
-pass and selector assembly and complete solver/public/family endpoints.
+for future adaptive calls. Whole-caller runtime and returned-output widths now
+follow from measured arbitrary executions and encoding recovery; the complete
+caller runtime formula has polynomial closure. Final pass and selector assembly
+and complete solver/public/family endpoints remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -253,7 +255,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. All four shared-store components now have exact source laws, stored-code bounds, complete primitive-derived runtime, preserved encoding/capacity invariants and polynomial closure. Indexed dispatch also has complete primitive-derived runtime, polynomial closure and adaptive capacity reservations. Arbitrary caller composition has source correspondence and stored-code bounds; measured query resources exclude cutoff. | Derive whole-caller runtime; assemble and certify the final pass/selector, then complete whole-solver certificates and public/family endpoints. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. All four shared-store components now have exact source laws, stored-code bounds, complete primitive-derived runtime, preserved encoding/capacity invariants and polynomial closure. Indexed dispatch also has complete primitive-derived runtime, polynomial closure and adaptive capacity reservations. Arbitrary caller composition has exact source/stored-code bounds, measured-resource runtime, returned-output bounds and polynomial runtime closure; measured query resources exclude cutoff. | Assemble and certify the final pass/selector, then complete whole-solver certificates and public/family endpoints. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2913,6 +2915,57 @@ Validation: all five new modules compiled without warnings. Extended handler
 regressions and aggregate imports passed serially with `-j1 -M8192` and default
 proof limits. All 739 relative links in the two guides resolve; whitespace checks pass.
 
+### Complete arbitrary ROM caller runtime, 2026-10-15
+
+[Request recovery](../Signatures/Runtime/BackendSchnorrROMRequestRecovery.lean)
+derives the full hash key, signing message and random arity bounds from encoded
+request size. Canonical equal-size encodings use identity recovery. Natural-value
+recovery may allow an exponential numeric range; neither runtime nor code
+enumerates that range. Actual conversion costs remain charged by the port laws.
+
+[Caller composition](../Signatures/Runtime/BackendSchnorrROMCallerBudget.lean)
+installs the already certified dispatcher in the actual general caller. An
+invariant reserves cache/tape capacity for the remaining calls and follows every
+typed reply-dependent continuation. Initialization, retained state, returned
+replies and loop/control work are included. Its complete time bound is
+
+```text
+callerLocalTime + sum_k (queries[k] * dispatcherTime)
+  + 3 * overhead (32 * routeWidth)
+  + (fuel + 1) * (42 * overhead (32 * routeWidth) + callerTickTime).
+```
+
+[Measured-resource composition](../Signatures/Runtime/BackendSchnorrROMCallerResources.lean)
+derives request/state/head widths, continuation invariants and the symbolic-price
+budget directly from the attacker's `RunsWithin` contract. It uses
+`bound.work + 2 * bound.queries + 2` for caller local work and conservatively
+bounds each of the three request counts by `bound.queries`. The final theorem
+assumes no completed handler/caller budget, arithmetic attacker implementation,
+finite message domain or caller-specific invariant. Actual scalar sampling is
+charged from its original execution profile; actual boundary conversions remain
+explicit local backend contracts.
+
+[Returned-output bounds](../Signatures/Runtime/BackendSchnorrROMCallerOutput.lean)
+connect the executed caller to its costed reference and bound the complete
+returned encoding by the measured head-size cap. This includes returns at zero
+remaining fuel. Existing measured termination and exact source correspondence
+still rule out cutoff when sufficient query fuel is supplied.
+[Polynomial closure](../Signatures/Runtime/BackendSchnorrROMCallerPolynomial.lean)
+covers the entire installed caller runtime formula, including original caller
+work, all dispatcher calls and control costs, without a numeric-arity/counter or
+message-domain factor.
+
+[Caller regressions](../SignaturesTest/SchnorrROMCaller.lean) check actual zero-fuel
+return/cutoff behavior with the full shared store, classify dynamic random arities
+as large as `2^64`, and guard the complete runtime/output theorem assumptions and
+standard axiom footprints. These are caller-phase certificates; final-live-hash
+assembly, fork selection, extraction/fallback and full solver/public/family
+endpoints remain to be completed.
+
+Validation: all five new proof modules, the new caller regression and aggregate
+imports passed without warnings, serially with `-j1 -M8192` and default proof
+limits. All 751 relative links in the two guides resolve; whitespace checks pass.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -2922,25 +2975,29 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Use measured attacker resources for native replay storage and sampling costs.
   Probability-level private-family coverage is now derived without inspecting
   source syntax, but this finite existence argument supplies no efficiency bound.
-- Derive whole-caller runtime from measured request encodings and execution
-  resources. Indexed request conversion, retention, dependent reply tagging and
-  both dispatches now have complete runtime and polynomial closure from original
-  sampler profiles and primitive laws. The actual handler preserves adaptive
-  cache/tape reservations; source laws and stored-code bounds preserve ordering
-  with attacker queries.
+- Use the completed measured-resource caller runtime and returned-output bounds
+  when assembling final verification. Indexed conversion, request retention,
+  dependent reply tagging, dispatch and caller control now have complete runtime
+  and polynomial closure. Adaptive cache/tape reservations, exact source laws and
+  stored-code bounds are preserved.
 - Assemble and certify the native general-caller pass and selector, then install
   them in the native controller. The finite-cache general pass, its capacity
   bounds and exact fork/extraction correspondence are proved; native cache/signing
   kernels have semantics, stored-code and complete runtime bounds. Draws, reset,
   lookup and the complete controller also have derived runtime resources. Indexed
-  dispatch now has complete runtime; whole-caller and pass/selector resources
-  still need deriving from the actual code/caller. Caller source correspondence, measured termination and
-  complete stored-code bounds are now proved.
+  dispatch and whole-caller execution now have complete runtime; pass/selector
+  resources still need deriving from the actual code. Caller source correspondence,
+  measured termination, returned-output bounds and complete stored-code bounds
+  are now proved. The native fork controller is generic in its output type: a
+  `Unit ⊕ cachePassOutput` result can represent cutoff explicitly, with a rejecting
+  selector on that branch. Derive the always-present branch from measured fuel
+  and prove the output-embedding correspondence; do not assume a free default
+  message or an executable projection from an arbitrary optional result.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
   do not assume free snapshots of an arbitrary attacker state.
-- Complete the general-caller execution bounds, then
-  compose the complete solver's extraction and fallback. Controller adapters,
+- Compose the certified general-caller execution with final verification, then
+  the complete solver's extraction and fallback. Controller adapters,
   routing, lookup, reset and both draw handlers are accounted for and generate no
   arity-sized codec code; older fixed-arity endpoints
   retain their linear-range accounting. If bounded
@@ -4657,8 +4714,10 @@ additional axioms or proof-resource overrides.
 - [x] Derive complete indexed dispatcher runtime and polynomial closure from
   primitive/original sampler contracts, preserving cache/tape reservations for
   adaptive calls and charging actual request/dependent-reply conversions.
-- [ ] Derive whole-caller runtime; install and certify the final general-caller
-  pass/selector with replay costs recovered from measured resources.
+- [x] Derive whole-caller runtime, request/returned-output widths and polynomial
+  runtime closure from measured arbitrary executions and local encoding contracts.
+- [ ] Install and certify the final general-caller pass/selector with replay costs
+  recovered from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
