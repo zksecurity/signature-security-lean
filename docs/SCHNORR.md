@@ -174,8 +174,9 @@ now charges both executions, both selector calls, replacement sampling,
 lookup/reset, all adapters, branches and retained copies. Its frame invariants
 include the first output and configuration retained during replay. The runtime
 formula has proved polynomial closure from separate pass budgets, tape capacities,
-encoded widths and backend operation costs. Implementing the general-caller pass
-and selector and deriving their budgets from measured attacker resources remain open.
+encoded widths and backend operation costs. The general-caller pass is now
+assembled with exact source correspondence and complete stored-code bounds;
+complete pass runtime composition and selector certification remain open.
 
 The [general finite-cache pass](../Signatures/Runtime/SchnorrROMListPass.lean)
 now has exact adaptive source/trace correspondence for arbitrary attacker
@@ -294,7 +295,24 @@ entire output encoding, including zero-fuel returns.
 now covers the full caller runtime.
 [Caller regressions](../SignaturesTest/SchnorrROMCaller.lean) check zero-fuel
 return/cutoff behavior and guard the measured-resource scope and axiom footprint.
-Final pass/selector assembly and complete solver/public/family endpoints remain open.
+The [assembled native pass](../Signatures/Runtime/BackendSchnorrROMPass.lean)
+now initializes both caches, runs the general caller and queries the live hash
+cache for final verification. Actual input, output and optional-return conversions
+are part of the code. Empty/singleton result lists distinguish cutoff from
+completion without a default message. Its
+[source law](../Signatures/Runtime/BackendSchnorrROMPassSource.lean) holds on every
+raw replay tape; measured query resources prove singleton completion.
+[Stored-code bounds](../Signatures/Runtime/BackendSchnorrROMPassDescription.lean)
+cover the complete pass. [Local adapter costs](../Signatures/Runtime/BackendSchnorrROMPassLocalCost.lean)
+and [result encodings](../Signatures/Runtime/BackendSchnorrROMPassSize.lean) charge
+the forgery, both caches, list construction and both tape lists.
+[Final verification composition](../Signatures/Runtime/BackendSchnorrROMPassVerificationBudget.lean)
+charges retained data, packing and control around the live-hash component.
+This internal composition lemma still needs to be combined with initialization,
+boundary conversion and terminal costs to certify the complete pass runtime.
+[Pass regressions](../SignaturesTest/SchnorrROMPass.lean) check live-cache selection,
+private-cell ordering and sampler independence of the costed cutoff branch.
+Selector certification and complete solver/public/family endpoints also remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
