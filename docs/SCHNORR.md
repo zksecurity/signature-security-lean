@@ -214,9 +214,23 @@ and sums. Its [complete native cost](../Signatures/Runtime/BackendSchnorrAGMFlat
 charges coefficient matching, both coordinates, temporary rows and retained
 context; the full coefficient length appears even for an unused suffix.
 Stored code is bounded independently of the basis/coefficient lengths, and the
-output holds two field elements. Hash/sign handlers, final extraction, full
-solver accounting and general-caller composition remain open; these component
-certificates are not yet a certificate for the full solver.
+output holds two field elements.
+
+The [decoded hash path](../Signatures/Runtime/BackendSchnorrAGMHash.lean) now
+composes flattening and the complete read, retaining the original state during
+coefficient processing. Its [budget](../Signatures/Runtime/BackendSchnorrAGMHashBudget.lean)
+adds the actual preparation and control costs to the proved flattening/read
+bounds. It agrees with the finite source for every coefficient vector, preserves
+both histories and the malformed flag, and keeps the first cached explanation.
+Cache hits still charge coefficient processing but do not sample a challenge.
+The [singleton decoder](../Signatures/Runtime/BackendListSingleton.lean) checks
+list shape using two flags and one candidate, with a derived cost for scanning
+the entire list and a constant stored-code bound. Duplicate elements do not
+turn a multiple-element list into a singleton.
+
+Connecting this decoder to the malformed-request dispatcher, signing, final
+extraction, full solver accounting and general-caller composition remain open;
+these component certificates are not yet a certificate for the full solver.
 
 ## What Efficiency Is Certified
 

@@ -30,7 +30,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
 
 include sizes laws dataLaws mono
 
-private theorem framed_cost {input output : Ty CryptoAtom} (e : Expr CryptoOp [input] output)
+theorem framed_cost {input output : Ty CryptoAtom} (e : Expr CryptoOp [input] output)
     (x : input.Value (cryptoBase F G₁ G₂ K M)) (width time : Nat)
     (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)
     (hi : Q.size (rep.ty input) x ≤ width)

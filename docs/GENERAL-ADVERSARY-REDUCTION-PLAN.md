@@ -95,10 +95,11 @@ requires that collision probability to be negligible too.
 Schnorr AGM now has a finite-list reduction with exact adaptive output/state
 correspondence and the original probability bound. Its storage capacities are
 `qS + qH + 1` cache entries, `qS + 2` affine basis entries, and `qS` signed
-messages, with no finite message/group-domain assumption. Its native cache core
-now has exact encoded-state semantics and derived time/code bounds. Outer
-read/handler routing, representation flattening, complete solver overhead, and
-general-caller composition remain open for this route.
+messages, with no finite message/group-domain assumption. Its native cache core,
+complete read, representation flattening and decoded singleton hash path now
+have exact encoded-state semantics and derived time/code bounds. A costed
+singleton decoder is also available. Malformed-request routing, signing, final
+extraction, complete solver overhead and general-caller composition remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
@@ -123,7 +124,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and complete native read and coefficient-flattening time/code certificates. | Hash/sign handlers, final extraction, complete solver overhead and general caller composition. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and native read, coefficient-flattening, decoded hash and singleton-decoder time/code certificates. | Malformed-request dispatcher, signing, final extraction, complete solver overhead and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1155,7 +1156,49 @@ Validation: the targeted test passed (3361 jobs), and
 `lake build Signatures SignaturesTest` passed (4139 jobs), with no new warnings
 or nonstandard axioms. All 406 local links in the two edited guides resolve.
 
-Next, implement and charge hash/sign handlers and final extraction, then derive
+The [decoded hash path](../Signatures/Runtime/BackendSchnorrAGMHash.lean) now
+computes the affine explanation before reading the cache and keeps the entire
+original state in represented runtime data. It matches the finite-source read
+for every coefficient vector, including short and surplus vectors. Supported
+executions preserve both histories and the malformed flag exactly. Cache hits
+retain the first explanation and skip the sampler, while still charging
+coefficient processing.
+
+Its [input/size invariants](../Signatures/Runtime/BackendSchnorrAGMHashSize.lean)
+use base width `w`, cache cap `K`, separate history bound `H`, basis cap `N` and
+full coefficient cap `L`. With
+`W = Read.frameWidth (3*w) K H + (4*L+64)*w`, the
+[complete bound](../Signatures/Runtime/BackendSchnorrAGMHashBudget.lean) is
+`Flatten.flattenTime overhead W N L ... + Read.readTime overhead (3*w) K H ...
++ 262*overhead(256*W)`. The widened read accommodates both encoded affine
+coordinates. [Preparation costs](../Signatures/Runtime/BackendSchnorrAGMHashLocalCost.lean)
+include the original input, retained compiler environments, packing and the
+local-call frame. The public bound assumes primitive/sampler and representation
+contracts, not a completed flattening, read or hash budget. Stored code is
+bounded by the component descriptions and a fixed structural allowance.
+
+The [singleton decoder](../Signatures/Runtime/ListSingleton.lean) uses two Boolean
+flags and one candidate; no uncharged length operation or natural counter is
+needed. Its [native bound](../Signatures/Runtime/BackendListSingleton.lean) is
+`L*129*fee + 64*fee`, where `fee = overhead(128*(4*L+32)*w)`; the retained
+context and candidate must fit `w`. It scans all input cells, returns an output
+of size at most `3*w`, and has description size at most `128*allowance`.
+Its validity flag is true exactly when the input is the singleton containing
+the returned candidate. In particular, `[[]]` is one coefficient row and two
+identical group elements still form an invalid two-element group list.
+
+[Regressions](../SignaturesTest/BackendSchnorrAGMHash.lean) cover these shape
+distinctions, first-explanation preservation, sampler-independent cache hits,
+exceptional-challenge misses and empty inner vectors, together with transitive
+axiom and public-contract guards. The decoded path and decoder are separate
+components; the all-shape hash dispatcher is not yet installed.
+
+Validation: the targeted test passed (3402 jobs), and
+`lake build Signatures SignaturesTest` passed (4149 jobs). The new declarations
+have no nonstandard transitive axioms or new warnings; all 416 local links in
+the two edited guides resolve.
+
+Next, connect and charge malformed-request routing, signing and final extraction, then derive
 complete solver time/code bounds from general attacker resources and connect them to the probability
 theorem. Charge all incoming coefficient/group encodings, including ignored
 malformed data. The proof-side encoding and metadata-restoration maps are not
@@ -2780,6 +2823,9 @@ additional axioms or proof-resource overrides.
 - [x] Implement native Schnorr AGM representation flattening, preserving all
   positional/zero-padding semantics and deriving complete time/code/output-size
   bounds including coefficient suffixes and retained contexts.
+- [x] Compose the decoded singleton hash path with exact source semantics and
+  derived preparation/control/runtime/code bounds; implement and bound the
+  singleton-list decoder needed by the all-shape dispatcher.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;

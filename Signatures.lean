@@ -25,6 +25,8 @@ import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.BackendSchnorrAGMReadBudget
 import Signatures.Runtime.BackendSchnorrAGMFlattenBudget
+import Signatures.Runtime.BackendSchnorrAGMHashBudget
+import Signatures.Runtime.BackendListSingleton
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -180,8 +182,11 @@ construct the default entry and route the whole state, with derived time/code
 bounds and unchanged history-size limits. Native representation flattening now
 preserves chronological coefficients and zero padding, with derived time/code
 and output-size bounds including the entire coefficient list and retained context.
-Hash/sign handlers, final extraction, complete solver runtime and general-caller
-composition remain open.
+The decoded singleton hash path composes flattening and the complete read, with
+derived preparation/control/time/code bounds and exact source correspondence.
+A separate native singleton decoder has checked list-scan and stored-code costs.
+Connecting that decoder to the malformed-request dispatcher, signing, final
+extraction, complete solver runtime and general-caller composition remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
