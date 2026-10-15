@@ -105,7 +105,10 @@ now composes both scalar draws, response arithmetic, both histories, cache
 programming and state packing, with exact source semantics and derived complete
 time/code bounds. Signing dispatch now scans incoming groups, constructs accepted
 and rejected scalar/group-list replies, and derives all-path time/code bounds
-including ignored coefficient-row encodings. The random handler, final extraction,
+including ignored coefficient-row encodings. The random handler now executes one
+dynamic uniform query even for malformed requests, with exact source semantics,
+preserved store capacities and derived conversion/scan/state/reply budgets.
+Final extraction,
 complete solver overhead and general-caller
 composition, including external request/reply packing, remain open.
 
@@ -132,7 +135,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and native read, coefficient-flattening, all-shape hash/sign dispatch and complete accepted-signing time/code certificates. | Random handler, final extraction, complete solver overhead and general caller composition, including indexed request/reply packing. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and native read, coefficient-flattening, all-shape hash/sign dispatch, dynamic randomness and complete accepted-signing time/code certificates. | Final extraction, complete solver overhead and general caller composition, including indexed request/reply packing. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1357,7 +1360,48 @@ the new dispatch regressions. The new declarations have no warnings or
 nonstandard transitive axioms. All 444 local links in the two edited guides
 resolve. No proof-resource or transparency overrides were added.
 
-Next, implement and charge the random handler and final extraction, then derive
+### Schnorr randomness-handler checkpoint, 2026-10-15
+
+[Dynamic uniform sampling](../Signatures/Runtime/BackendUniformSampling.lean)
+composes implemented request encoding, one backend uniform query and implemented
+reply decoding. Its input is a natural arity; it has no enumerated sampler table.
+The exact denotation is `Fin.val` mapped over the source uniform query. Its
+all-path budget is request conversion plus response conversion plus the external
+query/control allowance, and four charged control transitions. Its code size is
+the two adapter descriptions plus five, independent of the arity.
+
+The [Schnorr random handler](../Signatures/Runtime/BackendSchnorrAGMRandom.lean)
+scans incoming groups, retains or sets the malformed flag, performs that dynamic
+query, and constructs an empty-group reply. It draws even on malformed requests.
+The query tree and encoded state agree exactly with the source handler for
+arbitrary group and coefficient lists. The source's `Fin (n+1)` reply is related
+to its natural value; the final caller-index conversion remains to be installed.
+
+[Size invariants](../Signatures/Runtime/BackendSchnorrAGMRandomSize.lean) preserve
+cache, affine-basis and signed-message capacities, and include all ignored rows.
+The [local costs](../Signatures/Runtime/BackendSchnorrAGMRandomLocalCost.lean) derive
+the group scan, flag update and reply construction from compiled expressions.
+The [complete bound](../Signatures/Runtime/BackendSchnorrAGMRandomBudget.lean)
+adds actual query-interface conversions, the external query, value retention and
+every control transition. Its only execution premises concern those local
+encoding operations, the external query and backend structural contracts; it
+does not assume efficiency of a completed handler or sampler. The arity affects
+encoding and external-query contracts; there is no runtime loop proportional to
+the domain cardinality. Stored code is bounded independently of runtime list
+lengths and arity by the two query adapters and `2048*structuralAllowance+16`.
+
+[Regressions](../SignaturesTest/BackendSchnorrAGMRandom.lean) check malformed
+requests still drawing, arbitrary ignored rows, preserved flags and histories,
+the singleton randomness domain, and a `2^128` arity using the same dynamic code.
+They check standard transitive axioms and exclude finite-domain and assumed
+completed-component-efficiency premises.
+
+Validation: targeted random-handler regressions passed (3403 jobs), and
+`lake build Signatures SignaturesTest` passed (4177 jobs). The new declarations
+have no warnings or nonstandard transitive axioms. All 453 local links in the
+two edited guides resolve. No proof-resource or transparency overrides were added.
+
+Next, implement indexed request/reply adapters and final extraction, then derive
 complete solver time/code bounds from general attacker resources and connect them to the probability
 theorem. Charge all incoming coefficient/group encodings, including ignored
 malformed data. The proof-side encoding and metadata-restoration maps are not
@@ -2997,8 +3041,11 @@ additional axioms or proof-resource overrides.
 - [x] Add signing request dispatch, including the group-emptiness scan, malformed
   rejection, ignored incoming rows and construction of scalar/group-list replies,
   with exact source semantics and derived all-path time/code bounds.
-- [ ] Add the random handler and indexed request/reply adapters, including
-  malformed branches and all incoming/outgoing representation costs.
+- [x] Add the random handler with one runtime-selected uniform query, preserved
+  store capacities, malformed-state updates and fully charged native conversions,
+  scanning, retention and reply construction.
+- [ ] Add indexed request/reply adapters and compose all handlers with general
+  callers, charging all incoming/outgoing representations and retained data.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;

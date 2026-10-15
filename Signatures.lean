@@ -32,6 +32,7 @@ import Signatures.Runtime.BackendListSnoc
 import Signatures.Runtime.BackendSchnorrAGMProgramming
 import Signatures.Runtime.BackendSchnorrAGMSigningBudget
 import Signatures.Runtime.BackendSchnorrAGMSigningDispatchBudget
+import Signatures.Runtime.BackendSchnorrAGMRandomBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -194,7 +195,9 @@ branch selection and malformed-state construction. It agrees with the source
 handler at its scalar/state interface, and rejection never calls the sampler.
 The signing dispatcher now handles every request shape, constructs scalar/group-list
 replies and charges both accepted and rejected paths, including ignored coefficient
-rows. Random handling, final extraction, complete solver runtime and general-caller
+rows. Random handling makes one runtime-selected uniform query even for malformed
+requests, with derived conversion, scan, state and reply costs. Final extraction,
+complete solver runtime and general-caller
 composition (including external request/reply packing) remain open.
 
 The public security statements' axiom footprints are exactly

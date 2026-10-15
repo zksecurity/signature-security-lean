@@ -270,8 +270,21 @@ their values. The tuple/list result has an exact correspondence to the source
 reply. Its conversion to the caller's indexed request/reply interface remains
 part of general-caller composition.
 
-The hash dispatcher still uses an internal scalar/state interface. The random handler,
-final extraction, full solver accounting and general-caller composition,
+The [randomness handler](../Signatures/Runtime/BackendSchnorrAGMRandom.lean)
+uses one [dynamic uniform query](../Signatures/Runtime/BackendUniformSampling.lean)
+for every request, including malformed requests. Its arity is a runtime input;
+there is no sampler table or loop over the randomness domain. Request/reply
+conversions have implemented realizers with explicit cost and encoding contracts.
+A compiled emptiness scan marks malformed state and preserves the cache and
+both history capacities. The handler returns the sampled natural number and an
+empty group list. Its [complete budget](../Signatures/Runtime/BackendSchnorrAGMRandomBudget.lean)
+charges conversions, the external query and its control cost, scans, retained
+data, state updates and reply construction. Ignored rows are included in input
+size. Its exact source correspondence relates the natural-number result to the
+source's dependent `Fin (n+1)` reply; caller-index tagging remains separate.
+
+The hash dispatcher still uses an internal scalar/state interface. Final
+extraction, full solver accounting and general-caller composition,
 including external request/reply packing, remain open; these component certificates
 are not yet a certificate for the full solver.
 
