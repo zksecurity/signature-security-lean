@@ -193,7 +193,11 @@ pass now handles arbitrary source attacker computations, has exact trace
 correspondence and query-derived cache capacities, and its complete fork plus
 extraction equals the named reduction. Native live/managed-cache and signing
 kernels have exact state-passing semantics and stored-code bounds. Their runtime
-certificates and integration with the caller/replay samplers remain open.
+certificates and caller integration remain open. Native private scalar sampling
+now transforms the actual sampler code to use the shared raw tape, with exact
+computation correspondence and a stored-code bound. Its typed per-draw handler
+has primitive-derived runtime/encoding bounds and polynomial closure. Lifting
+these resources across the whole sampler execution remains open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -217,7 +221,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction now have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved, with polynomial closure. Native cache/signing kernels have exact state-passing semantics and stored-code bounds. | Complete cache/signing runtime, raw private-sampler composition, general-caller pass/selector assembly and measured-resource recovery, then whole-solver certificates and public/family endpoints. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. Native cache/signing kernels have semantics and stored-code bounds. Actual private sampler code now shares the raw tape with exact source correspondence and a description bound; its typed per-draw handler has full runtime/encoding bounds and polynomial closure. | Lift measured execution resources through the private sampler transformation; complete cache/signing runtime, general-caller pass/selector assembly and measured-resource recovery, then whole-solver certificates and public/family endpoints. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2444,6 +2448,56 @@ serially with `-j1 -M8192` and default proof limits. The checks reported no
 warnings or nonstandard axioms; no admissions or proof-option overrides were
 introduced. Local guide links and whitespace checks pass.
 
+### Native private sampler composition, 2026-10-15
+
+[BackendStateSimulation](../Signatures/Runtime/BackendStateSimulation.lean)
+transforms actual backend code by replacing each oracle query with an implemented
+stateful handler. It supports local code, sequencing, branching, retained values,
+bounded loops with stop code, and input-counted iteration. The complete
+transformed computation equals source simulation, including the returned state.
+It requires no arithmetic source implementation of the sampler or attacker.
+[The description theorem](../Signatures/Runtime/BackendStateSimulationDescription.lean)
+bounds stored code by the original description times the handler/structural
+allowance; loop bodies are stored once and query arities are not enumerated.
+
+[BackendSchnorrPrivateSampling](../Signatures/Runtime/BackendSchnorrPrivateSampling.lean)
+installs the raw uniform-tape handler into the actual sampler code. The sampler's
+internal queries retain their original uniform-family tags and share ordering
+with attacker draws. Request/reply conversion uses actual backend realizers.
+The typed reply normalizes malformed stored naturals exactly as the source
+oracle does, so full source equality holds on all input tapes. The scalar
+specialization uses exact sampler computation equality to `$ᵗ F`, not merely
+equality of its output distribution; this preserves replay behavior.
+
+[Native description bounds](../Signatures/Runtime/BackendSchnorrPrivateSamplingDescription.lean)
+count the sampler, installed handlers and both interface conversions.
+[The typed handler runtime](../Signatures/Runtime/BackendSchnorrPrivateSamplingBudget.lean)
+derives scan/draw/save costs internally from the existing native uniform bound,
+then charges request decoding, retained arity/state, typed reply construction and
+all routing. Its result preserves both tape encoding invariants and permits one
+new saved cell. Polynomial closure is proved from encoded widths, actual tape
+capacities and primitive/interface costs; numeric arity is not a runtime factor.
+The full handler theorem assumes no completed `Bounds` certificate.
+
+[Regressions](../SignaturesTest/SchnorrPrivateSampling.lean) exercise adaptive
+arities, retained local values, skipped branches, both loop forms, malformed
+replies, arity `2^64`, and chronological append on a fresh draw. They also guard
+the source equalities, standard axioms, primitive-derived handler budget and
+absence of capacity/arity enumeration in generated code.
+
+This completes the native private sampler's semantic and stored-code connection.
+It does not yet derive the transformed sampler's total runtime from the original
+sampler's measured execution resources. That composition must count all internal
+draws, changing tape capacities, local work, control steps and retained values.
+Native cache/signing runtime and complete general-caller pass/selector assembly
+remain unfinished.
+
+Validation: the five new source modules, new private-sampling regression,
+existing general-ROM/cache and native-fork regressions, and aggregate import
+passed serially with `-j1 -M8192` and default proof limits, without warnings,
+admissions, nonstandard axioms or proof-option overrides. Local guide links and
+whitespace checks pass.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -2453,6 +2507,10 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Use measured attacker resources for native replay storage and sampling costs.
   Probability-level private-family coverage is now derived without inspecting
   source syntax, but this finite existence argument supplies no efficiency bound.
+- Derive total resources for the transformed private sampler from its measured
+  execution. Its native code, exact raw-tape source law, stored-code bound and
+  complete typed per-draw runtime/encoding bounds are proved; the number of
+  internal uniform draws and changing tape capacities must still be composed.
 - Assemble and certify the native general-caller pass and selector, then install
   them in the native controller. The finite-cache general pass, its capacity
   bounds and exact fork/extraction correspondence are proved; native cache/signing
@@ -4158,8 +4216,11 @@ additional axioms or proof-resource overrides.
   extraction/fallback and transport the original concrete probability bound.
 - [x] Compile native live/managed-cache and signing kernels with exact state-passing
   semantics and actual stored-code bounds, including both private signing draws.
-- [ ] Derive native cache/signing runtime and install/certify raw private scalar
-  sampling, preserving the original uniform-family ordering with attacker queries.
+- [x] Transform actual private sampler code to share the raw uniform tape, with
+  exact computation correspondence and stored-code bounds; derive typed per-draw
+  runtime/encoding bounds and polynomial closure from primitive contracts.
+- [ ] Lift measured sampler execution resources through the stateful transformation
+  and derive native cache/signing runtime, preserving ordering with attacker queries.
 - [ ] Install and certify the general-caller pass/selector, with replay costs
   recovered from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the

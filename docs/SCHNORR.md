@@ -187,9 +187,16 @@ equals the named reduction by computation equality, including extraction and
 fallback. The original probability bound transfers directly.
 [Native cache/signing kernels](../Signatures/Runtime/BackendSchnorrROMCache.lean)
 now implement those routines with a state-passing scalar draw, exact semantics
-and stored-code bounds. Their complete runtime, private-sampler composition and
-general-caller assembly remain open; internal private scalar draws must preserve
-the same raw uniform-family ordering as the attacker's private draws.
+and stored-code bounds. Their complete runtime and general-caller assembly remain
+open. [Native private sampling](../Signatures/Runtime/BackendSchnorrPrivateSampling.lean)
+now transforms the actual scalar sampler to share the raw tape with attacker
+draws, with exact source correspondence even on malformed input tapes. Its
+[stored-code bound](../Signatures/Runtime/BackendSchnorrPrivateSamplingDescription.lean)
+counts the sampler and installed handlers; the
+[typed per-draw runtime bound](../Signatures/Runtime/BackendSchnorrPrivateSamplingBudget.lean)
+charges actual interface conversion, scan/draw/save and routing costs and has
+proved polynomial closure. Total sampler runtime still needs deriving from its
+measured execution resources before installing the completed pass.
 
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
