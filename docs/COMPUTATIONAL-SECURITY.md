@@ -171,9 +171,14 @@ is confined to the final target when transcript bases are cached. Complete
 [signing-transcript](../Signatures/Runtime/BackendWeightedSigningExtraction.lean), and
 [final-target](../Signatures/Runtime/BackendWeightedTargetExtraction.lean) call bounds
 now charge actual preparation, evaluation and retained argument/cache frames from
-primitive contracts. Outer extractor runtime composition, automatic caller-condition
-recovery, and whole-solver
-certificates remain open.
+primitive contracts. Complete
+[good](../Signatures/Runtime/BackendWeightedGoodExtractionBudget.lean) and
+[bad](../Signatures/Runtime/BackendWeightedBadExtractionBudget.lean) extractor bounds
+now compose those calls, default construction, final arithmetic and the retained
+full output/transcripts. Intermediate cache equality recovers each later call's
+cache bounds from a cached-transcript invariant; no finished runtime is supplied.
+Automatic recovery of these input conditions from the preceding general interaction,
+and whole-solver certificates, remain open.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.

@@ -51,6 +51,8 @@ import Signatures.Runtime.BackendWeightedExtractionState
 import Signatures.Runtime.BackendWeightedSigningExtraction
 import Signatures.Runtime.BackendWeightedHashExtraction
 import Signatures.Runtime.BackendWeightedTargetExtraction
+import Signatures.Runtime.BackendWeightedGoodExtractionBudget
+import Signatures.Runtime.BackendWeightedBadExtractionBudget
 import Signatures.Runtime.BackendWeightedScale
 import Signatures.OperationBounds
 import Signatures.PaperStatements
@@ -134,7 +136,10 @@ now compose these with native dispatch and general-caller runtime/code bounds.
 Both native extractors now have exact source/cache correspondence, complete
 stored-code bounds, and final-target-only cache growth. All five extraction
 calls now have derived runtime bounds for hash/sign transcripts and both final-target
-branches. Outer extractor composition and whole-solver certificates remain open.
+branches. Complete outer extractor runtime bounds now compose these calls with
+default construction, final arithmetic, and the retained output and transcripts.
+They derive all component costs from primitive contracts and the cached-transcript
+invariant. Automatic caller-condition recovery and whole-solver certificates remain open.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;

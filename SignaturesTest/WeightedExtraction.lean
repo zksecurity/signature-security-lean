@@ -3,6 +3,8 @@ import Signatures.Runtime.BackendWeightedExtractionState
 import Signatures.Runtime.BackendWeightedSigningExtraction
 import Signatures.Runtime.BackendWeightedHashExtraction
 import Signatures.Runtime.BackendWeightedTargetExtraction
+import Signatures.Runtime.BackendWeightedGoodExtractionBudget
+import Signatures.Runtime.BackendWeightedBadExtractionBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -149,7 +151,16 @@ run_meta do
       ``Index.coefficients_size, ``Extract.preparationInput_size, ``Extract.preparationCache_size,
       ``Extract.hashCoefficients_length, ``Extract.hashCoefficients_rows_size, ``Extract.hashCoefficients_size,
       ``Extract.goodSigningCoefficients_bound, ``Extract.badSigningCoefficients_bound,
-      ``Extract.hashExtraction_bound, ``Extract.goodTarget_bound, ``Extract.badTarget_bound] do
+      ``Extract.hashExtraction_bound, ``Extract.goodTarget_bound, ``Extract.badTarget_bound,
+      ``Extract.goodHashArgs_cost, ``Extract.goodSignArgs_cost, ``Extract.badSignArgs_cost,
+      ``Extract.goodTargetArgs_cost, ``Extract.badTargetArgs_cost, ``Extract.defaultRow_cost,
+      ``Extract.extraction_target_size, ``Extract.extractionFrames_size, ``Extract.extractionInputs_size,
+      ``Extract.extractionArgumentFrame_size, ``Extract.extractionTargetFrame_size,
+      ``Extract.evaluateCoefficients_cached, ``Extract.evaluateTarget_cache,
+      ``Extract.goodExtraction_assembly, ``Extract.badExtraction_assembly,
+      ``Extract.extractionWidth_bounds, ``Extract.defaultRow_denote,
+      ``Extract.defaultRow_size, ``Extract.extractionCache_size,
+      ``Extract.backendGood_bound, ``Extract.backendBad_bound] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -162,18 +173,20 @@ run_meta do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
             throwError "{name}: supplied finished extractor budget"
 
--- The actual call endpoints derive all component budgets. Their resource
--- premises must not supply a runtime bound for compiled preparation/evaluation.
+-- The actual call and complete extractor endpoints derive all component budgets.
+-- Their resource premises must not supply a runtime bound for compiled components.
 run_meta do
   for name in #[``Extract.goodSigningCoefficients_bound, ``Extract.badSigningCoefficients_bound,
-      ``Extract.hashExtraction_bound, ``Extract.goodTarget_bound, ``Extract.badTarget_bound] do
+      ``Extract.hashExtraction_bound, ``Extract.goodTarget_bound, ``Extract.badTarget_bound,
+      ``Extract.backendGood_bound, ``Extract.backendBad_bound] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let type ← inferType param
         forallTelescope type fun _ conclusion => do
           if conclusion.isAppOf ``LE.le then
             for component in #[``Expression.compile, ``Language.compile, ``Evaluate.backendGood,
-                ``Evaluate.backendBad, ``Read.goodRead, ``Read.badRead] do
+                ``Evaluate.backendBad, ``Read.goodRead, ``Read.badRead,
+                ``Extract.backendGood, ``Extract.backendBad] do
               if (conclusion.find? (fun e => e.isConstOf component)).isSome then
                 throwError "{name}: assumed completed component runtime"
 

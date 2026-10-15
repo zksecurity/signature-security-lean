@@ -191,9 +191,13 @@ and preserve the old bindings and encountered-key widths. Complete
 [final-target](../Signatures/Runtime/BackendWeightedTargetExtraction.lean) call bounds
 now include actual preparation, evaluation, arguments and retained frames. These
 derive every component cost from primitive, sampler, encoding and control contracts.
-Outer extractor runtime composition, recovery of caller conditions from general
-resources, and whole-solver
-certificates remain in progress.
+Complete [good](../Signatures/Runtime/BackendWeightedGoodExtractionBudget.lean) and
+[bad](../Signatures/Runtime/BackendWeightedBadExtractionBudget.lean) extractor runtime
+bounds now include all phases, default construction, final arithmetic and the
+retained full output/transcripts. All component budgets are discharged; cached
+transcript calls preserve the exact cache, so subsequent calls retain its original
+bounds. Automatic recovery of these input state/encoding conditions from general
+caller resources, and whole-solver certificates, remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
