@@ -190,8 +190,18 @@ entries, and `qS` signed messages. No finite message or group type is required.
 The [probability endpoint](../Signatures/Runtime/SchnorrAGMSecurity.lean)
 preserves both original loss terms. Its solver uses the supplied generator;
 equality to the source's fixed-generator solver is proved for the complete DLog
-experiment. Native encoded implementation, full runtime/code accounting, and
-general-caller composition remain open.
+experiment.
+
+The [native cache core](../Signatures/Runtime/BackendSchnorrAGMCache.lean) now
+implements the tuple/list encoding, message/commitment comparisons, first-hit
+lookup, scalar sampling, entry insertion, and the exceptional-challenge flag.
+The affine explanation is explicit runtime data retained before sampling. A
+cache hit preserves the complete costed run when the sampler changes.
+[Derived bounds](../Signatures/Runtime/BackendSchnorrAGMCacheBudget.lean) charge
+the scans, sampling, field operations, compiler environments and stored code.
+Only primitive and representation contracts are assumed. Outer read/handler
+routing, representation flattening, full solver accounting, and general-caller
+composition remain open; the cache core alone is not a solver certificate.
 
 ## What Efficiency Is Certified
 

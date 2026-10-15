@@ -95,8 +95,10 @@ requires that collision probability to be negligible too.
 Schnorr AGM now has a finite-list reduction with exact adaptive output/state
 correspondence and the original probability bound. Its storage capacities are
 `qS + qH + 1` cache entries, `qS + 2` affine basis entries, and `qS` signed
-messages, with no finite message/group-domain assumption. Native encoded code,
-complete overhead, and general-caller composition remain open for this route.
+messages, with no finite message/group-domain assumption. Its native cache core
+now has exact encoded-state semantics and derived time/code bounds. Outer
+read/handler routing, representation flattening, complete solver overhead, and
+general-caller composition remain open for this route.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
@@ -121,7 +123,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, and query-dependent storage capacities. | Native encoded implementation, a complete overhead proof, and general caller composition. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and native cache-core time/code certificates. | Complete native wrapper implementation/overhead and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1051,11 +1053,49 @@ Validation: `lake build Signatures SignaturesTest` passed (4124 jobs); the new
 refinement, capacity, extraction and security declarations use only the standard
 `propext`, `Classical.choice`, and `Quot.sound` axioms.
 
-Next, implement the finite-store operations in the common native backend, charge
-all incoming coefficient/group encodings (including ignored malformed data),
-derive complete solver time/code bounds from general attacker resources, and
-connect those certificates to the probability theorem. The list refinement alone
-does not establish efficient execution.
+The native cache core is now implemented and charged:
+
+- [Tuple/list layouts](../Signatures/Runtime/SchnorrAGMEncoding.lean) encode
+  affine explanations as scalar pairs, cache entries with an explicit optional
+  explanation tag, and the full finite source state. Decoding after encoding is
+  the identity. Cache lookup commutes with the encoding, including shadowed keys.
+- [Key comparison](../Signatures/Runtime/BackendSchnorrAGMComparison.lean) compiles
+  message and commitment equality tests, deriving native time and description
+  bounds from the two component instructions and structural operations.
+- [Fresh-entry sampling](../Signatures/Runtime/BackendSchnorrAGMFresh.lean) retains
+  the explanation as runtime data, samples a scalar, builds the entry and updates
+  the bad flag through field addition/equality. Its [complete bound](../Signatures/Runtime/BackendSchnorrAGMFreshBudget.lean)
+  includes value retention, adapters, arithmetic, and control transitions.
+- [Native cache access](../Signatures/Runtime/BackendSchnorrAGMCache.lean) combines
+  the actual comparator and fresh-entry sampler with the list-cache compiler.
+  Its output/cache/bad flag agrees with the finite-store source read after the
+  untouched metadata is restored in the proof relation. A hit preserves the
+  entire costed run when the sampler is replaced. Both runtime and stored code
+  are derived; the explanation is never hidden in a captured sampler constant.
+- [Cache runtime](../Signatures/Runtime/BackendSchnorrAGMCacheBudget.lean) is at
+  most `cap * (messageTime + pointTime + 391 * fee) + sampleTime +
+  2 * fieldTime + equalityTime + 395 * fee`, where
+  `fee = overhead (32 * CacheCompiler.frameWidth (5 * width) cap)`.
+  Scalar and explanation sizes are bounded by `width`; keys/entries use the
+  explicit `5 * width` cap. The formula charges every cache scan and compiler
+  environment. The premises concern primitive operations and sampling, never
+  efficiency of the completed cache procedure.
+- [Native regressions](../SignaturesTest/BackendSchnorrAGMCache.lean) check
+  pre-challenge explanation retention, bad-flag behavior, signing-programmed
+  entries, shadowed entries, changed commitments, absent-key sampling, and
+  complete no-sampling behavior on hits. Guards reject finite-domain premises
+  and circular cache-efficiency assumptions and check transitive axioms.
+
+Native-cache validation: `lake build Signatures SignaturesTest` passed (4132 jobs);
+the targeted cache regressions passed (3373 jobs), with no new warnings or
+nonstandard axioms.
+
+Next, implement and charge the outer read adapters, representation flattening,
+hash/sign handlers and final extraction, then derive complete solver time/code
+bounds from general attacker resources and connect them to the probability
+theorem. Charge all incoming coefficient/group encodings, including ignored
+malformed data. The proof-side encoding and metadata-restoration maps are not
+free runtime operations; their actual routing must be installed and charged.
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
 and [costed controller](../Signatures/Runtime/SchnorrSeededMachineCorrectness.lean).
@@ -2669,6 +2709,8 @@ additional axioms or proof-resource overrides.
   with explicit polynomial degree/dimension and Proximity's original collision loss.
 - [x] Refine Schnorr AGM to finite-list execution, preserve its original probability
   bound, and derive query-dependent cache/basis/signing-history capacities.
+- [x] Implement Schnorr AGM tuple/list layouts and native cache core, with exact
+  source semantics and derived comparison/sampling/scan/runtime/code bounds.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;

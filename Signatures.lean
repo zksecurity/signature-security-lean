@@ -23,6 +23,7 @@ import Signatures.Schnorr.SeededBitStatement
 import Signatures.Schnorr.Proofs.NonzeroSecurity
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
+import Signatures.Runtime.BackendSchnorrAGMCacheBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -170,7 +171,12 @@ the (qH+1)/|F| exceptional-challenge term and qS*(qS+qH)/|F| signing-simulation 
 Its finite-list implementation now preserves the complete adaptive output/state
 query tree and the original probability bound. It stores at most qS+qH+1 cached
 pairs, qS+2 affine basis entries, and qS signed messages, over arbitrary message
-and group types. Complete runtime and general-caller composition remain open.
+and group types. Native tuple/list layouts and cache-core code now have exact
+source correspondence, complete runtime and stored-code bounds. Cache misses
+retain the pre-challenge explanation as represented input and update bad using
+field instructions; hits skip sampling entirely. Outer read/handler routing,
+representation flattening, complete solver runtime and general-caller composition
+remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
