@@ -24,6 +24,7 @@ import Signatures.Schnorr.Proofs.NonzeroSecurity
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.BackendSchnorrAGMReadBudget
+import Signatures.Runtime.BackendSchnorrAGMFlattenBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -176,9 +177,11 @@ source correspondence, complete runtime and stored-code bounds. Cache misses
 retain the pre-challenge explanation as represented input and update bad using
 field instructions; hits skip sampling entirely. Complete native reads also
 construct the default entry and route the whole state, with derived time/code
-bounds and unchanged history-size limits. Representation flattening, hash/sign
-handlers, final extraction, complete solver runtime and general-caller composition
-remain open.
+bounds and unchanged history-size limits. Native representation flattening now
+preserves chronological coefficients and zero padding, with derived time/code
+and output-size bounds including the entire coefficient list and retained context.
+Hash/sign handlers, final extraction, complete solver runtime and general-caller
+composition remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

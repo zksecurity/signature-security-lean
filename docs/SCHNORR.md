@@ -206,9 +206,17 @@ source read. The [read budget](../Signatures/Runtime/BackendSchnorrAGMReadBudget
 adds the actual setup, return and control costs. Separate bounds on the two
 unchanged histories are preserved across reads; the cache grows by at most one
 entry. Only primitive, scalar-sampler and representation contracts are assumed.
-Representation flattening, hash/sign handlers, final extraction, full solver
-accounting and general-caller composition remain open; this read certificate is
-not yet a certificate for the full solver.
+[Native representation flattening](../Signatures/Runtime/SchnorrAGMFlatten.lean)
+now matches the source's chronological coefficient convention for every list,
+including missing or extra coefficients. It uses the existing positional
+coefficient matcher and computes the two affine coordinates with field products
+and sums. Its [complete native cost](../Signatures/Runtime/BackendSchnorrAGMFlattenBudget.lean)
+charges coefficient matching, both coordinates, temporary rows and retained
+context; the full coefficient length appears even for an unused suffix.
+Stored code is bounded independently of the basis/coefficient lengths, and the
+output holds two field elements. Hash/sign handlers, final extraction, full
+solver accounting and general-caller composition remain open; these component
+certificates are not yet a certificate for the full solver.
 
 ## What Efficiency Is Certified
 
