@@ -93,9 +93,19 @@ selector agreement, proving equality of the complete joint output distribution.
 the valid-slot premise from the existing intrinsic selector-reachability property.
 [SchnorrLazyFork](../Signatures/Runtime/SchnorrLazyFork.lean) implements that
 controller using the finite retained tape and proves its exact correspondence.
-All probability endpoints use native measures. Transport through the named
-Schnorr extraction/security endpoint, general-caller composition and native
-execution/code/encoding costs remain unfinished.
+All probability endpoints use native measures.
+
+The named [lazy ROM reduction](../Signatures/Schnorr/LazyROMReduction.lean)
+now has its [full security bound](../Signatures/Schnorr/Proofs/LazyROM.lean)
+proved through extraction and averaging over keys, with the original signing
+loss and `qH + 1` fork denominator. Its executable takes neither a family cover
+nor a private-query capacity. The probability proof still assumes a finite
+cover and pathwise bound for the reference experiment; duplicate cover entries
+are deduplicated there. Messages remain arbitrary, including uncountable types.
+[Regressions](../SignaturesTest/SchnorrLazyROM.lean) check native measures,
+adaptive replay, the message-type scope and the standard axiom footprint.
+Connecting this raw oracle computation to the finite-list native runner,
+general-caller composition and execution/code/encoding costs remain unfinished.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape

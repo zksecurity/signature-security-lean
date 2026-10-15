@@ -154,8 +154,11 @@ proved without enumerating possible sampling families. The complete finite-list
 fork now has the same joint output distribution as the pregenerated reference,
 including replacement sampling, unchanged-challenge rejection and second-run
 selector agreement. The valid-slot premise follows from the existing intrinsic
-selector-reachability property. Transport through the named Schnorr security
-endpoint and native execution/encoding bounds remain unfinished.
+selector-reachability property. The named lazy Schnorr reduction now inherits
+the full EUF-CMA bound, including extraction and averaging over keys. Its program
+takes no family cover or private-query capacity; those remain proof premises for
+the reference experiment. General-caller composition, the connection to the
+native finite-list runner and native execution/encoding bounds remain unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -179,7 +182,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. General finite-list lazy fork has exact joint correspondence with the pregenerated fork, including all controller checks; selector reachability supplies the valid-slot premise. | Transport to the named security endpoint; general caller composition and native replay costs; efficient randomness encoding and size bounds. |
+| Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. General finite-list lazy fork has exact joint correspondence with the pregenerated fork. The named lazy reduction has the original EUF-CMA bound through extraction and key averaging, for arbitrary messages and a proof-only finite family cover. | General caller composition and native replay costs; connect the named raw computation to the finite-list runner; derive private-family coverage; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -1958,6 +1961,44 @@ the aggregate `Signatures` import passed serially with `-j1 -M8192` and default
 proof limits. No warnings, admissions or nonstandard axioms were introduced.
 All 574 local links in the two updated guides resolve; `git diff --check` passes.
 
+### Named lazy Schnorr security checkpoint, 2026-10-15
+
+[LazyROMReduction](../Signatures/Schnorr/LazyROMReduction.lean) defines the named
+lazy DLog solver. It records only encountered randomness, resets at the selected
+challenge, retains private suffixes, and uses the established special-soundness
+extractor. Neither a family cover nor a private-query capacity is a program input.
+
+[LazyFork](../Signatures/Schnorr/Proofs/LazyFork.lean) instantiates the complete
+joint fork law with the same `qH + 1` selectable slots as the fixed-tape theorem.
+It deduplicates the proof-only cover without changing its membership-based bound
+and derives valid selection from the existing reachability theorem.
+[LazySampling](../Signatures/Schnorr/Proofs/LazySampling.lean) explicitly proves
+native measure correspondence for the final uniform interpretation.
+
+[LazyROM](../Signatures/Schnorr/Proofs/LazyROM.lean) transports that law through
+extraction and the full key-averaged DLog experiment. `LazyROM.security` preserves
+the original source game's signing-simulation loss and fork denominator. It adds
+no finite/countable-message premise and no source-language certificate. The
+proof uses singleton laws for atomic computations, avoiding an unjustified
+discreteness assumption on products containing arbitrary messages or caches.
+
+The reference experiment still has a finite-family/path-bound premise. This is
+not an executable eager allocation or a native efficiency theorem. Deriving that
+premise, connecting the raw two-family computation to the typed finite-list
+runner, and complete native costs/general-caller composition remain open.
+
+[Regressions](../SignaturesTest/SchnorrLazyROM.lean) check an adaptive replay into
+a previously unused private family, duplicate cover entries, native measure
+interpretation, arbitrary-message scope, the named source/target experiments,
+absence of proof-cover inputs to the program, and the standard three axioms.
+
+Validation: all four source modules, the new `SchnorrLazyROM` regression, the
+existing `SeededLazyFork` and `SchnorrFixedTape` regressions, and the aggregate
+`Signatures` import passed serially with `-j1 -M8192` and default proof limits.
+The new files produce no warnings; the existing fixed-tape test retains its
+deprecated `probEvent` notation warning. All 582 local links in the two updated
+guides resolve, and `git diff --check` passes.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -1966,9 +2007,9 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 
 - Derive private-randomness coverage from the general attacker resource contract,
   replacing the current dependence on inspecting arithmetic source syntax.
-- Apply the proved complete lazy-fork law to the named Schnorr reduction and
-  transport it through extraction and the key-averaged security experiment.
-  The generic law already preserves private suffixes and covers families first
+- Connect the named raw lazy reduction to the typed finite-list native runner.
+  Transport through extraction and the key-averaged security experiment is now
+  proved; the generic law preserves private suffixes and covers families first
   seen on replay.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
@@ -1976,8 +2017,8 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Use efficient encodings and samplers. The current codec's linear dependence on
   a finite sampling range is not a polynomial-in-bit-length result. If bounded
   sampling introduces error, prove and include its probability contribution.
-- Prove the new runner realizes the fixed-tape reduction required by the security
-  argument, rather than assuming all replay implementations have the same law.
+- Prove the native general-caller runner realizes the named lazy reduction whose
+  probability law is now connected to the fixed-tape security argument.
 - Separately adapt the ROM accounting to the
   [nonzero-nonce variant](../Signatures/Schnorr/Proofs/NonzeroSecurity.lean).
   Schnorr AGM's single-pass overhead and family theorem are already complete.
@@ -3636,8 +3677,11 @@ additional axioms or proof-resource overrides.
 - [x] Prove the complete joint lazy-fork probability bridge, including replacement
   sampling, collision/acceptance checks, finite-list tape correspondence and
   valid-slot derivation from intrinsic selector reachability.
-- [ ] Transport that fork equality to the named Schnorr security endpoint and
-  derive native encoding, replay and general-caller execution costs.
+- [x] Transport that fork equality through extraction and the key-averaged
+  experiment to the named lazy Schnorr security endpoint, preserving the original
+  source game, signing-simulation loss, fork denominator and arbitrary messages.
+- [ ] Derive private-family coverage and connect the named raw lazy reduction to
+  the finite-list runner; derive native encoding, replay and general-caller costs.
 - [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
