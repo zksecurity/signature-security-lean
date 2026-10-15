@@ -370,8 +370,20 @@ store, preserving the existing history bound.
 The [executable output adapter](../Signatures/Runtime/BackendSchnorrAGMSolverOutput.lean)
 now preserves every returned group and coefficient row and the complete private
 state. Its actual local conversion, rearrangement, state retention and control
-costs are charged, with a stored-code bound as well. Complete solver assembly,
-setup/cutoff/projection and the combined resource certificate remain open.
+costs are charged, with a stored-code bound as well.
+
+The [complete native solver](../Signatures/Runtime/BackendSchnorrAGMSolver.lean)
+now builds the initial basis and empty state, runs the general caller, handles
+cutoff and converts/extracts the returned forgery. Its
+[source theorem](../Signatures/Runtime/BackendSchnorrAGMSolverCorrectness.lean)
+proves exact agreement with the original DLog reduction from the attacker's
+measured resources and implementation law. Its
+[stored-code bound](../Signatures/Runtime/BackendSchnorrAGMSolverDescription.lean)
+includes the attacker, samplers, local adapters and all reduction branches.
+[Setup](../Signatures/Runtime/BackendSchnorrAGMSolverSetup.lean),
+[cutoff and projection](../Signatures/Runtime/BackendSchnorrAGMSolverLocalCost.lean)
+have derived runtime bounds. Combining the successful terminal and caller into
+the full runtime certificate, then the security and family endpoints, remains open.
 
 ## What Efficiency Is Certified
 

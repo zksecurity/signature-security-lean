@@ -41,6 +41,9 @@ import Signatures.Runtime.BackendSchnorrAGMExtractionDescription
 import Signatures.Runtime.BackendSchnorrAGMExtractionBudget
 import Signatures.Runtime.BackendSchnorrAGMExtractionResources
 import Signatures.Runtime.BackendSchnorrAGMSolverOutput
+import Signatures.Runtime.BackendSchnorrAGMSolverCorrectness
+import Signatures.Runtime.BackendSchnorrAGMSolverDescription
+import Signatures.Runtime.BackendSchnorrAGMSolverSetup
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -212,7 +215,11 @@ primitive contracts and measured attacker resources. The native final extractor
 has exact scalar/state source semantics and complete runtime/stored-code bounds
 for every output shape. Its input bounds follow from the full encoded return and
 caller state. Actual output conversion now has runtime and stored-code bounds,
-including retained state. Complete solver assembly/accounting remains open.
+including retained state. The complete native solver now assembles setup, caller,
+cutoff handling, extraction and scalar projection, with exact source correspondence
+and a complete stored-code bound. Setup, cutoff and projection have derived runtime
+bounds. Combined terminal/solver runtime certification and the public security/family
+endpoints remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
