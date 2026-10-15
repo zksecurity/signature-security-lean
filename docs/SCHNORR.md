@@ -387,8 +387,24 @@ counts setup, both fallback sampler occurrences, all extraction primitives and
 the complete installed fork. [Solver regressions](../SignaturesTest/SchnorrROMSolver.lean)
 exercise successful extraction, both fallback paths, equal challenges, unequal
 commitments and empty outputs, and guard source scope and standard axioms.
-Complete setup/extraction/fallback runtime composition, whole-solver polynomial
-time/code certificates and public/family security endpoints remain open.
+The [complete runtime theorem](../Signatures/Runtime/BackendSchnorrROMSolverBudget.lean)
+now derives setup, both fork executions, extraction and fallback internally from
+measured caller/sampler resources and primitive contracts. It also bounds the
+returned scalar encoding. [Setup](../Signatures/Runtime/BackendSchnorrROMSolverSetup.lean)
+charges configuration packing and local control. The
+[extractor budget](../Signatures/Runtime/BackendSchnorrROMExtractionBudget.lean)
+charges both nested folds, guards, field subtraction/division, output sizes,
+retained caches/results and both fallback paths. The actual fork's successful
+outputs have at most one entry per list, so extraction does not enumerate any
+message domain. Its only supplied component budget is the original sampler's;
+the complete solver derives even that budget from the sampler execution profile.
+The [polynomial theorem](../Signatures/Runtime/BackendSchnorrROMSolverPolynomial.lean)
+covers the exact complete runtime formula from original numerical resource
+families, with no finished pass/fork/extractor efficiency premise. Curve and
+message types may vary with the security parameter. Regression guards inspect
+the whole theorem and primitive-operation contracts for those restrictions.
+Stored-code polynomial closure, the fixed-backend executable certificate and
+concrete/public/family security endpoints remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
