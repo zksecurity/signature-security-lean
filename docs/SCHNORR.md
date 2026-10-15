@@ -123,11 +123,19 @@ ranges. The [native private draw](../Signatures/Runtime/BackendSchnorrRawUniform
 uses that fact to return a stored natural on a hit, or performs one dynamic
 uniform query and records it on a miss. Its code and proved description bound
 are independent of the input arity and tape length. Its complete state
-correspondence is proved. Native runtime/encoded-size bounds, the remaining
-native controller and general-caller composition are still open.
+correspondence is proved. [Raw tape capacity bounds](../Signatures/Runtime/SchnorrRawTapeBounds.lean)
+now charge at most one saved cell and one live sampling call per requested draw.
+After two runs the saved/remaining capacities are `q₁ + q₂ + 1` and `q₁ + 1`.
+[Encoded-size invariants](../Signatures/Runtime/BackendSchnorrRawUniformSize.lean)
+bound both lists separately and are preserved by native draw execution and reset.
+[Native return/save costs](../Signatures/Runtime/BackendSchnorrRawUniformLocalCost.lean)
+charge the chronological append's two traversals and the full retained input.
+The scan-cost proof, complete native draw budget, remaining native controller
+and general-caller composition are still open.
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
-reset validity, million-sized dynamic arities, exact computation equality and
-the native theorem/axiom scope.
+reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
+exact computation equality and the native theorem/axiom scope. Cost guards
+reject premises supplying the completed adapter or expression budget.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape

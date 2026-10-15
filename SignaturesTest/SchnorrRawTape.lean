@@ -1,11 +1,13 @@
 import Signatures.Runtime.SchnorrRawFork
-import Signatures.Runtime.BackendSchnorrRawUniform
+import Signatures.Runtime.SchnorrRawTapeBounds
+import Signatures.Runtime.BackendSchnorrRawUniformLocalCost
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
 /-! Raw replay must preserve every private draw in its original family order.
 The native private draw takes a dynamic arity and uses stored naturals directly
-on valid hits. No native runtime bound is asserted by these tests. -/
+on valid hits. Capacity/encoding and native return/save costs are checked;
+the complete scan/controller runtime certificate remains separate. -/
 
 open OracleComp OracleSpec Signatures.Runtime
 open Signatures.Runtime.Schnorr Signatures.Runtime.Schnorr.RawTape
@@ -22,6 +24,33 @@ private def pass : OracleComp Spec (Fin 2 × Fin 2 × Fin 2) := do
 
 private def recorded : RawTape.State (Fin 2) :=
   ⟨[(1, 0, 0), (3, 0, 1), (3, 0, 0)], []⟩
+
+/-- Query counts do not enumerate a range, even when its arity is chosen
+adaptively and is exponentially larger than its binary description. -/
+private def adaptivePass : OracleComp Spec Nat := do
+  let bit ← Spec.query (.inl 1)
+  let value ← Spec.query (.inl (if bit.val = 0 then 2 ^ 64 else 1))
+  pure value.val
+
+private theorem adaptiveQueries : IsTotalQueryBound adaptivePass 2 := by
+  simp [adaptivePass, IsTotalQueryBound]
+
+example (out : Nat × RawTape.State (Fin 2))
+    (supported : out ∈ support ((simulateQ RawTape.oracle adaptivePass).run {})) :
+    out.2.saved.length ≤ 2 ∧ out.2.remaining = [] :=
+  RawTape.firstPass_growth adaptivePass 2 adaptiveQueries out supported
+
+example (first second : Nat × RawTape.State (Fin 2))
+    (firstSupported : first ∈ support ((simulateQ RawTape.oracle adaptivePass).run {}))
+    (secondSupported : second ∈ support
+      ((simulateQ RawTape.oracle adaptivePass).run (RawTape.restart 0 1 first.2))) :
+    second.2.saved.length ≤ 5 ∧ second.2.remaining.length ≤ 3 :=
+  RawTape.replay_growth adaptivePass (fun _ => adaptivePass) 2 2 adaptiveQueries
+    (fun _ => adaptiveQueries) first firstSupported 0 1 second secondSupported
+
+example (state : RawTape.State (Fin 2)) :
+    IsTotalQueryBound ((simulateQ RawTape.oracle adaptivePass).run state) 2 :=
+  RawTape.simulate_queryBound adaptivePass 2 adaptiveQueries state
 
 /-- Both post-challenge private values stay in their original order. -/
 example : (simulateQ RawTape.oracle pass).run' (RawTape.restart 0 1 recorded) =
@@ -69,8 +98,17 @@ run_meta do
       ``RawTape.dlogReduction_eq_lazy, ``RawTape.security, ``RawTape.encode_valid,
       ``RawTape.pop_valid, ``RawTape.decode_uniform_val, ``RawTape.oracle_valid,
       ``RawTape.simulate_valid, ``RawTape.restart_valid,
+      ``RawTape.oracle_growth, ``RawTape.oracle_saved_extends, ``RawTape.simulate_growth,
+      ``RawTape.simulate_queryBound, ``RawTape.firstPass_growth, ``RawTape.restart_length,
+      ``RawTape.replay_growth, ``SeedTape.pop_sublist, ``SeedTape.pop_answer_mem_or_default,
+      ``SeedTape.pop_answer_mem, ``SeedTape.trim_sublist,
       ``NativeUniform.prepareExpression_value, ``NativeUniform.saveExpression_value,
-      ``NativeUniform.denote, ``NativeUniform.source, ``NativeUniform.description] do
+      ``NativeUniform.denote, ``NativeUniform.source, ``NativeUniform.description,
+      ``NativeUniform.pop_property, ``NativeUniform.prepare_property,
+      ``NativeUniform.hit_property, ``NativeUniform.save_property, ``NativeUniform.restart_property,
+      ``NativeUniform.cell_size, ``NativeUniform.tape_size, ``NativeUniform.state_size,
+      ``NativeUniform.input_size, ``NativeUniform.draw_size, ``NativeUniform.prepare_size,
+      ``NativeUniform.code_property, ``NativeUniform.hit_cost, ``NativeUniform.save_cost] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -101,5 +139,18 @@ run_meta do
         if (← inferType param).isConstOf ``Nat then
           unless (← getFVarLocalDecl param).userName == `allowance do
             throwError "{name}: code and its static bound must not depend on input arity or tape length"
+  for name in #[``NativeUniform.hit_cost, ``NativeUniform.save_cost] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let type ← inferType param
+        for forbidden in #[``NativeUniform.hit, ``NativeUniform.save,
+            ``BackendProgram.Expression.compile, ``BackendProgram.Expression.compileBound] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "{name}: completed adapter/compiled-expression costs must be derived"
+  forallTelescope (← getConstInfo ``NativeUniform.saveTime).type fun params _ => do
+    for param in params do
+      if (← inferType param).isConstOf ``Nat then
+        unless #[`width, `savedCap, `remainingCap, `zeroTime].contains (← getFVarLocalDecl param).userName do
+          throwError "save time must depend on encoded width and tape capacities, not numeric arity"
 
 end SignaturesTest.SchnorrRawTape
