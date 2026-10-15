@@ -1,5 +1,6 @@
 import Signatures.Schnorr.Proofs.LazyROM
 import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
+import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
 /-! Check the named lazy Schnorr probability endpoint, including a duplicate
@@ -60,11 +61,63 @@ example : 𝒟[Schnorr.LazyROM.fork adaptive 0 (fun _ => some (0 : Fin 1))] =
 example : 𝒟[simulateQ Schnorr.LazyROM.sample adaptive] = 𝒟[adaptive] :=
   Schnorr.LazyROM.sample_measure adaptive
 
+section DerivedCover
+
+private abbrev F := ZMod 5
+private abbrev Messages := Nat → Bool
+
+private instance : Fact (Nat.Prime 5) := ⟨by decide⟩
+
+noncomputable local instance : SampleableType F := SampleableType.ofFintype _
+
+noncomputable local instance : DecidableEq Messages := Classical.decEq _
+
+/-- Even with no hash/sign calls, this attacker has adaptive private sampling
+at large arities and an uncountable message type. No syntax certificate or
+private-family list is supplied to the security theorem. -/
+private noncomputable def privateOnly :
+    Schnorr.ROM.Adversary (F := F) (M := Messages) (1 : F) where
+  main _ := do
+    let branch : Fin 2 ← (Schnorr.ROM.advSpec F F Messages).query (.inl (.inl 1))
+    let value : Fin (1000000 + branch.val + 1) ←
+      (Schnorr.ROM.advSpec F F Messages).query (.inl (.inl (1000000 + branch.val)))
+    pure ((fun n => decide (n = value.val)), (0, 0))
+
+private theorem privateOnly_queries (pk : F) :
+    FiatShamir.signHashQueryBound (M := Messages) (oa := privateOnly.main pk) 0 0 := by
+  simp [FiatShamir.signHashQueryBound, privateOnly]
+
+/-- The appended verifier lookup is still the sole hash slot. -/
+example (pk : F) : IsQueryBoundP (Schnorr.LazyROM.main 1 pk privateOnly)
+    (· = Sum.inr ()) 1 :=
+  Schnorr.LazyROM.main_hashBound 1 pk privateOnly 0 0 privateOnly_queries
+
+example :
+    let eps := 𝒟[Schnorr.ROM.game 1 privateOnly] {true} -
+      (0 : ENNReal) * (0 + 0) * (Fintype.card F : ENNReal)⁻¹
+    eps * (eps / (0 + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
+      𝒟[DiffieHellman.dlogExperiment 1 (Schnorr.LazyROM.dlogReduction 1 privateOnly 0)] {true} := by
+  have generates : Function.Bijective (fun x : F => x • (1 : F)) := by
+    constructor
+    · intro x y same
+      simpa only [smul_eq_mul, mul_one] using same
+    · intro y
+      exact ⟨y, by simp⟩
+  simpa only [Nat.cast_zero] using
+    Schnorr.LazyROM.security 1 generates privateOnly 0 0 privateOnly_queries
+
+end DerivedCover
+
 open Lean Meta in
 run_meta do
   let endpoints := #[``Schnorr.LazyROM.fork_eq_complete,
     ``Schnorr.LazyROM.sample_measure, ``Schnorr.LazyROM.dlogReduction_eq_fixed,
-    ``Schnorr.LazyROM.dlogExperiment_eq_fixed, ``Schnorr.LazyROM.security]
+    ``Schnorr.LazyROM.dlogExperiment_eq_fixed, ``Schnorr.LazyROM.security_of_seed_bound,
+    ``Schnorr.LazyROM.security, ``Schnorr.LazyROM.main_hashBound,
+    ``Schnorr.LazyROM.exists_seed_bound,
+    ``Signatures.Runtime.FiniteQueryCover.replace_bound,
+    ``Signatures.Runtime.FiniteQueryCover.exists_bound,
+    ``Signatures.Runtime.FiniteQueryCover.exists_bound_family]
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in endpoints do
     for axiomName in (← collectAxioms name) do
@@ -84,14 +137,19 @@ run_meta do
                 (premiseType.find? (fun e => e == param)).isSome then
               throwError "{name}: must not restrict the message universe"
   let securityType := (← getConstInfo ``Schnorr.LazyROM.security).type
+  for forbidden in #[``OracleComp.IsPerIndexQueryBound, ``Schnorr.FixedTape.finiteBounds,
+      `Signatures.Runtime.Program] do
+    if (securityType.find? (fun e => e.isConstOf forbidden)).isSome then
+      throwError "lazy security must derive its seed cover without a source-language premise"
   for required in #[``Schnorr.ROM.game, ``Schnorr.LazyROM.dlogReduction,
       ``DiffieHellman.dlogExperiment] do
     unless (securityType.find? (fun e => e.isConstOf required)).isSome do
       throwError "lazy security must connect the original game to the named reduction"
-  forallTelescope (← getConstInfo ``Schnorr.LazyROM.dlogReduction).type fun params _ => do
-    for param in params do
-      let declaration ← getFVarLocalDecl param
-      if #[`privateFamilies, `qR, `bound].contains declaration.userName then
-        throwError "the executable reduction must not take a proof-only seed cover"
+  for name in #[``Schnorr.LazyROM.dlogReduction, ``Schnorr.LazyROM.security] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let declaration ← getFVarLocalDecl param
+        if #[`privateFamilies, `qR, `bound].contains declaration.userName then
+          throwError "{name}: must not take a proof-only seed cover"
 
 end SignaturesTest.SchnorrLazyROM

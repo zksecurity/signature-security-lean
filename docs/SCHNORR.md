@@ -98,12 +98,17 @@ All probability endpoints use native measures.
 The named [lazy ROM reduction](../Signatures/Schnorr/LazyROMReduction.lean)
 now has its [full security bound](../Signatures/Schnorr/Proofs/LazyROM.lean)
 proved through extraction and averaging over keys, with the original signing
-loss and `qH + 1` fork denominator. Its executable takes neither a family cover
-nor a private-query capacity. The probability proof still assumes a finite
-cover and pathwise bound for the reference experiment; duplicate cover entries
-are deduplicated there. Messages remain arbitrary, including uncountable types.
+loss and `qH + 1` fork denominator. Neither its executable nor `LazyROM.security`
+takes a family cover or private-query capacity. The
+[reference-cover proof](../Signatures/Schnorr/Proofs/LazyQueryBounds.lean) derives
+their existence internally from finite reply branching and finitely many public
+keys. It derives the hash coordinate from the source query allowance, including
+one final verifier lookup. Messages remain arbitrary, including uncountable types.
+This existence proof does not enumerate the cover in the reduction and does not
+assert that the cover is small or efficiently computable.
 [Regressions](../SignaturesTest/SchnorrLazyROM.lean) check native measures,
-adaptive replay, the message-type scope and the standard axiom footprint.
+adaptive replay, an attacker with large adaptive sampling arities and no
+hash/sign calls, the message-type scope and the standard axiom footprint.
 Connecting this raw oracle computation to the finite-list native runner,
 general-caller composition and execution/code/encoding costs remain unfinished.
 

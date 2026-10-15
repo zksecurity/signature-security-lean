@@ -1,6 +1,7 @@
 import Signatures.Schnorr.Proofs.FixedTapeROM
 import Signatures.Schnorr.Proofs.LazyFork
 import Signatures.Schnorr.Proofs.LazySampling
+import Signatures.Schnorr.Proofs.LazyQueryBounds
 
 /-! The named lazy Schnorr reduction inherits the original fixed-private-tape
 EUF-CMA bound, with the signing-simulation loss and fork denominator unchanged.
@@ -82,7 +83,7 @@ end Correspondence
 named lazy DLog reduction. No eager seed allocation occurs in that reduction.
 The seed-cover premise bounds the source query tree on every reply path; it is
 not an assumption about the reduction's runtime or extraction success. -/
-theorem security (g : G) (generates : Function.Bijective (fun x : F => x • g))
+theorem security_of_seed_bound (g : G) (generates : Function.Bijective (fun x : F => x • g))
     (adv : ROM.Adversary (F := F) (M := M) g) (privateFamilies : List Nat) (qR qS qH : Nat)
     (queries : ∀ pk, FiatShamir.signHashQueryBound (M := M) (oa := adv.main pk) qS qH)
     (bound : ∀ pk, IsPerIndexQueryBound (main g pk adv)
@@ -97,5 +98,19 @@ theorem security (g : G) (generates : Function.Bijective (fun x : F => x • g))
   intro pk
   rw [finiteBounds_dedup]
   exact bound pk
+
+/-- Ordinary Schnorr ROM security for the named lazy reduction. The adversary
+supplies only its signing/hash allowances: finiteness of a suitable reference
+seed cover is derived internally, without a source-language restriction or an
+additional private-randomness premise. This theorem does not bound runtime. -/
+theorem security (g : G) (generates : Function.Bijective (fun x : F => x • g))
+    (adv : ROM.Adversary (F := F) (M := M) g) (qS qH : Nat)
+    (queries : ∀ pk, FiatShamir.signHashQueryBound (M := M) (oa := adv.main pk) qS qH) :
+    let eps := 𝒟[ROM.game g adv] {true} -
+      (qS : ENNReal) * (qS + qH) * (Fintype.card F : ENNReal)⁻¹
+    eps * (eps / (qH + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
+      𝒟[dlogExperiment g (dlogReduction g adv qH)] {true} := by
+  obtain ⟨families, qR, bounded⟩ := exists_seed_bound g generates adv qS qH queries
+  exact security_of_seed_bound g generates adv families qR qS qH queries bounded
 
 end Schnorr.LazyROM
