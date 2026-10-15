@@ -366,8 +366,29 @@ so charging the full output does not inflate every tape cell or create circular
 storage requirements. Replay reserves the first pass's saved capacity plus two
 cells before charging its own draws. The old equal-width controller theorem is
 preserved as a specialization; the two-width formula also has polynomial closure.
-Polynomial closure of the fully instantiated fork formula, whole-solver setup,
-extraction/fallback, resource certificates and public/family endpoints remain open.
+The [fully instantiated fork formula](../Signatures/Runtime/BackendSchnorrROMForkPolynomial.lean)
+now has polynomial closure from original numerical resource families. Its
+[pass inputs](../Signatures/Runtime/BackendSchnorrROMPassTime.lean) contain only
+sampler work/visits/queries, widths/capacities and primitive/port/control costs;
+they assume no finished component efficiency and do not fix curve/message types.
+The exact same numerical formula occurs in the installed fork's runtime theorem.
+
+The [complete native solver](../Signatures/Runtime/BackendSchnorrROMSolver.lean)
+now assembles configuration setup, the installed fork and
+[guarded extraction](../Signatures/Runtime/BackendSchnorrROMExtraction.lean).
+Extraction compares commitments and challenges, returns `(z-z')/(c-c')` only
+when the commitments agree and challenges differ, and otherwise executes the
+original uniform fallback. Failed forks also sample uniformly. Nested folds
+process the empty/singleton output representation without a default message.
+The whole native solver is proved equal to the named lazy DLog reduction from
+measured attacker resources and its implementation law, preserving the full
+computation. Its [stored-code bound](../Signatures/Runtime/BackendSchnorrROMSolverDescription.lean)
+counts setup, both fallback sampler occurrences, all extraction primitives and
+the complete installed fork. [Solver regressions](../SignaturesTest/SchnorrROMSolver.lean)
+exercise successful extraction, both fallback paths, equal challenges, unequal
+commitments and empty outputs, and guard source scope and standard axioms.
+Complete setup/extraction/fallback runtime composition, whole-solver polynomial
+time/code certificates and public/family security endpoints remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

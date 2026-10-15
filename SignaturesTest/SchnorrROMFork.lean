@@ -1,5 +1,5 @@
 import Signatures.Runtime.BackendSchnorrROMForkDescription
-import Signatures.Runtime.BackendSchnorrROMForkBudget
+import Signatures.Runtime.BackendSchnorrROMForkPolynomial
 import Lean.Util.CollectAxioms
 
 /-! Scope and axiom regressions for the installed general ROM fork. Its source
@@ -67,8 +67,8 @@ run_meta do
   forallTelescope (← getConstInfo ``NativeROMFork.code_bound_of_resources).type fun params conclusion => do
     unless conclusion.isAppOf ``Bounds &&
         (conclusion.find? (fun e => e.isConstOf ``NativeROMFork.code)).isSome &&
-        (conclusion.find? (fun e => e.isConstOf ``NativeFork.runtimeBoundWithTapeWidth)).isSome do
-      throwError "bound the whole installed fork with separate tape and output widths"
+        (conclusion.find? (fun e => e.isConstOf ``NativeROMFork.resourcesTime)).isSome do
+      throwError "bound the whole installed fork with the original-resource runtime formula"
     let mut measured := false
     let mut resources := #[]
     let mut selectorOps := false
@@ -92,5 +92,39 @@ run_meta do
             ``Fintype, ``Finite, ``Inhabited] do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
             throwError "original pass resources must not hide finished budgets or restricted attackers"
+  for name in #[``NativePass.TimeInputs.time_polynomial, ``NativeROMFork.controllerWidth_polynomial,
+      ``NativeROMFork.resourcesTime_polynomial] do
+    for axiomName in (← collectAxioms name) do
+      unless allowed.contains axiomName do
+        throwError "{name}: unexpected axiom {axiomName}"
+    forallTelescope (← getConstInfo name).type fun params conclusion => do
+      unless conclusion.isAppOf ``PolynomiallyBounded do
+        throwError "derive polynomial closure of the actual runtime formula"
+      for param in params do
+        let type ← inferType param
+        for forbidden in #[``NativePass.TimeInputs.time, ``NativeROMFork.resourcesTime,
+            ``NativeSelection.timeBudget, ``Bounds, ``Fintype, ``Finite, ``Inhabited] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "polynomial closure must not assume completed component efficiency or fixed finite domains"
+  let polyInfo ← getConstInfoInduct ``NativePass.TimeInputs.Polynomial
+  for ctor in polyInfo.ctors do
+    forallTelescope (← getConstInfo ctor).type fun params _ => do
+      for param in params do
+        let type ← inferType param
+        if (← isProp type) then
+          unless type.isAppOf ``PolynomiallyBounded do
+            throwError "time-input polynomial contracts must bound original numerical fields"
+          for forbidden in #[``NativePass.TimeInputs.time, ``NativePass.timeBudget,
+              ``NativeHandler.callerTime, ``NativeHandler.timeBudget, ``NativePass.finalHashTime,
+              ``NativeSelection.timeBudget, ``ExecutionProfile.runtimeBound] do
+            if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+              throwError "time-input contracts must not hide finished component polynomial bounds"
+  match ← getConstInfo ``NativeROMFork.resourcesTime with
+  | .defnInfo info =>
+      for required in #[``NativeFork.runtimeBoundWithTapeWidth, ``NativePass.TimeInputs.time,
+          ``NativeSelection.timeBudget, ``ExecutionProfile.runtimeBound] do
+        unless (info.value.find? (fun e => e.isConstOf required)).isSome do
+          throwError "the installed fork formula must include actual pass, selector and sampler costs"
+  | _ => throwError "the installed runtime formula must have an inspectable definition"
 
 end SignaturesTest.SchnorrROMFork

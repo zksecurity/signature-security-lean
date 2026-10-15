@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendSchnorrROMPassBudget
+import Signatures.Runtime.BackendSchnorrROMPassTime
 
 /-! Original component resources for one actual ROM pass. This record packages
 the primitive/profile hypotheses of the proved pass theorem, never a completed
@@ -111,17 +111,37 @@ variable {width tapeWidth managedCap liveCap initialSavedCap remainingCap fuel :
     control queryCost recovery bound (header := header) width tapeWidth managedCap liveCap initialSavedCap remainingCap fuel)
 
 variable {rep bd boundary ports cost primitive uniform privatePorts sampler primitiveBound control queryCost recovery bound} in
+def Resources.timeInputs : TimeInputs where
+  work := resources.work
+  visits := resources.visits
+  queries := resources.queries
+  sourceWidth := resources.sourceWidth
+  savedCap := resources.savedCap
+  tickTime := resources.tickTime
+  comparisonTime := resources.comparisonTime
+  zeroTime := resources.zeroTime
+  addTime := resources.addTime
+  requestTime := resources.requestTime
+  responseTime := resources.responseTime
+  queryTime := resources.queryTime
+  arityTime := resources.arityTime
+  replyTime := resources.replyTime
+  messageTime := resources.messageTime
+  pointTime := resources.pointTime
+  scaleTime := resources.scaleTime
+  subTime := resources.subTime
+  portWidth := resources.portWidth
+  encodeTime := resources.encodeTime
+  tagTime := resources.tagTime
+  routeWidth := resources.routeWidth
+  callerTickTime := resources.callerTickTime
+  inputTime := resources.inputTime
+  outputTime := resources.outputTime
+  optionalTime := resources.optionalTime
+
+variable {rep bd boundary ports cost primitive uniform privatePorts sampler primitiveBound control queryCost recovery bound} in
 def Resources.time (overhead : Nat → Nat) : Nat :=
-  timeBudget overhead (frameWidth width managedCap liveCap resources.routeWidth)
-    (NativeHandler.callerTime overhead resources.routeWidth fuel (bound.work + 2 * bound.queries + 2) (fun _ => bound.queries)
-      (NativeHandler.timeBudget overhead resources.work resources.visits resources.queries resources.sourceWidth tapeWidth
-        resources.savedCap remainingCap resources.tickTime resources.comparisonTime resources.zeroTime resources.addTime
-        resources.requestTime resources.responseTime resources.queryTime resources.arityTime resources.replyTime
-        width managedCap liveCap resources.messageTime resources.pointTime resources.scaleTime resources.subTime
-        resources.portWidth resources.encodeTime resources.tagTime) resources.callerTickTime)
-    (finalHashTime overhead resources.work resources.visits resources.queries tapeWidth resources.savedCap remainingCap
-      resources.tickTime resources.comparisonTime resources.zeroTime resources.queryTime width liveCap
-      resources.messageTime resources.pointTime) resources.inputTime resources.outputTime resources.optionalTime
+  resources.timeInputs.time overhead bound width tapeWidth managedCap liveCap remainingCap fuel
 
 include resources in
 omit [Q.HasCategory] QP QS [Q.IsDistributive] [Q.HasOption] [OptionCode (Q := Q)] in

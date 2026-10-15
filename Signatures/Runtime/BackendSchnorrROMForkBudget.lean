@@ -16,6 +16,20 @@ open BackendProgram RawTape NativeInterface NativeComponents
 def controllerWidth (width managedCap liveCap : Nat) : Nat :=
   (16 * (managedCap + liveCap) + 64) * width
 
+/-- The complete installed runtime, expanded from original component resources.
+The replay reservation includes the first pass's final hash and reset cell. -/
+def resourcesTime (overhead : Nat → Nat) (bound : ExecutionCost)
+    (width tapeWidth managedCap liveCap fuel : Nat) (first second : NativePass.TimeInputs)
+    (scaleTime addTime messageTime pointTime incrementTime comparisonTime scalarComparisonTime subtractTime : Nat) : Nat :=
+  NativeFork.runtimeBoundWithTapeWidth overhead (controllerWidth width managedCap (liveCap + 1)) tapeWidth
+    (first.savedCap + 1) (second.savedCap + 1)
+    (first.time overhead bound width tapeWidth managedCap liveCap 0 fuel)
+    (second.time overhead bound width tapeWidth managedCap liveCap (first.savedCap + 2) fuel)
+    (NativeSelection.timeBudget overhead width managedCap (liveCap + 1)
+      scaleTime addTime messageTime pointTime incrementTime comparisonTime)
+    (ExecutionProfile.runtimeBound overhead tapeWidth first.work first.visits first.queries first.tickTime first.queryTime)
+    first.comparisonTime scalarComparisonTime subtractTime first.zeroTime
+
 universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
@@ -90,12 +104,8 @@ theorem code_bound_of_resources (width tapeWidth managedCap liveCap fuel qH : Na
       (ConfigBound (Q := Q) rep width)
       (NativeFork.Result (Q := Q) rep (controllerWidth width managedCap (liveCap + 1))
         (ValidOutput (Q := Q) rep width managedCap (liveCap + 1)))
-      (NativeFork.runtimeBoundWithTapeWidth overhead (controllerWidth width managedCap (liveCap + 1)) tapeWidth
-        (first.savedCap + 1) (second.savedCap + 1) (first.time overhead) (second.time overhead)
-        (NativeSelection.timeBudget overhead width managedCap (liveCap + 1)
-          scaleTime addTime messageTime pointTime incrementTime comparisonTime)
-        (ExecutionProfile.runtimeBound overhead tapeWidth first.work first.visits first.queries first.tickTime first.queryTime)
-        first.comparisonTime scalarComparisonTime subtractTime first.zeroTime) := by
+      (resourcesTime overhead bound width tapeWidth managedCap liveCap fuel first.timeInputs second.timeInputs
+        scaleTime addTime messageTime pointTime incrementTime comparisonTime scalarComparisonTime subtractTime) := by
   let W := controllerWidth width managedCap (liveCap + 1)
   let validOut := ValidOutput (Q := Q) rep width managedCap (liveCap + 1)
   let validConfig := ConfigBound (Q := Q) rep width
