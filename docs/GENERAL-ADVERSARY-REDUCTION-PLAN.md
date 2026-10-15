@@ -188,7 +188,12 @@ adapters, both passes, both selector calls, sampling, lookup/reset and every
 control/retention cost. Frame invariants count duplicated configurations, both
 tapes and the first output retained during replay. The pass budgets distinguish
 the empty initial tape from the reset tape. General-caller pass/selector
-implementation and their resource derivation remain unfinished.
+assembly and their resource derivation remain unfinished. The finite-cache ROM
+pass now handles arbitrary source attacker computations, has exact trace
+correspondence and query-derived cache capacities, and its complete fork plus
+extraction equals the named reduction. Native live/managed-cache and signing
+kernels have exact state-passing semantics and stored-code bounds. Their runtime
+certificates and integration with the caller/replay samplers remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -212,7 +217,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances, with reference coverage derived internally. Its raw finite-list controller/extractor has exact computation correspondence. Both native draw families, reset and selected-challenge lookup have source, code, encoding and complete runtime bounds with polynomial closure. The native fork is assembled, has exact computation correspondence from reached-pass source laws, and counts both passes/selectors in its stored code. No numeric-arity or reset-position enumeration is introduced. Earlier certified-source endpoints remain available. | Derive complete controller adapter/routing runtime and general-caller pass/selector composition, then whole-replay/solver resource certificates. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction now have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved, with polynomial closure. Native cache/signing kernels have exact state-passing semantics and stored-code bounds. | Complete cache/signing runtime, raw private-sampler composition, general-caller pass/selector assembly and measured-resource recovery, then whole-solver certificates and public/family endpoints. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2380,6 +2385,65 @@ import passed serially with `-j1 -M8192` and default proof limits. The checks
 reported no warnings or nonstandard axioms; no admissions or proof-option
 overrides were introduced. Local guide links and whitespace checks pass.
 
+### General ROM finite-cache pass and native kernels, 2026-10-15
+
+[SchnorrROMListPass](../Signatures/Runtime/SchnorrROMListPass.lean) interprets the
+original CMA query interface for arbitrary attacker oracle computations. Dynamic
+uniform requests keep their original arities; no arithmetic-source certificate
+or random-family bound is supplied. The reduction reuses the implemented managed
+cache/signing routines. The final verification lookup bypasses the managed cache
+and consults the independent live cache. Full adaptive answer/state refinement,
+the final cached challenge invariant, and exact trace equality to
+`Schnorr.LazyROM.main` are proved. The map to function-valued source caches is
+proof-only.
+
+[SchnorrROMListGrowth](../Signatures/Runtime/SchnorrROMListGrowth.lean) bounds
+each cache from the ordinary signing/hash allowances. Starting empty, either
+pass stores at most `qS + qH` managed entries and `qH + 1` live entries, including
+the final verification query. Private random requests grow neither cache.
+The proofs cover every adaptive reply path and require no finite message or
+group universe.
+
+[SchnorrRawForkMap](../Signatures/Runtime/SchnorrRawForkMap.lean) proves that
+output representation changes commute with the complete raw-tape fork and that
+both accepted outputs are supported outputs of the original pass. These laws
+let [SchnorrROMListReduction](../Signatures/Runtime/SchnorrROMListReduction.lean)
+transport the finite-cache fork and guarded extractor to the named reduction
+by exact computation equality. Fallback sampling is included. The same concrete
+EUF-CMA probability bound consequently applies to this finite-cache/tape source
+reduction without an attacker-language restriction.
+
+[BackendSchnorrROMCache](../Signatures/Runtime/BackendSchnorrROMCache.lean)
+compiles the live-cache access, managed-cache access and signing routines into
+actual backend code. Each takes an actual state-passing scalar draw, allowing
+the retained tape to pass through sampling. Exact semantics preserve both cache
+behavior and the returned sampler state. A live hit is independent of the
+sampler even in the costed execution. Stored-code bounds count the sampler once
+per hash routine and twice in signing; no arity/capacity enumeration is generated.
+
+[Regressions](../SignaturesTest/SchnorrROMList.lean) use Nat messages and an actual
+compiled sampler fixture that advances its state on every draw. They cover a
+managed hit disagreeing with the live cache, a managed miss/live hit, a double
+miss with one draw, a cached zero, and a colliding signature that preserves the
+old challenge while performing two ordered draws. A final-verification case
+checks that the live challenge takes precedence over a conflicting managed
+entry. Guards reject restricted
+attacker-source premises and finite-message requirements, and check exact
+computation laws, standard axioms and static cache-code scope.
+
+This checkpoint does not supply complete native cache/signing runtime or a
+general-caller pass certificate. In particular, private scalar sampling must run
+through the raw uniform tape so its internal queries preserve their original
+ordering alongside the attacker's private queries. The remaining work must
+derive that composition and its cost, install the request/reply dispatcher,
+derive selector/pass resources and finish the whole solver.
+
+Validation: all five new source modules, the new general-ROM/cache regression,
+the existing native fork regression and aggregate `Signatures` import passed
+serially with `-j1 -M8192` and default proof limits. The checks reported no
+warnings or nonstandard axioms; no admissions or proof-option overrides were
+introduced. Local guide links and whitespace checks pass.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -2389,12 +2453,12 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Use measured attacker resources for native replay storage and sampling costs.
   Probability-level private-family coverage is now derived without inspecting
   source syntax, but this finite existence argument supplies no efficiency bound.
-- Implement and certify the native general-caller pass, source cache/signing
-  handling and selector, then install them in the assembled native controller.
-  Exact raw-fork/extraction equality and native-controller source composition
-  are proved. Draws, reset, selected-challenge lookup and the complete controller
-  have derived runtime resources; pass/selector resources still need deriving
-  from the actual general caller.
+- Assemble and certify the native general-caller pass and selector, then install
+  them in the native controller. The finite-cache general pass, its capacity
+  bounds and exact fork/extraction correspondence are proved; native cache/signing
+  kernels have semantics and stored-code bounds. Draws, reset, lookup and the
+  complete controller have derived runtime resources. Cache/signing and
+  pass/selector runtime resources still need deriving from the actual code/caller.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
   do not assume free snapshots of an arbitrary attacker state.
@@ -4088,6 +4152,14 @@ additional axioms or proof-resource overrides.
   exact source correspondence at reached restart states, and count its entire stored code.
 - [x] Derive complete native controller adapter/routing runtime, including both
   pass budgets, retained output/configuration copies, lookup/reset and polynomial closure.
+- [x] Connect a finite-cache pass for arbitrary CMA oracle computations to the
+  original ROM pass; derive managed/live capacities from ordinary query allowances.
+- [x] Prove exact computation equality for the finite-cache/tape fork plus
+  extraction/fallback and transport the original concrete probability bound.
+- [x] Compile native live/managed-cache and signing kernels with exact state-passing
+  semantics and actual stored-code bounds, including both private signing draws.
+- [ ] Derive native cache/signing runtime and install/certify raw private scalar
+  sampling, preserving the original uniform-family ordering with attacker queries.
 - [ ] Install and certify the general-caller pass/selector, with replay costs
   recovered from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the

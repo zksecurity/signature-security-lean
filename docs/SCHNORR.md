@@ -176,6 +176,21 @@ include the first output and configuration retained during replay. The runtime
 formula has proved polynomial closure from separate pass budgets, tape capacities,
 encoded widths and backend operation costs. Implementing the general-caller pass
 and selector and deriving their budgets from measured attacker resources remain open.
+
+The [general finite-cache pass](../Signatures/Runtime/SchnorrROMListPass.lean)
+now has exact adaptive source/trace correspondence for arbitrary attacker
+computations, without requiring arithmetic source code. Its
+[cache capacities](../Signatures/Runtime/SchnorrROMListGrowth.lean) are `qS + qH`
+managed entries and `qH + 1` live entries from empty stores. The
+[complete finite-cache/tape reduction](../Signatures/Runtime/SchnorrROMListReduction.lean)
+equals the named reduction by computation equality, including extraction and
+fallback. The original probability bound transfers directly.
+[Native cache/signing kernels](../Signatures/Runtime/BackendSchnorrROMCache.lean)
+now implement those routines with a state-passing scalar draw, exact semantics
+and stored-code bounds. Their complete runtime, private-sampler composition and
+general-caller assembly remain open; internal private scalar draws must preserve
+the same raw uniform-family ordering as the attacker's private draws.
+
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
 exact computation equality and the native theorem/axiom scope. Cost guards
