@@ -1,5 +1,6 @@
 import Signatures.Runtime.BackendStateSimulationResources
 import Signatures.Runtime.BackendStateSimulationRouting
+import Signatures.Runtime.BackendExecutionProfileCost
 import Lean.Util.CollectAxioms
 
 /-! Regression cases for source resources and their coupling to actual compiled
@@ -73,6 +74,33 @@ private def control : ControlCosts where
   retain := fun _ _ => 5
   loop := fun _ _ => 0
 
+private def pricedControl : ControlCosts := { control with loop := fun _ _ => 7 }
+
+/-- Actual execution charges all four tests, including the exhausted test,
+and all three body calls independently of the backend's local cost. -/
+example :
+    (fun z => z.steps) <$> (Code.iterate nat (.atomic (Q.identity nat))).run
+      (iface := iface) pricedControl (fun _ _ => 0) (3, 2) =
+      pure (3 * Q.cost (Q.identity nat) 2 + 37) := by
+  simp [Code.run, iterationRun, pricedControl, control, Nat.succ_mul, Nat.add_assoc]
+  omega
+
+/-- A zero iteration count still pays for its test. -/
+example :
+    (fun z => z.steps) <$> (Code.iterate nat (.atomic (Q.identity nat))).run
+      (iface := iface) pricedControl (fun _ _ => 0) (0, 2) = pure 7 := by
+  rfl
+
+/-- An immediate return with huge available fuel charges one test and one
+body call; the numeric fuel is not itself an execution count. -/
+example :
+    (fun z => z.steps) <$> (Code.loop (.atomic (QS.inl nat nat)) (.atomic (Q.identity nat)) (2^64)).run
+      (iface := iface) pricedControl (fun _ _ => 0) 7 =
+      pure (Q.cost (QS.inl nat nat) 7 + 10) := by
+  change (pure (Q.cost (QS.inl nat nat) 7 + 3 + 7) : ProbComp Nat) =
+    pure (Q.cost (QS.inl nat nat) 7 + 10)
+  congr 1
+
 /-- The joint witness retains actual call/copy costs separately from original
 local work. They cannot disappear by merely projecting the returned value. -/
 example {S : Type} (store : C.Str S) (saved : S)
@@ -88,6 +116,7 @@ open Lean Meta in
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``ExecutionProfile.erase, ``ExecutionProfile.run_sizes, ``ExecutionProfile.Within.price,
+      ``ExecutionProfile.within_bound, ``ExecutionProfile.runtimeBound_polynomial,
       ``StateSimulation.audit_erase, ``StateSimulation.audit_source, ``StateSimulation.native_profile, ``StateSimulation.native_resources,
       ``StateSimulation.atomic_work, ``StateSimulation.sequence_work, ``StateSimulation.first_work, ``StateSimulation.iteration_work,
       ``StateSimulation.branch_work, ``StateSimulation.loop_body_work] do
@@ -106,5 +135,21 @@ run_meta do
             `Signatures.Runtime.AGM.SourceCertificate, ``Program] do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
             throwError "{name}: original resources cannot require a completed native budget or arithmetic source"
+  forallTelescope (← getConstInfo ``ExecutionProfile.within_bound).type fun params conclusion => do
+    unless conclusion.isAppOf ``Bounds do
+      throwError "derive a complete actual execution bound"
+    let mut sourceProgram := false
+    for param in params do
+      let decl ← getFVarLocalDecl param
+      if decl.userName == `program then
+        sourceProgram := conclusion.getAppArgs.contains param
+      if ((← inferType param).find? (fun e => e.isConstOf ``Bounds)).isSome then
+        throwError "derive runtime from the source profile without assuming a finished program bound"
+    unless sourceProgram do
+      throwError "the runtime bound must describe the same original program"
+  forallTelescope (← getConstInfo ``ExecutionProfile.runtimeBound).type fun params _ => do
+    for param in params do
+      if #[`arityCap, `counter, `domainSize].contains (← getFVarLocalDecl param).userName then
+        throwError "runtime must depend on executed visits, not on numeric arities or counter bounds"
 
 end SignaturesTest.BackendExecutionProfile

@@ -207,10 +207,13 @@ routing bounds are proved. The complete sampler runtime now adds source local
 work, per-visit routing and per-query handler cost. It derives all handler and
 structural budgets internally, bounds output widths and cumulative tape growth,
 and has polynomial closure without a polynomial numeric-arity/counter premise.
-The certified sampler is now installed in all three native cache/signing kernels.
-Their complete runtime and output/tape-capacity bounds follow from original
-sampler profiles and primitive laws, with no completed component-budget premise.
-Signing reserves cumulative tape growth across both draws; the cache-entry width
+The kernels now install the distinct draw families required by the source game:
+live/managed hashing uses the challenge tape, while signing replays the sampler's
+private uniform queries. Both ordinary and transformed sampler runtime follow
+from the original execution profile. Complete kernel runtime and output/tape
+capacities follow from that profile and primitive laws, with no completed
+component-budget premise. Hashing reserves one additional challenge cell; signing
+reserves cumulative private tape growth across both draws. The cache-entry width
 allowance stays fixed across calls. The installed runtime formulas have proved
 polynomial closure without a numeric arity, counter or message-domain factor.
 Common-store caller adapters, dispatch, the complete caller pass/selector and
@@ -238,7 +241,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. Live/managed-cache and complete signing kernels have semantics, stored-code bounds, derived runtime, output/tape capacities and polynomial closure. The actual transformed private sampler is installed in all three; their budgets follow from original sampler profiles and primitive laws, including cumulative growth across both signing draws. | Assemble common-store caller adapters, dispatch and the general-caller pass/selector; recover their measured resources, then complete whole-solver certificates and public/family endpoints. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. Live/managed-cache and complete signing kernels have semantics, stored-code bounds, derived runtime, output/tape capacities and polynomial closure. Hashing installs the challenge-family handler; signing installs the transformed private sampler. Their budgets follow from original sampler profiles and primitive laws, including one challenge cell per hash miss and cumulative growth across both signing draws. | Assemble common-store caller adapters, dispatch and the general-caller pass/selector; recover their measured resources, then complete whole-solver certificates and public/family endpoints. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2678,16 +2681,12 @@ final state. Cache keys use a fixed allowance for the message/point pair; repeat
 signing does not multiply that allowance. Both kernels have polynomial runtime
 closure, and their existing exact semantics and stored-code bounds still apply.
 
-[Sampler installation](../Signatures/Runtime/BackendSchnorrROMPrivateBudget.lean)
-derives complete `Bounds` for the actual live, managed and signing kernels with
-`NativePrivate.code` installed. The only whole-execution resource premise is the
-original sampler's execution profile. All transformed sampler and kernel budgets
-are derived internally from that profile and primitive encoding/cost laws.
-With at most `queries` internal sampler queries, live/managed access reserves
-`savedCap + queries` tape cells; signing reserves `savedCap + 2 * queries`.
-The second signing draw's runtime is evaluated at the increased saved capacity.
-Remaining-tape capacity is preserved. Polynomial closure for all three installed
-formulas is proved without a polynomial numeric-arity/counter/domain-size premise.
+The initial sampler installation in commit `1cc6529` used `NativePrivate.code`
+in all three kernels. Its runtime theorem correctly bounded that code, but the
+hash implementation did not match the source game's challenge family. No source
+correspondence for that installation had been proved. The correction below
+replaces hashing's draw and its tape reservation; the generic kernel budgets
+and private signing implementation remain valid.
 
 [Kernel regressions](../SignaturesTest/SchnorrROMKernelBudget.lean) execute two
 different draws to check which scalar becomes the challenge and which becomes
@@ -2695,7 +2694,9 @@ the response, state advancement between calls, insertion, and collision with an
 existing zero and shadowed duplicate. Scope guards require actual kernel bounds,
 the two distinct draw budgets in generic signing, and no completed component
 budget in the installed theorem. They also require an original sampler profile,
-the actual transformed sampler in all-kernel certification, and standard axioms.
+the presence of a transformed sampler, and standard axioms. That presence check
+was insufficient to distinguish hash and signing draw families; the correction
+below strengthens it for each individual kernel.
 
 Native caller-state adapters, dispatch, general-caller pass/selector resources,
 complete extraction/fallback, public security and family endpoints remain open.
@@ -2705,6 +2706,52 @@ Validation: all four new proof modules, the new kernel regression, existing
 cache, finite-ROM and sampler-budget regressions, and aggregate import passed
 serially with `-j1 -M8192`, default proof limits and no warnings. All 696 relative
 links in the two updated guides resolve; whitespace checks pass.
+
+### Correct hash/private draw installation and ordinary sampler runtime, 2026-10-15
+
+[Original-profile runtime](../Signatures/Runtime/BackendExecutionProfileCost.lean)
+now bounds the actual untransformed backend program by
+`work + visits * (overhead (3 * width) + tickTime) + queries * queryTime`.
+The proof covers all seven code constructors, including exhausted loop tests,
+early returns and encoded iteration counters. It derives runtime and final
+output width from the same original execution profile used for private-tape
+sampling, without a finished program-budget premise. The formula has polynomial
+closure without a numeric counter, arity or message-domain factor.
+
+[The challenge adapter](../Signatures/Runtime/BackendSchnorrROMDraws.lean) wraps the
+existing native challenge handler in the cache kernels' stateful draw interface.
+Its complete computation matches the raw challenge oracle when the original
+sampler implements uniform field sampling. Replay consumes a challenge cell and
+preserves private cells. A fresh draw executes the original sampler outside the
+private replay handler and appends exactly one challenge cell. Stored-code and
+complete runtime bounds charge the adapter and sampler; polynomial closure is
+proved.
+
+[Corrected kernel installation](../Signatures/Runtime/BackendSchnorrROMPrivateBudget.lean)
+uses this challenge adapter in live/managed hashing and `NativePrivate.code` in
+signing. Both sampler budgets are derived from the original profile. Hashing
+reserves `savedCap + 1`; signing reserves `savedCap + 2 * queries`, evaluating
+the second draw at its increased saved capacity. The maximum store-width premise
+covers the extra challenge cell even when the sampler makes zero internal
+queries. Source profile widths fit the tape's scalar encoding allowance.
+
+[Kernel regressions](../SignaturesTest/SchnorrROMKernelBudget.lean) check hash replay
+with interleaved private cells, exactly one fresh challenge append for an arbitrary
+sampler, managed hits that skip both live lookup and drawing, and actual private
+sampling across two signing draws while preserving the challenge cell. Scope
+guards check the installed draw family separately in each kernel.
+[Profile regressions](../SignaturesTest/BackendExecutionProfile.lean) check actual
+loop-test charges, including zero iterations and immediate return with huge fuel,
+and guard the theorem's original-program resource scope and axioms.
+
+Common-store dispatch and complete pass/source correspondence remain open.
+These corrected component theorems do not claim a finished source-equivalent
+native pass or complete solver efficiency.
+
+Validation: the three changed/new proof modules, kernel and execution-profile
+regressions, existing raw-tape/private-sampling/finite-ROM regressions and aggregate
+import passed serially with `-j1 -M8192`, default proof limits and no warnings.
+All 703 relative links in the two updated guides resolve; whitespace checks pass.
 
 ### Schnorr general ROM replay remaining work
 
@@ -2717,9 +2764,10 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
   source syntax, but this finite existence argument supplies no efficiency bound.
 - Adapt the certified cache/signing kernels to the caller's complete shared
   store and request/reply interfaces, preserving ordering with attacker queries.
-  The transformed sampler is now installed in all three kernels with derived
-  complete runtime, output widths, cumulative tape capacities and polynomial
-  closure from original measured sampler resources and primitive laws.
+  The source draw families are now installed separately: challenge handling for
+  hashing and private sampling for signing. Complete runtime, output widths,
+  cumulative tape capacities and polynomial closure follow from original measured
+  sampler resources and primitive laws.
 - Assemble and certify the native general-caller pass and selector, then install
   them in the native controller. The finite-cache general pass, its capacity
   bounds and exact fork/extraction correspondence are proved; native cache/signing
@@ -4434,9 +4482,10 @@ additional axioms or proof-resource overrides.
   deriving total native runtime, final encoding/tape capacities and polynomial closure.
 - [x] Derive actual structured-key lookup, stateful live-cache access and pure
   signing cache-update costs, with entry/capacity bounds and polynomial closure.
-- [x] Derive native cache/signing runtime with the certified private sampler,
-  completing managed-cache and full signing composition with cumulative tape
-  capacities, fixed cache-width allowances and polynomial runtime closure.
+- [x] Derive native cache/signing runtime with challenge-family draws for hashing
+  and private sampling for signing, recovering both sampler runtimes from original
+  profiles, with cumulative tape capacities, fixed cache-width allowances and
+  polynomial runtime closure.
 - [ ] Install and certify the general-caller pass/selector, with replay costs
   recovered from measured resources; include common-store adapters and dispatch
   preserving ordering between kernel and attacker queries.

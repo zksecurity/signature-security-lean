@@ -221,11 +221,23 @@ The saved tape grows by at most the internal query allowance, and the remaining
 tape stays within its initial capacity. Polynomial closure is proved without
 enumerating numeric arities or loop counters.
 [The installed-kernel theorem](../Signatures/Runtime/BackendSchnorrROMPrivateBudget.lean)
-now derives live-cache, managed-cache and full signing budgets with this actual
-sampler from its original execution profile and primitive laws. It assumes no
-completed sampler or kernel budget. Signing reserves twice the internal query
-allowance and charges the second draw at the increased saved capacity. All three
-installed runtime formulas have proved polynomial closure.
+derives live-cache, managed-cache and full signing budgets from the original
+sampler profile and primitive laws. Hashing uses the
+[challenge adapter](../Signatures/Runtime/BackendSchnorrROMDraws.lean): it consumes a
+challenge-family cell on replay, or runs the original sampler and appends one
+challenge cell. Its internal uniform queries are not private replay events.
+Signing uses the transformed private sampler, sharing its uniform families with
+attacker randomness. This corrects the initial installation in `1cc6529`, which
+incorrectly used private sampling for hashing too; its cost theorem was valid
+for that code but supplied no source correspondence for that installation.
+[Ordinary sampler runtime](../Signatures/Runtime/BackendExecutionProfileCost.lean)
+is now derived from the same original profile, so neither sampler nor kernel
+runtime is an assumed completed budget. Hashing reserves one extra tape cell;
+signing reserves twice the internal query allowance and charges the second draw
+at the increased saved capacity. All three runtime formulas have proved
+polynomial closure. [Kernel tests](../SignaturesTest/SchnorrROMKernelBudget.lean)
+check both draw families, preservation of unrelated tape cells, fresh challenge
+append and skipped draws on cache hits.
 Common-store caller adapters, dispatch and general-caller pass/selector assembly,
 then complete solver/public/family endpoints, remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
