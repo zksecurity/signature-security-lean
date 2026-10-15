@@ -23,6 +23,16 @@ def Bounds {A B : Type} {a : C.Str A} {b : C.Str B}
   ∀ input, pre input → ∀ z ∈ support (code.run control queryCost input),
     post z.value ∧ z.steps ≤ budget
 
+/-- Increase the time allowance while retaining the same actual program and
+input/output invariants. This rule keeps large program syntax opaque in clients. -/
+theorem Bounds.time_mono {A B : Type} {a : C.Str A} {b : C.Str B}
+    {code : Code Q spec iface a b} {pre : A → Prop} {post : B → Prop} {budget larger : Nat}
+    (bound : Bounds control queryCost code pre post budget) (increase : budget ≤ larger) :
+    Bounds control queryCost code pre post larger := by
+  intro input hi out ho
+  obtain ⟨hp, ht⟩ := bound input hi out ho
+  exact ⟨hp, ht.trans increase⟩
+
 theorem Bounds.atomic {A B : Type} {a : C.Str A} {b : C.Str B} {f : A → B}
     (code : Q.Realizer a b f) (pre : A → Prop) (post : B → Prop) (budget : Nat)
     (h : ∀ input, pre input → post (f input) ∧

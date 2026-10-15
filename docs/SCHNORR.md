@@ -253,8 +253,20 @@ resources establish termination without cutoff. The
 count all adapters, ports, kernels, the original/transformed sampler and caller
 code. [Handler regressions](../SignaturesTest/SchnorrROMHandler.lean) check cache
 separation, signing/private replay ordering, typed random replies and source scope.
-Assembled adapter/dispatcher/caller runtime and encoding propagation remain open,
-followed by final pass/selector and complete solver/public/family endpoints.
+[All eight adapter costs](../Signatures/Runtime/BackendSchnorrROMHandlerLocalCost.lean)
+are now derived, including default-zero construction for hashing.
+[Shared-store invariants](../Signatures/Runtime/BackendSchnorrROMHandlerSize.lean)
+charge the configuration, both caches and both tape lists with fixed cache-entry
+width allowances. [Complete component composition](../Signatures/Runtime/BackendSchnorrROMHandlerComponentBudget.lean)
+charges every control boundary and retained copy.
+[Primitive-derived component certificates](../Signatures/Runtime/BackendSchnorrROMHandlerPrimitiveBudget.lean)
+now cover random, hash, signing and final-live-hash operations without completed
+kernel/sampler/adapter-budget premises. Each adds
+`2061 * overhead (8192 * ((32 * (managedCap + liveCap) + 128) * width))`
+to its native kernel budget, plus the zero primitive for hash/final preparation.
+All four formulas have polynomial closure without a numeric arity/counter factor.
+Indexed request/reply routing and whole-caller runtime remain open, followed by
+final pass/selector and complete solver/public/family endpoints.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

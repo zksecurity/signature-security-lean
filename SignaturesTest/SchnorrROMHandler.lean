@@ -1,4 +1,5 @@
 import Signatures.Runtime.BackendSchnorrROMHandlerDescription
+import Signatures.Runtime.BackendSchnorrROMHandlerPrimitiveBudget
 import Signatures.Runtime.BackendSchnorrRawFork
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
@@ -140,7 +141,16 @@ run_meta do
       ``NativeComponents.random_source, ``NativeHandler.code_denote,
       ``NativeHandler.executed_erase, ``NativeHandler.caller_source_of_resources,
       ``NativeHandler.caller_no_cutoff_of_resources, ``NativeHandler.code_description,
-      ``NativeHandler.finalHash_description, ``NativeHandler.caller_description] do
+      ``NativeHandler.finalHash_description, ``NativeHandler.caller_description,
+      ``Bounds.time_mono, ``NativeComponents.randomInput_cost, ``NativeComponents.randomOutput_cost,
+      ``NativeComponents.hashInput_cost, ``NativeComponents.hashOutput_cost,
+      ``NativeComponents.signingInput_cost, ``NativeComponents.signingOutput_cost,
+      ``NativeComponents.finalInput_cost, ``NativeComponents.finalOutput_cost,
+      ``NativeComponents.store_mono, ``NativeComponents.store_size, ``NativeComponents.input_size,
+      ``NativeComponents.hash_bound_of_native, ``NativeComponents.finalHash_bound_of_native,
+      ``NativeComponents.signing_bound_of_native, ``NativeComponents.random_bound_of_native,
+      ``NativeComponents.cache_components_bound, ``NativeComponents.random_bound,
+      ``NativeComponents.cache_components_polynomial, ``NativeComponents.randomTime_polynomial] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -164,5 +174,37 @@ run_meta do
             measured := true
         unless measured do
           throwError "derive caller termination from measured resources"
+  for name in #[``NativeComponents.cache_components_bound, ``NativeComponents.random_bound] do
+    forallTelescope (← getConstInfo name).type fun params conclusion => do
+      let mut profile := false
+      for param in params do
+        let type ← inferType param
+        if (type.find? (fun e => e.isConstOf ``ExecutionProfile.Within)).isSome then
+          profile := true
+        for forbidden in #[``Bounds, ``Program, ``SourceCertificate, ``Fintype, ``Finite,
+            ``Expression.compile, ``Expression.compileBound] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "{name}: derive complete shared-store component budgets from primitive/original resources"
+      if name == ``NativeComponents.cache_components_bound then
+        unless profile do
+          throwError "recover both scalar sampler budgets from the original execution profile"
+        let conclusion ← whnf conclusion
+        unless conclusion.isAppOf ``And && conclusion.getAppArgs[1]!.isAppOf ``And do
+          throwError "certify final-live-hash, managed hash and signing together"
+        let bounds := #[conclusion.getAppArgs[0]!, conclusion.getAppArgs[1]!.getAppArgs[0]!,
+          conclusion.getAppArgs[1]!.getAppArgs[1]!]
+        for (bound, component) in bounds.zip #[``NativeComponents.finalHash, ``NativeComponents.hash, ``NativeComponents.signing] do
+          unless bound.isAppOf ``Bounds && (bound.find? (fun e => e.isConstOf component)).isSome do
+            throwError "certify the actual shared-store {component} program"
+      else
+        unless conclusion.isAppOf ``Bounds &&
+            (conclusion.find? (fun e => e.isConstOf ``NativeComponents.random)).isSome do
+          throwError "certify the actual shared-store private-draw program"
+  for name in #[``NativeComponents.cache_components_polynomial, ``NativeComponents.randomTime_polynomial] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let userName := (← getFVarLocalDecl param).userName
+        if #[`arityCap, `counter, `counterCap, `domainSize].contains userName then
+          throwError "{name}: no polynomial numeric-arity/counter or finite-domain assumption"
 
 end SignaturesTest.SchnorrROMHandler
