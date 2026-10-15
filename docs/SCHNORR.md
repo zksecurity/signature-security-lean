@@ -130,12 +130,19 @@ After two runs the saved/remaining capacities are `q₁ + q₂ + 1` and `q₁ + 
 bound both lists separately and are preserved by native draw execution and reset.
 [Native return/save costs](../Signatures/Runtime/BackendSchnorrRawUniformLocalCost.lean)
 charge the chronological append's two traversals and the full retained input.
-The scan-cost proof, complete native draw budget, remaining native controller
-and general-caller composition are still open.
+[Native scan costs](../Signatures/Runtime/BackendSeedTapeScanCost.lean) now charge
+the forward traversal, growing accumulator, original context and final reversal.
+The [complete private-draw budget](../Signatures/Runtime/BackendSchnorrRawUniformBudget.lean)
+combines preparation, scan, sampling, append and routing for the actual program.
+Its [polynomial closure](../Signatures/Runtime/BackendSchnorrRawUniformPolynomial.lean)
+depends on encoded widths, tape capacities and primitive costs; numeric arity
+need not be polynomial. Native challenge/reset/controller handling and full
+general-caller composition are still open.
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
 exact computation equality and the native theorem/axiom scope. Cost guards
-reject premises supplying the completed adapter or expression budget.
+reject premises supplying completed component budgets and require the complete
+native program's all-path runtime conclusion.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape

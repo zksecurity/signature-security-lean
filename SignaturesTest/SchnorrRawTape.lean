@@ -1,13 +1,13 @@
 import Signatures.Runtime.SchnorrRawFork
 import Signatures.Runtime.SchnorrRawTapeBounds
-import Signatures.Runtime.BackendSchnorrRawUniformLocalCost
+import Signatures.Runtime.BackendSchnorrRawUniformPolynomial
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
 /-! Raw replay must preserve every private draw in its original family order.
 The native private draw takes a dynamic arity and uses stored naturals directly
-on valid hits. Capacity/encoding and native return/save costs are checked;
-the complete scan/controller runtime certificate remains separate. -/
+on valid hits. Capacity/encoding and complete native private-draw costs are
+checked; the full controller/general-caller certificate remains separate. -/
 
 open OracleComp OracleSpec Signatures.Runtime
 open Signatures.Runtime.Schnorr Signatures.Runtime.Schnorr.RawTape
@@ -90,6 +90,11 @@ example : NativeUniform.saveExpression.denote
   rw [NativeUniform.saveExpression_value]
   rfl
 
+/-- The scan cost proof covers the existing code with any retained context. -/
+example (Γ : List (Ty CryptoAtom)) :
+    SeedTape.popCode.weakenTail Γ = SeedTape.NativeScan.scan (Γ := Γ) :=
+  SeedTape.NativeScan.scan_eq Γ
+
 open Lean Meta in
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
@@ -108,7 +113,11 @@ run_meta do
       ``NativeUniform.hit_property, ``NativeUniform.save_property, ``NativeUniform.restart_property,
       ``NativeUniform.cell_size, ``NativeUniform.tape_size, ``NativeUniform.state_size,
       ``NativeUniform.input_size, ``NativeUniform.draw_size, ``NativeUniform.prepare_size,
-      ``NativeUniform.code_property, ``NativeUniform.hit_cost, ``NativeUniform.save_cost] do
+      ``NativeUniform.code_property, ``NativeUniform.hit_cost, ``NativeUniform.save_cost,
+      ``SeedTape.NativeScan.scan_eq, ``SeedTape.NativeScan.step_invariant,
+      ``SeedTape.NativeScan.fold_invariant, ``SeedTape.NativeScan.body_time,
+      ``SeedTape.NativeScan.forward_time, ``SeedTape.NativeScan.scan_time, ``SeedTape.NativeScan.scan_cost,
+      ``NativeUniform.prepare_cost, ``NativeUniform.bound, ``NativeUniform.runtimeBound_polynomial] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -139,18 +148,25 @@ run_meta do
         if (← inferType param).isConstOf ``Nat then
           unless (← getFVarLocalDecl param).userName == `allowance do
             throwError "{name}: code and its static bound must not depend on input arity or tape length"
-  for name in #[``NativeUniform.hit_cost, ``NativeUniform.save_cost] do
+  for name in #[``NativeUniform.hit_cost, ``NativeUniform.save_cost, ``NativeUniform.prepare_cost,
+      ``NativeUniform.bound, ``SeedTape.NativeScan.scan_cost] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let type ← inferType param
-        for forbidden in #[``NativeUniform.hit, ``NativeUniform.save,
+        for forbidden in #[``NativeUniform.hit, ``NativeUniform.save, ``NativeUniform.prepare,
+            ``NativeUniform.code, ``SeedTape.popCode, ``BackendProgram.Bounds,
             ``BackendProgram.Expression.compile, ``BackendProgram.Expression.compileBound] do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
             throwError "{name}: completed adapter/compiled-expression costs must be derived"
-  forallTelescope (← getConstInfo ``NativeUniform.saveTime).type fun params _ => do
-    for param in params do
-      if (← inferType param).isConstOf ``Nat then
-        unless #[`width, `savedCap, `remainingCap, `zeroTime].contains (← getFVarLocalDecl param).userName do
-          throwError "save time must depend on encoded width and tape capacities, not numeric arity"
+  for name in #[``NativeUniform.saveTime, ``NativeUniform.prepareTime, ``NativeUniform.runtimeBound] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        if (← inferType param).isConstOf ``Nat then
+          unless #[`width, `savedCap, `remainingCap, `comparisonTime, `zeroTime, `addTime,
+              `requestTime, `responseTime, `queryTime].contains (← getFVarLocalDecl param).userName do
+            throwError "{name}: runtime must depend on encoded width, tape capacities and primitive costs, not numeric arity"
+  forallTelescope (← getConstInfo ``NativeUniform.bound).type fun _ conclusion => do
+    unless conclusion.isAppOf ``BackendProgram.Bounds do
+      throwError "private-draw runtime must bound the entire native program on all supported runs"
 
 end SignaturesTest.SchnorrRawTape

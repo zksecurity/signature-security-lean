@@ -164,8 +164,12 @@ has proved state correspondence and a stored-code bound independent of arity.
 Raw tape growth and live-query bounds now follow from actual requested draws.
 Native encoding invariants charge both lists and survive draw/reset operations;
 native hit-return and chronological-save costs are derived, including both append
-traversals and retained data. Native scan costs, the complete draw budget,
-general-caller composition and the remaining native controller are unfinished.
+traversals and retained data. Native scan and preparation costs now charge the
+original context, forward traversal, growing accumulator and final reversal.
+The complete native private-draw budget composes those costs with dynamic
+sampling, append and control routing. Its runtime formula has proved polynomial
+closure from component resources without a polynomial numeric-arity premise.
+General-caller composition and the remaining native controller are unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -189,7 +193,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances, with reference coverage derived internally. Its raw finite-list controller/extractor has exact computation correspondence. Native dynamic private draws have full-state correspondence, arity-independent stored-code bounds, preserved encoding bounds, and derived hit-return/save costs. Raw tape growth and live-query bounds are proved. Earlier certified-source arithmetic/bit endpoints remain available. | Derive native scan and complete draw/replay budgets; complete the native controller and general caller composition. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances, with reference coverage derived internally. Its raw finite-list controller/extractor has exact computation correspondence. Native dynamic private draws have full-state correspondence, arity-independent stored-code bounds, preserved encoding bounds, a complete primitive-derived runtime budget and polynomial closure. Raw tape growth and live-query bounds are proved. Earlier certified-source arithmetic/bit endpoints remain available. | Complete native challenge/reset/controller and general caller composition, then whole-replay/solver resource certificates. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2114,8 +2118,8 @@ It assumes primitive/data/structural contracts, not a completed adapter budget.
 The result depends on encoded widths, saved/remaining capacities and zero's
 primitive cost, with no enumeration or linear dependence on numeric arity.
 
-The complete native scan, draw budget, challenge/reset controller and general
-caller/solver runtime certificates remain open. These local cost and encoded-size
+At this checkpoint, the complete native scan, draw budget, challenge/reset controller and general
+caller/solver runtime certificates remained open. These local cost and encoded-size
 results do not establish a whole-reduction runtime or peak-memory certificate.
 
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) now include a private arity
@@ -2130,6 +2134,49 @@ regression and the aggregate `Signatures` import passed serially with `-j1
 or proof-option overrides were introduced. All 605 local links in the updated
 guides resolve; `git diff --check` passes.
 
+### Complete native private-draw runtime and polynomial closure, 2026-10-15
+
+[BackendSeedTapeScanCost](../Signatures/Runtime/BackendSeedTapeScanCost.lean)
+proves native runtime bounds for the original tape scan in an arbitrary trailing
+context. Its expression aliases are definitionally equal to the existing weakened
+scan; no replacement implementation is assumed. The remaining-input invariant
+reserves capacity for the growing accumulator. The proof charges every fold
+iteration and fee, the retained original list and context, default creation,
+the final reversal and result assembly.
+
+[BackendSchnorrRawUniformPrepareCost](../Signatures/Runtime/BackendSchnorrRawUniformPrepareCost.lean)
+instantiates that scan with the full original input, including both saved and
+remaining tapes. Tag computation, expression framing, hit/miss selection and
+prepared-state assembly are charged from primitive and data/structural laws.
+
+[BackendSchnorrRawUniformBudget](../Signatures/Runtime/BackendSchnorrRawUniformBudget.lean)
+composes preparation, selection, hit return, dynamic uniform sampling, retention,
+chronological append and every control fee into `NativeUniform.bound`. This is
+an all-path `Bounds` certificate for the actual `NativeUniform.code`. It preserves
+encoded output/state bounds, allowing at most one additional saved cell and no
+remaining-tape growth. Its assumptions concern primitive operations, representation
+and control laws, and the uniform query's request/reply adapters and sampling cost.
+No completed scan, expression, sampler wrapper or handler budget is assumed.
+
+[BackendSchnorrRawUniformPolynomial](../Signatures/Runtime/BackendSchnorrRawUniformPolynomial.lean)
+proves polynomial closure of that actual runtime formula from polynomial encoded
+widths, tape capacities and component times, with one joint polynomial structural
+overhead bound. Numeric arity does not occur in the formula and need not grow
+polynomially. The concrete theorem still requires width and primitive/port cost
+bounds for the reachable numeric range. This is a component efficiency theorem,
+not a full Schnorr ROM family security endpoint or conventional-machine instance.
+
+[Regression guards](../SignaturesTest/SchnorrRawTape.lean) check the original
+scan's equality in any retained context, the standard three axioms for all new
+proofs, the all-path native-program conclusion, absence of completed-component
+budget premises, and absence of numeric-arity parameters in the runtime formulas.
+
+Validation: all four new source modules, the expanded `SchnorrRawTape`
+regression and the aggregate `Signatures` import passed serially with
+`-j1 -M8192` and default proof limits, without warnings, admissions, nonstandard
+axioms or proof-option overrides. All 613 local links in the updated guides
+resolve; `git diff --check` passes.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -2141,12 +2188,14 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
   source syntax, but this finite existence argument supplies no efficiency bound.
 - Complete the native challenge draw and caller/controller assembly on top of
   the raw finite-list semantics. Exact list-controller and extraction equality
-  are now proved, and dynamic private-draw native code is implemented.
+  are now proved, and dynamic private draws have native semantics, code/runtime
+  certificates, encoding invariants and polynomial runtime closure.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
   do not assume free snapshots of an arbitrary attacker state.
-- Derive encoded-width and runtime bounds for the new dynamic tape operations.
-  They no longer generate arity-sized codec code; older fixed-arity endpoints
+- Complete native encoded-width and runtime bounds for challenge/reset and the
+  whole replay controller. Private-draw accounting is proved and generates no
+  arity-sized codec code; older fixed-arity endpoints
   retain their linear-range accounting. If bounded
   sampling introduces error, prove and include its probability contribution.
 - Prove the native general-caller runner realizes the named lazy reduction whose
@@ -3821,7 +3870,8 @@ additional axioms or proof-resource overrides.
   private draws with full-state correspondence and arity-independent code bounds.
 - [x] Derive raw saved/remaining capacities and live-query bounds, preserve native
   encoding invariants, and charge hit-return and chronological-save execution.
-- [ ] Derive native tape-scan costs and compose the complete dynamic draw budget.
+- [x] Derive native tape-scan costs and compose the complete dynamic private-draw
+  budget, with polynomial closure of its actual runtime formula.
 - [ ] Complete native challenge/controller assembly and derive native encoding,
   replay and general-caller costs from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the
