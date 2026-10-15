@@ -238,8 +238,23 @@ at the increased saved capacity. All three runtime formulas have proved
 polynomial closure. [Kernel tests](../SignaturesTest/SchnorrROMKernelBudget.lean)
 check both draw families, preservation of unrelated tape cells, fresh challenge
 append and skipped draws on cache hits.
-Common-store caller adapters, dispatch and general-caller pass/selector assembly,
-then complete solver/public/family endpoints, remain open.
+[Common-store adapters](../Signatures/Runtime/BackendSchnorrROMHandlerComponents.lean)
+now preserve the public configuration, both caches and the same raw tape across
+random, hash, signing and final-live-hash operations. Their
+[source laws](../Signatures/Runtime/BackendSchnorrROMHandlerSource.lean) connect to
+the original list-cache handler on every tape state, including modulo decoding
+of malformed raw naturals. The [shared-state interpretation](../Signatures/Runtime/SchnorrROMSharedState.lean)
+commutes with adaptive oracle simulation. Actual
+[request/reply ports](../Signatures/Runtime/BackendSchnorrROMInterface.lean) and
+[indexed dispatch](../Signatures/Runtime/BackendSchnorrROMHandler.lean) now realize
+the full source interaction for arbitrary quantitative callers. Measured query
+resources establish termination without cutoff. The
+[stored-code bounds](../Signatures/Runtime/BackendSchnorrROMHandlerDescription.lean)
+count all adapters, ports, kernels, the original/transformed sampler and caller
+code. [Handler regressions](../SignaturesTest/SchnorrROMHandler.lean) check cache
+separation, signing/private replay ordering, typed random replies and source scope.
+Assembled adapter/dispatcher/caller runtime and encoding propagation remain open,
+followed by final pass/selector and complete solver/public/family endpoints.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
