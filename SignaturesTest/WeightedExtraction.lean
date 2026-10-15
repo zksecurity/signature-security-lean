@@ -1,5 +1,8 @@
 import Signatures.Runtime.BackendWeightedExtractionDescription
 import Signatures.Runtime.BackendWeightedExtractionState
+import Signatures.Runtime.BackendWeightedSigningExtraction
+import Signatures.Runtime.BackendWeightedHashExtraction
+import Signatures.Runtime.BackendWeightedTargetExtraction
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -136,7 +139,17 @@ run_meta do
       ``Extract.goodFinish_cachedTranscript, ``Extract.badFinish_cachedTranscript,
       ``Extract.goodFinish_cached, ``Extract.badFinish_cached,
       ``Extract.goodFinish_cache, ``Extract.badFinish_cache,
-      ``Extract.backendGood_cache, ``Extract.backendBad_cache] do
+      ``Extract.backendGood_cache, ``Extract.backendBad_cache,
+      ``Extract.goodResult_cost, ``Extract.badResult_cost,
+      ``Extract.coefficientPrepareArgs_cost, ``Extract.coefficientEvaluateArgs_cost,
+      ``Extract.targetPrepareArgs_cost, ``Extract.targetEvaluateArgs_cost,
+      ``Extract.evaluateCoefficients_bound, ``Extract.evaluateTarget_bound,
+      ``Extract.hashTerms_weakenTail_time, ``Extract.hashCoefficients_cost,
+      ``Index.coefficients_cost, ``Index.coefficients_length, ``Index.coefficients_rows_size,
+      ``Index.coefficients_size, ``Extract.preparationInput_size, ``Extract.preparationCache_size,
+      ``Extract.hashCoefficients_length, ``Extract.hashCoefficients_rows_size, ``Extract.hashCoefficients_size,
+      ``Extract.goodSigningCoefficients_bound, ``Extract.badSigningCoefficients_bound,
+      ``Extract.hashExtraction_bound, ``Extract.goodTarget_bound, ``Extract.badTarget_bound] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -148,5 +161,20 @@ run_meta do
         for forbidden in #[``Bounds] do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
             throwError "{name}: supplied finished extractor budget"
+
+-- The actual call endpoints derive all component budgets. Their resource
+-- premises must not supply a runtime bound for compiled preparation/evaluation.
+run_meta do
+  for name in #[``Extract.goodSigningCoefficients_bound, ``Extract.badSigningCoefficients_bound,
+      ``Extract.hashExtraction_bound, ``Extract.goodTarget_bound, ``Extract.badTarget_bound] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let type ← inferType param
+        forallTelescope type fun _ conclusion => do
+          if conclusion.isAppOf ``LE.le then
+            for component in #[``Expression.compile, ``Language.compile, ``Evaluate.backendGood,
+                ``Evaluate.backendBad, ``Read.goodRead, ``Read.badRead] do
+              if (conclusion.find? (fun e => e.isConstOf component)).isSome then
+                throwError "{name}: assumed completed component runtime"
 
 end SignaturesTest.WeightedExtraction

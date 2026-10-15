@@ -185,8 +185,14 @@ execute the source's ordered transcript and target evaluations in one cache.
 include all generators, matching, samplers, defaults and field arithmetic.
 [Cache invariants](../Signatures/Runtime/BackendWeightedExtractionState.lean) show
 that only final-target evaluation can add entries for a valid cached transcript,
-and preserve the old bindings and encountered-key widths. Complete extractor
-runtime, recovery of caller conditions from general resources, and whole-solver
+and preserve the old bindings and encountered-key widths. Complete
+[hash-transcript](../Signatures/Runtime/BackendWeightedHashExtraction.lean),
+[signing-transcript](../Signatures/Runtime/BackendWeightedSigningExtraction.lean), and
+[final-target](../Signatures/Runtime/BackendWeightedTargetExtraction.lean) call bounds
+now include actual preparation, evaluation, arguments and retained frames. These
+derive every component cost from primitive, sampler, encoding and control contracts.
+Outer extractor runtime composition, recovery of caller conditions from general
+resources, and whole-solver
 certificates remain in progress.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic

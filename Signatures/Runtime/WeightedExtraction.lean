@@ -27,14 +27,14 @@ def evaluateCoefficients {dataTy : Ty CryptoAtom}
     (combine : Expr CryptoOp [value, scalar, value] value) :
     Program CryptoOp (EvalCmd indexTy value)
       [.list (AGM.tokenTy dataTy), .list scalar, evalRowTy indexTy] value :=
-  .bind (.ret ((Coefficients.signedTerms terms).weakenTail [evalRowTy indexTy]))
+  .bind (.call (.ret (Coefficients.signedTerms terms)) (.cons v0 (.cons v1 .nil)))
     (.call (evaluateRows zero combine) (.cons v0 (.cons v3 .nil)))
 
 def evaluateTarget (terms : Expr CryptoOp [messageTy] (.list (Terms.termTy indexTy)))
     (zero : Expr CryptoOp [.list (evalRowTy indexTy), evalRowTy indexTy] value)
     (combine : Expr CryptoOp [value, scalar, value] value) :
     Program CryptoOp (EvalCmd indexTy value) [messageTy, evalRowTy indexTy] value :=
-  .bind (.ret (terms.weakenTail [evalRowTy indexTy]))
+  .bind (.call (.ret terms) (.cons v0 .nil))
     (.call (evaluateRows zero combine) (.cons v0 (.cons v2 .nil)))
 
 def defaultRow (default : Expr CryptoOp [messageTy] (Terms.termTy indexTy)) :
@@ -133,12 +133,9 @@ theorem evaluateCoefficients_source {dataTy : Ty CryptoAtom}
       (evalSemantics (fun i => impl (.inr i))) (tr, coeff, default, ()) =
       simulateQ impl (evalTerms (Model.LazyAGM.WeightedReduction.signedTerms
         (fun m => terms.denote (arithmetic F G₁ G₂ K M cost) (m, ())) coeff tr.reverse)) := by
-  have h := (Coefficients.signedTerms terms).weakenTail_denote (Δ := [evalRowTy indexTy])
-    (arithmetic F G₁ G₂ K M cost) (tr, coeff, ()) (default, ())
-  simp only [Env.append] at h
-  simp only [evaluateCoefficients, Program.denote, pure_bind, Args.denote, v0, v3, Expr.denote, Var.get]
+  simp only [evaluateCoefficients, Program.denote, pure_bind, Args.denote, v0, v1, v3, Expr.denote, Var.get]
   rw [evaluateRows_source cost impl zero combine _ default (hz _ default) hc,
-    h, Coefficients.signedTerms_denote]
+    Coefficients.signedTerms_denote]
 
 theorem evaluateTarget_source
     [AddCommMonoid (value.Value (cryptoBase F G₁ G₂ K M))]
@@ -156,11 +153,8 @@ theorem evaluateTarget_source
     (evaluateTarget terms zero combine).denote (arithmetic F G₁ G₂ K M cost)
       (evalSemantics (fun i => impl (.inr i))) (m, default, ()) =
       simulateQ impl (evalTerms (terms.denote (arithmetic F G₁ G₂ K M cost) (m, ()))) := by
-  have h := terms.weakenTail_denote (Δ := [evalRowTy indexTy])
-    (arithmetic F G₁ G₂ K M cost) (m, ()) (default, ())
-  simp only [Env.append] at h
   simp only [evaluateTarget, Program.denote, pure_bind, Args.denote, v0, v2, Expr.denote, Var.get]
-  rw [evaluateRows_source cost impl zero combine _ default (hz _ default) hc, h]
+  rw [evaluateRows_source cost impl zero combine _ default (hz _ default) hc]
 
 theorem good_source
     (impl : QueryImpl (baseSpec (indexTy.Value (cryptoBase F G₁ G₂ K M)) F) N)

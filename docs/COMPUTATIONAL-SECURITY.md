@@ -167,7 +167,12 @@ preserve the source's joint output/cache law. Their
 [stored-code bounds](../Signatures/Runtime/BackendWeightedExtractionDescription.lean)
 charge the full implemented syntax, and [cache growth](../Signatures/Runtime/BackendWeightedExtractionState.lean)
 is confined to the final target when transcript bases are cached. Complete
-extractor runtime, automatic caller-condition recovery, and whole-solver
+[hash](../Signatures/Runtime/BackendWeightedHashExtraction.lean),
+[signing-transcript](../Signatures/Runtime/BackendWeightedSigningExtraction.lean), and
+[final-target](../Signatures/Runtime/BackendWeightedTargetExtraction.lean) call bounds
+now charge actual preparation, evaluation and retained argument/cache frames from
+primitive contracts. Outer extractor runtime composition, automatic caller-condition
+recovery, and whole-solver
 certificates remain open.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
