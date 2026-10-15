@@ -195,8 +195,16 @@ draws, with exact source correspondence even on malformed input tapes. Its
 counts the sampler and installed handlers; the
 [typed per-draw runtime bound](../Signatures/Runtime/BackendSchnorrPrivateSamplingBudget.lean)
 charges actual interface conversion, scan/draw/save and routing costs and has
-proved polynomial closure. Total sampler runtime still needs deriving from its
-measured execution resources before installing the completed pass.
+proved polynomial closure. The [original execution profile](../Signatures/Runtime/BackendExecutionProfile.lean)
+now measures local work, control visits, intermediate encoded widths, counters
+and requests. [Resource recovery](../Signatures/Runtime/BackendStateSimulationResources.lean)
+pairs these source resources with the transformed program's actual costed run;
+both computation projections are proved exact. [Structural cost bounds](../Signatures/Runtime/BackendStateSimulationRouting.lean)
+charge the added adapters and retained state from primitive backend laws.
+The total sampler runtime inequality, including cumulative tape growth across
+all internal draws, still needs proving before installing the completed pass.
+Original local-work bounds alone do not bound visits or intermediate widths
+without further backend laws; these source resources remain explicit.
 
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,

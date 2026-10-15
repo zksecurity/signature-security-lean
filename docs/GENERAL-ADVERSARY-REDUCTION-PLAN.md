@@ -196,8 +196,12 @@ kernels have exact state-passing semantics and stored-code bounds. Their runtime
 certificates and caller integration remain open. Native private scalar sampling
 now transforms the actual sampler code to use the shared raw tape, with exact
 computation correspondence and a stored-code bound. Its typed per-draw handler
-has primitive-derived runtime/encoding bounds and polynomial closure. Lifting
-these resources across the whole sampler execution remains open.
+has primitive-derived runtime/encoding bounds and polynomial closure. Original
+execution profiles now measure local work, visited control nodes, intermediate
+encoded widths, counters and requests. Exact computation projections couple
+those profiles to actual transformed runs, and primitive-derived structural
+routing bounds are proved. The total sampler runtime inequality and cumulative
+tape-capacity composition remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -221,7 +225,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. Native cache/signing kernels have semantics and stored-code bounds. Actual private sampler code now shares the raw tape with exact source correspondence and a description bound; its typed per-draw handler has full runtime/encoding bounds and polynomial closure. | Lift measured execution resources through the private sampler transformation; complete cache/signing runtime, general-caller pass/selector assembly and measured-resource recovery, then whole-solver certificates and public/family endpoints. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. Native cache/signing kernels have semantics and stored-code bounds. Actual private sampler code now shares the raw tape with exact source correspondence and a description bound; its typed per-draw handler has full runtime/encoding bounds and polynomial closure. Original execution profiles are coupled to actual transformed runs and structural routing costs are derived. | Prove the total sampler runtime inequality with cumulative tape growth; complete cache/signing runtime, general-caller pass/selector assembly and measured-resource recovery, then whole-solver certificates and public/family endpoints. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2498,6 +2502,53 @@ passed serially with `-j1 -M8192` and default proof limits, without warnings,
 admissions, nonstandard axioms or proof-option overrides. Local guide links and
 whitespace checks pass.
 
+### Original sampler execution resources, 2026-10-15
+
+[Execution profiles](../Signatures/Runtime/BackendExecutionProfile.lean) measure
+the original code's local work, executed control nodes, encoded boundary widths,
+reached loop counters and chronological requests. Erasing the profile gives the
+original computation exactly. A zero-cost backend primitive still contributes
+an executed node; an unchosen branch contributes neither work nor visits.
+[Resource algebra](../Signatures/Runtime/BackendExecutionProfileBounds.lean)
+recovers boundary sizes and bounds the expression
+`local work + visits * routing allowance + queries * handler allowance`.
+This is currently a price on source metrics, not yet a theorem bounding the
+transformed sampler's complete runtime.
+
+[Joint instrumentation](../Signatures/Runtime/BackendStateSimulationExecution.lean)
+records the transformed run and source profile on the same execution path.
+[Native erasure](../Signatures/Runtime/BackendStateSimulationErasure.lean)
+recovers the exact costed native computation, including its step count.
+[Source projection](../Signatures/Runtime/BackendStateSimulationProfile.lean)
+recovers the simulated source profile with its returned simulator state.
+[Resource recovery](../Signatures/Runtime/BackendStateSimulationResources.lean)
+therefore attaches original measured resources to every supported actual native
+run, without assuming a completed native runtime certificate.
+
+[Structural bounds](../Signatures/Runtime/BackendStateSimulationRouting.lean)
+charge primitive costs and routing for atomic calls, sequencing, branching,
+retained local contexts, loop-body distribution and input-counted iteration.
+They use encoded-width and primitive implementation laws, including an explicit
+cost law for distribution over a sum. They do not enumerate the query domain
+or charge the original local computation a second time.
+
+These are preparatory lemmas for the total sampler inequality. Still required:
+compose them across all code constructors, carry a store invariant indexed by
+queries consumed, and instantiate the result with the proved raw-tape handler
+bound. Time alone need not dominate visits or intermediate encoded widths for
+an arbitrary quantitative backend; these original resources must be supplied
+explicitly or recovered under additional backend laws.
+
+[Regressions](../SignaturesTest/BackendExecutionProfile.lean) check repeated
+local work, zero-cost body visits, skipped large-fuel branches, exhausted and
+early-return loops, actual query effects, and separation of native call/copy
+costs from source work. Scope guards check exact computation equalities,
+standard axioms and absence of completed-native-budget premises in resource
+recovery. All seven source modules, the new regression, the existing private
+sampling regression and aggregate import passed serially with `-j1 -M8192`,
+default proof limits and no warnings. Documentation links and whitespace checks
+also pass.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -2509,8 +2560,10 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
   source syntax, but this finite existence argument supplies no efficiency bound.
 - Derive total resources for the transformed private sampler from its measured
   execution. Its native code, exact raw-tape source law, stored-code bound and
-  complete typed per-draw runtime/encoding bounds are proved; the number of
-  internal uniform draws and changing tape capacities must still be composed.
+  complete typed per-draw runtime/encoding bounds are proved. Exact coupling to
+  original execution profiles and structural routing bounds are also proved;
+  the total runtime inequality and changing tape capacities across internal
+  uniform draws must still be composed.
 - Assemble and certify the native general-caller pass and selector, then install
   them in the native controller. The finite-cache general pass, its capacity
   bounds and exact fork/extraction correspondence are proved; native cache/signing
@@ -4219,6 +4272,8 @@ additional axioms or proof-resource overrides.
 - [x] Transform actual private sampler code to share the raw uniform tape, with
   exact computation correspondence and stored-code bounds; derive typed per-draw
   runtime/encoding bounds and polynomial closure from primitive contracts.
+- [x] Couple original execution profiles to actual transformed costed runs and
+  derive structural routing bounds from primitive costs and encoded widths.
 - [ ] Lift measured sampler execution resources through the stateful transformation
   and derive native cache/signing runtime, preserving ordering with attacker queries.
 - [ ] Install and certify the general-caller pass/selector, with replay costs
