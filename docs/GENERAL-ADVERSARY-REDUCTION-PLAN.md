@@ -146,6 +146,13 @@ runtime/code formulas and a nonuniform family corollary are now proved. The
 family theorem keeps one fixed backend and derives negligible forgery from
 polynomial component resources, DLog hardness and negligible inverse field size.
 
+General Schnorr ROM replay now has a lazy retained-tape component for arbitrary
+oracle computations. The first run records exactly its chronological draws;
+reset preserves both private families, including their post-challenge suffixes.
+Single-run seeded semantics and query-dependent saved/remaining-cell bounds are
+proved without enumerating possible sampling families. The joint lazy-fork
+probability bridge and native execution/encoding bounds remain unfinished.
+
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
 their public statements and family corollaries, then finish API/documentation retirement.
@@ -168,7 +175,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
+| Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. General lazy-tape semantics, exact first-run recording, and query-dependent cell/query bounds are now proved. | Joint lazy-fork probability bridge, general caller composition and native replay costs; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -1831,6 +1838,39 @@ with the existing `SchnorrGeneralStatement` regressions and the aggregate
 The modules are warning-free, with no admissions or nonstandard axioms.
 All 674 local links in the four edited Markdown guides resolve.
 
+### General Schnorr lazy-tape checkpoint, 2026-10-15
+
+[SchnorrLazySeed](../Signatures/Runtime/SchnorrLazySeed.lean) implements a
+finite saved tape plus a consumable remaining tape. Each family consumes its own
+next saved reply; a miss makes one ambient query and appends the answer to the
+saved tape. The implementation inspects encountered cells only. There is no
+advance family enumeration, finite-domain premise or arithmetic caller syntax.
+Reset changes the chosen family's prefix/replacement and preserves every other
+family, including private draws after the first run's changed challenge.
+
+The projection to the existing typed seeded oracle is exact for an arbitrary
+adaptive computation. [The first-pass recording law](../Signatures/Runtime/SchnorrLazySeedLog.lean)
+also preserves the joint output and full chronological tape, not only the output
+marginal. Its two-pass identity expresses the implemented joint outputs as
+first-run logging followed by typed seeded replay of that encountered-path tape.
+[Cell/query bounds](../Signatures/Runtime/SchnorrLazySeedBounds.lean)
+give at most `q1 + q2 + 1` saved cells and `q1 + 1` remaining cells after two
+passes, and at most `q1 + q2` ambient calls. The replacement is supplied to this
+two-pass component: its sampling cost must be added by the fork controller.
+These are cell counts, not encoded memory or execution-time certificates.
+
+[Regression checks](../SignaturesTest/SchnorrLazySeed.lean) cover private caller
+and simulator draws after the fork, a newly encountered sampling family in the
+second run, an exhausted family's fresh suffix, a large numerical random range,
+empty passes, and the standard axiom footprint. This checkpoint does not yet
+prove joint probability equality with the fully pregenerated fork. That bridge,
+native codecs/costs, and general-caller integration remain required.
+
+Validation: all three new modules, the new lazy-tape regression, the existing
+`SeedTape` regression and the aggregate `Signatures` import passed serially with
+`-j1 -M8192` and default proof limits. No warnings, admissions or nonstandard
+axioms were introduced; all 680 local links in the four status guides resolve.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -1839,9 +1879,9 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 
 - Derive private-randomness coverage from the general attacker resource contract,
   replacing the current dependence on inspecting arithmetic source syntax.
-- Fix the entire private randomness of the algorithm being forked, including
-  simulator draws, across both executions. Retain the required oracle prefix and
-  refresh the selected challenge and suffix according to the chosen fork theorem.
+- Connect the lazy retained tape to the full fixed-private-randomness fork law.
+  The new local reset already preserves caller and simulator private suffixes;
+  the joint distribution proof must also cover families first seen on replay.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
   do not assume free snapshots of an arbitrary attacker state.
@@ -1850,9 +1890,9 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
   sampling introduces error, prove and include its probability contribution.
 - Prove the new runner realizes the fixed-tape reduction required by the security
   argument, rather than assuming all replay implementations have the same law.
-- Add the single-pass overhead proof for
-  [Schnorr AGM](../Signatures/Schnorr/Proofs/AGMSecurity.lean), and separately adapt
-  the ROM accounting to the [nonzero-nonce variant](../Signatures/Schnorr/Proofs/NonzeroSecurity.lean).
+- Separately adapt the ROM accounting to the
+  [nonzero-nonce variant](../Signatures/Schnorr/Proofs/NonzeroSecurity.lean).
+  Schnorr AGM's single-pass overhead and family theorem are already complete.
 
 ## Implementation order and completion checks
 
@@ -3499,6 +3539,11 @@ additional axioms or proof-resource overrides.
   setup, caller and terminal into the complete Schnorr AGM runtime/`Within` certificate.
 - [x] Apply DLog hardness to the derived Schnorr AGM solver witness, preserving
   the original probability losses and checking every challenge's encoded input size.
+- [x] Define lazy retained randomness for arbitrary replay computations; prove
+  exact single-run seeded semantics, joint first-run recording, preservation of
+  private suffixes on reset, and query-dependent tape-cell/ambient-call bounds.
+- [ ] Prove the joint lazy-fork probability bridge and derive native encoding,
+  replay and general-caller execution costs.
 - [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness

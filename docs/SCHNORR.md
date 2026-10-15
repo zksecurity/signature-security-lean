@@ -71,6 +71,16 @@ composes extraction, averaging over keys, and the signing-simulation bound.
 Its [regressions](../SignaturesTest/SchnorrFixedTape.lean) check private draws
 after the fork, the final-query slot, and the axiom footprint.
 
+The general-caller work now includes a
+[lazy retained tape](../Signatures/Runtime/SchnorrLazySeed.lean) that samples only
+encountered draws. Reset preserves both caller and simulator private randomness,
+including draws after the changed challenge. Its
+[first-pass law](../Signatures/Runtime/SchnorrLazySeedLog.lean) preserves the joint
+output and recorded tape. [Two-pass bounds](../Signatures/Runtime/SchnorrLazySeedBounds.lean)
+count saved/remaining cells and ambient draws independently of the universe of
+sampling families. These local results do not yet transport the fixed-tape fork
+probability theorem or certify native execution and encoded memory costs.
+
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape
 reduction. Its original `SourceCertificate` supplies both semantics and resources;
