@@ -175,8 +175,8 @@ lookup/reset, all adapters, branches and retained copies. Its frame invariants
 include the first output and configuration retained during replay. The runtime
 formula has proved polynomial closure from separate pass budgets, tape capacities,
 encoded widths and backend operation costs. The general-caller pass is now
-assembled with exact source correspondence and complete stored-code bounds;
-complete pass runtime composition and selector certification remain open.
+assembled with exact source correspondence, complete stored-code/runtime bounds
+and polynomial runtime closure; selector certification remains open.
 
 The [general finite-cache pass](../Signatures/Runtime/SchnorrROMListPass.lean)
 now has exact adaptive source/trace correspondence for arbitrary attacker
@@ -308,10 +308,21 @@ and [result encodings](../Signatures/Runtime/BackendSchnorrROMPassSize.lean) cha
 the forgery, both caches, list construction and both tape lists.
 [Final verification composition](../Signatures/Runtime/BackendSchnorrROMPassVerificationBudget.lean)
 charges retained data, packing and control around the live-hash component.
-This internal composition lemma still needs to be combined with initialization,
-boundary conversion and terminal costs to certify the complete pass runtime.
+[Initialization](../Signatures/Runtime/BackendSchnorrROMPassSetup.lean) and
+[terminal composition](../Signatures/Runtime/BackendSchnorrROMPassTerminalComposition.lean)
+now charge the actual [boundary conversions](../Signatures/Runtime/BackendSchnorrROMPassPorts.lean),
+cache construction, optional dispatch, singleton creation and cutoff.
+The [complete pass runtime](../Signatures/Runtime/BackendSchnorrROMPassBudget.lean)
+derives all component budgets from measured arbitrary caller executions,
+original sampler profiles and primitive/encoding/control laws. It assumes no
+finished pass/component budget and preserves complete output/cache/tape bounds.
+Its [polynomial closure](../Signatures/Runtime/BackendSchnorrROMPassPolynomial.lean)
+covers the entire installed runtime formula without a polynomial numeric-arity,
+counter-value or message-domain assumption. The same pass theorem covers both
+empty initial tapes and bounded replay tapes; sufficient query fuel excludes cutoff.
 [Pass regressions](../SignaturesTest/SchnorrROMPass.lean) check live-cache selection,
-private-cell ordering and sampler independence of the costed cutoff branch.
+private-cell ordering and sampler independence of the costed cutoff branch,
+and guard the full runtime theorem's measured-resource scope and axiom footprint.
 Selector certification and complete solver/public/family endpoints also remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.

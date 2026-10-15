@@ -1,6 +1,6 @@
 import Signatures.Runtime.BackendSchnorrROMPassSource
 import Signatures.Runtime.BackendSchnorrROMPassDescription
-import Signatures.Runtime.BackendSchnorrROMPassVerificationBudget
+import Signatures.Runtime.BackendSchnorrROMPassPolynomial
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -89,7 +89,10 @@ run_meta do
       ``NativePass.initialExpression_cost, ``NativePass.verifyInput_cost, ``NativePass.verifyOutput_cost,
       ``NativePass.singletonExpression_cost, ``NativePass.cutoffExpression_cost,
       ``NativePass.initial_reserved, ``NativePass.completed_size, ``NativePass.verified_size,
-      ``NativePass.result_size, ``NativePass.verify_bound_of_finalHash] do
+      ``NativePass.result_size, ``NativePass.verify_bound_of_finalHash,
+      ``NativePass.setup_bound, ``NativePass.terminal_bound_of_verification, ``NativePass.code_bound_of_resources,
+      ``NativePass.frameWidth_polynomial, ``NativePass.finalHashTime_polynomial,
+      ``NativePass.timeBudget_polynomial, ``NativePass.resourcesTime_polynomial] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -112,5 +115,36 @@ run_meta do
         unless conclusion.isAppOf ``Eq &&
             (conclusion.find? (fun e => e.isConstOf ``NativePass.code)).isSome do
           throwError "require exact computation equality for the actual assembled pass"
+  forallTelescope (← getConstInfo ``NativePass.code_bound_of_resources).type fun params conclusion => do
+    let mut measured := false
+    let mut sampled := false
+    let mut ports := false
+    for param in params do
+      let type ← inferType param
+      if (type.find? (fun e => e.isConstOf ``QuantitativeRealization.RunsWithin)).isSome then
+        measured := true
+      if (type.find? (fun e => e.isConstOf ``ExecutionProfile.Within)).isSome then
+        sampled := true
+      if (type.find? (fun e => e.isConstOf ``NativePass.PortCaps)).isSome then
+        ports := true
+      for forbidden in #[``Bounds, ``GeneralCaller.Budget, ``Program, ``SourceCertificate,
+          ``Fintype, ``Finite, ``Inhabited, ``Expression.compile, ``Expression.compileBound] do
+        if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+          throwError "derive the complete pass budget from arbitrary measured callers and local contracts"
+      let name := (← getFVarLocalDecl param).userName
+      if #[`callerInv, `hcallerStep, `hcallerWidth, `hhandler, `hbudget, `hverify, `hfinal, `valid].contains name then
+        throwError "discharge completed pass components and cover all bounded replay tapes"
+    unless measured && sampled && ports do
+      throwError "require actual caller resources, original sampler resources and actual boundary contracts"
+    unless conclusion.isAppOf ``Bounds &&
+        (conclusion.find? (fun e => e.isConstOf ``NativePass.code)).isSome &&
+        (conclusion.find? (fun e => e.isConstOf ``NativePass.ResultBound)).isSome do
+      throwError "certify the entire actual pass with complete output and tape invariants"
+  for name in #[``NativePass.finalHashTime_polynomial, ``NativePass.resourcesTime_polynomial] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let userName := (← getFVarLocalDecl param).userName
+        if #[`arityCap, `counter, `counterCap, `domainSize, `hCaller, `hHash, `hPass].contains userName then
+          throwError "derive polynomial pass runtime without completed-budget or numeric-domain premises"
 
 end SignaturesTest.SchnorrROMPass
