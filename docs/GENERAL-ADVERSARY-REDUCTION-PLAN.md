@@ -92,6 +92,12 @@ under DLog hardness and negligible inverse field size. Proximity bounds forgery
 by its original collision probability plus negligible error; a separate corollary
 requires that collision probability to be negligible too.
 
+Schnorr AGM now has a finite-list reduction with exact adaptive output/state
+correspondence and the original probability bound. Its storage capacities are
+`qS + qH + 1` cache entries, `qS + 2` affine basis entries, and `qS` signed
+messages, with no finite message/group-domain assumption. Native encoded code,
+complete overhead, and general-caller composition remain open for this route.
+
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
 their public statements and family corollaries, then finish API/documentation retirement.
@@ -115,7 +121,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, and query-dependent storage capacities. | Native encoded implementation, a complete overhead proof, and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1019,6 +1025,37 @@ probability. These are oracle-derived-base games; this work does not establish
 standard-model public-setup variants or remove algebraicity.
 
 ## Schnorr composition and replay
+
+The single-pass AGM route now has these checked foundations:
+
+- [Finite cache](../Signatures/Runtime/SchnorrAGMCache.lean): an association list
+  of encountered message/commitment pairs, retaining the first cached challenge
+  and affine explanation on repeated hashes or signing collisions.
+- [Adaptive execution](../Signatures/Runtime/SchnorrAGMExecution.lean): exact
+  query-tree equality of the complete output and abstracted state, including
+  malformed requests, chronological signing bases, and final extraction. This
+  correspondence holds for arbitrary query trees, before imposing algebraicity.
+- [Storage capacity](../Signatures/Runtime/SchnorrAGMGrowth.lean): at most
+  `qS + qH + 1` cached pairs, `qS + 2` affine basis entries, and `qS` signed
+  messages, independent of domain cardinality. Private random requests add no
+  cache entries. These are entry counts, not encoded-size or runtime bounds.
+- [Probability transport](../Signatures/Runtime/SchnorrAGMSecurity.lean): the
+  original source forgery bound holds with this finite-store solver and unchanged
+  losses. The solver uses its input generator; equality to the old fixed-generator
+  solver is proved at the complete DLog-experiment level.
+- [Regressions](../SignaturesTest/SchnorrAGMFiniteCache.lean): late explanations,
+  signing collisions, signing before hashing, malformed requests, adaptive
+  repeated hashes, an unseen final target, and transitive axiom guards.
+
+Validation: `lake build Signatures SignaturesTest` passed (4124 jobs); the new
+refinement, capacity, extraction and security declarations use only the standard
+`propext`, `Classical.choice`, and `Quot.sound` axioms.
+
+Next, implement the finite-store operations in the common native backend, charge
+all incoming coefficient/group encodings (including ignored malformed data),
+derive complete solver time/code bounds from general attacker resources, and
+connect those certificates to the probability theorem. The list refinement alone
+does not establish efficient execution.
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
 and [costed controller](../Signatures/Runtime/SchnorrSeededMachineCorrectness.lean).
@@ -2630,6 +2667,8 @@ additional axioms or proof-resource overrides.
   original admissibility/collision conditions and explicit resource-indexed DLog bounds.
 - [x] Derive weighted polynomial-family resources and asymptotic security,
   with explicit polynomial degree/dimension and Proximity's original collision loss.
+- [x] Refine Schnorr AGM to finite-list execution, preserve its original probability
+  bound, and derive query-dependent cache/basis/signing-history capacities.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;

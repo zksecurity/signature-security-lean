@@ -39,8 +39,13 @@ The [BLS AGM family corollary](Signatures/BLS/GeneralAGMFamilyStatement.lean)
 also gives negligible forgery success from polynomial component resources,
 nonuniform DLog hardness in one fixed backend, and negligible `1/|F|`.
 Both reduction families' time and stored-code bounds are derived.
-Conventional-machine instantiation and general-attacker overhead for the other
-routes remain in progress.
+OOPS and Proximity also have general-caller concrete statements and nonuniform
+family corollaries, with derived solver time/code bounds. Their degree/dimension
+must grow polynomially; OOPS retains admissibility and Proximity retains its
+fresh-collision probability. Schnorr AGM now has exact finite-list execution and
+query-dependent storage bounds, preserving its original probability theorem.
+Schnorr's general-caller runtime/replay routes remain in progress. A conventional
+machine instantiation is separate from the conditional fixed-backend results.
 
 Start with the [GitHub review guide](docs/review-guide.md) or the
 [security-game ledger](docs/SECURITY-GAMES.md). Reviews and checklists can be recorded with the

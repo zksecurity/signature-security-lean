@@ -22,6 +22,7 @@ import Signatures.Schnorr.BitStatement
 import Signatures.Schnorr.SeededBitStatement
 import Signatures.Schnorr.Proofs.NonzeroSecurity
 import Signatures.Schnorr.Proofs.AGMSecurity
+import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -149,7 +150,9 @@ They derive all component costs from primitive contracts and the cached-transcri
 invariant. Request sizes, caller reachability, returned-output/coefficient bounds,
 and the extractor's input widths now follow from general attacker resources and
 encoding contracts. Exact native interaction semantics supplies the cached-transcript
-invariant from an empty store. Whole-solver certificates remain open.
+invariant from an empty store. Both complete weighted solvers now have derived
+runtime/code certificates and general-caller concrete and nonuniform family
+security endpoints. OOPS retains admissibility; Proximity retains its collision loss.
 
 Schnorr's two-pass machine re-executes the source with a recorded prefix. Its certificate
 charges both passes, caches, replay tape, scans, verification, extraction, and fixed data;
@@ -164,7 +167,10 @@ ROM theorem proves exact finite simulation and the signing collision loss with
 denominator |F|-1. The adaptive Schnorr AGM solver has representation invariants,
 pathwise extraction, and security for the original source game. Its bound includes
 the (qH+1)/|F| exceptional-challenge term and qS*(qS+qH)/|F| signing-simulation loss.
-Its complete runtime and general-caller composition remain open.
+Its finite-list implementation now preserves the complete adaptive output/state
+query tree and the original probability bound. It stores at most qS+qH+1 cached
+pairs, qS+2 affine basis entries, and qS signed messages, over arbitrary message
+and group types. Complete runtime and general-caller composition remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

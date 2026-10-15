@@ -180,6 +180,19 @@ This AGM theorem certifies probability and single-pass extraction. The arithmeti
 and bit-machine certificates for the ordinary ROM reduction are separate; they
 are not runtime certificates for this AGM solver.
 
+The [finite-list implementation](../Signatures/Runtime/SchnorrAGMExecution.lean)
+now has exact joint output/state query-tree correspondence to that reduction,
+including malformed requests and final extraction. Its cache stores only
+encountered message/commitment pairs. Repeated hashes and colliding signatures
+retain the first challenge and explanation. The [capacity proof](../Signatures/Runtime/SchnorrAGMGrowth.lean)
+bounds the whole run by `qS + qH + 1` cache entries, `qS + 2` affine basis
+entries, and `qS` signed messages. No finite message or group type is required.
+The [probability endpoint](../Signatures/Runtime/SchnorrAGMSecurity.lean)
+preserves both original loss terms. Its solver uses the supplied generator;
+equality to the source's fixed-generator solver is proved for the complete DLog
+experiment. Native encoded implementation, full runtime/code accounting, and
+general-caller composition remain open.
+
 ## What Efficiency Is Certified
 
 The arithmetic extractor has the proved exact cost
