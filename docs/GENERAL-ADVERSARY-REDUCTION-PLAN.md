@@ -133,8 +133,12 @@ preserves all output rows and private state. The complete native solver now
 assembles setup, caller execution, optional return/cutoff handling, extraction
 and scalar projection. Its exact source correspondence follows from measured
 attacker resources, and its complete stored-code bound is derived. Setup, cutoff
-and final projection have derived runtime bounds. Combined terminal/solver
-runtime certification and the security/family endpoints remain open.
+and final projection have derived runtime bounds. Complete terminal and solver
+runtime certificates now combine those costs with measured caller work and query
+overhead. A fixed-backend executable witness includes exact source semantics and
+the entire stored program. The concrete security theorem applies DLog hardness
+to this derived witness, retaining the original probability losses. The short
+public statement and polynomial-family corollary remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
@@ -159,7 +163,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list refinement and complete native solver assembly with exact source correspondence and a full stored-code bound. Caller overhead follows from measured resources. Extraction, output conversion, setup, cutoff and projection have derived runtime bounds. | Compose terminal and whole-solver runtime certificates, then expose security/family endpoints. |
+| Schnorr AGM | Complete native runtime/code certificates and concrete DLog security from measured general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Add the short public statement and derived polynomial-family corollary; instantiate a conventional machine only for that stronger claim. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1475,8 +1479,8 @@ two edited guides resolve. No proof-resource or transparency overrides were adde
 
 The composed handler/caller runtime and general resource recovery are now proved.
 Native final extraction, its complete runtime, the charged output adapter and
-complete solver assembly are described below. Next, combine the runtime bounds
-into the whole-solver certificate and connect it to the probability theorem.
+complete solver assembly are described below. The final checkpoint also combines
+the runtime bounds into the whole-solver certificate and concrete security theorem.
 
 ### Schnorr measured caller resources, 2026-10-15
 
@@ -1571,8 +1575,8 @@ axioms and exclude finite-domain or assumed completed-component efficiency.
 
 The following checkpoints complete the outer shape-dispatch runtime, actual
 source-output conversion and solver assembly, including setup/cutoff/projection
-budgets. The combined runtime certificate and public security/family endpoints
-remain separate work.
+budgets. The final checkpoint completes the combined runtime certificate and
+concrete security endpoint. Public statement and family packaging remain open.
 
 Validation: targeted extraction regressions passed (3419 jobs), and
 `lake build Signatures SignaturesTest` passed (4213 jobs). The new modules and
@@ -1621,9 +1625,9 @@ surplus rows and private state. Axiom and premise guards include the complete
 extraction bound, input recovery and adapter budgets.
 
 The following checkpoint assembles the complete solver and derives its stored-code,
-setup, cutoff and projection bounds. Combined runtime certification, application
-of the original probability/hardness theorem, and the short public/family endpoints
-remain open.
+setup, cutoff and projection bounds. The subsequent resource checkpoint completes
+runtime certification and application of the original probability/hardness theorem.
+The short public/family endpoints remain open.
 
 Validation: targeted extraction regressions passed (3480 jobs), and
 `lake build Signatures SignaturesTest` passed (4218 jobs). The new modules and
@@ -1666,17 +1670,79 @@ the first cached explanation even when the discarded verification Boolean is
 false. They use infinite natural message labels and guard the transitive axioms
 and absence of finite-domain, restricted-attacker or completed-budget premises.
 
-Still open: compose output conversion, extraction and projection into the
-successful terminal budget; charge optional-result routing and both branches;
-combine setup, the measured caller and terminal into the whole runtime/`Within`
-certificate; then derive the hardness, short public and polynomial-family endpoints.
-The whole solver's semantic equality and stored-code bound do not by themselves
-establish its runtime bound.
+The following checkpoint composes the terminal and complete solver runtime,
+constructs the `Within` witness and applies DLog hardness. The short public and
+polynomial-family endpoints remain open. The semantic equality and stored-code
+bound alone were not used to infer runtime efficiency.
 
 Validation: targeted solver regressions passed (3479 jobs), and
 `lake build Signatures SignaturesTest` passed (4224 jobs). The new modules and
 regressions have no warnings, admissions, nonstandard transitive axioms or
 proof-resource/transparency overrides. All 510 local links in the two edited
+guides resolve.
+
+### Schnorr complete native resource certificate and concrete security, 2026-10-15
+
+[Local solver port contracts](../Signatures/Runtime/BackendSchnorrAGMSolverPorts.lean)
+cover actual input, output and optional-result adapters. The
+[output adapter bound](../Signatures/Runtime/BackendSchnorrAGMSolverOutput.lean)
+now distinguishes source return width, native forgery width and retained-state
+width. It never extends a conversion-cost assumption beyond the reachable source
+width. [Extraction input recovery](../Signatures/Runtime/BackendSchnorrAGMExtractionResources.lean)
+also works directly from private state after dropping the public configuration,
+preserving the original history bound and every returned coefficient row.
+
+[Terminal composition](../Signatures/Runtime/BackendSchnorrAGMSolverTerminalComposition.lean)
+charges actual output conversion, extraction, projection, optional-result
+inspection, state retention, distribution and cutoff. The
+[complete terminal theorem](../Signatures/Runtime/BackendSchnorrAGMSolverTerminalBudget.lean)
+instantiates its extraction budget from primitive, encoding and scalar-sampler
+contracts. If `E=max(width,outputWidth)` and `H=historyWidth(width,N,S)`, then
+`terminalWidth = width + outputWidth + routeWidth + (60*K+4*N+2*S+27)*width +
+Read.frameWidth(3*E,K,H)`. Terminal time is the derived full extraction time at
+width `E`, plus `fieldTime + 2*adapterTime + 23*overhead(4096*terminalWidth)`.
+Both successful return and cutoff are covered.
+
+The [whole-solver bound](../Signatures/Runtime/BackendSchnorrAGMSolverBudget.lean)
+is setup time plus the resource-derived caller time plus terminal time plus
+`2*overhead(32*programWidth)`, where
+`programWidth=4*(inputWidth+routeWidth+terminalWidth)`.
+The caller's returned width follows from its measured head-size bound, rather
+than a new assumption on the final forgery. Its local work and query counts are
+charged through the established general-caller theorem. No complete handler,
+extractor or solver budget is supplied as an efficiency premise.
+
+The [uniform stored-code bound](../Signatures/Runtime/BackendSchnorrAGMSolverDescription.lean)
+is `callerCode + 4*samplerCode + 2*randomPortSize + 4*handlerPortSize +
+3*solverPortSize + 49*instructionSize + fuel + 23000*allowance + 512`.
+Here `callerCode` charges initialization, two head copies and update code.
+The [backend resource witness](../Signatures/Runtime/BackendSchnorrAGMSolverWithin.lean)
+combines the derived time and code bounds with exact semantics of the named
+finite-list DLog reduction at every input. Sufficient measured query fuel excludes
+cutoff when connecting to the source adversary. The code and its model are fixed
+across challenges.
+
+[DLog resource accounting](../Signatures/Runtime/BackendSchnorrAGMDLog.lean)
+requires every `(g,x*g)` challenge to fit the input cap; the pair's encoded size
+is at most `2*groupWidth+unitWidth+2*header`.
+The [concrete security theorem](../Signatures/Runtime/BackendSchnorrAGMSecurity.lean)
+constructs the witness, supplies it to DLog hardness in that same backend class,
+and concludes the original bound
+`epsilon + (qH+1)/|F| + qS*(qS+qH)/|F|` for the original AGM game.
+Arbitrary message types and the source algebraicity condition are preserved.
+The only explicit finiteness premise in this endpoint concerns the scalar field.
+
+The [solver regressions](../SignaturesTest/BackendSchnorrAGMSolver.lean) now guard
+all new resource/security endpoints for standard transitive axioms, arbitrary
+message domains and absence of restricted-source or assumed-complete-budget
+premises. Existing semantic regressions cover cutoff, initial state and first
+cached explanations. The short public theorem, polynomial closure and family
+corollary remain open, along with the separate general ROM work below.
+
+Validation: targeted solver regressions passed (3513 jobs), and
+`lake build Signatures SignaturesTest` passed (4228 jobs). The new modules and
+regressions have no warnings, admissions, nonstandard transitive axioms or
+proof-resource/transparency overrides. All 525 local links in the two edited
 guides resolve.
 
 ### Schnorr general ROM replay remaining work
@@ -3343,12 +3409,14 @@ additional axioms or proof-resource overrides.
   correspondence from measured caller resources, plus its full stored-code bound.
 - [x] Derive initial-state reservations and setup, cutoff and final-projection
   runtime bounds, including actual input conversion and initial basis construction.
-- [ ] Compose successful-terminal and optional-return routing budgets, then combine
+- [x] Compose successful-terminal and optional-return routing budgets, then combine
   setup, caller and terminal into the complete Schnorr AGM runtime/`Within` certificate.
-- [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
+- [x] Apply DLog hardness to the derived Schnorr AGM solver witness, preserving
+  the original probability losses and checking every challenge's encoded input size.
+- [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
-- [ ] Expose general-attacker security endpoints with explicit concrete budgets;
-  derive asymptotic corollaries under the stated family and polynomial bounds.
+- [ ] Add the Schnorr AGM public statement and polynomial-family corollary;
+  complete the corresponding general ROM concrete and family endpoints.
 - [ ] Present those endpoints through the simple public scheme/parameter,
   qualified-adversary, query-allowance, game, and bound interface described above;
   keep execution/encoding certificates internal and hardness scope explicit.
@@ -3377,8 +3445,9 @@ transport are now proved. Both lazy AGM solvers now have checked probability
 correspondence, list-cache refinements, full resource certificates, and the short
 general-caller concrete statement. BLS, OOPS and Proximity AGM now also have
 polynomial-family closure and nonuniform security corollaries; Proximity retains
-its collision qualification. Continue with Schnorr's general-caller overhead,
-replay and separate nonzero-nonce work, followed by public statements/families and
-API/documentation retirement.
+its collision qualification. Schnorr AGM now also has its complete native resource
+certificate and concrete DLog security theorem. Continue with its short public
+statement and polynomial-family corollary, general Schnorr ROM replay and separate
+nonzero-nonce work, then API/documentation retirement.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine/family claim. The broader plan remains open.

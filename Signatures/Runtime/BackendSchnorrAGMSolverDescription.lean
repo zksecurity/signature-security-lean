@@ -12,6 +12,10 @@ namespace Signatures.Runtime.SchnorrAGM.Native.Solver
 
 open BackendProgram Interface
 
+def programDescription (callerCode samplerCode randomPortSize handlerPortSize solverPortSize fuel allowance instructionSize : Nat) : Nat :=
+  callerCode + 4 * samplerCode + 2 * randomPortSize + 4 * handlerPortSize + 3 * solverPortSize +
+    49 * instructionSize + fuel + 23000 * allowance + 512
+
 universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
@@ -102,6 +106,25 @@ theorem program_description (fuel : Nat) :
   have ht := terminal_description rep bd boundary data cost primitive sizes allowance laws dataLaws primitiveSize hp dispatch
     (Extraction.code rep data cost primitive sampler)
   dsimp only [program, Code.descriptionSize]
+  omega
+
+omit hp in
+theorem program_description_uniform (fuel instructionSize randomPortSize handlerPortSize solverPortSize : Nat)
+    (hinstr : ∀ {a b} (instr : CryptoOp a b), sizes.localSize (primitive instr) ≤ instructionSize)
+    (hrequest : sizes.localSize randomPorts.request ≤ randomPortSize)
+    (hresponse : sizes.localSize randomPorts.response ≤ randomPortSize)
+    (hhandler : sizes.localSize ports.request ≤ handlerPortSize ∧ sizes.localSize ports.randomTag ≤ handlerPortSize ∧
+      sizes.localSize (ports.scalarTag false) ≤ handlerPortSize ∧ sizes.localSize (ports.scalarTag true) ≤ handlerPortSize)
+    (hsolver : sizes.localSize boundary.input ≤ solverPortSize ∧ sizes.localSize boundary.output ≤ solverPortSize ∧
+      sizes.localSize boundary.optional ≤ solverPortSize) :
+    (program rep bd boundary data cost primitive ports randomPorts sampler R fuel).descriptionSize sizes ≤
+      programDescription (sizes.localSize R.initCode + 2 * sizes.localSize R.headCode + sizes.localSize R.updateCode)
+        (sampler.descriptionSize sizes) randomPortSize handlerPortSize solverPortSize fuel allowance instructionSize := by
+  have h := program_description rep bd boundary data cost primitive sizes allowance laws dataLaws (fun _ => instructionSize)
+    hinstr dispatch ports randomPorts sampler R fuel
+  obtain ⟨hh1, hh2, hh3, hh4⟩ := hhandler
+  obtain ⟨hs1, hs2, hs3⟩ := hsolver
+  dsimp only [programDescription]
   omega
 
 end Signatures.Runtime.SchnorrAGM.Native.Solver

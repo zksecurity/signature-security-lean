@@ -382,8 +382,21 @@ measured resources and implementation law. Its
 includes the attacker, samplers, local adapters and all reduction branches.
 [Setup](../Signatures/Runtime/BackendSchnorrAGMSolverSetup.lean),
 [cutoff and projection](../Signatures/Runtime/BackendSchnorrAGMSolverLocalCost.lean)
-have derived runtime bounds. Combining the successful terminal and caller into
-the full runtime certificate, then the security and family endpoints, remains open.
+have derived runtime bounds. The [complete terminal budget](../Signatures/Runtime/BackendSchnorrAGMSolverTerminalBudget.lean)
+now charges actual output conversion, every extraction path, optional-result
+inspection, cutoff and projection. Source-output and native-output widths may
+differ; only the actual local conversion's size expansion and cost are assumed.
+
+The [whole-solver runtime](../Signatures/Runtime/BackendSchnorrAGMSolverBudget.lean)
+adds setup, measured caller work and query overhead, terminal execution, and both
+outer sequence charges. Its [backend witness](../Signatures/Runtime/BackendSchnorrAGMSolverWithin.lean)
+combines this bound, the complete stored program and exact source semantics.
+The [concrete security endpoint](../Signatures/Runtime/BackendSchnorrAGMSecurity.lean)
+uses that witness in DLog hardness and retains the original bound
+`epsilon + (qH+1)/|F| + qS*(qS+qH)/|F|`. Every DLog challenge must fit the input cap.
+No finite message domain or arithmetic-language attacker is required. This remains
+conditional on the fixed backend and its local implementation/encoding contracts.
+The short public statement and derived polynomial-family corollary remain open.
 
 ## What Efficiency Is Certified
 

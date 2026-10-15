@@ -44,6 +44,7 @@ import Signatures.Runtime.BackendSchnorrAGMSolverOutput
 import Signatures.Runtime.BackendSchnorrAGMSolverCorrectness
 import Signatures.Runtime.BackendSchnorrAGMSolverDescription
 import Signatures.Runtime.BackendSchnorrAGMSolverSetup
+import Signatures.Runtime.BackendSchnorrAGMSecurity
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -218,8 +219,12 @@ caller state. Actual output conversion now has runtime and stored-code bounds,
 including retained state. The complete native solver now assembles setup, caller,
 cutoff handling, extraction and scalar projection, with exact source correspondence
 and a complete stored-code bound. Setup, cutoff and projection have derived runtime
-bounds. Combined terminal/solver runtime certification and the public security/family
-endpoints remain open.
+bounds. The complete terminal and solver runtime now follow from primitive and
+representation contracts and measured caller resources. A fixed-backend executable
+witness combines runtime, full stored-code accounting and exact source behavior;
+the concrete security theorem applies DLog hardness to this witness with the
+original probability losses. The short public statement and polynomial-family
+corollary remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

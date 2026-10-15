@@ -83,21 +83,22 @@ include routing
 
 /-- The only conversion-cost premise concerns the actual local representation
 adapter. The full wrapper and its retained-state/control overhead are derived. -/
-theorem adaptOutput_bound (width adapterTime : Nat) (hh : header ≤ width)
+theorem adaptOutput_bound_with_widths (width routeWidth outputWidth adapterTime : Nat) (hh : header ≤ width)
+    (hr : routeWidth ≤ width) (ho : outputWidth ≤ width)
     (keep : EncodedState F G₁ M → Prop)
-    (hconvert : ∀ out, Q.size bd.out out ≤ width →
-      Q.size (rep.ty forgeryTy) (encodeForgery out) ≤ width ∧ Q.cost convert out ≤ adapterTime) :
+    (hconvert : ∀ out, Q.size bd.out out ≤ routeWidth →
+      Q.size (rep.ty forgeryTy) (encodeForgery out) ≤ outputWidth ∧ Q.cost convert out ≤ adapterTime) :
     Bounds control queryCost (adaptOutput (iface := iface) rep bd convert)
-      (fun p => Q.size bd.out p.1 ≤ width ∧ Q.size (rep.ty storeTy) p.2 ≤ width ∧ keep p.2.2)
-      (fun p => Q.size (rep.ty forgeryTy) p.1 ≤ width ∧ Q.size (rep.ty stateTy) p.2 ≤ width ∧ keep p.2)
+      (fun p => Q.size bd.out p.1 ≤ routeWidth ∧ Q.size (rep.ty storeTy) p.2 ≤ width ∧ keep p.2.2)
+      (fun p => Q.size (rep.ty forgeryTy) p.1 ≤ outputWidth ∧ Q.size (rep.ty stateTy) p.2 ≤ width ∧ keep p.2)
       (adapterTime + 9 * overhead (32 * width)) := by
   let fee := overhead (32 * width)
   let pre := fun p : SourceForgery F G₁ M × ((G₁ × G₁) × EncodedState F G₁ M) =>
-    Q.size bd.out p.1 ≤ width ∧ Q.size (rep.ty storeTy) p.2 ≤ width ∧ keep p.2.2
+    Q.size bd.out p.1 ≤ routeWidth ∧ Q.size (rep.ty storeTy) p.2 ≤ width ∧ keep p.2.2
   let middle := fun p : SourceForgery F G₁ M × EncodedState F G₁ M =>
-    Q.size bd.out p.1 ≤ width ∧ Q.size (rep.ty stateTy) p.2 ≤ width ∧ keep p.2
+    Q.size bd.out p.1 ≤ routeWidth ∧ Q.size (rep.ty stateTy) p.2 ≤ width ∧ keep p.2
   let post := fun p : Extraction.inputTy.Value (cryptoBase F G₁ G₂ K M) =>
-    Q.size (rep.ty forgeryTy) p.1 ≤ width ∧ Q.size (rep.ty stateTy) p.2 ≤ width ∧ keep p.2
+    Q.size (rep.ty forgeryTy) p.1 ≤ outputWidth ∧ Q.size (rep.ty stateTy) p.2 ≤ width ∧ keep p.2
   have hpre (input) (hi : pre input) : Q.size (StepClass.HasProd.prod bd.out (rep.ty storeTy)) input ≤ 3 * width := by
     have ho := hi.1
     have hs := hi.2.1
@@ -113,7 +114,7 @@ theorem adaptOutput_bound (width adapterTime : Nat) (hh : header ≤ width)
       ⟨hi.1, (sizes.snd_le (rep.ty configTy) (rep.ty stateTy) input.2).trans hi.2.1, hi.2.2⟩
     have hin := hpre input hi
     have hout := hmid (input.1, input.2.2) ho
-    have ht := outputArgs_cost rep bd sizes laws mono input width hh hi.1 hi.2.1
+    have ht := outputArgs_cost rep bd sizes laws mono input width hh (hi.1.trans hr) hi.2.1
     have hc := (routing.localCall _ _).trans (mono (show
       Q.size (StepClass.HasProd.prod bd.out (rep.ty storeTy)) input +
         Q.size (StepClass.HasProd.prod bd.out (rep.ty stateTy)) (input.1, input.2.2) ≤ 32 * width by omega))
@@ -121,9 +122,12 @@ theorem adaptOutput_bound (width adapterTime : Nat) (hh : header ≤ width)
     dsimp only [fee]
     omega
   have hconvert := firstAtomic_bound_of_width (iface := iface) mono control queryCost routing (rep.ty stateTy) convert
-    (fun out => Q.size bd.out out ≤ width) (fun out => Q.size (rep.ty forgeryTy) out ≤ width)
+    (fun out => Q.size bd.out out ≤ routeWidth) (fun out => Q.size (rep.ty forgeryTy) out ≤ outputWidth)
     (fun saved => Q.size (rep.ty stateTy) saved ≤ width ∧ keep saved) width adapterTime
-    (fun _ h => h) (fun _ h => h.1) (by intro out ho; exact ⟨(hconvert out ho).1, hconvert out ho⟩)
+    (fun _ h => h.trans hr) (fun _ h => h.1) (by
+      intro out hout
+      have hc := hconvert out hout
+      exact ⟨hc.1, hc.1.trans ho, hc.2⟩)
   have hall := Bounds.seq control queryCost _ _ pre middle post (6 * fee) (adapterTime + 2 * fee) fee hstart hconvert (by
     intro input hi output ho
     have hin := hpre input hi
@@ -132,5 +136,17 @@ theorem adaptOutput_bound (width adapterTime : Nat) (hh : header ≤ width)
   intro input hi z hrun
   obtain ⟨ho, ht⟩ := hall input hi z hrun
   exact ⟨ho, by dsimp only [fee] at *; omega⟩
+
+/-- Equal-width specialization retained for existing callers. -/
+theorem adaptOutput_bound (width adapterTime : Nat) (hh : header ≤ width)
+    (keep : EncodedState F G₁ M → Prop)
+    (hconvert : ∀ out, Q.size bd.out out ≤ width →
+      Q.size (rep.ty forgeryTy) (encodeForgery out) ≤ width ∧ Q.cost convert out ≤ adapterTime) :
+    Bounds control queryCost (adaptOutput (iface := iface) rep bd convert)
+      (fun p => Q.size bd.out p.1 ≤ width ∧ Q.size (rep.ty storeTy) p.2 ≤ width ∧ keep p.2.2)
+      (fun p => Q.size (rep.ty forgeryTy) p.1 ≤ width ∧ Q.size (rep.ty stateTy) p.2 ≤ width ∧ keep p.2)
+      (adapterTime + 9 * overhead (32 * width)) :=
+  adaptOutput_bound_with_widths rep bd convert sizes laws mono control queryCost routing
+    width width width adapterTime hh le_rfl le_rfl keep hconvert
 
 end Signatures.Runtime.SchnorrAGM.Native.Solver

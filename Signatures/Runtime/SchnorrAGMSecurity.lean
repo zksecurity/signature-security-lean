@@ -2,8 +2,9 @@ import Signatures.Runtime.SchnorrAGMGrowth
 import Signatures.Schnorr.Proofs.AGMSecurity
 
 /-! Preserve the original Schnorr AGM probability bound with the finite-store
-solver. This is a semantic/probability endpoint; a complete native resource
-certificate is still required before using a time-bounded DLog assumption. -/
+solver. This file supplies the semantic/probability endpoint. The separate
+BackendSchnorrAGMSecurity module constructs the native resource certificate and
+applies time-bounded DLog hardness without assuming the solver's efficiency. -/
 
 open OracleComp OracleSpec AlgebraicGroupModel.Interaction Schnorr.AGM
 open scoped ENNReal

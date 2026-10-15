@@ -1,6 +1,7 @@
 import Signatures.Runtime.BackendSchnorrAGMSolverCorrectness
 import Signatures.Runtime.BackendSchnorrAGMSolverDescription
 import Signatures.Runtime.BackendSchnorrAGMSolverSetup
+import Signatures.Runtime.BackendSchnorrAGMSecurity
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -68,7 +69,12 @@ run_meta do
       ``Solver.setup_description, ``Solver.finishSome_description, ``Solver.cutoff_description,
       ``Solver.terminal_description, ``Solver.program_description,
       ``Solver.initial_reserved, ``Solver.initial_cost, ``Solver.cutoff_cost, ``Solver.cutoff_bound,
-      ``Solver.projection_bound, ``Solver.setup_bound] do
+      ``Solver.projection_bound, ``Solver.setup_bound,
+      ``Solver.adaptOutput_bound_with_widths, ``Extraction.input_of_state,
+      ``Solver.PortCaps.mk, ``Solver.finishSome_bound_of_extractor, ``Solver.cutoff_bound_of_store,
+      ``Solver.terminal_bound_of_extractor, ``Solver.terminal_bound, ``Solver.program_bound,
+      ``Solver.program_description_uniform, ``Solver.program_within, ``Solver.challenge_size,
+      ``Solver.security_of_resources] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -76,7 +82,10 @@ run_meta do
       for param in params do
         let type ← inferType param
         if type.isAppOf ``Finite || type.isAppOf ``Fintype then
-          throwError "{name}: unexpected finite-domain premise"
+          let domain := type.getAppArgs[0]!
+          unless name == ``Solver.security_of_resources && domain.isFVar &&
+              (← domain.fvarId!.getUserName) == `F do
+            throwError "{name}: unexpected finite-domain premise"
         for forbidden in #[``Solver.program, ``Solver.setup, ``Solver.terminal, ``Solver.finishSome,
             ``Extraction.code, ``Handler.caller,
             `Signatures.Runtime.AGM.SourceCertificate, `Signatures.Runtime.Schnorr.SourceCertificate,
