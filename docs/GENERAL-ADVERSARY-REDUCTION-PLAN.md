@@ -125,9 +125,12 @@ termination now follow from measured attacker resources and explicit encoding
 laws. The caller budget uses these derived conditions without a separate caller
 invariant or supplied caller budget. The native final extractor now handles all
 output shapes and exactly realizes the original solver's scalar/state projection.
-Its stored-code bound and complete decoded-path runtime are derived, including
-one cache read and field extraction. Composing the outer shape-dispatch runtime,
-the actual caller-output conversion and complete solver overhead remain open.
+Its stored-code and complete all-path runtime bounds are derived, including both
+shape scans, retained response, rejection, one cache read and field extraction.
+Its input bounds follow from the full encoded attacker return and the caller
+state. Actual output conversion has derived runtime/stored-code bounds and
+preserves all output rows and private state. Complete solver assembly, setup,
+cutoff/projection and the combined resource certificate remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
@@ -152,7 +155,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, complete native indexed-handler bounds and additive caller overhead from measured resources. Native final extraction has exact scalar/state semantics, stored-code bounds and derived decoded-path runtime. | Compose final shape-dispatch runtime, implement the output conversion and complete solver overhead, then expose security/family endpoints. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, complete native indexed-handler bounds and additive caller overhead from measured resources. Native final extraction has exact scalar/state semantics and complete time/code bounds. Its input contract follows from measured return/state bounds; actual output conversion is implemented and charged. | Assemble and certify the complete solver, including setup/cutoff/projection, then expose security/family endpoints. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1467,10 +1470,9 @@ have no warnings or nonstandard transitive axioms. All 462 local links in the
 two edited guides resolve. No proof-resource or transparency overrides were added.
 
 The composed handler/caller runtime and general resource recovery are now proved.
-Native final extraction and its decoded-path runtime are described below. Next,
-compose the final shape-dispatch runtime, derive complete solver time/code bounds
-and connect them to the probability theorem. The final output encoding map is
-still a proof relation; its actual conversion must be installed and charged.
+Native final extraction, its complete runtime and the charged output adapter are
+described below. Next, assemble the complete solver, derive its time/code bounds
+and connect them to the probability theorem.
 
 ### Schnorr measured caller resources, 2026-10-15
 
@@ -1507,8 +1509,8 @@ finite-list source execution. No extra termination certificate is required.
 then bounds the encoded forgery, message, scalar, group count, row count and every
 row length, including malformed and unused rows. Output conversion may have an
 explicit monotone size expansion; equal-size encodings again give identity
-recovery. The actual output adapter and final native extractor remain to be
-implemented and charged by the complete solver.
+recovery. The following checkpoints implement and charge the actual output
+adapter and final native extractor; complete solver assembly remains open.
 
 [Regressions](../SignaturesTest/BackendSchnorrAGMResources.lean) cover ignored
 signing rows, malformed final outputs, infinite natural message types and binary
@@ -1563,9 +1565,9 @@ slots, malformed outputs preserving state, fresh targets and exceptional
 denominators over infinite natural message labels. They check transitive standard
 axioms and exclude finite-domain or assumed completed-component efficiency.
 
-The outer shape-dispatch runtime still needs composition with the decoded bound.
-The actual source-output conversion, solver setup/cutoff/projection, complete
-resource certificate and public security/family endpoints remain separate work.
+The following checkpoint completes the outer shape-dispatch runtime and actual
+source-output conversion. Solver setup/cutoff/projection, the complete resource
+certificate and public security/family endpoints remain separate work.
 
 Validation: targeted extraction regressions passed (3419 jobs), and
 `lake build Signatures SignaturesTest` passed (4213 jobs). The new modules and
@@ -1574,6 +1576,55 @@ proof-resource/transparency overrides. All 492 local links in the two edited
 guides resolve. The decoded composition uses a generic body lemma so Lean can
 reuse component proofs within its normal limits; the public bound derives that
 body's budget from primitives and the scalar sampler.
+
+### Schnorr complete extraction overhead and output conversion, 2026-10-15
+
+[Final-output frame bounds](../Signatures/Runtime/BackendSchnorrAGMExtractionSize.lean)
+cover the full encoded forgery, both shape lists, every coefficient row, the
+retained response and the entire state. Rejection returns zero with the original
+state; it does not use the hash handler's malformed-state update.
+[Routing budgets](../Signatures/Runtime/BackendSchnorrAGMExtractionRoutingBudget.lean)
+charge initial rearrangement, both singleton scans, response retention and
+rejection. The [complete native runtime theorem](../Signatures/Runtime/BackendSchnorrAGMExtractionBudget.lean)
+then composes the decoded extractor with these stages and sum distribution.
+Writing `W = HashDispatch.frameWidth(w,K,H,G,R,L)` and
+`fee = overhead(4096*W)`, the bound is
+`prepareTime(overhead,W,G,R,pointZeroTime) +
+max(decodedTime, fieldTime + 261*fee) + 271*fee`.
+This is a bound on the actual full code for every shape, derived from primitive,
+scalar-sampler, encoding and control-operation contracts. No finished-extractor
+budget is supplied.
+
+[Extraction input recovery](../Signatures/Runtime/BackendSchnorrAGMExtractionResources.lean)
+derives the input contract from the full output encoding and the proved caller
+store invariant. Positive-cell and payload encoding laws bound all group
+payloads, group/row counts and row lengths. Combining caller width and recovered
+output width uses their maximum; the existing history bound is preserved. No
+separate attacker-output length assumptions or finite message domain are needed.
+
+The [executable output adapter](../Signatures/Runtime/BackendSchnorrAGMSolverOutput.lean)
+uses an actual backend realizer for `encodeForgery`, drops the public configuration,
+and retains the entire private state. It preserves every group and coefficient
+row, including surplus or malformed data. Its complete runtime is at most
+`adapterTime + 9*overhead(32*width)`, with stored code at most
+`localSize(convert) + 5*allowance + 4`. Only the local representation conversion's
+cost and encoded-size expansion are contractual; all wrapper/control costs are
+derived. A proof-level encoding equality is not treated as executable conversion.
+
+The extraction regressions now also cover this actual output adapter preserving
+surplus rows and private state. Axiom and premise guards include the complete
+extraction bound, input recovery and adapter budgets.
+
+Still open: assemble the complete solver with setup, caller execution, optional
+return/cutoff handling and final projection; derive its combined runtime/code
+certificate, apply the original probability/hardness theorem, and expose the
+short public and family endpoints.
+
+Validation: targeted extraction regressions passed (3480 jobs), and
+`lake build Signatures SignaturesTest` passed (4218 jobs). The new modules and
+regressions have no warnings, admissions, nonstandard transitive axioms or
+proof-resource/transparency overrides. All 499 local links in the two edited
+guides resolve.
 
 ### Schnorr general ROM replay remaining work
 
@@ -3231,8 +3282,12 @@ additional axioms or proof-resource overrides.
 - [x] Implement all-shape native Schnorr AGM final extraction with exact joint
   scalar/state correspondence, full stored-code bounds and primitive-derived
   entry-read, adapter and complete decoded-path runtime bounds.
-- [ ] Compose final shape-dispatch runtime, implement and charge source-output
-  conversion, and assemble complete Schnorr AGM solver resources.
+- [x] Compose the final shape-dispatch runtime and derive complete all-path
+  extraction costs, including both scans, retained response and malformed output.
+- [x] Recover extraction input bounds from measured output/state resources and
+  implement and charge actual source-output conversion with full row retention.
+- [ ] Assemble complete Schnorr AGM solver resources, including setup, caller,
+  optional-return/cutoff handling, extraction and final projection.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;

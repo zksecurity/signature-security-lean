@@ -38,7 +38,9 @@ import Signatures.Runtime.BackendSchnorrAGMHandlerPrimitiveBudget
 import Signatures.Runtime.BackendSchnorrAGMCallerBudget
 import Signatures.Runtime.BackendSchnorrAGMOutputSize
 import Signatures.Runtime.BackendSchnorrAGMExtractionDescription
-import Signatures.Runtime.BackendSchnorrAGMExtractionDecodedBudget
+import Signatures.Runtime.BackendSchnorrAGMExtractionBudget
+import Signatures.Runtime.BackendSchnorrAGMExtractionResources
+import Signatures.Runtime.BackendSchnorrAGMSolverOutput
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -207,9 +209,10 @@ dispatcher now installs all three handlers with request retention and indexed
 reply tagging. General callers have exact adaptive source correspondence and
 complete stored-code bounds. Indexed handler/caller runtime is derived from
 primitive contracts and measured attacker resources. The native final extractor
-has exact scalar/state source semantics, a stored-code bound and a decoded-path
-runtime bound. Outer extraction dispatch, output conversion and complete solver
-accounting remain open.
+has exact scalar/state source semantics and complete runtime/stored-code bounds
+for every output shape. Its input bounds follow from the full encoded return and
+caller state. Actual output conversion now has runtime and stored-code bounds,
+including retained state. Complete solver assembly/accounting remains open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

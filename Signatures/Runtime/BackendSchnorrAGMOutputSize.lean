@@ -2,8 +2,8 @@ import Signatures.Runtime.BackendSchnorrAGMCallerOutput
 
 /-! Recover all final forgery sizes from the measured attacker return. Every
 group and coefficient row is retained, including malformed or surplus rows.
-The output conversion is an encoding relation here; its actual code and runtime
-must still be supplied and charged by the complete solver. -/
+The output conversion is an encoding relation here; BackendSchnorrAGMSolverOutput
+implements and charges the corresponding adapter for the complete solver. -/
 
 open OracleComp OracleSpec PFunctor
 open PFunctor.DynSystem.DynComputation

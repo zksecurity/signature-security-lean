@@ -1,9 +1,12 @@
 import Signatures.Runtime.BackendSchnorrAGMExtractionDescription
-import Signatures.Runtime.BackendSchnorrAGMExtractionDecodedBudget
+import Signatures.Runtime.BackendSchnorrAGMExtractionBudget
+import Signatures.Runtime.BackendSchnorrAGMExtractionResources
+import Signatures.Runtime.BackendSchnorrAGMSolverOutput
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec PFunctor Schnorr.AGM
+open PFunctor.DynSystem.DynComputation
 open Signatures.Runtime Signatures.Runtime.BackendProgram Signatures.Runtime.SchnorrAGM.Native
 
 namespace SignaturesTest.BackendSchnorrAGMExtraction
@@ -85,6 +88,18 @@ example (hs : sampler.denote () = pure (4 : F)) :
     Flatten.total]
   decide
 
+-- The executable output boundary retains surplus group/row data and the full
+-- private state. The public generator/key configuration can be discarded here.
+example
+    (bd : Boundary C (Interface.sourceSpec F F Nat).toPFunctor Unit (Interface.SourceForgery F F Nat))
+    (convert : Q.Realizer bd.out (rep.ty Interface.forgeryTy) Interface.encodeForgery)
+    (saved : EncodedState F F Nat) :
+    (Solver.adaptOutput (iface := iface) rep bd convert).denote
+      (Interface.decodeForgery ((7, 6), [1, 2], [[1, 3], [6, 5, 4]]), (1, 2), saved) =
+      pure (((7, 6), [1, 2], [[1, 3], [6, 5, 4]]), saved) := by
+  rw [Solver.adaptOutput_denote]
+  rfl
+
 end Native
 
 open Lean Meta in
@@ -100,7 +115,14 @@ run_meta do
       ``Extraction.source_finish, ``Extraction.localCode_description,
       ``Extraction.decoded_description, ``Extraction.description,
       ``Extraction.start_cost, ``Extraction.reject_cost, ``Extraction.finish_cost,
-      ``Extraction.prepared_bound, ``Extraction.decoded_bound] do
+      ``Extraction.prepared_bound, ``Extraction.decoded_bound,
+      ``Extraction.width_le_frame, ``Extraction.hash_frame_le, ``Extraction.starting_size,
+      ``Extraction.input_size, ``Extraction.decoded_size, ``Extraction.routed_size,
+      ``Extraction.reject_property, ``Extraction.start_bound, ``Extraction.route_bound,
+      ``Extraction.reject_bound, ``Extraction.bound,
+      ``Extraction.input_of_forgery_size, ``Extraction.input_of_store,
+      ``Solver.adaptOutput_denote, ``Solver.outputArgs_description, ``Solver.adaptOutput_description,
+      ``Solver.outputArgs_cost, ``Solver.adaptOutput_bound] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -110,7 +132,7 @@ run_meta do
         if type.isAppOf ``Finite || type.isAppOf ``Fintype then
           throwError "{name}: unexpected finite-domain premise"
         for forbidden in #[``EntryRead.code, ``Extraction.code, ``Extraction.decoded, ``Extraction.prepared,
-            ``Read.code, ``Hash.code, ``HashDispatch.code, ``cacheAccess,
+            ``Read.code, ``Hash.code, ``HashDispatch.code, ``cacheAccess, ``Solver.adaptOutput,
             `Signatures.Runtime.AGM.SourceCertificate, `Signatures.Runtime.Schnorr.SourceCertificate,
             `Signatures.Runtime.GeneralCaller.Budget] do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
