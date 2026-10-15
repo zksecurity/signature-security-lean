@@ -1,5 +1,6 @@
 import Signatures.Runtime.BackendSchnorrROMHandlerDescription
-import Signatures.Runtime.BackendSchnorrROMHandlerPrimitiveBudget
+import Signatures.Runtime.BackendSchnorrROMHandlerPolynomial
+import Signatures.Runtime.BackendSchnorrROMHandlerReserve
 import Signatures.Runtime.BackendSchnorrRawFork
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
@@ -142,7 +143,7 @@ run_meta do
       ``NativeHandler.executed_erase, ``NativeHandler.caller_source_of_resources,
       ``NativeHandler.caller_no_cutoff_of_resources, ``NativeHandler.code_description,
       ``NativeHandler.finalHash_description, ``NativeHandler.caller_description,
-      ``Bounds.time_mono, ``NativeComponents.randomInput_cost, ``NativeComponents.randomOutput_cost,
+      ``Bounds.time_mono, ``Bounds.consequence, ``NativeComponents.randomInput_cost, ``NativeComponents.randomOutput_cost,
       ``NativeComponents.hashInput_cost, ``NativeComponents.hashOutput_cost,
       ``NativeComponents.signingInput_cost, ``NativeComponents.signingOutput_cost,
       ``NativeComponents.finalInput_cost, ``NativeComponents.finalOutput_cost,
@@ -150,7 +151,11 @@ run_meta do
       ``NativeComponents.hash_bound_of_native, ``NativeComponents.finalHash_bound_of_native,
       ``NativeComponents.signing_bound_of_native, ``NativeComponents.random_bound_of_native,
       ``NativeComponents.cache_components_bound, ``NativeComponents.random_bound,
-      ``NativeComponents.cache_components_polynomial, ``NativeComponents.randomTime_polynomial] do
+      ``NativeComponents.cache_components_polynomial, ``NativeComponents.randomTime_polynomial,
+      ``NativeHandler.nativeRequest_size, ``NativeHandler.store_size, ``NativeHandler.code_bound_of_components,
+      ``NativeHandler.code_bound, ``NativeHandler.handlerTime_polynomial, ``NativeHandler.timeBudget_polynomial,
+      ``NativeHandler.reserved_weaken, ``NativeHandler.reserved_lower, ``NativeHandler.bound_reserved_of_bounds,
+      ``NativeHandler.code_bound_reserved] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -200,7 +205,30 @@ run_meta do
         unless conclusion.isAppOf ``Bounds &&
             (conclusion.find? (fun e => e.isConstOf ``NativeComponents.random)).isSome do
           throwError "certify the actual shared-store private-draw program"
-  for name in #[``NativeComponents.cache_components_polynomial, ``NativeComponents.randomTime_polynomial] do
+  for name in #[``NativeHandler.code_bound, ``NativeHandler.code_bound_reserved] do
+    forallTelescope (← getConstInfo name).type fun params conclusion => do
+      let mut profile := false
+      let mut ports := false
+      for param in params do
+        let type ← inferType param
+        if (type.find? (fun e => e.isConstOf ``ExecutionProfile.Within)).isSome then
+          profile := true
+        if (type.find? (fun e => e.isConstOf ``NativeHandler.PortCaps)).isSome then
+          ports := true
+        for forbidden in #[``Bounds, ``Program, ``SourceCertificate, ``Fintype, ``Finite,
+            ``Expression.compile, ``Expression.compileBound] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "{name}: derive the actual dispatcher cost from original sampler resources and local contracts"
+      unless profile && ports do
+        throwError "{name}: charge original scalar sampling and actual request/reply conversions"
+      unless conclusion.isAppOf ``Bounds &&
+          (conclusion.find? (fun e => e.isConstOf ``NativeHandler.code)).isSome do
+        throwError "{name}: certify the executed full indexed dispatcher"
+      if name == ``NativeHandler.code_bound_reserved then
+        unless (conclusion.find? (fun e => e.isConstOf ``NativeHandler.ReservedState)).isSome do
+          throwError "preserve reservations for future adaptive calls"
+  for name in #[``NativeComponents.cache_components_polynomial, ``NativeComponents.randomTime_polynomial,
+      ``NativeHandler.handlerTime_polynomial, ``NativeHandler.timeBudget_polynomial] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let userName := (← getFVarLocalDecl param).userName

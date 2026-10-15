@@ -33,6 +33,17 @@ theorem Bounds.time_mono {A B : Type} {a : C.Str A} {b : C.Str B}
   obtain ⟨hp, ht⟩ := bound input hi out ho
   exact ⟨hp, ht.trans increase⟩
 
+/-- Strengthen the input predicate and weaken the output predicate of the same
+actual program without changing its time allowance. -/
+theorem Bounds.consequence {A B : Type} {a : C.Str A} {b : C.Str B}
+    {code : Code Q spec iface a b} {pre pre' : A → Prop} {post post' : B → Prop} {budget : Nat}
+    (bound : Bounds control queryCost code pre post budget)
+    (input : ∀ a, pre' a → pre a) (output : ∀ b, post b → post' b) :
+    Bounds control queryCost code pre' post' budget := by
+  intro arg hi out ho
+  obtain ⟨hp, ht⟩ := bound arg (input arg hi) out ho
+  exact ⟨output out.value hp, ht⟩
+
 theorem Bounds.atomic {A B : Type} {a : C.Str A} {b : C.Str B} {f : A → B}
     (code : Q.Realizer a b f) (pre : A → Prop) (post : B → Prop) (budget : Nat)
     (h : ∀ input, pre input → post (f input) ∧

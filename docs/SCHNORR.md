@@ -265,8 +265,22 @@ kernel/sampler/adapter-budget premises. Each adds
 `2061 * overhead (8192 * ((32 * (managedCap + liveCap) + 128) * width))`
 to its native kernel budget, plus the zero primitive for hash/final preparation.
 All four formulas have polynomial closure without a numeric arity/counter factor.
-Indexed request/reply routing and whole-caller runtime remain open, followed by
-final pass/selector and complete solver/public/family endpoints.
+[Indexed routing](../Signatures/Runtime/BackendSchnorrROMHandlerRoutingBudget.lean)
+now charges request conversion, both sum dispatches, retained requests/state and
+dependent reply tagging. [Actual port contracts](../Signatures/Runtime/BackendSchnorrROMHandlerPorts.lean)
+include modulo decoding of malformed raw random replies.
+The [complete dispatcher budget](../Signatures/Runtime/BackendSchnorrROMHandlerBudget.lean)
+derives all component costs from original sampler profiles and primitive laws.
+At frame `H = 8 * (W + portWidth)`, its time is bounded by the maximum of the
+three component times, plus request/tag costs and `40 * overhead (128 * H)`.
+[Adaptive reservations](../Signatures/Runtime/BackendSchnorrROMHandlerReserve.lean)
+keep one cache entry and `2 * samplerQueries + 1` saved tape cells per future
+call within fixed maximum capacities. The actual dispatcher preserves this
+invariant with the same proved time allowance.
+[Polynomial closure](../Signatures/Runtime/BackendSchnorrROMHandlerPolynomial.lean)
+covers the complete formula without numeric-arity/counter or message-domain
+factors. Whole-caller runtime remains open, followed by final pass/selector
+and complete solver/public/family endpoints.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
