@@ -228,9 +228,22 @@ list shape using two flags and one candidate, with a derived cost for scanning
 the entire list and a constant stored-code bound. Duplicate elements do not
 turn a multiple-element list into a singleton.
 
-Connecting this decoder to the malformed-request dispatcher, signing, final
-extraction, full solver accounting and general-caller composition remain open;
-these component certificates are not yet a certificate for the full solver.
+The [all-shape dispatcher](../Signatures/Runtime/BackendSchnorrAGMHashDispatch.lean)
+now runs both scans and selects the decoded hash or rejection path. Rejection
+returns zero and sets malformed while preserving the cache, both histories and
+bad flag; replacing the sampler leaves the full costed rejection run unchanged.
+The source correspondence covers arbitrary group and coefficient-row lists,
+including repeated group elements and empty/multiple coefficient rows. Its
+[derived budget](../Signatures/Runtime/BackendSchnorrAGMHashDispatchBudget.lean)
+includes defaults, both scans, packing, selection, rejection construction and
+all control transitions. Every coefficient row and all group elements contribute
+to the input-size bound, even if the request is rejected. Its stored code is
+independent of these runtime list lengths.
+
+This dispatcher uses an internal scalar/state interface. Random/signing handlers,
+final extraction, full solver accounting and general-caller composition,
+including external request/reply packing, remain open; these component certificates
+are not yet a certificate for the full solver.
 
 ## What Efficiency Is Certified
 

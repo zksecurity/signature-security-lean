@@ -27,6 +27,7 @@ import Signatures.Runtime.BackendSchnorrAGMReadBudget
 import Signatures.Runtime.BackendSchnorrAGMFlattenBudget
 import Signatures.Runtime.BackendSchnorrAGMHashBudget
 import Signatures.Runtime.BackendListSingleton
+import Signatures.Runtime.BackendSchnorrAGMHashDispatchBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -184,9 +185,11 @@ preserves chronological coefficients and zero padding, with derived time/code
 and output-size bounds including the entire coefficient list and retained context.
 The decoded singleton hash path composes flattening and the complete read, with
 derived preparation/control/time/code bounds and exact source correspondence.
-A separate native singleton decoder has checked list-scan and stored-code costs.
-Connecting that decoder to the malformed-request dispatcher, signing, final
-extraction, complete solver runtime and general-caller composition remain open.
+The all-shape hash dispatcher now charges both singleton scans, default creation,
+branch selection and malformed-state construction. It agrees with the source
+handler at its scalar/state interface, and rejection never calls the sampler.
+Random/signing handlers, final extraction, complete solver runtime and general-caller
+composition (including external request/reply packing) remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
