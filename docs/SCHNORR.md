@@ -78,16 +78,24 @@ including draws after the changed challenge. Its
 [first-pass law](../Signatures/Runtime/SchnorrLazySeedLog.lean) preserves the joint
 output and recorded tape. [Two-pass bounds](../Signatures/Runtime/SchnorrLazySeedBounds.lean)
 count saved/remaining cells and ambient draws independently of the universe of
-sampling families. These local results do not yet transport the fixed-tape fork
-probability theorem or certify native execution and encoded memory costs.
+sampling families. Native execution and encoded memory costs remain separate
+obligations.
 
 The [joint deferred-sampling law](../Signatures/Runtime/SeededDeferredTrace.lean)
 now preserves the first output, complete transcript and original seed while
 moving generation of unused entries after the first run. The
 [suffix-sampling law](../Signatures/Runtime/SeededSuffixSampling.lean) removes
-those independent entries from a second execution after a valid reset. Both use
-native measure statements. Their composition with Schnorr's actual selector,
-challenge guard and fork acceptance checks is still required.
+those independent entries from a second execution after a valid reset.
+[SeededLazyFork](../Signatures/Runtime/SeededLazyFork.lean) now composes these
+laws with replacement sampling, the unchanged-challenge guard and second-run
+selector agreement, proving equality of the complete joint output distribution.
+[SeededForkReachability](../Signatures/Runtime/SeededForkReachability.lean) derives
+the valid-slot premise from the existing intrinsic selector-reachability property.
+[SchnorrLazyFork](../Signatures/Runtime/SchnorrLazyFork.lean) implements that
+controller using the finite retained tape and proves its exact correspondence.
+All probability endpoints use native measures. Transport through the named
+Schnorr extraction/security endpoint, general-caller composition and native
+execution/code/encoding costs remain unfinished.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape
