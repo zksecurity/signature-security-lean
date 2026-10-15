@@ -314,10 +314,27 @@ both local adapters and their control boundaries. Random requests preserve all
 capacities; hash requests can add one cache entry while preserving both actual
 histories; signing can grow all three capacities by one.
 
-Indexed request conversion, original-request retention, reply tagging and caller
-runtime still require composition with these component certificates. Final
-extraction and full solver accounting also remain open; these results are not
-yet a resource certificate for the full solver.
+The [complete indexed handler bound](../Signatures/Runtime/BackendSchnorrAGMHandlerBudget.lean)
+now composes those certificates with request conversion, original-request
+retention, reply tagging and routing. Its primitive contracts cover the dynamic
+uniform-query ports and scalar sampler; its separate
+[port contracts](../Signatures/Runtime/BackendSchnorrAGMHandlerPorts.lean) charge
+the actual decoder and dependent taggers, including the random tag's `Fin.ofNat`.
+The final reply width has its own bound, independent of the retained cache size.
+
+[Capacity reservations](../Signatures/Runtime/BackendSchnorrAGMHandlerReserve.lean)
+track each list's length plus remaining query fuel. Each call consumes one
+reservation; its runtime is bounded at the fixed maximum capacities. The
+[adaptive caller bound](../Signatures/Runtime/BackendSchnorrAGMCallerBudget.lean)
+adds the proved handler and routing costs to the attacker's own realized work
+and query allowances. These runtime reserves conservatively allow one new cell
+in each list per request; the sharper source-game capacities remain unchanged.
+
+Recovering request/return sizes, row lengths and random arities from measured
+attacker resources and encoding laws remains open. The current caller theorem
+still takes reachable-request and state/head-size conditions explicitly. Final
+extraction and full solver accounting also remain open; this is not yet a
+resource certificate for the full solver.
 
 ## What Efficiency Is Certified
 

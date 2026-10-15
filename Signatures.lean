@@ -35,6 +35,7 @@ import Signatures.Runtime.BackendSchnorrAGMSigningDispatchBudget
 import Signatures.Runtime.BackendSchnorrAGMRandomBudget
 import Signatures.Runtime.BackendSchnorrAGMHandlerDescription
 import Signatures.Runtime.BackendSchnorrAGMHandlerPrimitiveBudget
+import Signatures.Runtime.BackendSchnorrAGMCallerBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
