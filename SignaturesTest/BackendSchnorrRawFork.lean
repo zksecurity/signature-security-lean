@@ -112,7 +112,9 @@ run_meta do
       ``NativeFork.fresh_cost, ``NativeFork.lookup_cost, ``NativeFork.collision_cost,
       ``NativeFork.reset_cost, ``NativeFork.second_cost, ``NativeFork.secondSelection_cost,
       ``NativeFork.finish_cost, ``NativeFork.chooseLocal_cost, ``NativeFork.reject_cost,
-      ``NativeFork.bound, ``NativeFork.runtimeBound_polynomial] do
+      ``NativeFork.Frame.stateAt, ``NativeFork.Frame.tapeAt,
+      ``NativeFork.bound, ``NativeFork.runtimeBound_polynomial,
+      ``NativeFork.bound_with_tapeWidth, ``NativeFork.runtimeBoundWithTapeWidth_polynomial] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -145,36 +147,47 @@ run_meta do
           ``Expression.compile, ``Expression.compileBound] do
         if (type.find? (fun e => e.isConstOf forbidden)).isSome then
           throwError "lookup runtime must be derived from primitive and backend laws"
-  forallTelescope (← getConstInfo ``NativeFork.runtimeBound).type fun params _ => do
-    for param in params do
-      if (← inferType param).isConstOf ``Nat then
-        unless #[`width, `firstCap, `secondCap, `firstTime, `secondTime, `selectorTime,
-            `sampleTime, `comparisonTime, `scalarComparisonTime, `subtractTime, `zeroTime].contains
-            (← getFVarLocalDecl param).userName do
-          throwError "fork runtime must depend on stored capacities, not numeric positions or domains"
-  forallTelescope (← getConstInfo ``NativeFork.bound).type fun params conclusion => do
-    unless conclusion.isAppOf ``Bounds do
-      throwError "fork runtime must cover the whole native controller on all paths"
-    let mut componentBudgets := #[]
-    for param in params do
-      let type ← inferType param
-      let name := (← getFVarLocalDecl param).userName
-      if type.isAppOf ``Bounds then
-        unless #[`hfirst, `hsecond, `hsample].contains name do
-          throwError "fork runtime assumes an unproved controller component: {name}"
-        componentBudgets := componentBudgets.push name
-        if name != `hsample then
-          let args := type.getAppArgs
-          unless args[args.size - 3]!.isAppOf ``NativeFork.Incoming &&
-              args[args.size - 2]!.isAppOf ``NativeFork.Returned do
-            throwError "both passes must carry encoded inputs, outputs and separate tape capacities"
-      for forbidden in #[``NativeFork.code, ``NativeFork.replay, ``NativeFork.selected,
-          ``NativeLookup.code, ``NativeReset.code, ``Expression.compile, ``Expression.compileBound] do
-        if (type.find? (fun e => e.isConstOf forbidden)).isSome then
-          throwError "fork runtime assumes completed internal code costs: {name}"
-    unless componentBudgets == #[`hfirst, `hsecond, `hsample] do
-      throwError "fork must account for both actual pass executions and the actual fresh sampler"
-  for name in #[``NativeFork.code, ``NativeFork.source, ``NativeFork.bound] do
+  for name in #[``NativeFork.runtimeBound, ``NativeFork.runtimeBoundWithTapeWidth] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        if (← inferType param).isConstOf ``Nat then
+          unless #[`width, `tapeWidth, `firstCap, `secondCap, `firstTime, `secondTime, `selectorTime,
+              `sampleTime, `comparisonTime, `scalarComparisonTime, `subtractTime, `zeroTime].contains
+              (← getFVarLocalDecl param).userName do
+            throwError "fork runtime must depend on stored capacities, not numeric positions or domains"
+  for theoremName in #[``NativeFork.bound, ``NativeFork.bound_with_tapeWidth] do
+    forallTelescope (← getConstInfo theoremName).type fun params conclusion => do
+      unless conclusion.isAppOf ``Bounds do
+        throwError "fork runtime must cover the whole native controller on all paths"
+      let mut componentBudgets := #[]
+      for param in params do
+        let type ← inferType param
+        let name := (← getFVarLocalDecl param).userName
+        if type.isAppOf ``Bounds then
+          unless #[`hfirst, `hsecond, `hsample].contains name do
+            throwError "fork runtime assumes an unproved controller component: {name}"
+          componentBudgets := componentBudgets.push name
+          if name != `hsample then
+            let args := type.getAppArgs
+            let incoming := if theoremName == ``NativeFork.bound then
+              ``NativeFork.Incoming else ``NativeFork.IncomingWidths
+            let returned := if theoremName == ``NativeFork.bound then
+              ``NativeFork.Returned else ``NativeFork.ReturnedWidths
+            unless args[args.size - 3]!.isAppOf incoming && args[args.size - 2]!.isAppOf returned do
+              throwError "both passes must carry encoded inputs, outputs and separate tape capacities"
+          if name == `hsample && theoremName == ``NativeFork.bound_with_tapeWidth then
+            let some tapeWidth ← params.findM? fun p => return (← getFVarLocalDecl p).userName == `tapeWidth
+              | throwError "the controller must expose a separate tape width"
+            let args := type.getAppArgs
+            unless (args[args.size - 2]!.find? (· == tapeWidth)).isSome do
+              throwError "fresh sampling must preserve the narrow tape-entry width"
+        for forbidden in #[``NativeFork.code, ``NativeFork.replay, ``NativeFork.selected,
+            ``NativeLookup.code, ``NativeReset.code, ``Expression.compile, ``Expression.compileBound] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "fork runtime assumes completed internal code costs: {name}"
+      unless componentBudgets == #[`hfirst, `hsecond, `hsample] do
+        throwError "fork must account for both actual pass executions and the actual fresh sampler"
+  for name in #[``NativeFork.code, ``NativeFork.source, ``NativeFork.bound, ``NativeFork.bound_with_tapeWidth] do
     let type := (← getConstInfo name).type
     for forbidden in #[``Program, `Signatures.Runtime.Schnorr.SourceCertificate] do
       if (type.find? (fun e => e.isConstOf forbidden)).isSome then

@@ -1,8 +1,11 @@
 import Signatures.Runtime.BackendSchnorrROMForkDescription
+import Signatures.Runtime.BackendSchnorrROMForkBudget
 import Lean.Util.CollectAxioms
 
 /-! Scope and axiom regressions for the installed general ROM fork. Its source
-laws derive both executions from measured caller resources and actual pass code. -/
+laws derive both executions from measured caller resources and actual pass code.
+The runtime theorem derives both pass, selector and sampler budgets internally;
+its original-resource records must not conceal completed component bounds. -/
 
 open PFunctor
 open PFunctor.DynSystem.DynComputation
@@ -22,7 +25,9 @@ open Lean Meta in
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``NativeROMFork.source_of_resources, ``NativeROMFork.result_shape_of_resources,
-      ``NativeROMFork.code_description] do
+      ``NativeROMFork.code_description, ``NativeROMFork.output_size,
+      ``NativePass.Resources.tapeWidth_le, ``NativePass.Resources.sampler_bound,
+      ``NativePass.Resources.pass_bound, ``NativeROMFork.code_bound_of_resources] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -59,5 +64,33 @@ run_meta do
         unless (info.value.find? (fun e => e.isConstOf required)).isSome do
           throwError "install the actual native pass and selector in the replay controller"
   | _ => throwError "the native ROM fork must have an executable definition"
+  forallTelescope (← getConstInfo ``NativeROMFork.code_bound_of_resources).type fun params conclusion => do
+    unless conclusion.isAppOf ``Bounds &&
+        (conclusion.find? (fun e => e.isConstOf ``NativeROMFork.code)).isSome &&
+        (conclusion.find? (fun e => e.isConstOf ``NativeFork.runtimeBoundWithTapeWidth)).isSome do
+      throwError "bound the whole installed fork with separate tape and output widths"
+    let mut measured := false
+    let mut resources := #[]
+    let mut selectorOps := false
+    for param in params do
+      let type ← inferType param
+      if (type.find? (fun e => e.isConstOf ``QuantitativeRealization.RunsWithin)).isSome then
+        measured := true
+      if type.isAppOf ``NativePass.Resources then
+        resources := resources.push (← getFVarLocalDecl param).userName
+      if type.isAppOf ``NativeSelection.Operations then
+        selectorOps := true
+    unless measured && resources == #[`first, `second] && selectorOps do
+      throwError "derive both pass budgets and selection from original resources and primitive contracts"
+  let resourceInfo ← getConstInfoInduct ``NativePass.Resources
+  for ctor in resourceInfo.ctors do
+    forallTelescope (← getConstInfo ctor).type fun params _ => do
+      for param in params do
+        let type ← inferType param
+        for forbidden in #[``Bounds, ``GeneralCaller.Budget, ``NativePass.code,
+            ``NativeHandler.code, ``NativeSelection.selector, ``Program, ``SourceCertificate,
+            ``Fintype, ``Finite, ``Inhabited] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "original pass resources must not hide finished budgets or restricted attackers"
 
 end SignaturesTest.SchnorrROMFork

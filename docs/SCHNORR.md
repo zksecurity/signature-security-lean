@@ -178,8 +178,8 @@ encoded widths and backend operation costs. The general-caller pass is now
 assembled with exact source correspondence, complete stored-code/runtime bounds
 and polynomial runtime closure. The selector now also has complete runtime,
 stored-code and polynomial bounds. Both are installed in the native controller,
-with exact source correspondence and a complete stored-code bound; installed
-fork runtime composition remains open.
+with exact source correspondence, a complete stored-code bound and a derived
+runtime bound for both installed passes, selection and replacement sampling.
 
 The [general finite-cache pass](../Signatures/Runtime/SchnorrROMListPass.lean)
 now has exact adaptive source/trace correspondence for arbitrary attacker
@@ -357,9 +357,17 @@ two singleton completed passes. Its
 counts both pass/selector occurrences and all controller components.
 [Fork guards](../SignaturesTest/SchnorrROMFork.lean) check those installed components,
 source scope, measured-resource premises and axiom footprint.
-Installed fork runtime composition still needs separate tape-entry and complete
-output widths in the controller invariant. Whole-solver extraction/fallback,
-resource certificates and public/family endpoints remain open.
+The [installed fork runtime](../Signatures/Runtime/BackendSchnorrROMForkBudget.lean)
+now derives both actual pass budgets, selection and fresh sampling from
+[original caller/sampler resources](../Signatures/Runtime/BackendSchnorrROMPassResources.lean)
+and primitive contracts. No completed component budget is assumed. The controller
+preserves [separate tape-entry and retained-output widths](../Signatures/Runtime/BackendSchnorrRawForkTapeWidth.lean),
+so charging the full output does not inflate every tape cell or create circular
+storage requirements. Replay reserves the first pass's saved capacity plus two
+cells before charging its own draws. The old equal-width controller theorem is
+preserved as a specialization; the two-width formula also has polynomial closure.
+Polynomial closure of the fully instantiated fork formula, whole-solver setup,
+extraction/fallback, resource certificates and public/family endpoints remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
