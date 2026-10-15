@@ -23,7 +23,7 @@ import Signatures.Schnorr.SeededBitStatement
 import Signatures.Schnorr.Proofs.NonzeroSecurity
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
-import Signatures.Runtime.BackendSchnorrAGMCacheBudget
+import Signatures.Runtime.BackendSchnorrAGMReadBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -174,8 +174,10 @@ pairs, qS+2 affine basis entries, and qS signed messages, over arbitrary message
 and group types. Native tuple/list layouts and cache-core code now have exact
 source correspondence, complete runtime and stored-code bounds. Cache misses
 retain the pre-challenge explanation as represented input and update bad using
-field instructions; hits skip sampling entirely. Outer read/handler routing,
-representation flattening, complete solver runtime and general-caller composition
+field instructions; hits skip sampling entirely. Complete native reads also
+construct the default entry and route the whole state, with derived time/code
+bounds and unchanged history-size limits. Representation flattening, hash/sign
+handlers, final extraction, complete solver runtime and general-caller composition
 remain open.
 
 The public security statements' axiom footprints are exactly

@@ -199,9 +199,16 @@ The affine explanation is explicit runtime data retained before sampling. A
 cache hit preserves the complete costed run when the sampler changes.
 [Derived bounds](../Signatures/Runtime/BackendSchnorrAGMCacheBudget.lean) charge
 the scans, sampling, field operations, compiler environments and stored code.
-Only primitive and representation contracts are assumed. Outer read/handler
-routing, representation flattening, full solver accounting, and general-caller
-composition remain open; the cache core alone is not a solver certificate.
+The [complete native read](../Signatures/Runtime/BackendSchnorrAGMRead.lean) also
+constructs its default entry, retains the complete metadata, and restores the
+updated cache and bad flag. Its output/state distribution equals the finite
+source read. The [read budget](../Signatures/Runtime/BackendSchnorrAGMReadBudget.lean)
+adds the actual setup, return and control costs. Separate bounds on the two
+unchanged histories are preserved across reads; the cache grows by at most one
+entry. Only primitive, scalar-sampler and representation contracts are assumed.
+Representation flattening, hash/sign handlers, final extraction, full solver
+accounting and general-caller composition remain open; this read certificate is
+not yet a certificate for the full solver.
 
 ## What Efficiency Is Certified
 

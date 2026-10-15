@@ -123,7 +123,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and native cache-core time/code certificates. | Complete native wrapper implementation/overhead and general caller composition. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, and complete native read time/code certificates. | Representation flattening, hash/sign handlers, final extraction, complete solver overhead and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -1090,8 +1090,39 @@ Native-cache validation: `lake build Signatures SignaturesTest` passed (4132 job
 the targeted cache regressions passed (3373 jobs), with no new warnings or
 nonstandard axioms.
 
-Next, implement and charge the outer read adapters, representation flattening,
-hash/sign handlers and final extraction, then derive complete solver time/code
+The [complete native read](../Signatures/Runtime/BackendSchnorrAGMRead.lean) now
+executes both surrounding adapters: constructing a zero-tagged fallback,
+packing the cache arguments, retaining the full metadata, and returning the
+challenge with the updated cache/bad flag. Its joint output/state distribution
+is exactly the encoded finite-source read. Replacing the scalar sampler on a
+hit preserves the complete costed wrapper run. The default reuses the supplied
+affine pair in ignored slots; it is never inserted on a miss.
+
+The [read size invariants](../Signatures/Runtime/BackendSchnorrAGMReadSize.lean)
+bound the representation history and signing history separately by `historyWidth`.
+These bounds are preserved unchanged across reads; only the cache capacity grows
+from `cap` to at most `cap + 1`. Every outer boundary fits
+`W = (20 * cap + 200) * width + 4 * historyWidth`.
+The [compiled adapter costs](../Signatures/Runtime/BackendSchnorrAGMReadLocalCost.lean)
+and [complete read budget](../Signatures/Runtime/BackendSchnorrAGMReadBudget.lean)
+derive the bound
+`cacheTime + fieldTime + 800 * overhead (256 * W)`.
+It charges default creation, tuple projections/construction, retained metadata,
+and all local-call/sequence transitions. The stored-code bound is the scalar
+sampler's code plus the message/group comparisons, field addition, two zero
+instructions, scalar equality and a fixed structural allowance. Neither theorem
+assumes a finished adapter, cache, or read is efficient.
+
+[Complete-read regressions](../SignaturesTest/BackendSchnorrAGMRead.lean) check
+shadowed hits, late explanations, signing-programmed entries, changed commitments,
+miss-induced bad events and preservation of every metadata field. They also
+check transitive axioms and reject finite-domain or completed-component premises.
+Complete-read validation: the targeted test passed (3377 jobs), and
+`lake build Signatures SignaturesTest` passed (4136 jobs), with no new warnings
+or nonstandard axioms. All 399 local links in the two edited guides resolve.
+
+Next, implement and charge representation flattening, hash/sign handlers and
+final extraction, then derive complete solver time/code
 bounds from general attacker resources and connect them to the probability
 theorem. Charge all incoming coefficient/group encodings, including ignored
 malformed data. The proof-side encoding and metadata-restoration maps are not
@@ -2711,6 +2742,8 @@ additional axioms or proof-resource overrides.
   bound, and derive query-dependent cache/basis/signing-history capacities.
 - [x] Implement Schnorr AGM tuple/list layouts and native cache core, with exact
   source semantics and derived comparison/sampling/scan/runtime/code bounds.
+- [x] Implement the complete native Schnorr AGM read, with exact whole-state
+  semantics, preserved history bounds and derived adapter/control/runtime/code costs.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [ ] Expose general-attacker security endpoints with explicit concrete budgets;
