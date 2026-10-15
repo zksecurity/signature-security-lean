@@ -184,7 +184,15 @@ and [entry bounds](../Signatures/Runtime/BackendWeightedExtractionEntry.lean) ch
 all coefficients and retained logs under explicit encoding laws. The
 [native interaction](../Signatures/Runtime/BackendWeightedOracleCache.lean) supplies
 the cached-transcript condition from an empty store once fuel covers the attacker's
-query bound. Whole-solver certificates and security endpoints remain open.
+query bound. Both [complete native solvers](../Signatures/Runtime/BackendWeightedSolver.lean)
+now have [exact source semantics](../Signatures/Runtime/BackendWeightedSolverCorrectness.lean),
+[runtime bounds](../Signatures/Runtime/BackendWeightedSolverBudget.lean),
+[stored-code bounds](../Signatures/Runtime/BackendWeightedSolverDescription.lean),
+and [executable certificates](../Signatures/Runtime/BackendWeightedSolverWithin.lean)
+in the fixed backend. These charge setup, samplers, output adaptation, cutoff,
+retained frames, and extraction alongside the general caller. Their internal
+cache/transcript conditions follow from execution. The scheme-specific concrete
+security statements and polynomial family closure remain open.
 Proximity's tuple width is derived
 from coordinate encodings, and the structured topic/degree and slot/coordinate
 comparisons have native runtime/code bounds too.

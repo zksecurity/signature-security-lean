@@ -78,7 +78,10 @@ including coefficient generation, evaluation, default construction, final arithm
 and retention of the full output and both transcripts. Caller conditions and
 extractor input bounds now follow from the attacker's measured resources and
 encoding contracts. The native interaction supplies the cached-transcript invariant.
-Whole-solver/security endpoints remain unfinished.
+Both complete native solvers now have exact source correspondence, runtime and
+stored-code bounds, and executable certificates in the fixed backend. Setup,
+output adaptation, cutoff handling, and extraction are all charged. The
+scheme-specific security and family endpoints remain unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete the other signature routes and expose their
@@ -100,8 +103,8 @@ machine results, not completion of this broader objective.
 | --- | --- | --- |
 | BLS co-CDH ROM | Public general-caller concrete and nonuniform asymptotic security endpoints over arbitrary message types, with derived native runtime/code certificates and canonical encoding recovery. | A conventional-machine instantiation if claiming conventional PPT coverage; the conditional backend route is complete. |
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| OOPS AGM | Weighted lazy probability correspondence, native term generators, private caches, evaluator and coefficient-expansion bounds are proved. Actual replies and the full native caller phase have derived runtime/stored-code bounds and preserved cache/log capacities. Both native extractors have exact semantics, stored-code and cache-growth proofs, and complete runtime bounds for the full extractors. Caller reachability, request/output/coefficient sizes and cached-transcript conditions now follow from resources and actual native execution. | Whole-solver certificates/endpoints. |
-| Proximity AGM | The same weighted components and complete native interaction bounds are proved, including original-index/cache transport and preserved cache/log capacities. Both native extractors have exact semantics, stored-code and cache-growth proofs, and complete runtime bounds for the full extractors. The same caller/resource/cache recovery is proved; the original collision term remains. | Whole-solver certificates/endpoints. |
+| OOPS AGM | Weighted lazy probability correspondence and complete native solver runtime/code certificates are proved. Exact source semantics and caller/cache/output invariants connect setup, general attacker execution, and extraction over arbitrary topic types. | Connect the certificates to concrete security, public statements, and polynomial families. |
+| Proximity AGM | The same complete weighted native solver certificates are proved, with separate index/message types and original-index/cache transport. The source probability proof retains its collision term. | Connect the certificates and index transport to concrete security, public statements, and polynomial families. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Original adaptive source-game security with a named single-pass DLog solver. | A complete overhead proof and general caller composition. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
@@ -794,12 +797,49 @@ transfer it using resource-derived termination and exact source correspondence.
 Starting with an empty store, both branches return an output, retain their original
 challenge configuration and supply the extractor's cached-transcript condition.
 
-Next: assemble native solver setup, caller, output adaptation, extraction and
-termination, prove their full runtime/stored-code certificates, and connect the
-OOPS/Proximity security and family endpoints. The complete interaction/extractor
-bounds and input recovery do not yet close the whole-solver goal.
+Both [complete native programs](../Signatures/Runtime/BackendWeightedSolver.lean)
+now perform challenge setup, the measured general caller, output conversion,
+cutoff handling and actual extraction. The good branch retains the challenge
+public key; the bad branch samples its signing scalar and computes the scaled
+key. [Exact source laws](../Signatures/Runtime/BackendWeightedSolverCorrectness.lean)
+identify each whole program with the corresponding weighted finite-list source
+reduction. Resource-derived termination removes the cutoff on realized source runs.
 
-Validation: `lake build Signatures SignaturesTest` passes (4084 jobs), log
+[Setup bounds](../Signatures/Runtime/BackendWeightedSolverSetup.lean) charge the
+empty store, full challenge frame, key conversion, and bad-branch sampling and
+scaling. [Terminal bounds](../Signatures/Runtime/BackendWeightedSolverTerminal.lean)
+derive all extraction conditions from the saved store and full encoded output.
+The [complete runtime proof](../Signatures/Runtime/BackendWeightedSolverBudget.lean)
+carries the cached-transcript invariant from the actual caller into extraction,
+and charges all sequencing and retained frames. Its assumptions concern measured
+attacker resources, source realization, representation laws and individual
+operations; no completed caller/extractor budget or internal cache invariant is
+supplied by the user.
+
+[Stored-code bounds](../Signatures/Runtime/BackendWeightedSolverDescription.lean)
+include attacker initialization, two head-code copies, updates, scalar and dynamic
+samplers, ports, fuel, and three term-generator occurrences. Degree/dimension is
+explicitly charged, with a common polynomial expression for both generator kinds.
+The [fixed-backend certificates](../Signatures/Runtime/BackendWeightedSolverWithin.lean)
+combine these bounds with exact source semantics into `goodProgram_within` and
+`badProgram_within`. Index and message encodings remain separate, neither domain
+is finite, and no arithmetic-language implementation of the attacker is required.
+
+[Whole-program regressions](../SignaturesTest/BackendWeightedSolver.lean) cover
+zero-fuel cutoff and retained bad-branch sampling with arbitrary natural topics.
+Transitive axiom guards cover the new proofs. Final-endpoint guards reject finite
+domains, supplied complete component/certificate bounds, restricted source
+certificates and internal state invariants; they require both measured execution
+and source realization. Scheme-specific concrete security, public interfaces and
+polynomial family closure remain open.
+
+Whole-solver validation: `lake build Signatures SignaturesTest` passed (4096 jobs),
+log `/private/tmp/agm-weighted-solver-full.log`. The eleven new solver modules and
+whole-program regression have no warnings, admissions, extra axioms or
+proof-resource overrides. All 567 local links in this plan and the two companion
+status documents were checked.
+
+Prior recovery validation: `lake build Signatures SignaturesTest` passed (4084 jobs), log
 `/private/tmp/agm-weighted-caller-recovery-full.log`. The
 [native reply regressions](../SignaturesTest/WeightedReply.lean) cover signing
 before explicit hashing, shadowed cache entries, both mask coordinates, zero
@@ -833,7 +873,7 @@ The import blocker was macOS vnode exhaustion, confirmed by free vnodes reaching
 zero during a monitored Lean import. The user applied a temporary vnode-limit
 increase from 263168 to 524288, which restored proof checking. Descriptor limits
 were also temporarily raised; their original values are recorded for restoration.
-No compiler checking settings changed. The remaining runtime, solver and replay
+No compiler checking settings changed. The remaining security, family and replay
 obligations below stay incomplete.
 
 `SignaturesTest.WeightedCache` checks native scalar/pair caches over infinite
@@ -2492,7 +2532,7 @@ additional axioms or proof-resource overrides.
   construction, final arithmetic and the full retained output/transcript state.
 - [x] Recover weighted caller reachability, request/return widths, and coefficient
   lengths from general attacker resources and encoding contracts.
-- [ ] Derive whole weighted native solver runtime/code bounds, charging
+- [x] Derive whole weighted native solver runtime/code bounds, charging
   degree/dimension, term construction, coefficient expansion, and general caller composition.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.

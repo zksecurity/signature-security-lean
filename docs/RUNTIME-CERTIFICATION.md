@@ -202,8 +202,17 @@ budget. [Output recovery](../Signatures/Runtime/BackendWeightedExtractionOutput.
 and [entry bounds](../Signatures/Runtime/BackendWeightedExtractionEntry.lean) supply
 coefficient lengths and the full retained input frame. The
 [native cache laws](../Signatures/Runtime/BackendWeightedOracleCache.lean) derive the
-cached-transcript condition from actual execution starting empty. Native whole-solver
-setup/termination composition and certificates remain in progress.
+cached-transcript condition from actual execution starting empty. Both
+[complete native solvers](../Signatures/Runtime/BackendWeightedSolver.lean) now
+have [exact source correspondence](../Signatures/Runtime/BackendWeightedSolverCorrectness.lean),
+[complete runtime bounds](../Signatures/Runtime/BackendWeightedSolverBudget.lean),
+[stored-code bounds](../Signatures/Runtime/BackendWeightedSolverDescription.lean),
+and [fixed-backend certificates](../Signatures/Runtime/BackendWeightedSolverWithin.lean).
+The certificates derive setup, caller, adaptation, cutoff, and extraction costs
+from primitive contracts and measured attacker resources. They require no
+supplied complete component budget or cached-transcript invariant, and no finite
+topic/slot/message domain. Scheme-specific security endpoints and polynomial
+family closure remain open.
 
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle

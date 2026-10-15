@@ -57,6 +57,7 @@ import Signatures.Runtime.BackendWeightedHashExtraction
 import Signatures.Runtime.BackendWeightedTargetExtraction
 import Signatures.Runtime.BackendWeightedGoodExtractionBudget
 import Signatures.Runtime.BackendWeightedBadExtractionBudget
+import Signatures.Runtime.BackendWeightedSolverWithin
 import Signatures.Runtime.BackendWeightedScale
 import Signatures.OperationBounds
 import Signatures.PaperStatements
