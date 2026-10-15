@@ -176,7 +176,9 @@ include the first output and configuration retained during replay. The runtime
 formula has proved polynomial closure from separate pass budgets, tape capacities,
 encoded widths and backend operation costs. The general-caller pass is now
 assembled with exact source correspondence, complete stored-code/runtime bounds
-and polynomial runtime closure; selector certification remains open.
+and polynomial runtime closure. Selector source, stored code and complete
+chronological-lookup costs are proved; complete selector runtime composition
+remains open.
 
 The [general finite-cache pass](../Signatures/Runtime/SchnorrROMListPass.lean)
 now has exact adaptive source/trace correspondence for arbitrary attacker
@@ -323,7 +325,24 @@ empty initial tapes and bounded replay tapes; sufficient query fuel excludes cut
 [Pass regressions](../SignaturesTest/SchnorrROMPass.lean) check live-cache selection,
 private-cell ordering and sampler independence of the costed cutoff branch,
 and guard the full runtime theorem's measured-resource scope and axiom footprint.
-Selector certification and complete solver/public/family endpoints also remain open.
+The [native selector](../Signatures/Runtime/BackendSchnorrROMSelection.lean) now
+checks the signature equation, locates the chronological live-cache entry and
+checks `index < qH + 1`. It rejects empty results without inventing a message,
+agrees with the source selector on singleton results, and has defined normalized
+semantics on every result list. Its
+[stored-code bound](../Signatures/Runtime/BackendSchnorrROMSelectionDescription.lean)
+counts every compiled component and the query-limit literal.
+The [complete lookup runtime](../Signatures/Runtime/BackendSchnorrROMLiveIndexBudget.lean)
+charges reversal, the scan, growing ordinal, original/reversed caches and trailing
+environments. It derives scan and reversal costs from actual primitive bounds
+and encountered-cache capacity, without iterating over the message space.
+[Polynomial closure](../Signatures/Runtime/BackendSchnorrROMSelectionPolynomial.lean)
+covers lookup runtime and the complete selector's description.
+[Selector regressions](../SignaturesTest/SchnorrROMSelection.lean) exercise the
+final-query slot, chronological order, cutoff, failed verification, missing live
+entries, duplicate keys and malformed multi-result lists, and guard theorem scope.
+Complete verification/guard/outer-fold runtime composition, controller installation
+and complete solver/public/family endpoints remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

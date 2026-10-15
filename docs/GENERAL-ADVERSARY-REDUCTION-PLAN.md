@@ -188,8 +188,10 @@ adapters, both passes, both selector calls, sampling, lookup/reset and every
 control/retention cost. Frame invariants count duplicated configurations, both
 tapes and the first output retained during replay. The pass budgets distinguish
 the empty initial tape from the reset tape. General-caller pass assembly, source
-correspondence, complete runtime and polynomial runtime closure are now proved;
-selector certification and full solver assembly remain unfinished. The finite-cache ROM
+correspondence, complete runtime and polynomial runtime closure are now proved.
+The actual selector now has exact source correspondence, a stored-code bound and
+complete chronological-lookup runtime with polynomial closure. Its surrounding
+verification/guard/fold runtime and full solver assembly remain unfinished. The finite-cache ROM
 pass now handles arbitrary source attacker computations, has exact trace
 correspondence and query-derived cache capacities, and its complete fork plus
 extraction equals the named reduction. Native live/managed-cache and signing
@@ -237,8 +239,10 @@ and final live hashing. Its source law holds on every supplied replay tape;
 measured query resources exclude cutoff. Complete stored-code bounds and all-path
 runtime now compose setup, the measured caller, final live hashing, actual boundary
 conversions and terminal control. Polynomial closure of the complete runtime
-formula is proved. Selector certification and whole-solver/public/family endpoints
-remain open.
+formula is proved. Selector source correspondence, stored code and the complete
+reverse-and-scan cost are proved, with polynomial closure of the lookup and code
+bounds. Complete selector runtime composition and whole-solver/public/family
+endpoints remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -262,7 +266,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. All four shared-store components now have exact source laws, stored-code bounds, complete primitive-derived runtime, preserved encoding/capacity invariants and polynomial closure. Indexed dispatch also has complete primitive-derived runtime, polynomial closure and adaptive capacity reservations. Arbitrary caller composition has exact source/stored-code bounds, measured-resource runtime, returned-output bounds and polynomial runtime closure. The complete native pass has exact source correspondence on every tape, measured completion, complete stored-code and runtime bounds, output/tape invariants and polynomial runtime closure. | Certify the selector and install both passes in the controller, then complete whole-solver certificates and public/family endpoints. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances. The finite-cache general pass and complete finite-cache/tape reduction have exact computation correspondence, including extraction/fallback, and query-derived cache capacities. Native draw, reset, lookup and complete fork-controller runtime/code bounds are proved. All four shared-store components now have exact source laws, stored-code bounds, complete primitive-derived runtime, preserved encoding/capacity invariants and polynomial closure. Indexed dispatch also has complete primitive-derived runtime, polynomial closure and adaptive capacity reservations. Arbitrary caller composition has exact source/stored-code bounds, measured-resource runtime, returned-output bounds and polynomial runtime closure. The complete native pass has exact source correspondence on every tape, measured completion, complete stored-code and runtime bounds, output/tape invariants and polynomial runtime closure. The actual selector has exact source correspondence, a complete stored-code bound and complete chronological-lookup runtime with polynomial closure. | Finish selector verification/guard/outer-fold runtime, install both passes in the controller, then complete whole-solver certificates and public/family endpoints. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -3061,6 +3065,53 @@ Validation: all five new proof modules, the expanded pass regressions and aggreg
 imports passed without warnings using serial `-j1 -M8192` and default proof limits.
 All 776 relative links in the two guides resolve; whitespace checks pass.
 
+### Native ROM selector source, description and chronological lookup, 2026-10-15
+
+The [actual native selector](../Signatures/Runtime/BackendSchnorrROMSelection.lean)
+verifies the returned Schnorr equation, reverses and scans the live cache, and
+checks the selected ordinal against `qH + 1`. Empty pass results reject; singleton
+results equal the existing source selector exactly. Every result list has defined
+semantics (the fold keeps the last result's selection), and its encoded choice
+equals its source interpretation on all inputs. Every returned index is at most
+`qH`. No default message or finite message domain is required.
+
+The [stored-code bound](../Signatures/Runtime/BackendSchnorrROMSelectionDescription.lean)
+counts the actual compiled verifier, reversal, scan and guard, including the
+`qH + 1` literal. It stores the scan body once. With `s(op)` the primitive's
+stored size and `a` the local description allowance, the bound is
+
+```text
+2*s(scale₁) + s(add₁) + 2*s(point₁Eq) + s(messageEq)
+  + s(natAdd) + s(natLt) + qH + 4096*a + 16.
+```
+
+The [scan-step cost](../Signatures/Runtime/BackendSchnorrROMLiveIndexCost.lean),
+[complete fold cost](../Signatures/Runtime/BackendSchnorrROMLiveIndexFold.lean)
+and [complete chronological lookup](../Signatures/Runtime/BackendSchnorrROMLiveIndexBudget.lean)
+bound the actual compiled canonical expressions. A remaining-cell invariant
+bounds the growing ordinal. Reversal, the original cache, intermediate reversed
+cache, trailing environments and all copies/control work are charged. Comparison
+contracts concern encountered cells and the fixed target; the theorem supplies
+the scan and reversal budgets internally. There is no message-space iteration.
+
+[Polynomial closure](../Signatures/Runtime/BackendSchnorrROMSelectionPolynomial.lean)
+covers this complete lookup formula and the selector-description formula from
+encoded widths, encountered-cache capacity, primitive costs/sizes, query allowance
+and structural overhead. This does **not** yet certify the selector's entire
+runtime: verification, guard, outer result fold and adapters still need composition.
+Installing both passes and this selector in the controller, whole-solver runtime
+and stored-code closure, and public/family security endpoints remain open.
+
+[Regressions](../SignaturesTest/SchnorrROMSelection.lean) check empty results,
+the final-query slot at `qH = 0`, chronological indexing, out-of-range rejection,
+managed/live-cache separation, failed verification, duplicate keys and malformed
+multi-result lists. Guards require the actual compiled lookup, reject finished
+component budgets and finite/default-message premises, and check standard axioms.
+
+Validation: the six proof modules, new selector regressions and aggregate imports
+passed without warnings using serial `-j1 -M8192` and default proof limits. All
+788 relative links in the two guides resolve; whitespace checks pass.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -3073,8 +3124,9 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Use the complete measured-resource pass runtime, stored-code bounds and output
   invariants for both executions. Its runtime formula has polynomial closure;
   initial/replay tape capacities and adaptive reservations remain explicit.
-- Implement and certify the selector, then install it and the complete pass
-  in the native controller.
+- Finish the selector's verification/guard/outer-fold runtime composition using
+  its proved source, stored-code and complete chronological-lookup bounds, then
+  install it and the complete pass in the native controller.
   The finite-cache general pass, its capacity
   bounds and exact fork/extraction correspondence are proved; native cache/signing
   kernels have semantics, stored-code and complete runtime bounds. Draws, reset,
@@ -3083,7 +3135,8 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
   pass has exact source correspondence, measured completion, complete stored-code
   and runtime bounds, and polynomial runtime closure.
   The generic native fork accepts the implemented `.list cachePassOutput` output:
-  empty for cutoff, singleton for completion. Selection must reject empty results.
+  empty for cutoff, singleton for completion. The implemented selector rejects
+  empty results and agrees with the source selector on singleton results.
   The pass source law and singleton completion are proved from measured fuel on
   every raw tape. Transport this embedding through the fork without assuming a
   free default message or an executable projection from an arbitrary optional result.
@@ -4816,6 +4869,12 @@ additional axioms or proof-resource overrides.
 - [x] Derive complete pass runtime from measured caller/sampler resources and
   local boundary contracts, including setup, terminal handling and both outcomes;
   prove polynomial closure of the full installed runtime formula.
+- [x] Implement native selection, prove source correspondence on every result
+  list and singleton agreement, and charge its entire stored description.
+- [x] Derive complete chronological live-index runtime, including reversal,
+  scan, growing counters and retained copies, with polynomial closure.
+- [ ] Derive complete selector verification/guard/outer-fold runtime and its
+  polynomial closure from primitive and encoding contracts.
 - [ ] Install and certify the final general-caller pass/selector with replay costs
   recovered from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the
