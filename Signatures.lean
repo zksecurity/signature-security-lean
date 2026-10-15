@@ -31,6 +31,7 @@ import Signatures.Runtime.BackendSchnorrAGMHashDispatchBudget
 import Signatures.Runtime.BackendListSnoc
 import Signatures.Runtime.BackendSchnorrAGMProgramming
 import Signatures.Runtime.BackendSchnorrAGMSigningBudget
+import Signatures.Runtime.BackendSchnorrAGMSigningDispatchBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -191,7 +192,9 @@ derived preparation/control/time/code bounds and exact source correspondence.
 The all-shape hash dispatcher now charges both singleton scans, default creation,
 branch selection and malformed-state construction. It agrees with the source
 handler at its scalar/state interface, and rejection never calls the sampler.
-Random/signing handlers, final extraction, complete solver runtime and general-caller
+The signing dispatcher now handles every request shape, constructs scalar/group-list
+replies and charges both accepted and rejected paths, including ignored coefficient
+rows. Random handling, final extraction, complete solver runtime and general-caller
 composition (including external request/reply packing) remain open.
 
 The public security statements' axiom footprints are exactly

@@ -256,12 +256,21 @@ It exactly realizes the source's accepted signing branch, preserving cache
 entries on collisions and appending both histories in order. Its
 [derived budget](../Signatures/Runtime/BackendSchnorrAGMSigningBudget.lean)
 charges the full internal path, including retained state, adapters and control.
-The stored-code bound is independent of cache and history lengths. This uses an
-internal generator/public-key/message/state interface: request parsing,
-malformed-signing rejection, ignored coefficient-row transfer and external
-reply construction still require their complete handler/caller costs.
+The stored-code bound is independent of cache and history lengths.
 
-The hash dispatcher also uses an internal scalar/state interface. Signing dispatch, the random handler,
+The [signing dispatcher](../Signatures/Runtime/BackendSchnorrAGMSigningDispatch.lean)
+accepts raw group and coefficient lists. A compiled emptiness scan selects the
+accepted signing core or malformed rejection. Rejection sets only the malformed
+flag, returns scalar zero with no group elements, and makes no scalar draws.
+Acceptance constructs the scalar response and singleton commitment list. The
+[complete budget](../Signatures/Runtime/BackendSchnorrAGMSigningDispatchBudget.lean)
+charges the scan, retained input, routing and both reply constructors, and the
+input-size bound includes every coefficient row even though signing ignores
+their values. The tuple/list result has an exact correspondence to the source
+reply. Its conversion to the caller's indexed request/reply interface remains
+part of general-caller composition.
+
+The hash dispatcher still uses an internal scalar/state interface. The random handler,
 final extraction, full solver accounting and general-caller composition,
 including external request/reply packing, remain open; these component certificates
 are not yet a certificate for the full solver.
