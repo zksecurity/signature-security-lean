@@ -136,13 +136,23 @@ The [complete private-draw budget](../Signatures/Runtime/BackendSchnorrRawUnifor
 combines preparation, scan, sampling, append and routing for the actual program.
 Its [polynomial closure](../Signatures/Runtime/BackendSchnorrRawUniformPolynomial.lean)
 depends on encoded widths, tape capacities and primitive costs; numeric arity
-need not be polynomial. Native challenge/reset/controller handling and full
-general-caller composition are still open.
+need not be polynomial.
+
+The [native challenge handler](../Signatures/Runtime/BackendSchnorrRawChallenge.lean)
+consumes the first challenge cell on a hit and runs the supplied scalar sampler
+only on a miss. Its full-state source correspondence and stored-code bound include
+the actual scalar-sampling program. Its
+[complete runtime budget and polynomial closure](../Signatures/Runtime/BackendSchnorrRawChallengeBudget.lean)
+charge scan, append, retained data, sampling and control routing, using the same
+tape encoding invariants. Native reset/controller handling and full general-caller
+composition are still open.
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
 exact computation equality and the native theorem/axiom scope. Cost guards
 reject premises supplying completed component budgets and require the complete
-native program's all-path runtime conclusion.
+native program's all-path runtime conclusion. Challenge regressions check
+interleaved private/field cells, first-hit consumption and chronological append;
+the only supplied component budget is the scalar sampler's.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape

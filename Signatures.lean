@@ -58,6 +58,7 @@ import Signatures.Schnorr.Proofs.LazyROM
 import Signatures.Runtime.SchnorrRawFork
 import Signatures.Runtime.SchnorrRawTapeBounds
 import Signatures.Runtime.BackendSchnorrRawUniformPolynomial
+import Signatures.Runtime.BackendSchnorrRawChallengeBudget
 import Signatures.Runtime.BackendCoronSecurity
 import Signatures.Runtime.BackendCoronPolynomial
 import Signatures.Runtime.BackendCoronFamilySecurity

@@ -1,13 +1,14 @@
 import Signatures.Runtime.SchnorrRawFork
 import Signatures.Runtime.SchnorrRawTapeBounds
 import Signatures.Runtime.BackendSchnorrRawUniformPolynomial
+import Signatures.Runtime.BackendSchnorrRawChallengeBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
 /-! Raw replay must preserve every private draw in its original family order.
 The native private draw takes a dynamic arity and uses stored naturals directly
-on valid hits. Capacity/encoding and complete native private-draw costs are
-checked; the full controller/general-caller certificate remains separate. -/
+on valid hits. Both raw draw families have checked capacity/encoding and native
+costs; the full controller/general-caller certificate remains separate. -/
 
 open OracleComp OracleSpec Signatures.Runtime
 open Signatures.Runtime.Schnorr Signatures.Runtime.Schnorr.RawTape
@@ -95,6 +96,31 @@ example (Γ : List (Ty CryptoAtom)) :
     SeedTape.popCode.weakenTail Γ = SeedTape.NativeScan.scan (Γ := Γ) :=
   SeedTape.NativeScan.scan_eq Γ
 
+private def challengeState : RawTape.State F :=
+  ⟨[(3, 0, 1), (1, 2, 0), (3, 0, 0), (1, 4, 0)],
+    [(3, 0, 1), (1, 2, 0), (3, 0, 0), (1, 4, 0)]⟩
+
+/-- A challenge hit consumes the first challenge without reordering private
+draws or changing the saved transcript. The later challenge stays available. -/
+example : NativeChallenge.prepareExpression.denote
+    (arithmetic F F F Nat Nat PrimitiveCosts.unit)
+    (NativeUniform.encodeState challengeState, ()) =
+      (true, (2, (challengeState.saved, [(3, 0, 1), (3, 0, 0), (1, 4, 0)]))) := by
+  rw [NativeChallenge.prepareExpression_value]
+  rfl
+
+example : NativeChallenge.prepareExpression.denote
+    (arithmetic F F F Nat Nat PrimitiveCosts.unit) (([(3, 0, 1)], [(3, 0, 1)]), ()) =
+      (false, (0, ([(3, 0, 1)], [(3, 0, 1)]))) := by
+  rw [NativeChallenge.prepareExpression_value]
+  rfl
+
+example : NativeChallenge.saveExpression.denote
+    (arithmetic F F F Nat Nat PrimitiveCosts.unit) ((4, ([(3, 0, 1)], [(3, 0, 1)])), ()) =
+      (4, ([(3, 0, 1), (1, 4, 0)], [(3, 0, 1)])) := by
+  rw [NativeChallenge.saveExpression_value]
+  rfl
+
 open Lean Meta in
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
@@ -117,11 +143,17 @@ run_meta do
       ``SeedTape.NativeScan.scan_eq, ``SeedTape.NativeScan.step_invariant,
       ``SeedTape.NativeScan.fold_invariant, ``SeedTape.NativeScan.body_time,
       ``SeedTape.NativeScan.forward_time, ``SeedTape.NativeScan.scan_time, ``SeedTape.NativeScan.scan_cost,
-      ``NativeUniform.prepare_cost, ``NativeUniform.bound, ``NativeUniform.runtimeBound_polynomial] do
+      ``NativeUniform.prepare_cost, ``NativeUniform.bound, ``NativeUniform.runtimeBound_polynomial,
+      ``NativeChallenge.prepareExpression_value, ``NativeChallenge.saveExpression_value,
+      ``NativeChallenge.denote, ``NativeChallenge.source, ``NativeChallenge.description,
+      ``NativeChallenge.prepare_property, ``NativeChallenge.save_property,
+      ``NativeChallenge.output_size, ``NativeChallenge.prepare_size,
+      ``NativeChallenge.prepare_cost, ``NativeChallenge.save_cost, ``NativeChallenge.bound,
+      ``NativeChallenge.runtimeBound_polynomial] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
-  for name in #[``RawTape.fork_eq_lazy, ``RawTape.dlogReduction_eq_lazy] do
+  for name in #[``RawTape.fork_eq_lazy, ``RawTape.dlogReduction_eq_lazy, ``NativeChallenge.source] do
     forallTelescope (← getConstInfo name).type fun _ conclusion => do
       unless conclusion.isAppOf ``Eq do
         throwError "{name}: must be computation equality"
@@ -142,7 +174,8 @@ run_meta do
           if (type.isAppOf ``Finite || type.isAppOf ``Fintype || type.isAppOf ``Countable) &&
               (type.find? (fun e => e == param)).isSome then
             throwError "raw finite-list security must preserve arbitrary message types"
-  for name in #[``NativeUniform.code, ``NativeUniform.descriptionBound] do
+  for name in #[``NativeUniform.code, ``NativeUniform.descriptionBound,
+      ``NativeChallenge.code, ``NativeChallenge.descriptionBound] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         if (← inferType param).isConstOf ``Nat then
@@ -158,15 +191,33 @@ run_meta do
             ``BackendProgram.Expression.compile, ``BackendProgram.Expression.compileBound] do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
             throwError "{name}: completed adapter/compiled-expression costs must be derived"
-  for name in #[``NativeUniform.saveTime, ``NativeUniform.prepareTime, ``NativeUniform.runtimeBound] do
+  for name in #[``NativeUniform.saveTime, ``NativeUniform.prepareTime, ``NativeUniform.runtimeBound,
+      ``NativeChallenge.prepareTime, ``NativeChallenge.saveTime, ``NativeChallenge.runtimeBound] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         if (← inferType param).isConstOf ``Nat then
           unless #[`width, `savedCap, `remainingCap, `comparisonTime, `zeroTime, `addTime,
-              `requestTime, `responseTime, `queryTime].contains (← getFVarLocalDecl param).userName do
+              `requestTime, `responseTime, `queryTime, `sampleTime].contains (← getFVarLocalDecl param).userName do
             throwError "{name}: runtime must depend on encoded width, tape capacities and primitive costs, not numeric arity"
-  forallTelescope (← getConstInfo ``NativeUniform.bound).type fun _ conclusion => do
-    unless conclusion.isAppOf ``BackendProgram.Bounds do
-      throwError "private-draw runtime must bound the entire native program on all supported runs"
+  for name in #[``NativeUniform.bound, ``NativeChallenge.bound] do
+    forallTelescope (← getConstInfo name).type fun _ conclusion => do
+      unless conclusion.isAppOf ``BackendProgram.Bounds do
+        throwError "{name}: runtime must bound the entire native program on all supported runs"
+  for name in #[``NativeChallenge.prepare_cost, ``NativeChallenge.save_cost, ``NativeChallenge.bound] do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let type ← inferType param
+        for forbidden in #[``NativeChallenge.prepare, ``NativeChallenge.save, ``NativeChallenge.code,
+            ``SeedTape.popCode, ``BackendProgram.Expression.compile, ``BackendProgram.Expression.compileBound] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "{name}: challenge handler/component costs must be derived"
+  forallTelescope (← getConstInfo ``NativeChallenge.bound).type fun params _ => do
+    let some sampler ← params.findM? (fun param => return (← getFVarLocalDecl param).userName == `sampler)
+      | throwError "challenge handler must take actual scalar-sampling code"
+    for param in params do
+      let type ← inferType param
+      if type.isAppOf ``BackendProgram.Bounds then
+        unless type.getAppArgs.contains sampler do
+          throwError "challenge handler may assume only the scalar sampler's component budget"
 
 end SignaturesTest.SchnorrRawTape
