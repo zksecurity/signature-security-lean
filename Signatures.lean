@@ -37,6 +37,8 @@ import Signatures.Runtime.BackendSchnorrAGMHandlerDescription
 import Signatures.Runtime.BackendSchnorrAGMHandlerPrimitiveBudget
 import Signatures.Runtime.BackendSchnorrAGMCallerBudget
 import Signatures.Runtime.BackendSchnorrAGMOutputSize
+import Signatures.Runtime.BackendSchnorrAGMExtractionDescription
+import Signatures.Runtime.BackendSchnorrAGMExtractionDecodedBudget
 import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
@@ -203,8 +205,11 @@ rows. Random handling makes one runtime-selected uniform query even for malforme
 requests, with derived conversion, scan, state and reply costs. The complete native
 dispatcher now installs all three handlers with request retention and indexed
 reply tagging. General callers have exact adaptive source correspondence and
-complete stored-code bounds. Composed handler/caller runtime, final extraction
-and complete solver accounting remain open.
+complete stored-code bounds. Indexed handler/caller runtime is derived from
+primitive contracts and measured attacker resources. The native final extractor
+has exact scalar/state source semantics, a stored-code bound and a decoded-path
+runtime bound. Outer extraction dispatch, output conversion and complete solver
+accounting remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

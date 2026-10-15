@@ -348,8 +348,23 @@ bounds the message, scalar, group/row counts and each coefficient-row length
 from that return, including malformed outputs. Equal-size boundary encodings
 give identity size recovery; actual conversion code still requires charging.
 
-Final extraction, the executable output adapter and full solver accounting
-remain open; this is not yet a resource certificate for the full solver.
+[Native final extraction](../Signatures/Runtime/BackendSchnorrAGMExtraction.lean)
+now handles every output shape. It scans both lists, retains the response,
+flattens coefficients, reads the first cached entry and performs the scalar
+extraction. Missing explanations return zero; malformed outputs return zero
+without changing the state or sampling. The
+[source projection proof](../Signatures/Runtime/SchnorrAGMExtraction.lean)
+shows exact scalar/state agreement with the original final step: its verification
+Boolean is discarded by the original DLog solver. The entry read returns the
+cached explanation directly, avoiding another scan while preserving first-entry
+semantics, fresh draws and the bad-event flag.
+
+The [full stored-code bound](../Signatures/Runtime/BackendSchnorrAGMExtractionDescription.lean)
+and [decoded extraction runtime](../Signatures/Runtime/BackendSchnorrAGMExtractionDecodedBudget.lean)
+are derived from primitives, encoding and scalar-sampler contracts. Composing the
+outer shape-dispatch runtime, implementing the source-output adapter and deriving
+full solver resources remain open; this is not yet a resource certificate for
+the full solver.
 
 ## What Efficiency Is Certified
 
