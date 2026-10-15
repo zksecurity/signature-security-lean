@@ -81,6 +81,14 @@ count saved/remaining cells and ambient draws independently of the universe of
 sampling families. These local results do not yet transport the fixed-tape fork
 probability theorem or certify native execution and encoded memory costs.
 
+The [joint deferred-sampling law](../Signatures/Runtime/SeededDeferredTrace.lean)
+now preserves the first output, complete transcript and original seed while
+moving generation of unused entries after the first run. The
+[suffix-sampling law](../Signatures/Runtime/SeededSuffixSampling.lean) removes
+those independent entries from a second execution after a valid reset. Both use
+native measure statements. Their composition with Schnorr's actual selector,
+challenge guard and fork acceptance checks is still required.
+
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape
 reduction. Its original `SourceCertificate` supplies both semantics and resources;

@@ -151,7 +151,10 @@ oracle computations. The first run records exactly its chronological draws;
 reset preserves both private families, including their post-challenge suffixes.
 Single-run seeded semantics and query-dependent saved/remaining-cell bounds are
 proved without enumerating possible sampling families. The joint lazy-fork
-probability bridge and native execution/encoding bounds remain unfinished.
+probability bridge now has generic deferred-sampling lemmas preserving the first
+output, full transcript and original seed, plus removal of independent unused
+suffixes after a valid reset. Composing these with the actual fork controller
+and proving native execution/encoding bounds remain unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -175,7 +178,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. General lazy-tape semantics, exact first-run recording, and query-dependent cell/query bounds are now proved. | Joint lazy-fork probability bridge, general caller composition and native replay costs; efficient randomness encoding and size bounds. |
+| Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. General lazy-tape semantics, query-dependent cell/query bounds, and generic joint deferred-sampling/reset-suffix laws are proved. | Compose the joint lazy-fork probability bridge, general caller composition and native replay costs; efficient randomness encoding and size bounds. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -1871,6 +1874,50 @@ Validation: all three new modules, the new lazy-tape regression, the existing
 `-j1 -M8192` and default proof limits. No warnings, admissions or nonstandard
 axioms were introduced; all 680 local links in the four status guides resolve.
 
+### Joint deferred-sampling checkpoint, 2026-10-15
+
+[SeededDeferredStep](../Signatures/Runtime/SeededDeferredStep.lean) factors a
+requested dependent-family reply out of a full generated seed while preserving
+the entire residual seed. [SeededDeferred](../Signatures/Runtime/SeededDeferred.lean)
+extends this to arbitrary covered adaptive computations: unused entries may be
+sampled independently after the run, with their remaining capacities determined
+by the actual requests. Its capacity tracker erases exactly to the live source
+computation and is proof instrumentation only.
+
+[SeededTrace](../Signatures/Runtime/SeededTrace.lean) reconstructs the original
+covered seed from the consumed transcript and unused entries.
+[SeededDeferredTrace](../Signatures/Runtime/SeededDeferredTrace.lean) combines
+these facts into a joint law whose continuation receives the output, complete
+transcript and original seed. This retains the correlations needed by rewinding.
+It does not infer a two-run law from a first-run output marginal.
+
+[SeededSuffix](../Signatures/Runtime/SeededSuffix.lean) separates recorded
+prefixes from unused suffixes after a selected slot inside the recorded prefix.
+[SeededSuffixSampling](../Signatures/Runtime/SeededSuffixSampling.lean) then
+removes independent unused entries from the replay's sampling, including families
+first visited in the second run and the erased suffix of the changed family.
+The family list and generated unused entries occur only in the probability
+proof; the lazy implementation still stores encountered cells only.
+
+The distribution statements use the native measure interpretation.
+[SeededMeasure](../Signatures/Runtime/SeededMeasure.lean) explicitly transports
+the pinned library's discrete proof identities to that interpretation.
+[Regressions](../SignaturesTest/SeededDeferred.lean) check an adaptive choice of
+sampling family, joint observation of an unused value, untouched families,
+native measure specialization, the standard axiom footprint and absence of a
+finite-family-universe requirement.
+
+Validation: all seven new source modules, the new regression, the existing
+`SchnorrLazySeed` and `SeedTape` regressions and the aggregate `Signatures` import
+passed serially with `-j1 -M8192` and default proof limits. No warnings,
+admissions or nonstandard axioms were introduced. All 690 local links in the
+four status guides resolve.
+
+Still required: compose these generic laws with the actual lazy fork's selection,
+old/new challenge comparison and acceptance checks; prove the valid-slot premise
+from Schnorr's selector; connect the resulting law to the fixed-tape security
+theorem; and derive the native general-caller/code/encoding costs.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -3542,6 +3589,9 @@ additional axioms or proof-resource overrides.
 - [x] Define lazy retained randomness for arbitrary replay computations; prove
   exact single-run seeded semantics, joint first-run recording, preservation of
   private suffixes on reset, and query-dependent tape-cell/ambient-call bounds.
+- [x] Prove joint deferred sampling with the original seed and complete first
+  transcript, and remove unused independent suffixes after a valid reset,
+  including dependent families first queried in the second run.
 - [ ] Prove the joint lazy-fork probability bridge and derive native encoding,
   replay and general-caller execution costs.
 - [ ] Complete general Schnorr ROM replay; cover the

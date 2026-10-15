@@ -50,6 +50,8 @@ import Signatures.Runtime.SchnorrSeededSecurity
 import Signatures.Runtime.SchnorrSeededPassBudget
 import Signatures.Runtime.SeedTapeReset
 import Signatures.Runtime.SchnorrLazySeedLog
+import Signatures.Runtime.SeededDeferredTrace
+import Signatures.Runtime.SeededSuffixSampling
 import Signatures.Runtime.BackendCoronSecurity
 import Signatures.Runtime.BackendCoronPolynomial
 import Signatures.Runtime.BackendCoronFamilySecurity
