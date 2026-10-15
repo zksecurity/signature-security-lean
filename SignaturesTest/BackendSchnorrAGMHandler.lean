@@ -1,4 +1,5 @@
 import Signatures.Runtime.BackendSchnorrAGMHandlerDescription
+import Signatures.Runtime.BackendSchnorrAGMHandlerPrimitiveBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -126,6 +127,41 @@ example (input : F) (q : SourceRequest F F Nat) (next : (sourceSpec F F Nat).Ran
   simp [runWithInput, runWith, unroll, hv]
 
 end Native
+
+-- Primitive-derived component budgets must stay available for infinite
+-- message types and must not turn completed native programs into premises.
+open Lean Meta in
+run_meta do
+  let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
+  let publicBounds := #[``HandlerComponents.random_bound, ``HandlerComponents.signing_bound,
+    ``HandlerComponents.hash_bound]
+  for name in publicBounds ++ #[``HashDispatch.histories_run,
+      ``HandlerComponents.store_mono, ``HandlerComponents.read_state,
+      ``HandlerComponents.random_input, ``HandlerComponents.signing_input, ``HandlerComponents.hash_input,
+      ``HandlerComponents.config_size, ``HandlerComponents.store_size, ``HandlerComponents.args_size,
+      ``HandlerComponents.input_size, ``HandlerComponents.output_size,
+      ``HandlerComponents.randomInput_cost, ``HandlerComponents.hashInput_cost, ``HandlerComponents.signingInput_cost,
+      ``HandlerComponents.groupOutput_cost, ``HandlerComponents.hashOutput_cost,
+      ``HandlerComponents.random_bound_of_native, ``HandlerComponents.signing_bound_of_native,
+      ``HandlerComponents.hash_bound_of_native] do
+    for axiomName in (← collectAxioms name) do
+      unless allowed.contains axiomName do
+        throwError "{name}: unexpected axiom {axiomName}"
+  for name in publicBounds do
+    forallTelescope (← getConstInfo name).type fun params _ => do
+      for param in params do
+        let type ← inferType param
+        if type.isAppOf ``Finite || type.isAppOf ``Fintype then
+          throwError "{name}: unexpected finite-domain premise"
+        for forbidden in #[``HandlerComponents.random, ``HandlerComponents.hash, ``HandlerComponents.signing,
+            ``HandlerComponents.localCode, ``Random.code, ``HashDispatch.code, ``SigningDispatch.code,
+            ``Signing.code, ``Hash.code, ``Read.code, `Signatures.Runtime.AGM.SourceCertificate,
+            `Signatures.Runtime.Schnorr.SourceCertificate, `Signatures.Runtime.GeneralCaller.Budget] do
+          if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+            throwError "{name}: assumes completed component efficiency or restricts attacker implementation"
+        if name == ``HandlerComponents.random_bound &&
+            (type.find? (fun e => e.isConstOf ``Bounds)).isSome then
+          throwError "{name}: assumes a completed sampler budget"
 
 open Lean Meta in
 run_meta do

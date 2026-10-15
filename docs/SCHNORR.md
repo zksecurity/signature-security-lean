@@ -297,9 +297,27 @@ and observable query-fuel cutoff; the implementation/termination contract rules
 out cutoff for the source program. The
 [stored-code bound](../Signatures/Runtime/BackendSchnorrAGMHandlerDescription.lean)
 includes all installed components, request conversion, reply tagging and caller
-routing, without tables over messages or random arities. Composed handler/caller
-runtime, final extraction and full solver accounting remain open; these results
-are not yet a resource certificate for the full solver.
+routing, without tables over messages or random arities.
+
+The [shared size invariant](../Signatures/Runtime/BackendSchnorrAGMHandlerSize.lean)
+accounts for the public configuration, original request and every coefficient
+row. It converts cell-count bounds on histories to the read invariant without
+inflating them after each hash. The
+[compiled adapter costs](../Signatures/Runtime/BackendSchnorrAGMHandlerLocalCost.lean)
+cover all three input conversions, common reply packing and construction of the
+hash reply's empty group list. The
+[common-store component bounds](../Signatures/Runtime/BackendSchnorrAGMHandlerPrimitiveBudget.lean)
+derive each complete component budget from primitive contracts. Each adds at
+most `2061 * overhead (8192 * W)` to its established native dispatch budget,
+where `W` is the explicit shared frame bound. This includes config retention,
+both local adapters and their control boundaries. Random requests preserve all
+capacities; hash requests can add one cache entry while preserving both actual
+histories; signing can grow all three capacities by one.
+
+Indexed request conversion, original-request retention, reply tagging and caller
+runtime still require composition with these component certificates. Final
+extraction and full solver accounting also remain open; these results are not
+yet a resource certificate for the full solver.
 
 ## What Efficiency Is Certified
 

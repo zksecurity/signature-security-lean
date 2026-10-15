@@ -131,6 +131,37 @@ theorem denote (input : inputTy.Value (cryptoBase F G₁ G₂ K M)) :
         | nil => simp [code, Code.denote, routeValue, prepareValue]
         | cons coeff' cs => simp [code, Code.denote, routeValue, prepareValue, rejectValue, ListSingleton.value_multiple]
 
+/-- Every hash-request shape preserves the actual histories. This also holds
+for noncanonical encoded states and for rejected requests. -/
+theorem histories_run (control : ControlCosts) (queryCost : (i : Nat) → unifSpec.Range i → Nat)
+    (input : inputTy.Value (cryptoBase F G₁ G₂ K M)) :
+    ∀ out ∈ support ((code rep data cost primitive sampler).run control queryCost input),
+    out.value.2.2.1 = input.2.2.2.2.1 ∧ out.value.2.2.2.1 = input.2.2.2.2.2.1 := by
+  intro out hout
+  have h := Code.value_mem_denote control queryCost (code rep data cost primitive sampler) input out hout
+  rw [denote] at h
+  rcases input with ⟨m, groups, rows, state⟩
+  rcases groups with _ | ⟨R, _ | ⟨R', gs⟩⟩
+  · simp only [support_pure, Set.mem_singleton_iff] at h
+    rw [h]
+    exact ⟨rfl, rfl⟩
+  · rcases rows with _ | ⟨coeff, _ | ⟨coeff', cs⟩⟩
+    · simp only [support_pure, Set.mem_singleton_iff] at h
+      rw [h]
+      exact ⟨rfl, rfl⟩
+    · dsimp only at h
+      rw [Hash.denote, Read.denote] at h
+      simp only [support_map, Set.mem_image] at h
+      obtain ⟨r, _, hr⟩ := h
+      rw [← hr]
+      exact ⟨rfl, rfl⟩
+    · simp only [support_pure, Set.mem_singleton_iff] at h
+      rw [h]
+      exact ⟨rfl, rfl⟩
+  · simp only [support_pure, Set.mem_singleton_iff] at h
+    rw [h]
+    exact ⟨rfl, rfl⟩
+
 /-- Malformed requests do not call even an arbitrary effectful scalar sampler. -/
 theorem malformed_run (other : Code Q unifSpec iface rep.data.unit (rep.ty scalar))
     (control : ControlCosts) (queryCost : (i : Nat) → unifSpec.Range i → Nat)

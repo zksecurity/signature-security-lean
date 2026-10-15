@@ -111,8 +111,12 @@ preserved store capacities and derived conversion/scan/state/reply budgets.
 The native dispatcher now installs all three handlers with request retention,
 common-store adapters and dependent reply tagging. General quantitative callers
 have exact adaptive source correspondence and complete stored-code bounds.
-Composed handler/caller runtime, final extraction and complete solver overhead
-remain open.
+Shared request/store size bounds now cover every retained row and the public
+configuration. All five compiled common-store adapters have derived local costs,
+and each installed component has a complete primitive-derived runtime bound.
+Hash dispatch preserves both actual histories for all request shapes, so its
+shared state invariant grows only the cache capacity. Indexed routing/tagging,
+caller runtime, final extraction and complete solver overhead remain open.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller overhead/replay routes and
@@ -137,7 +141,7 @@ machine results, not completion of this broader objective.
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. | General caller composition and replay; efficient randomness encoding and size bounds. |
-| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, component runtime certificates, and the installed native dispatcher with exact adaptive general-caller source correspondence and complete stored-code bounds. | Composed handler/caller runtime from attacker resources, final extraction and complete solver overhead. |
+| Schnorr AGM | Original adaptive source-game security, exact finite-list solver refinement, query-dependent storage capacities, primitive-derived common-store component runtime certificates, and the installed native dispatcher with exact adaptive general-caller source correspondence and complete stored-code bounds. | Indexed routing/tagging and caller runtime from attacker resources, final extraction and complete solver overhead. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
@@ -3097,6 +3101,10 @@ additional axioms or proof-resource overrides.
 - [x] Install indexed request/reply adapters and all three handlers in the native
   general caller, with exact adaptive finite-list source correspondence and
   complete stored-code bounds.
+- [x] Derive shared request/store invariants and all five compiled common-store
+  adapter costs. Compose primitive-derived random/hash/signing budgets with
+  config retention, reply construction and control costs; preserve each
+  component's cache/history capacity growth without any finite-domain premise.
 - [ ] Derive composed handler/caller runtime from primitive and attacker resources,
   charging all incoming/outgoing representations, tagging and retained data.
 - [ ] Add Schnorr AGM overhead and general Schnorr ROM replay; cover the
