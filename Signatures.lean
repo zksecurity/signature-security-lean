@@ -55,6 +55,8 @@ import Signatures.Runtime.SeededSuffixSampling
 import Signatures.Runtime.SeededForkReachability
 import Signatures.Runtime.SchnorrLazyFork
 import Signatures.Schnorr.Proofs.LazyROM
+import Signatures.Runtime.SchnorrRawFork
+import Signatures.Runtime.BackendSchnorrRawUniform
 import Signatures.Runtime.BackendCoronSecurity
 import Signatures.Runtime.BackendCoronPolynomial
 import Signatures.Runtime.BackendCoronFamilySecurity

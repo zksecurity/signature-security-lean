@@ -158,8 +158,11 @@ selector-reachability property. The named lazy Schnorr reduction now inherits
 the full EUF-CMA bound, including extraction and averaging over keys. Its program
 and security theorem take no family cover or private-query capacity: a finite
 reference cover is derived internally, and the hash coordinate follows from the
-source query allowance. General-caller composition, the connection to the
-native finite-list runner and native execution/encoding bounds remain unfinished.
+source query allowance. The raw finite-list controller now implements that named
+reduction by exact computation equality. Its native dynamic private-draw component
+has proved state correspondence and a stored-code bound independent of arity.
+General-caller composition, the remaining native controller and native
+execution/encoding bounds remain unfinished.
 
 Remaining: instantiate the fixed backend in a conventional machine if making that
 stronger claim; complete Schnorr's general-caller ROM overhead/replay routes and
@@ -183,7 +186,7 @@ machine results, not completion of this broader objective.
 | BLS AGM | Complete lazy native runtime/code certificates, resource-indexed DLog security, short public concrete statements, and a nonuniform asymptotic corollary with derived polynomial solver bounds. General realized callers, arbitrary messages, and the original probability loss are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | OOPS AGM | Complete native certificates, concrete security, short public statements and nonuniform family security with derived polynomial resources. General realized callers, arbitrary topics and the original admissibility rule are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
-| Schnorr ROM | Forking probability proof, costed replay, complete fixed-private-tape controller, and arithmetic/bit endpoints for certified source attackers. General finite-list lazy fork has exact joint correspondence with the pregenerated fork. The named lazy reduction has the original EUF-CMA bound through extraction and key averaging, for arbitrary messages and only the ordinary signing/hash allowances; the reference cover is derived internally. | General caller composition and native replay costs; connect the named raw computation to the finite-list runner; efficient randomness encoding and size bounds. |
+| Schnorr ROM | The named lazy reduction has the original EUF-CMA bound for arbitrary messages and ordinary signing/hash allowances, with reference coverage derived internally. Its raw finite-list controller/extractor has exact computation correspondence. Native dynamic private draws have full-state correspondence and arity-independent stored-code bounds. Earlier certified-source arithmetic/bit endpoints remain available. | Complete the native controller and general caller composition; derive native replay runtime and encoded-size bounds. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 | Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
 
@@ -2038,6 +2041,48 @@ serially with `-j1 -M8192` and default proof limits, without warnings or admissi
 The regression checks only the standard three axioms. All 587 local links in the
 updated guides resolve; `git diff --check` passes.
 
+### Raw finite-list runner and native dynamic private draws, 2026-10-15
+
+[SchnorrRawTape](../Signatures/Runtime/SchnorrRawTape.lean) reuses the existing
+cell lists, scan and reset operations for precisely the raw two-family interface
+of `LazyROM`. It proves the complete first-run output/tape law, exact seeded
+replay and reset correspondence. Caller and simulator uniform draws remain in
+their original families and order; the proof does not assume that splitting or
+expanding a private family commutes with a fork.
+
+[SchnorrRawFork](../Signatures/Runtime/SchnorrRawFork.lean) implements the full
+finite-list controller. `fork_eq_lazy` and `dlogReduction_eq_lazy` are computation
+equalities, including selection, fresh sampling, collision rejection, both runs,
+second-selection agreement and extraction. `RawTape.security` therefore inherits
+the named theorem without additional attacker or private-seed premises.
+
+[SchnorrRawTapeValid](../Signatures/Runtime/SchnorrRawTapeValid.lean) proves that
+recorded private naturals fit their requested sampling ranges, and that draws,
+simulation and reset preserve this invariant. A valid hit can return the stored
+natural directly instead of running an arity-specific decoder.
+
+[BackendSchnorrRawUniform](../Signatures/Runtime/BackendSchnorrRawUniform.lean)
+implements a native private draw from compiled expressions, structural code and
+the existing dynamic uniform sampler. The arity is an input value. The program
+computes its tag, scans encountered cells, returns and consumes a hit, or samples
+and appends a fresh reply. Its theorem preserves the full saved/remaining state
+on valid tapes. Its stored description is derived from the actual expression
+bodies and interface adapters, independently of input arity and tape length.
+This is not yet a native runtime or encoded-memory certificate for the whole
+reduction: challenge handling, complete caller/controller assembly and their
+resource proofs remain open.
+
+[Regressions](../SignaturesTest/SchnorrRawTape.lean) preserve two post-challenge
+private draws in the same family and their order, check reset validity and
+million-sized dynamic hit/miss/append behavior, and guard computation equality,
+native probability semantics, arbitrary messages and the standard three axioms.
+
+Validation: all four new source modules, the new `SchnorrRawTape` regression,
+the existing `SchnorrLazyROM` regression and the aggregate `Signatures` import
+passed serially with `-j1 -M8192` and default proof limits. No new warnings,
+admissions, nonstandard axioms or proof-option overrides were introduced.
+All 597 local links in the updated guides resolve; `git diff --check` passes.
+
 ### Schnorr general ROM replay remaining work
 
 Reuse the existing [fixed-private-tape probability theorem](../Signatures/Schnorr/Proofs/FixedTapeROM.lean)
@@ -2047,15 +2092,15 @@ The existing fixed-tape proof is not invalidated by widening the caller interfac
 - Use measured attacker resources for native replay storage and sampling costs.
   Probability-level private-family coverage is now derived without inspecting
   source syntax, but this finite existence argument supplies no efficiency bound.
-- Connect the named raw lazy reduction to the typed finite-list native runner.
-  Transport through extraction and the key-averaged security experiment is now
-  proved; the generic law preserves private suffixes and covers families first
-  seen on replay.
+- Complete the native challenge draw and caller/controller assembly on top of
+  the raw finite-list semantics. Exact list-controller and extraction equality
+  are now proved, and dynamic private-draw native code is implemented.
 - Charge both runs, seed/tape creation, access, reset, cache operations, checking,
   extraction, and fallback. Restarting from the initial state is sufficient;
   do not assume free snapshots of an arbitrary attacker state.
-- Use efficient encodings and samplers. The current codec's linear dependence on
-  a finite sampling range is not a polynomial-in-bit-length result. If bounded
+- Derive encoded-width and runtime bounds for the new dynamic tape operations.
+  They no longer generate arity-sized codec code; older fixed-arity endpoints
+  retain their linear-range accounting. If bounded
   sampling introduces error, prove and include its probability contribution.
 - Prove the native general-caller runner realizes the named lazy reduction whose
   probability law is now connected to the fixed-tape security argument.
@@ -3723,8 +3768,12 @@ additional axioms or proof-resource overrides.
 - [x] Derive the probability reference's private-family coverage without source
   syntax or additional caller premises; retain the actual `qH + 1` hash bound and
   remove the seed cover/private capacity from the main ROM probability endpoint.
-- [ ] Connect the named raw lazy reduction to the finite-list runner; derive
-  native encoding, replay and general-caller costs from measured resources.
+- [x] Implement the raw finite-list controller and extractor with exact
+  computation equality to the named lazy reduction and its security theorem.
+- [x] Preserve tape validity through replay/reset and implement native dynamic
+  private draws with full-state correspondence and arity-independent code bounds.
+- [ ] Complete native challenge/controller assembly and derive native encoding,
+  replay and general-caller costs from measured resources.
 - [ ] Complete general Schnorr ROM replay; cover the
   nonzero-nonce variant separately.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness

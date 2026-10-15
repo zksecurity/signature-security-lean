@@ -109,8 +109,25 @@ assert that the cover is small or efficiently computable.
 [Regressions](../SignaturesTest/SchnorrLazyROM.lean) check native measures,
 adaptive replay, an attacker with large adaptive sampling arities and no
 hash/sign calls, the message-type scope and the standard axiom footprint.
-Connecting this raw oracle computation to the finite-list native runner,
-general-caller composition and execution/code/encoding costs remain unfinished.
+
+[SchnorrRawTape](../Signatures/Runtime/SchnorrRawTape.lean) now implements the
+same raw families using the shared finite cell lists and scan/reset operations.
+[SchnorrRawFork](../Signatures/Runtime/SchnorrRawFork.lean) proves exact computation
+equality with the named lazy controller and DLog reduction, including extraction,
+and transfers its security theorem. Caller and simulator private draws keep
+their original ordering within each family; no randomness-family change is assumed.
+
+[Tape validity](../Signatures/Runtime/SchnorrRawTapeValid.lean) is preserved by
+draws, complete runs and reset, so stored private replies fit their requested
+ranges. The [native private draw](../Signatures/Runtime/BackendSchnorrRawUniform.lean)
+uses that fact to return a stored natural on a hit, or performs one dynamic
+uniform query and records it on a miss. Its code and proved description bound
+are independent of the input arity and tape length. Its complete state
+correspondence is proved. Native runtime/encoded-size bounds, the remaining
+native controller and general-caller composition are still open.
+[Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
+reset validity, million-sized dynamic arities, exact computation equality and
+the native theorem/axiom scope.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape
