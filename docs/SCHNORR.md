@@ -144,15 +144,28 @@ only on a miss. Its full-state source correspondence and stored-code bound inclu
 the actual scalar-sampling program. Its
 [complete runtime budget and polynomial closure](../Signatures/Runtime/BackendSchnorrRawChallengeBudget.lean)
 charge scan, append, retained data, sampling and control routing, using the same
-tape encoding invariants. Native reset/controller handling and full general-caller
-composition are still open.
+tape encoding invariants.
+
+The [native reset](../Signatures/Runtime/BackendSchnorrRawReset.lean) exactly
+implements raw-tape restart, retaining every private draw and only the requested
+challenge prefix before appending the replacement. Its stored-code bound is
+independent of the reset position and tape capacities. The
+[generic trim/reset cost](../Signatures/Runtime/BackendSeedTapeResetCost.lean)
+charges traversal, decrement/comparison operations, reversal and retained context.
+The [complete reset budget](../Signatures/Runtime/BackendSchnorrRawResetBudget.lean)
+also charges argument construction and both output tape copies. Its runtime
+has polynomial closure in encoded widths, capacities and primitive costs, with
+no iteration factor for the numeric reset position. Native controller assembly
+and full general-caller composition are still open.
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
 reset validity, dynamic arities up to `2^64`, two-run capacity reservations,
 exact computation equality and the native theorem/axiom scope. Cost guards
 reject premises supplying completed component budgets and require the complete
 native program's all-path runtime conclusion. Challenge regressions check
 interleaved private/field cells, first-hit consumption and chronological append;
-the only supplied component budget is the scalar sampler's.
+the only supplied component budget is the scalar sampler's. Reset regressions
+check empty tapes, retained private suffixes, both identical output lists, and a
+`2^64` reset position. Its runtime theorem takes no completed reset-cost premise.
 
 [SchnorrSeededSecurity.security](../Signatures/Runtime/SchnorrSeededSecurity.lean)
 now proves the same native EUF-CMA inequality for a source-derived fixed-tape
