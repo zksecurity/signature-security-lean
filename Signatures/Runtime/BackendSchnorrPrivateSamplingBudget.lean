@@ -5,7 +5,8 @@ import Signatures.Runtime.BackendLanguageBudget
 
 /-! The typed tape handler's complete routing budget, composed with the native
 uniform-draw certificate. Runtime reply conversion is charged explicitly.
-Lifting an entire sampler still requires its execution-resource composition. -/
+Whole-sampler resource composition is proved in
+`BackendSchnorrPrivateSamplingResources`. -/
 
 open OracleComp OracleSpec PFunctor
 

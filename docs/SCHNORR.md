@@ -201,8 +201,14 @@ and requests. [Resource recovery](../Signatures/Runtime/BackendStateSimulationRe
 pairs these source resources with the transformed program's actual costed run;
 both computation projections are proved exact. [Structural cost bounds](../Signatures/Runtime/BackendStateSimulationRouting.lean)
 charge the added adapters and retained state from primitive backend laws.
-The total sampler runtime inequality, including cumulative tape growth across
-all internal draws, still needs proving before installing the completed pass.
+The [complete sampler resource theorem](../Signatures/Runtime/BackendSchnorrPrivateSamplingResources.lean)
+now proves total runtime, output widths and cumulative tape capacities across
+all internal draws. Its time is original local work plus executed visits times
+a derived routing allowance plus internal queries times the proved handler cost.
+The saved tape grows by at most the internal query allowance, and the remaining
+tape stays within its initial capacity. Polynomial closure is proved without
+enumerating numeric arities or loop counters. Native cache/signing runtime and
+general-caller pass/selector assembly remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

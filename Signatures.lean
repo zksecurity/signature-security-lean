@@ -68,6 +68,7 @@ import Signatures.Runtime.SchnorrROMListGrowth
 import Signatures.Runtime.BackendSchnorrROMCache
 import Signatures.Runtime.BackendSchnorrPrivateSamplingDescription
 import Signatures.Runtime.BackendSchnorrPrivateSamplingBudget
+import Signatures.Runtime.BackendSchnorrPrivateSamplingResources
 import Signatures.Runtime.BackendStateSimulationResources
 import Signatures.Runtime.BackendStateSimulationRouting
 import Signatures.Runtime.BackendCoronSecurity
