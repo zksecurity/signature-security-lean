@@ -187,8 +187,15 @@ equals the named reduction by computation equality, including extraction and
 fallback. The original probability bound transfers directly.
 [Native cache/signing kernels](../Signatures/Runtime/BackendSchnorrROMCache.lean)
 now implement those routines with a state-passing scalar draw, exact semantics
-and stored-code bounds. Their complete runtime and general-caller assembly remain
-open. [Native private sampling](../Signatures/Runtime/BackendSchnorrPrivateSampling.lean)
+and stored-code bounds. [Live-cache runtime](../Signatures/Runtime/BackendSchnorrROMLiveBudget.lean)
+is derived from the actual structured-key scan, primitive comparisons and draw
+budget. Hits preserve the store; misses may advance its invariant. The result
+bounds returned entry widths and at most one extra cache entry.
+[Signing's pure cache update](../Signatures/Runtime/BackendSchnorrROMProgrammingCost.lean)
+also has a derived runtime and width/capacity bound. Both formulas have polynomial
+closure without a message-domain factor. Managed-cache and complete signing
+runtime, sampler installation and general-caller assembly remain open.
+[Native private sampling](../Signatures/Runtime/BackendSchnorrPrivateSampling.lean)
 now transforms the actual scalar sampler to share the raw tape with attacker
 draws, with exact source correspondence even on malformed input tapes. Its
 [stored-code bound](../Signatures/Runtime/BackendSchnorrPrivateSamplingDescription.lean)
@@ -207,8 +214,8 @@ all internal draws. Its time is original local work plus executed visits times
 a derived routing allowance plus internal queries times the proved handler cost.
 The saved tape grows by at most the internal query allowance, and the remaining
 tape stays within its initial capacity. Polynomial closure is proved without
-enumerating numeric arities or loop counters. Native cache/signing runtime and
-general-caller pass/selector assembly remain open.
+enumerating numeric arities or loop counters. Its composition with managed-cache
+access and both signing draws, and general-caller pass/selector assembly, remain open.
 Original local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 

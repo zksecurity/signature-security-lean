@@ -64,6 +64,19 @@ private theorem withLookup_time
       LanguageRepresentation.ty, LanguageRepresentation.env, Sum.elim] at * <;>
     simp only [hfound, ite_true] <;> grind only
 
+/-- Charge insertion and retained lookup output independently of how the scan's
+comparison is implemented. This also supports inlined structured comparisons. -/
+theorem withLookup_time_bound
+    (scan : Expr Op [key, val, .list (.pair key val)] (.pair .bool val))
+    (env : Env base [key, val, .list (.pair key val)]) (width scanTime : Nat)
+    (hh : header ≤ width)
+    (hi : Q.size (rep.env [key, val, .list (.pair key val)]) env ≤ width)
+    (hv : Q.size (rep.ty (.pair .bool val)) (scan.denote P env) ≤ width)
+    (ht : (Expression.compileBound rep data P primitive laws dataLaws primitiveBound scan).time env ≤ scanTime) :
+    (Expression.compileBound rep data P primitive laws dataLaws primitiveBound (withLookup scan)).time env ≤
+      scanTime + 128 * overhead (128 * width) :=
+  withLookup_time rep data P primitive sizes lists laws dataLaws primitiveBound mono scan env width scanTime hh hi hv ht
+
 omit sizes lists mono [C.HasOption] [C.HasSum] [Q.HasCategory] QP QS in
 theorem property [DecidableEq (key.Value base)]
     (width cap : Nat) (k : key.Value base) (v : val.Value base)

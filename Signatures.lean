@@ -66,6 +66,8 @@ import Signatures.Runtime.BackendSchnorrRawForkBudget
 import Signatures.Runtime.SchnorrROMListReduction
 import Signatures.Runtime.SchnorrROMListGrowth
 import Signatures.Runtime.BackendSchnorrROMCache
+import Signatures.Runtime.BackendSchnorrROMLiveBudget
+import Signatures.Runtime.BackendSchnorrROMProgrammingCost
 import Signatures.Runtime.BackendSchnorrPrivateSamplingDescription
 import Signatures.Runtime.BackendSchnorrPrivateSamplingBudget
 import Signatures.Runtime.BackendSchnorrPrivateSamplingResources
