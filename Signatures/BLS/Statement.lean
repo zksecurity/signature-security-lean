@@ -23,8 +23,8 @@ only the AGM route also requires algebraic group outputs.
 
 Inspect these definitions in `GeneralSecurityModel.lean`, the component contracts
 in `GeneralAGMParameters.lean` / `GeneralCoCDHParameters.lean`, and the proofs in
-`Proofs/GeneralSecurity.lean`. Older arithmetic-source statements are in
-`ArithmeticStatement.lean`. -/
+`Proofs/GeneralSecurity.lean`. The arithmetic-source co-CDH statement remains in
+`ArithmeticStatement.lean`; eager-table AGM wrappers have been retired. -/
 
 namespace BLS
 

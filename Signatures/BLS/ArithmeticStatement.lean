@@ -12,18 +12,14 @@ import Signatures.Runtime.AGMBadMachine
 import Signatures.Runtime.KeyEquality
 import Signatures.Runtime.ProximityWeight
 
-/-! # Detailed arithmetic-source BLS security statements
+/-! Detailed arithmetic-source BLS co-CDH security.
 
-The public general-attacker AGM endpoint is `BLS.agm_security` in `BLS/Statement.lean`:
-curve, security parameter, query allowances, and algebraic adversary. Its
-`AGMSecurityModel` exposes primitive contracts and attacker resources; both lazy
-solver budgets are derived. The declarations below retain their existing names.
-
-Source-certified co-CDH and AGM security endpoints below derive solver budgets
-from attacker implementations and resource bounds. The AGM conclusion includes
-both DLog branches plus `1/|F|`; these existing machine solvers charge full-domain
-private tables even though the security game uses a lazy random oracle. The
-general-attacker endpoint above uses the proved lazy general-caller replacement.
+The public general-attacker endpoints are `BLS.agm_security` and
+`BLS.cocdh_security` in `Statement.lean`. The superseded eager-table AGM wrapper
+and its arithmetic-attacker alias have been retired. The co-CDH source-certified
+endpoint below remains useful for the distinct arithmetic implementation model.
+Original eager probability and resource lemmas remain in their supporting modules;
+see `docs/API-MIGRATION.md` for the replacement interfaces.
 -/
 
 open OracleComp AlgebraicGroupModel
@@ -99,89 +95,5 @@ theorem bls_eufcma_of_cocdh_machine_hardness
       (hscalar (by simpa only [pairing_smul_left] using h))
   exact reduction.trans (mul_le_mul_right (hhard _ (cert.within sampling qS)) _)
 
-section AGM
-
-open Signatures.Runtime.AGM
-
-variable [DecidableEq F] [Fintype M] [DecidableEq G₁] [DecidableEq G₂]
-
-/-- An implementation of the BLS algebraic attacker in the arithmetic source
-language, with semantic equality at every public key and all-path bounds on
-local work, random/hash/sign calls, and output coefficient lengths.
-
-BLS uses the message type for both hash indices and signed messages. The generic
-AGM certificate's two identity conversions and internal `key` type tags are
-fixed here; `key` is a machine type tag, not a signing secret key. This alias
-does not claim coverage of unrestricted efficient attackers. -/
-abbrev ArithmeticAttackerCertificate (cost : PrimitiveCosts)
-    (randomBound localTime : Nat) (queries : Fin 3 → Nat) (gammaLength xiLength : Nat)
-    (A : Model.LazyAGM.Adversary F M M G₁ G₂) :=
-  SourceCertificate (F := F) (K := M) (M := M) (indexTy := key) (messageTy := key)
-    cost (Equiv.refl M) (Equiv.refl M) randomBound localTime queries gammaLength xiLength A
-
-/-- BLS AGM for a certified arithmetic-source attacker. Both exact DLog solver
-budgets are derived, and hardness at those budgets bounds their success by
-`goodEpsilon` and `badEpsilon`. The resulting forgery bound is their sum plus
-`1/|F|`. These existing solver implementations charge full finite-domain tables;
-the lazy general-caller replacement is exposed by `BLS.agm_security` in `Statement.lean`. -/
--- This is the machine-bounded security endpoint; no separate unbounded wrapper is exposed.
-theorem bls_lazy_agm_of_dlog_machine_hardness
-    -- Fix public base points; the certified adaptive algebraic adversary A is inferred from cert.
-    (g₁ : G₁) (g₂ : G₂) {A : Model.LazyAGM.Adversary F M M G₁ G₂}
-    -- Every signature-group point must be a scalar multiple of g1.
-    (hgen : Function.Surjective (fun r : F => r • g₁))
-    -- Require a nonzero pairing of the chosen base points; no G2-to-G1 map is assumed.
-    (hpair : (pairing (F := F) g₁ g₂ : Gₜ) ≠ 0)
-    -- Fix arithmetic and sampling prices; these are model contracts, not proved bit costs.
-    {cost : PrimitiveCosts} (sampling : Machine.SamplingCosts)
-    -- queries: 0 = private-random calls, 1 = hash calls (qH), 2 = signing calls.
-    -- randomBound bounds private-random request arity; localTime bounds source local work.
-    -- queries 1 is qH; queries 0 and 2 bound random and signing calls on all adaptive paths.
-    -- gammaLength/xiLength bound output hash/signing coefficient-list lengths.
-    {randomBound localTime : Nat} {queries : Fin 3 → Nat} {gammaLength xiLength : Nat}
-    -- Actual arithmetic-source code implementing A, together with proofs of these bounds.
-    (cert : ArithmeticAttackerCertificate cost randomBound localTime queries gammaLength xiLength A)
-    -- Maximum DLog success probabilities at the two derived budgets below.
-    -- ENNReal is the nonnegative extended reals. Separate bounds allow different solver costs.
-    (goodEpsilon badEpsilon : ENNReal)
-    -- Assume every DLog solver in the following machine class and budget has success <= goodEpsilon...
-    (hgoodHard : Model.HardWithin (Model.dlog11Advantage g₁ g₂)
-      -- ...for recovering x from (g1,x*g1,g2,x*g2), with these arithmetic/sampling prices...
-      (dlogWithin (F := F) (K := M) (M := M) cost sampling)
-      -- ...at the derived good-solver budget, including queries, local work, and private-table setup.
-      (cert.goodBudget sampling (cost.keyEq + 5) (cost.keyEq + cost.field + 8)) goodEpsilon)
-    -- Make the analogous assumption for the bad-branch budget and badEpsilon...
-    (hbadHard : Model.HardWithin (Model.dlog11Advantage g₁ g₂)
-      -- ...for recovering x from (g1,x*g1,g2,x*g2), with these arithmetic/sampling prices...
-      (dlogWithin (F := F) (K := M) (M := M) cost sampling)
-      -- ...at the derived bad-solver budget, which also charges its masked-base construction.
-      (cert.badBudget sampling (cost.keyEq + 5) (cost.keyEq + cost.field + 8)) badEpsilon) :
-    -- Probability that the same lazy-ROM BLS game returns a valid signature on a never-signed message.
-    𝒟[BLS.LazyAGM.game (Gₜ := Gₜ) g₁ g₂ A] {true} ≤
-      -- Add both hardness bounds and retain the residual 1/|F| term; neither branch is omitted.
-      -- Freshness guarantees a nonzero coefficient, not a nonzero evaluated expression.
-      -- The independent hidden-slope collision is still charged by 1/|F|.
-      goodEpsilon + badEpsilon + 1 / (Nat.card F : ENNReal) := by
-  have reduction :
-      𝒟[BLS.LazyAGM.game (Gₜ := Gₜ) g₁ g₂ A] {true} ≤
-        Model.dlog11Advantage g₁ g₂ (Model.LazyAGM.goodReduction BLS.Proofs.indicatorWeight A) +
-        Model.dlog11Advantage g₁ g₂ (Model.LazyAGM.badReduction BLS.Proofs.indicatorWeight A) +
-        1 / (Nat.card F : ENNReal) := by
-   classical
-    let : Fintype F := Fintype.ofFinite F
-    let : Fintype G₁ := Fintype.ofSurjective (fun r : F => r • g₁) hgen
-    have hpair := smul_left_injective F hpair
-    rw [Nat.card_eq_fintype_card]
-    exact BLS.LazyAGM.Proofs.security g₁ g₂ A
-      ⟨smul_left_injective_of_pairing g₁ g₂ hpair, hgen⟩ hpair
-  have heq := KeyEquality.bls_value (F := F) (G₁ := G₁) (G₂ := G₂) (K := M) (M := M) cost
-  have hw := Weights.bls_value (F := F) (G₁ := G₁) (G₂ := G₂) (K := M) (M := M) cost
-  have he := fun x y => (KeyEquality.bls_steps (F := F) (G₁ := G₁) (G₂ := G₂) (K := M) (M := M) cost x y).le
-  have hc := fun i m => (Weights.bls_steps (F := F) (G₁ := G₁) (G₂ := G₂) (K := M) (M := M) cost i m).le
-  exact reduction.trans (add_le_add
-    (add_le_add (hgoodHard _ (cert.goodWithin sampling KeyEquality.bls heq Weights.bls BLS.Proofs.indicatorWeight hw _ _ he hc))
-      (hbadHard _ (cert.badWithin sampling KeyEquality.bls heq Weights.bls BLS.Proofs.indicatorWeight hw _ _ he hc))) le_rfl)
-
-end AGM
 
 end BLS.Statement

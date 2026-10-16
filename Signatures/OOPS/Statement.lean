@@ -1,5 +1,4 @@
 import Signatures.OOPS.Proofs.GeneralSecurity
-import Signatures.OOPS.ArithmeticStatement
 
 /-! OOPS AGM security for general implemented algebraic attackers. Given a
 curve, security parameter, degree, query allowances and adversary, bound the

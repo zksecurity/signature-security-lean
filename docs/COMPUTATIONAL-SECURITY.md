@@ -4,7 +4,8 @@
 proved for BLS/co-CDH, BLS/OOPS/Proximity AGM, Schnorr AGM and both Schnorr ROM
 nonce conventions, conditional on explicit fixed-backend contracts. Complete
 reduction runtime and stored-code bounds are derived. Proximity retains its
-collision term. Final API retirement and integration checks remain in progress;
+collision term. Eager API retirement and targeted checks are complete; full
+integration verification and the final audit remain in progress;
 no conventional-machine PPT or hardware-timing theorem is claimed.**
 
 BLS co-CDH additionally exposes
@@ -36,7 +37,7 @@ game and solver. A finite cover of all adaptive requests and final outputs is
 used only inside the proof; no executable code enumerates it. The cover ranges
 over generated public keys, so the public-key type need not be finite either.
 The arithmetic-source endpoint also uses this stronger probability result.
-The general-attacker results and remaining API/integration work are tracked in the
+The general-attacker results and remaining integration verification and final audit are tracked in the
 [current plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md).
 
 The new [lazy BLS AGM solvers](../Signatures/BLS/Spec/LazyAGMReduction.lean)
@@ -290,15 +291,11 @@ budget from source code, a uniform source budget, and fixed data. Its closed-mac
 includes adaptive simulation, lazy caches, final hashing, extraction, data loading, and input
 setup. `hbudget` is discharged by the compiler theorem, not supplied by the caller. Primitive
 arithmetic and sampling prices remain explicit model contracts. The weaker public wrappers
-have been deleted. The AGM statements in
-[BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/ArithmeticStatement.lean), and
-[Proximity](../Signatures/Proximity/ArithmeticStatement.lean) also derive both solver budgets from source
-certificates and concrete primitive prices.
-
-In all five concrete corollaries, Lean infers the adversary, primitive-cost model, local time,
-query budgets, and random-arity bound from `cert`; the AGM coefficient-length bounds are inferred
-as well. These remain parameters of the claim, not removed assumptions. Sampling costs and the
-hardness hypotheses remain explicit; no runtime or security premise is silently discharged by inference.
+have been deleted. The eager-table AGM wrappers are now retired too; their
+[replacements](API-MIGRATION.md) accept general implemented attackers and derive
+lazy solver budgets with stored-code accounting. The retained arithmetic-source
+BLS co-CDH and Schnorr endpoints still infer their source/resource indices from
+`cert`; those parameters remain part of their distinct implementation scope.
 
 AGM component certificates now cover full-domain sampling, ordered keyed-table construction,
 structured-key lookup, all three weight families, scalar/group sums, affine bases, and both
@@ -330,9 +327,9 @@ The hardness assertion is a theorem hypothesis, not a custom axiom or a proved p
 | Route | Conditional theorem | Numerical bound |
 | --- | --- | --- |
 | BLS co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `coronFactor qS * epsilon` |
-| BLS AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
-| OOPS AGM | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/ArithmeticStatement.lean) | same two-branch bound |
-| Proximity AGM | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/ArithmeticStatement.lean) | two-branch bound plus actual fresh-collision probability |
+| BLS AGM | [`BLS.agm_security_two_budgets`](../Signatures/BLS/Statement.lean) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
+| OOPS AGM | [`OOPS.agm_security_two_budgets`](../Signatures/OOPS/Statement.lean) | same two-branch bound |
+| Proximity AGM | [`Proximity.agm_security_two_budgets`](../Signatures/Proximity/Statement.lean) | two-branch bound plus actual fresh-collision probability |
 | Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | `delta * (delta/(qH+1) - 1/card F) <= epsilon`, where `delta = Adv - qS*(qS+qH)/card F` |
 | Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | same left side, bounded by `epsilon + targetBudget * 2^(-k)` at proved bit budget `(targetBudget+4)*bitFactor` |
 
@@ -341,7 +338,7 @@ continuation snapshot. Its source-derived budget includes cache/tape storage and
 re-execution, verification, extraction, fallback sampling, and fixed-data loading.
 The erased machine equals the upstream `Schnorr.dlogReduction` exactly. See the
 [Schnorr runtime review](SCHNORR.md).
-The current replay codec charges linearly in the range parameter of a finite
+The older arithmetic-source replay codec charges linearly in the range parameter of a finite
 random request, not its bit length; see [the efficiency qualification](SCHNORR.md#what-efficiency-is-certified).
 
 The existing reduction supplies the lower bound on solver success. `HardWithin`, applied with
@@ -479,18 +476,19 @@ implementation evidence; importing it is not itself an efficiency proof.
   artifact's size. The arithmetic-machine endpoints restrict online work only,
   not static code size. An enormous lookup tree can have short execution paths;
   their hardness assumptions are stronger than bounded-size circuit hardness.
-- Applying a concrete corollary requires a source-code certificate for the adversary. Arbitrary
+- Applying a retained arithmetic-source corollary requires a source-code certificate for the adversary. Arbitrary
   extensional Lean functions are not automatically efficient; source local work and all-path
   coefficient sizes remain explicit. Proximity message dimension is enforced by its tuple type.
-- Either retain those domain-size costs with explicit polynomial-size assumptions, or construct
-  sparse lazy reductions and prove their equality to the existing probability reductions.
-- For asymptotic security also supply a uniform parameterized group family, polynomial resource
-  bounds, and negligible target advantage/collision terms. Fixed finite types do not supply these.
+- The original eager reference implementations retain domain-size costs. The public
+  general-caller routes use the proved equivalent lazy reductions and their derived budgets.
+- The general asymptotic results use parameterized group families, polynomial original
+  resources, nonuniform hardness in one fixed backend and the stated field-growth/collision
+  assumptions. Fixed finite types alone do not supply these conditions.
 
-The legacy BLS, OOPS and Proximity arithmetic-machine endpoints remain available
-in their `ArithmeticStatement.lean` files; Schnorr's remain in `Statement.lean`.
-They derive solver budgets from source certificates;
-no `hbudget`, `hgood`, or `hbad` is assumed. The general-attacker BLS, OOPS and
-Proximity endpoints instead use the backend realization and measured resources
-of the attacker. Both routes preserve their original source games. No
-standard-model OOPS or concrete-hash claim is added.
+The eager-table BLS/OOPS/Proximity AGM security wrappers are retired; see the
+[API migration guide](API-MIGRATION.md). Their supporting probability and resource
+lemmas remain. The retained arithmetic-source BLS co-CDH and Schnorr statements
+have their separate implementation scopes. The public general-attacker endpoints
+use measured backend realizations, derive complete runtime/code bounds, and
+preserve the original source games. No standard-model OOPS or concrete-hash claim
+is added.

@@ -1,6 +1,6 @@
 # Current security games
 
-Five supported security endpoints, all with lazy random-oracle source games.
+Seven general-attacker security routes, all with lazy random-oracle source games.
 Each bound names explicit reduction algorithms. Their axiom footprints are exactly
 `[propext, Classical.choice, Quot.sound]`.
 
@@ -10,9 +10,10 @@ The [paper-facing OOPS corollary](review-guide.md#paper-facing-statements) uses 
 fixed-degree signing-call limit. BLS intentionally retains the type-3 co-CDH formulation
 with an explicit co-hint and no G2-to-G1 map. The core games and runtime endpoints are unchanged.
 
-The legacy machine statements use source-code certificates to derive solver
-budgets. The general BLS co-CDH, BLS AGM, OOPS AGM and Proximity AGM statements
-instead accept general backend-realized callers and derive complete native solver budgets.
+The public statements accept general backend-realized callers and derive complete
+native solver budgets. The eager-table AGM wrappers are retired; see the
+[API migration guide](API-MIGRATION.md). Arithmetic-source BLS co-CDH and Schnorr
+endpoints retain their distinct implementation scopes.
 Hardness always ranges over the specified implementation/resource class.
 The numerical bounds are `coronFactor(qS) * epsilon` for co-CDH and
 `goodEpsilon + badEpsilon + 1/|F|` for AGM, plus the fresh-collision probability for Proximity.
@@ -24,14 +25,14 @@ See the [computational-security audit](COMPUTATIONAL-SECURITY.md).
 | Route | Statement | Source |
 | --- | --- | --- |
 | BLS to co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | [`blsEufLazyPK`](../Signatures/BLS/CoCDH/Spec/LazyGame.lean) |
-| BLS lazy AGM | [`bls_lazy_agm_of_dlog_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | [BLS game](../Signatures/BLS/Spec/LazyAGM.lean) |
 | BLS AGM, general caller | [`BLS.agm_security`](../Signatures/BLS/Statement.lean) | Curve, security parameter, query allowances, algebraic adversary; same lazy game and complete solver budgets, arbitrary messages |
 | BLS co-CDH, general caller | [`BLS.cocdh_security`](../Signatures/BLS/Statement.lean) | Curve, security parameter, query allowances, unrestricted adversary; same lazy game and complete native solver budget, arbitrary messages |
-| OOPS lazy AGM, arithmetic source | [`oops_lazy_agm_of_dlog_machine_hardness`](../Signatures/OOPS/ArithmeticStatement.lean) | [OOPS game](../Signatures/OOPS/Spec/LazyAGM.lean) |
 | OOPS AGM, general caller | [`OOPS.agm_security`](../Signatures/OOPS/Statement.lean) | Curve, security parameter, degree, query allowances, algebraic adversary; original distinct-message rule, arbitrary topics |
-| Proximity lazy AGM, arithmetic source | [`proximity_lazy_agm_of_dlog_machine_hardness`](../Signatures/Proximity/ArithmeticStatement.lean) | [Proximity game](../Signatures/Proximity/Spec/LazyAGM.lean) |
 | Proximity AGM, general caller | [`Proximity.agm_security`](../Signatures/Proximity/Statement.lean) | Curve, security parameter, dimension, query allowances, algebraic adversary; original vector/slot game and actual collision term, arbitrary slots |
 | Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | [Schnorr game](../Signatures/Schnorr/Spec/ROM.lean) |
+| Schnorr ROM, general caller | [`Schnorr.rom_security`](../Signatures/Schnorr/Statement.lean) | Full-field nonces, unrestricted attacker, quadratic/square-root DLog bound |
+| Schnorr nonzero ROM, general caller | [`Schnorr.NonzeroNonce.rom_security`](../Signatures/Schnorr/Statement.lean) | Nonzero nonces, unrestricted attacker, signing denominator `|F|-1` |
+| Schnorr AGM, general caller | [`Schnorr.agm_security`](../Signatures/Schnorr/Statement.lean) | Algebraic attacker, original adaptive AGM game and query losses |
 | Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | Same game, compiled solver with explicit accumulated sampling error |
 
 The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and

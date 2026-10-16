@@ -1,6 +1,9 @@
 import Signatures.BLS.Statement
 import Signatures.OOPS.Statement
 import Signatures.Proximity.Statement
+import Signatures.Runtime.AGMBadMachine
+import Signatures.Runtime.KeyEquality
+import Signatures.Runtime.ProximityWeight
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -206,9 +209,7 @@ run_cmd do
       ``AGM.maskedBases_length, ``AGM.maskedBases_steps_le, ``AGM.maskedBases_native,
       ``AGM.badCode_run, ``AGM.SourceCertificate.badCode_bound, ``AGM.SourceCertificate.badCode_erase,
       ``AGM.SourceCertificate.badWithin,
-      ``BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness,
-      ``OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness,
-      ``Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness] do
+      ``BLS.agm_security, ``OOPS.agm_security, ``Proximity.agm_security] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

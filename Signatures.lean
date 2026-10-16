@@ -156,13 +156,15 @@ The three AGM signature games execute through its certified runner via `Signatur
 Their requests have no group arguments; replies extend the basis and the final forgery is explained.
 Exact computation equality preserves the existing security statements and named reductions.
 
-Five security routes: BLS to co-CDH, BLS/OOPS/Proximity in the query-only lazy AGM,
-and ordinary Schnorr ROM security to DLog with a complete costed replay machine.
-Hashing, signing, and verification share a cache; algebraic outputs use only explicit replies.
-Each exposes a concrete arithmetic-machine security statement; Schnorr also has
-a bit-heap-machine endpoint with bounded-sampling error. The statements derive every named solver's budget from a source-code certificate, including local
-work, fixed data, adaptive queries, cache/table operations, setup, and extraction. Both AGM
-branches have complete closed-machine certificates.
+Seven general-attacker routes cover BLS co-CDH, BLS/OOPS/Proximity AGM, Schnorr
+AGM and both Schnorr ROM nonce conventions. Their concrete and nonuniform family
+statements derive complete runtime/code certificates in one fixed backend.
+Hashing, signing and verification share a lazy cache; only AGM routes require
+algebraic outputs. Proximity retains its actual collision term.
+The superseded eager-table AGM security wrappers have been retired. Original
+probability definitions and resource lemmas remain for reference and exact
+lazy/eager coupling. Arithmetic-source BLS co-CDH and Schnorr statements retain
+their separate scopes; Schnorr also has a bit-heap endpoint with sampling error.
 The BLS co-CDH route additionally has `Coron.NativeSolver.security_of_resources`:
 arbitrary realized caller code in a fixed quantitative backend, a complete native
 solver certificate derived from caller and primitive contracts, and explicit
@@ -198,7 +200,8 @@ The new BLS AGM lazy solvers have joint probability correspondence, sparse extra
 finite-list cache refinement, structural query/storage bounds, and the same
 probability theorem for arbitrary messages, now composed with complete runtime/code
 certificates and general callers. The original AGM machine certificates
-above continue to apply to the eager solvers.
+remain valid for the eager solvers as supporting reference lemmas, not public
+efficiency endpoints. See `docs/API-MIGRATION.md`.
 OOPS and Proximity also have weighted lazy list-cache reductions, joint
 distribution equality with their existing eager solvers, and corresponding
 probability bounds for arbitrary topic/slot types. Both branches use at most

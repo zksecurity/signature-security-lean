@@ -30,7 +30,7 @@ The time allowance is the complete proved Coron runtime. Its resources are in
 The public proof bodies are in
 [`Proofs/GeneralSecurity.lean`](../Signatures/BLS/Proofs/GeneralSecurity.lean).
 The [plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md) distinguishes this completed
-conditional route and family results from remaining API/integration work and
+conditional route and family results from remaining integration verification and final audit and
 the separate conventional-machine instantiation claim.
 
 [Game ledger](SECURITY-GAMES.md) · [Source tree](../Signatures) ·
@@ -98,14 +98,10 @@ The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and
 derive polynomial solver time/code under one fixed backend and polynomial
 component/degree/dimension bounds. Proximity's collision-relative statement
 does not assume negligible collisions; its negligible-forgery corollary does.
-The detailed arithmetic-source security statements are annotated line by line in
-[BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean),
-[OOPS/ArithmeticStatement.lean](../Signatures/OOPS/ArithmeticStatement.lean), and
-[Proximity/ArithmeticStatement.lean](../Signatures/Proximity/ArithmeticStatement.lean).
-Use those supporting files for the source-certified adversaries and detailed bounds; use the
-game/oracle reading map above to unfold what their winning events mean. These legacy
-machine-bounded endpoints use source certificates with hash/sign/random query
-budgets and local work. The earlier weaker wrappers are deleted, not retained as private endpoints.
+The eager-table AGM wrappers are retired. The [migration guide](API-MIGRATION.md)
+explains the replacement models and hardness classes. Original eager probability
+and runtime lemmas remain supporting references. Arithmetic-source BLS co-CDH and
+Schnorr endpoints retain their distinct implementation scopes.
 
 ### BLS: lazy ROM to co-CDH
 
@@ -120,10 +116,10 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 
 ### BLS: query-only lazy AGM
 
-- [Statement](../Signatures/BLS/ArithmeticStatement.lean): `BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness`.
+- [Statement](../Signatures/BLS/Statement.lean): `BLS.agm_security_two_budgets`.
 - [Source game](../Signatures/BLS/Spec/LazyAGM.lean) and [proof](../Signatures/BLS/Proofs/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F|`, with hardness at each derived solver budget.
-- Finite message indices; certified all-path query/local-work and coefficient-size bounds.
+- Arbitrary message types; measured all-path execution, encoding and coefficient-size bounds.
   Only explicit base and signing replies supply representation tokens.
 - Freshness proves a nonzero symbolic coefficient. Unlike Proximity, the corresponding
   fresh symbolic-collision event has probability zero, with no noncollision assumption.
@@ -131,11 +127,10 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 
 ### OOPS: query-only lazy AGM
 
-- [Arithmetic-source statement](../Signatures/OOPS/ArithmeticStatement.lean): `OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness`.
 - [General-caller statement](../Signatures/OOPS/Statement.lean): `OOPS.agm_security`, with arbitrary topics and complete lazy solver budgets.
 - [Source game and degree rule](../Signatures/OOPS/Spec/LazyAGM.lean) and
   [proof](../Signatures/OOPS/Proofs/LazyAGM.lean).
-- Same two-reduction bound and oracle-derived topic bases. Only the older arithmetic-source endpoint requires a finite topic type.
+- Same two-reduction bound and oracle-derived topic bases. The retired eager implementation required a finite topic type.
 - At most `d` distinct signed scalar messages on the eventual forgery topic. Repetitions and
   other topics do not consume this cap. Freshness concerns the entire message/topic pair.
 - Freshness and this winning degree rule imply a nonzero symbolic coefficient by Vandermonde.
@@ -145,12 +140,11 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 
 ### Proximity: query-only lazy AGM, with collisions
 
-- [Arithmetic-source statement](../Signatures/Proximity/ArithmeticStatement.lean): `Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness`.
 - [General-caller statement](../Signatures/Proximity/Statement.lean): `Proximity.agm_security`, with arbitrary slots and complete lazy solver budgets.
 - [Source game and collision event](../Signatures/Proximity/Spec/LazyAGM.lean) and
   [proof](../Signatures/Proximity/Proofs/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F| + Pr[fresh collision]`.
-  Oracle-derived coordinate bases; only the older arithmetic-source endpoint requires a finite slot type.
+  Oracle-derived coordinate bases; the retired eager implementation required a finite slot type.
 - `Collision out signed` means the full vector/slot output is fresh and its vector equals
   the sum of signed vectors weighted by the output's signing coefficients. Repeats and other
   slots contribute; missing coefficients are zero. Signature validity is not required by this event.
@@ -161,14 +155,11 @@ budgets and local work. The earlier weaker wrappers are deleted, not retained as
 
 ## Conditional hardness bounds
 
-Each route's sole public endpoint combines its existing reduction and proved machine budget with
-[`Model.HardWithin`](../Signatures/Model/Hardness.lean): every solver in an explicitly supplied
-budget-bounded class has success at most `epsilon`.
-
-The caller certifies the **source adversary**; the compiler proves resource bounds for the exact
-named target solvers. AGM needs two hardness bounds at those derived budgets, giving
-`Adv_source <= goodEpsilon + badEpsilon + 1/|F|`, plus the fresh-collision probability for Proximity.
-Co-CDH gives `Adv_source <= coronFactor(qS) * epsilon`.
+Public endpoints bound forgery using resource-indexed DLog/co-CDH success
+suprema. Their supporting theorems apply [`Model.HardWithin`](../Signatures/Model/Hardness.lean)
+to actual solver witnesses constructed from the original contracts and attacker
+resources. AGM retains both reduction branches and `1/|F|`; Proximity additionally
+retains collision probability. Co-CDH preserves the Coron factor.
 
 **Concrete operation bounds now cover all four routes**, including both AGM branches; see
 [`OperationBounds.lean`](../Signatures/OperationBounds.lean). Erasing the ledgers gives the
@@ -180,20 +171,14 @@ adaptive source budget, and charged fixed data. The compiler proves the exact na
 budget; no `hbudget` premise is required. Primitive operation/sampling prices are explicit
 contracts, not bit-runtime proofs.
 
-**The three arithmetic-source AGM endpoints** live in BLS's `ArithmeticStatement.lean`
-and the OOPS and Proximity `Statement.lean` files linked above.
-The caller supplies an
-[AGM source certificate](../Signatures/Runtime/AGMSource.lean), not `hgood`/`hbad`.
-The [good package](../Signatures/Runtime/AGMGoodMachine.lean) and
-[bad package](../Signatures/Runtime/AGMBadMachine.lean) prove both exact named solvers'
-`Machine.Within` budgets. Check full-domain table sampling, canonical-enumeration loading,
-source data, simulation, and extraction. The bad package samples kappa, all a-values, then all
-b-values, constructs masked bases, and gives the source `kappa*g2`. Proximity uses structural
-vectors with charged coordinate reads. Its bound also accounts for fresh linear collisions.
-All four concrete corollaries infer the adversary, primitive costs, and source resource indices
-from `cert`. Review those indices in the certificate; they have not been dropped from the bounds.
-Read the [runtime audit](COMPUTATIONAL-SECURITY.md) before interpreting a resource predicate
-as machine time or PPT.
+**The eager AGM resource lemmas** remain in the
+[good package](../Signatures/Runtime/AGMGoodMachine.lean) and
+[bad package](../Signatures/Runtime/AGMBadMachine.lean). They charge full-domain
+tables, canonical-enumeration loading, simulation and extraction. These are
+reference implementations with explicit domain-size costs; their superseded
+public security wrappers have been removed. The current public AGM statements
+use lazy general-caller reductions with derived runtime and stored-code budgets.
+Read the [runtime audit](COMPUTATIONAL-SECURITY.md) for their conditional backend scope.
 
 ## Paper-facing statements
 

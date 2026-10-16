@@ -97,22 +97,22 @@ run_cmd liftTermElabM do
       `OOPS.Statement.oops_lazy_agm_le_dlog, `OOPS.Statement.oops_lazy_agm_of_dlog_hardness,
       `Proximity.Statement.proximity_lazy_agm_le_dlog,
       `Proximity.Statement.proximity_lazy_agm_of_dlog_hardness,
-      `OOPS.Statement.oops_call_eufcma_le_dlog, `Proximity.LazyAGM.Noncollision] do
+      `OOPS.Statement.oops_call_eufcma_le_dlog, `Proximity.LazyAGM.Noncollision,
+      `BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness,
+      `OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness,
+      `Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness,
+      `BLS.Statement.ArithmeticAttackerCertificate] do
     if (← getEnv).contains name then
-      throwError "Removed weaker public security statement remains imported: {name}"
+      throwError "Retired public security declaration remains imported: {name}"
 
--- Concrete endpoints must consume source certificates, not assume completed solver budgets.
+-- The retained arithmetic co-CDH endpoint derives its solver budget from the
+-- source certificate. General-caller endpoints have dedicated interface guards.
 run_cmd liftTermElabM do
-  for name in #[``BLS.Statement.bls_eufcma_of_cocdh_machine_hardness,
-      ``BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness,
-      ``OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness,
-      ``Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness] do
+  for name in #[``BLS.Statement.bls_eufcma_of_cocdh_machine_hardness] do
     let axioms ← collectAxioms name
     let expected := #[``propext, ``Classical.choice, ``Quot.sound]
     unless axioms.size == expected.size && axioms.all expected.contains do
       throwError "{name}: unexpected axiom footprint {axioms}"
-    let coCDH := name == ``BLS.Statement.bls_eufcma_of_cocdh_machine_hardness
-    let proximity := name == ``Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness
     forallTelescope (← getConstInfo name).type fun params conclusion => do
       let mut sawSource := false
       let mut hardnessCount := 0
@@ -137,13 +137,13 @@ run_cmd liftTermElabM do
           sawQueries := true
           unless ← isDefEq type (← Lean.Elab.Term.elabTerm (← `(Fin 3 → Nat)) none) do
             throwError "{name}: expected random/hash/sign query budgets"
-        if coCDH && binder == `hqs then
+        if binder == `hqs then
           sawSigningBound := true
           let .forallE _ (.fvar scalar) body _ := type
             | throwError "{name}: expected a scalar-indexed signing budget"
           unless (← scalar.getUserName) == `F && body.isAppOf ``OracleComp.IsQueryBoundP do
             throwError "{name}: signing budget must range over generated keys"
-        if coCDH && (type.isAppOf ``Finite || type.isAppOf ``Fintype) then
+        if type.isAppOf ``Finite || type.isAppOf ``Fintype then
           if let .fvar id := type.getAppArgs[0]! then
             sawMessageFinite := (← id.getUserName) == `M
         if type.isAppOf ``DecidableEq then
@@ -152,8 +152,7 @@ run_cmd liftTermElabM do
             throwError "{name}: target-group equality belongs to the winning check"
         if binder == `cert then
           sawSource := true
-          let expected := if coCDH then ``Signatures.Runtime.Coron.SourceCertificate
-            else ``Signatures.Runtime.AGM.SourceCertificate
+          let expected := ``Signatures.Runtime.Coron.SourceCertificate
           -- Public scheme-specific aliases must still reduce to the concrete certificate.
           unless (← whnf type).isAppOf expected do
             throwError "{name}: missing concrete source certificate"
@@ -161,31 +160,18 @@ run_cmd liftTermElabM do
           hardnessCount := hardnessCount + 1
           let #[_, _, within, budget, _] := type.getAppArgs
             | throwError "{name}: malformed budget-scoped hardness assumption"
-          let expectedClass := if coCDH then ``Signatures.Runtime.Coron.coCDHWithin
-            else ``Signatures.Runtime.AGM.dlogWithin
-          let expectedBudget := if coCDH then ``Signatures.Runtime.Coron.SourceCertificate.targetBudget
-            else if binder == `hgoodHard then ``Signatures.Runtime.AGM.SourceCertificate.goodBudget
-            else ``Signatures.Runtime.AGM.SourceCertificate.badBudget
+          let expectedClass := ``Signatures.Runtime.Coron.coCDHWithin
+          let expectedBudget := ``Signatures.Runtime.Coron.SourceCertificate.targetBudget
           unless within.isAppOf expectedClass && budget.isAppOf expectedBudget do
             throwError "{name}: hardness must use the derived machine budget"
         if #[`hnc, `hvand].contains binder then
           throwError "{name}: symbolic noncollision must be proved or measured, not assumed"
-      unless sawSource && hardnessCount == (if coCDH then 1 else 2) do
+      unless sawSource && hardnessCount == 1 do
         throwError "{name}: incomplete source/hardness interface"
       unless sawGenerator && sawPairing && sawQueries do
         throwError "{name}: missing group hypotheses or source query budgets"
-      unless !coCDH || (sawSigningBound && !sawMessageFinite) do
+      unless sawSigningBound && !sawMessageFinite do
         throwError "{name}: missing signing bound or finite-message assumption returned"
-      if proximity then
-        let some (_, lhs, rhs) := conclusion.le? | throwError "{name}: expected a probability bound"
-        if lhs.find? (fun e => e.isAppOf ``Proximity.LazyAGM.collisionGame) |>.isSome then
-          throwError "{name}: collision must not restrict the original winning event"
-        unless (rhs.find? (fun e => e.isAppOf ``Proximity.LazyAGM.collisionGame)).isSome do
-          throwError "{name}: missing actual collision probability on the right-hand side"
-      if name == ``OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness then
-        let degrees ← params.filterM fun p => return (← p.fvarId!.getUserName) == `d
-        unless degrees.size == 1 && (← isDefEq (← inferType degrees[0]!) (mkConst ``Nat)) do
-          throwError "{name}: expected one fixed degree for the whole game"
       let args ← params.filterM fun param => do
         return (← param.fvarId!.getDecl).binderInfo.isExplicit
       let application ← mkAppM name args

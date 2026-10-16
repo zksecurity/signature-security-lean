@@ -9,16 +9,15 @@ The endpoints have checked axiom footprints without `sorryAx`. The pairing-based
 include both DLog reductions and `1/|F|`; Proximity also includes the probability of a fresh
 linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 
-The pairing-based and full-field Schnorr ROM statements derive concrete arithmetic-machine
-solver budgets from a source-code certificate, then apply hardness at those budgets. Hash/sign/random query caps and local work
-are included, along with both AGM branches.
-Schnorr also has a concrete bit-heap-machine theorem, charging both replay runs,
-input loading, arithmetic, memory scans, and sampling, with explicit rejection error
-and a separate stored-code/data bound;
-see the [Schnorr review path](docs/SCHNORR.md). The general-caller endpoints for
-Schnorr AGM and both ROM nonce conventions are described below.
-Operation ledgers also cover the four pairing-based routes. See
-[computational-security status](docs/COMPUTATIONAL-SECURITY.md).
+The general-attacker statements derive complete reduction runtime and stored-code
+bounds from the attacker's measured resources and explicit backend contracts.
+They also have nonuniform polynomial-family corollaries. The superseded eager-table
+AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
+Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
+implementation models. Schnorr also has a bit-heap theorem charging replay,
+input loading, arithmetic, scans and sampling, with explicit rejection error
+and a separate stored-code/data bound. See the [Schnorr review path](docs/SCHNORR.md)
+and [computational-security status](docs/COMPUTATIONAL-SECURITY.md).
 
 The [general adversary reduction plan](docs/GENERAL-ADVERSARY-REDUCTION-PLAN.md)
 records the broader efficiency work. BLS co-CDH now has a public security theorem
@@ -59,8 +58,8 @@ backend. The same file now exposes `Schnorr.NonzeroNonce.rom_security`, with
 signing denominator `|F|-1`, derived complete solver resources, and a separate
 [nonuniform family corollary](Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean).
 Its family proof needs the same negligible inverse-field-size assumption.
-All general-attacker route endpoints are proved; API retirement and final
-integration checks remain tracked in the plan.
+All general-attacker route endpoints are proved and the eager AGM API is retired.
+Full integration checks and the completion audit remain tracked in the plan.
 A conventional machine instantiation is separate from these conditional results.
 
 Start with the [GitHub review guide](docs/review-guide.md) or the

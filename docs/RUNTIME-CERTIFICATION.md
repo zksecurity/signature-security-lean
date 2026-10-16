@@ -19,7 +19,7 @@ polynomial-code/advice nonuniform families. The backend remains fixed; group
 types and representations may vary with the security parameter. This result is
 conditional on primitive/encoding contracts and covers arbitrary message types
 without any runtime dependence on the full message-domain cardinality.
-The original arithmetic-source results documented below remain available.
+The original eager resource lemmas documented below remain supporting references.
 The other general-attacker route endpoints are now also proved: BLS/OOPS/Proximity
 AGM, Schnorr AGM, and Schnorr ROM with full-field or nonzero nonces. Each has a
 complete native certificate, public concrete statement and nonuniform family
@@ -27,7 +27,7 @@ corollary in one fixed backend. Proximity retains its collision qualification.
 The nonzero Schnorr [public statement](../Signatures/Schnorr/Statement.lean) and
 [family theorem](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean) charge
 both original samplers and preserve the `|F|-1` signing denominator.
-Final API retirement and integration checks remain; conventional-machine
+Full integration verification and the final audit remain; conventional-machine
 instantiation is a separate stronger claim.
 
 For BLS AGM, both new lazy solvers now have exact probability correspondence and
@@ -124,7 +124,7 @@ concludes negligible forgery success under nonuniform DLog hardness and negligib
 inverse field size. Its assumptions bound components and attacker resources;
 they do not assume completed-solver efficiency.
 The [general adversary plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md#lazy-bls-agm-progress-2026-10-14)
-tracks the completed route certificates and remaining API/integration work.
+tracks the completed route certificates and remaining integration verification and final audit.
 The complete AGM machine certificates documented below cover the older eager solvers.
 
 OOPS and Proximity now have [native term generators](../Signatures/Runtime/BackendWeightedTerms.lean)
@@ -484,12 +484,12 @@ verification, extraction, fallback, and fixed-data loading are all charged. See 
   Both sampling passes, key construction, initialized store, adaptive execution, extraction,
   and fixed-data loading are charged. Exact `Model.LazyAGM.badReduction` erasure and
   `SourceCertificate.badWithin` are proved in the same general machine class as the good branch.
-- [BLS](../Signatures/BLS/ArithmeticStatement.lean), [OOPS](../Signatures/OOPS/ArithmeticStatement.lean), and
-  [Proximity](../Signatures/Proximity/ArithmeticStatement.lean): the public AGM machine-bounded statements,
-  with compiled scheme-specific encodings, key comparisons,
-  weights, and their bounds. Both solver-budget hypotheses are discharged. No original
-  degree/freshness condition is changed, and the full domain size is retained. Proximity adds
-  an actual fresh-collision probability instead of assuming noncollision on all source paths.
+- The eager-table AGM security wrappers are retired; see [API migration](API-MIGRATION.md).
+  The current [BLS](../Signatures/BLS/Statement.lean), [OOPS](../Signatures/OOPS/Statement.lean)
+  and [Proximity](../Signatures/Proximity/Statement.lean) statements use the lazy
+  general-caller solvers. The eager resource lemmas above remain supporting
+  references with explicit full-domain costs; degree, freshness and collision
+  conditions are preserved by the replacements.
 - [`RuntimeAGMSource.lean`](../SignaturesTest/RuntimeAGMSource.lean): a concrete one-hash source
   certificate and complete good/bad witnesses with budgets 1334/1932 at unit primitive prices.
   Tests cover all-key erasure, empty/nonempty setup, undersized coefficient-bound rejection,

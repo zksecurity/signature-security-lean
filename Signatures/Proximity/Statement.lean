@@ -1,5 +1,4 @@
 import Signatures.Proximity.Proofs.GeneralSecurity
-import Signatures.Proximity.ArithmeticStatement
 
 /-! Proximity AGM security for general implemented algebraic attackers. Given a
 curve, security parameter, dimension, query allowances and adversary, bound the

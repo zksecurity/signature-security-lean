@@ -1,309 +1,29 @@
 # General adversary reduction plan
 
-Updated 2026-10-15. Status: implementation in progress. The shared general-caller
-framework now proves source erasure, resource substitution, indexed native
-composition, and explicit code-description bounds. BLS co-CDH now has a complete
-native challenge-to-output solver with exact source correspondence, a runtime
-bound derived from primitive contracts, and a stored-code bound. `program_within`
-constructs its executable in the common fixed-backend hardness class. The public
-`security_of_resources` endpoint now derives its caller conditions from a general
-`RunsWithin` bound and explicit representation recovery, then applies hardness.
-Polynomial closure of the derived time and code budgets and the nonuniform
-family security corollary are proved. Exact probability transport now permits
-arbitrary BLS ROM message types, with no finite-public-key assumption. Reachable
-storage grows with encountered messages and queries, not the message universe.
+Updated 2026-10-15. All seven conditional general-attacker routes now have
+proved complete solver resources, short public concrete statements and nonuniform
+family security: BLS co-CDH, BLS/OOPS/Proximity AGM, Schnorr AGM, and Schnorr ROM
+with either full-field or nonzero nonces. The source games and probability losses
+are preserved; Proximity retains its collision qualification.
 
-Both BLS AGM lazy solvers now have sparse extraction, joint distributional
-correspondence to the established reductions, and a finite-list cache refinement.
-The original probability bound now holds for arbitrary message types, for both
-symbolic-cache and finite-list solvers. Their query/transcript/cache-entry bounds
-are proved. Both private caches now have native implementations with exact
-list-handler semantics and derived runtime/description bounds, including a
-two-scalar implementation of pair sampling. Native hash/sign replies now have
-exact adaptive correspondence, complete runtime and stored-code bounds, and
-encoded-store invariants. Native chronological transcript/coefficient matching
-now has complete runtime, stored-code, and output-size bounds. Coefficient-list
-lengths are recovered from output size under an explicit positive-cell encoding
-contract. Native effectful row evaluation and both complete extractors now have
-exact joint output/cache correspondence and reachable-cache bounds. Their private
-reads have complete runtime and stored-code bounds, and computing loop lengths
-is charged. Whole-evaluator/extractor stored-code bounds are now proved. Row
-selection/update costs and complete good/bad evaluator runtime bounds are now
-derived from primitive and control-instruction contracts. Complete chronological
-preparation-and-evaluation calls now have combined runtime/encoding bounds and
-cache-state invariants. Both complete extractor runtime bounds now compose
-default creation, chronological calls, final-target access, and field arithmetic,
-including retained output/transcript data and changing cache capacities. Both
-native general-request dispatchers now have derived runtime/code bounds and
-remaining-request store invariants. General caller execution has exact adaptive
-source correspondence for arbitrary output types. Both native caller phases now
-have additive runtime and stored-code bounds derived from primitive contracts
-and the attacker's own execution resources. Request/return sizes, reachability,
-and termination follow from those resources; canonical AGM coefficient lengths
-follow from the full returned encoding. Both complete native solver programs are
-assembled and exactly realize the named finite-list reductions. Complete solver
-runtime/code bounds and fixed-backend executable certificates are now proved.
-The concrete hardness endpoint covers general realized attackers over arbitrary
-message types. The public BLS statements now distinguish AGM/DLog from
-unrestricted co-CDH. `BLS.agm_security` follows the requested English statement:
-curve, security parameter, query allowances, and algebraic adversary, with the
-named BLS game and twice one resource-indexed DLog bound plus `1/|F|` in the conclusion.
-The shared time allowance is the maximum of the two proved solver times;
-`agm_security_two_budgets` preserves the sharper two-budget statement.
-The declared execution model is separate from the mathematical curve.
-`BLS.cocdh_security` has the same four-input shape with an unrestricted attacker,
-the actual lazy ROM game, and the Coron factor times the resource-indexed co-CDH
-success bound. Only the AGM route uses `GeneralAGM.Parameters`.
+The shared framework derives caller invariants, composition costs, representation
+bounds and full stored-code accounting from original measured resources. It does
+not assume a completed reduction is efficient. The family theorems keep one
+backend fixed across security parameters and derive polynomial solver resources.
+Attackers need not use the arithmetic source language; AGM adds its algebraic-output
+requirement. Conventional-machine adequacy remains a separate stronger claim.
 
-The canonical `Signatures/BLS/Statement.lean` contains both short theorem
-statements. Their proof bodies are in `BLS/Proofs/GeneralSecurity.lean`; the
-inspectable models, game definitions and explicit hardness suprema are in
-`BLS/GeneralSecurityModel.lean`. Detailed arithmetic-source statements remain in
-`ArithmeticStatement.lean`. `Security.lean` and `SecurityModel.lean` preserve the
-old AGM-only names as compatibility imports. Regression guards check both public
-theorems' defining module and argument list, and reject algebraic requirements in
-the unrestricted co-CDH contracts.
+The superseded eager-table AGM security wrappers and the BLS arithmetic-attacker
+alias are retired. The [migration guide](API-MIGRATION.md) identifies the replacement
+interfaces and their hardness scope. Original eager probability/resource lemmas
+remain supporting references, and the retained arithmetic-source co-CDH and
+Schnorr endpoints keep their distinct scopes.
 
-The BLS AGM family corollary now derives polynomial runtime and stored code for
-both native reductions from component resources. It concludes negligible forgery
-success under nonuniform DLog hardness in one fixed backend and negligible inverse
-field size. Groups and message types may vary with the security parameter.
-
-OOPS/Proximity now have complete native interaction-phase runtime and stored-code
-bounds for both AGM branches. Their capacity invariants charge the growing
-private cache and reply logs over arbitrary topic/slot types. Both native extractors
-now have exact source/cache laws, complete stored-code bounds, and final-target-only
-cache growth. Both complete native extractors now have derived runtime bounds,
-including coefficient generation, evaluation, default construction, final arithmetic,
-and retention of the full output and both transcripts. Caller conditions and
-extractor input bounds now follow from the attacker's measured resources and
-encoding contracts. The native interaction supplies the cached-transcript invariant.
-Both complete native solvers now have exact source correspondence, runtime and
-stored-code bounds, and executable certificates in the fixed backend. Setup,
-output adaptation, cutoff handling, and extraction are all charged. Both schemes
-now connect these certificates to the original concrete security bounds. Their
-short public statements take the curve, security parameter, degree/dimension,
-query allowances and algebraic adversary. OOPS retains its distinct-message
-admissibility rule; Proximity retains its actual fresh-collision probability.
-Both weighted routes now have derived polynomial time/code bounds and
-nonuniform family corollaries in one fixed backend. Degree and dimension must
-grow polynomially in the security parameter. OOPS concludes negligible forgery
-under DLog hardness and negligible inverse field size. Proximity bounds forgery
-by its original collision probability plus negligible error; a separate corollary
-requires that collision probability to be negligible too.
-
-Schnorr AGM now has a finite-list reduction with exact adaptive output/state
-correspondence and the original probability bound. Its storage capacities are
-`qS + qH + 1` cache entries, `qS + 2` affine basis entries, and `qS` signed
-messages, with no finite message/group-domain assumption. Its native cache core,
-complete read, representation flattening and all-shape hash dispatcher now
-have exact encoded-state semantics and derived time/code bounds. Hash dispatch
-charges both singleton scans and the malformed-request path. Chronological
-history append and first-entry-preserving signing-cache programming now have
-native implementations and derived time/code bounds. The accepted signing core
-now composes both scalar draws, response arithmetic, both histories, cache
-programming and state packing, with exact source semantics and derived complete
-time/code bounds. Signing dispatch now scans incoming groups, constructs accepted
-and rejected scalar/group-list replies, and derives all-path time/code bounds
-including ignored coefficient-row encodings. The random handler now executes one
-dynamic uniform query even for malformed requests, with exact source semantics,
-preserved store capacities and derived conversion/scan/state/reply budgets.
-The native dispatcher now installs all three handlers with request retention,
-common-store adapters and dependent reply tagging. General quantitative callers
-have exact adaptive source correspondence and complete stored-code bounds.
-Shared request/store size bounds now cover every retained row and the public
-configuration. All five compiled common-store adapters have derived local costs,
-and each installed component has a complete primitive-derived runtime bound.
-Hash dispatch preserves both actual histories for all request shapes, so its
-shared state invariant grows only the cache capacity. Indexed routing/tagging,
-including retention of the complete original request, now has a derived
-primitive/port runtime bound. Capacity reservations support repeated adaptive
-calls at one fixed maximum budget. Caller runtime now adds this proved handler
-and routing overhead to the attacker's own local-work/query budget. Request and
-return widths, every coefficient-row length, random arities, reachability and
-termination now follow from measured attacker resources and explicit encoding
-laws. The caller budget uses these derived conditions without a separate caller
-invariant or supplied caller budget. The native final extractor now handles all
-output shapes and exactly realizes the original solver's scalar/state projection.
-Its stored-code and complete all-path runtime bounds are derived, including both
-shape scans, retained response, rejection, one cache read and field extraction.
-Its input bounds follow from the full encoded attacker return and the caller
-state. Actual output conversion has derived runtime/stored-code bounds and
-preserves all output rows and private state. The complete native solver now
-assembles setup, caller execution, optional return/cutoff handling, extraction
-and scalar projection. Its exact source correspondence follows from measured
-attacker resources, and its complete stored-code bound is derived. Setup, cutoff
-and final projection have derived runtime bounds. Complete terminal and solver
-runtime certificates now combine those costs with measured caller work and query
-overhead. A fixed-backend executable witness includes exact source semantics and
-the entire stored program. The concrete security theorem applies DLog hardness
-to this derived witness, retaining the original probability losses. The short
-public statement now takes a single-group curve, security parameter, query
-allowances and algebraic adversary. The displayed game equals the original game;
-the DLog supremum uses the derived complete runtime and stored-code bounds.
-Its proofs are separate from the statement. Polynomial closure of the actual
-runtime/code formulas and a nonuniform family corollary are now proved. The
-family theorem keeps one fixed backend and derives negligible forgery from
-polynomial component resources, DLog hardness and negligible inverse field size.
-
-General Schnorr ROM replay now has a lazy retained-tape component for arbitrary
-oracle computations. The first run records exactly its chronological draws;
-reset preserves both private families, including their post-challenge suffixes.
-Single-run seeded semantics and query-dependent saved/remaining-cell bounds are
-proved without enumerating possible sampling families. The complete finite-list
-fork now has the same joint output distribution as the pregenerated reference,
-including replacement sampling, unchanged-challenge rejection and second-run
-selector agreement. The valid-slot premise follows from the existing intrinsic
-selector-reachability property. The named lazy Schnorr reduction now inherits
-the full EUF-CMA bound, including extraction and averaging over keys. Its program
-and security theorem take no family cover or private-query capacity: a finite
-reference cover is derived internally, and the hash coordinate follows from the
-source query allowance. The raw finite-list controller now implements that named
-reduction by exact computation equality. Its native dynamic private-draw component
-has proved state correspondence and a stored-code bound independent of arity.
-Raw tape growth and live-query bounds now follow from actual requested draws.
-Native encoding invariants charge both lists and survive draw/reset operations;
-native hit-return and chronological-save costs are derived, including both append
-traversals and retained data. Native scan and preparation costs now charge the
-original context, forward traversal, growing accumulator and final reversal.
-The complete native private-draw budget composes those costs with dynamic
-sampling, append and control routing. Its runtime formula has proved polynomial
-closure from component resources without a polynomial numeric-arity premise.
-Native challenge draws now have complete answer/state correspondence, stored-code
-bounds, preserved encoding invariants, a derived all-path runtime budget and
-polynomial closure. Their scalar sampler is actual code with its own semantics,
-runtime and description accounted for. Native reset now has exact source
-correspondence, stored-code and both-list encoding bounds, a derived complete
-runtime budget and polynomial closure. It scans the saved tape, preserves every
-private draw, trims the selected challenge family and charges both resulting
-tape copies. The numeric reset position does not enter its iteration bound.
-The native controller now assembles both executions, selection, replacement
-sampling, old-challenge lookup, reset and acceptance/rejection. It has exact
-computation correspondence to the raw fork from source laws for the first pass
-and reached replay states, and a stored-code bound counting both pass/selector
-occurrences. The direct selected-challenge lookup also has complete native
-runtime and polynomial closure without building a prefix. The complete native
-controller now has an all-path runtime bound and polynomial closure, charging
-adapters, both passes, both selector calls, sampling, lookup/reset and every
-control/retention cost. Frame invariants count duplicated configurations, both
-tapes and the first output retained during replay. The pass budgets distinguish
-the empty initial tape from the reset tape. General-caller pass assembly, source
-correspondence, complete runtime and polynomial runtime closure are now proved.
-The actual selector now has exact source correspondence, a complete stored-code
-bound and complete primitive-derived runtime with polynomial closure. The actual
-pass and selector are installed in the controller, with exact source correspondence
-for both runs, a successful-output shape theorem and complete stored-code/runtime
-bounds. Its runtime derives both passes, selection and replacement sampling from
-original resources, keeping narrow tape entries separate from retained outputs.
-The fully instantiated fork formula now has polynomial closure from those original
-resources. Complete native solver assembly now includes setup, guarded extraction
-and uniform fallback, with exact equality to the named lazy reduction and a full
-stored-code bound. The complete solver now has a runtime/output-size certificate
-and polynomial runtime closure from original resources, including setup,
-extraction and fallback. Stored-code polynomial closure now follows from original
-caller/sampler/primitive/port descriptions. The fixed-backend executable certificate
-and concrete DLog-hardness theorem are proved, preserving the original losses.
-The short public interface and nonuniform family security theorem are now proved.
-The public theorem takes the curve, security parameter, query allowances and
-unrestricted adversary. The family theorem derives negligible original-game
-forgery from polynomial original resources, nonuniform DLog hardness in one fixed
-backend and negligible inverse field size. The finite-cache ROM
-pass handles arbitrary source attacker computations, has exact trace
-correspondence and query-derived cache capacities, and its complete fork plus
-extraction equals the named reduction. Native live/managed-cache and signing
-kernels have exact state-passing semantics and stored-code bounds. Their runtime
-certificates are now derived for live-cache access, managed-cache access and
-complete signing, including actual key comparisons, both signing draws,
-commitment arithmetic, cache programming and output construction.
-Native private scalar sampling now transforms the actual sampler code to use the
-shared raw tape, with exact
-computation correspondence and a stored-code bound. Its typed per-draw handler
-has primitive-derived runtime/encoding bounds and polynomial closure. Original
-execution profiles now measure local work, visited control nodes, intermediate
-encoded widths, counters and requests. Exact computation projections couple
-those profiles to actual transformed runs, and primitive-derived structural
-routing bounds are proved. The complete sampler runtime now adds source local
-work, per-visit routing and per-query handler cost. It derives all handler and
-structural budgets internally, bounds output widths and cumulative tape growth,
-and has polynomial closure without a polynomial numeric-arity/counter premise.
-The kernels now install the distinct draw families required by the source game:
-live/managed hashing uses the challenge tape, while signing replays the sampler's
-private uniform queries. Both ordinary and transformed sampler runtime follow
-from the original execution profile. Complete kernel runtime and output/tape
-capacities follow from that profile and primitive laws, with no completed
-component-budget premise. Hashing reserves one additional challenge cell; signing
-reserves cumulative private tape growth across both draws. The cache-entry width
-allowance stays fixed across calls. The installed runtime formulas have proved
-polynomial closure without a numeric arity, counter or message-domain factor.
-
-Native common-store adapters now retain the public configuration, both caches
-and the shared raw tape across hash, signing, final-live-hash and attacker-random
-operations. The complete indexed dispatcher and arbitrary quantitative caller
-have exact source computation correspondence on every tape state. Caller
-termination follows from measured query resources. Complete stored-code bounds
-count the original sampler, its private transformation, cache kernels, all
-adapters and request/reply conversions. All eight common-store adapters now have
-derived local runtime and encoding bounds. All four wrapped components have
-complete runtime, shared-state invariants and polynomial closure derived from
-primitive contracts and original sampler profiles. The complete indexed dispatcher
-now has a primitive-derived runtime bound, polynomial closure and reservations
-for future adaptive calls. Whole-caller runtime and returned-output widths now
-follow from measured arbitrary executions and encoding recovery; the complete
-caller runtime formula has polynomial closure. The complete native pass now
-assembles initialization, arbitrary caller execution, optional-return handling
-and final live hashing. Its source law holds on every supplied replay tape;
-measured query resources exclude cutoff. Complete stored-code bounds and all-path
-runtime now compose setup, the measured caller, final live hashing, actual boundary
-conversions and terminal control. Polynomial closure of the complete runtime
-formula is proved. Complete selector runtime and stored code now have polynomial
-closure. The installed native fork has exact source correspondence and a complete
-stored-code/runtime bound. The two-width controller now preserves narrow tape
-entries during replay while charging complete retained configurations/results.
-Both actual passes, selection and fresh sampling have internally derived budgets;
-the full installed fork formula has polynomial closure. Native setup, extraction
-and fallback now compose into the complete solver with exact source correspondence
-and full stored-code accounting. Complete solver runtime and returned-scalar bounds
-now follow from original resources, and the actual runtime formula has polynomial
-closure. Stored-code polynomial closure, fixed-backend executable certification
-and concrete hardness transport are now proved. The short public interface and
-nonuniform family security theorem now complete the full-field ROM route.
-
-The nonzero-nonce route now has a named lazy reduction with the original
-probability bound and an implemented signing kernel with exact source/state laws,
-complete runtime/code bounds and polynomial closure. Its finite-cache pass has
-exact adaptive correspondence, and the complete finite replay/extraction solver
-has exactly the named lazy solver's computation. Managed/live capacities are
-`qS + qH` and `qH + 1`, independent of the message universe. Both original
-samplers are now installed in the raw private tape. Their separate execution
-profiles derive the complete installed and common-store signing runtime/code
-bounds and polynomial closure, including `2*qField + qNonzero` tape growth.
-The actual nonzero dispatcher, arbitrary caller and complete native pass now
-have exact source correspondence and original-resource runtime/code bounds.
-Adaptive reservations include `2*qField + qNonzero + 1` tape cells per request;
-complete caller/pass runtime has polynomial closure from original resources.
-
-Both actual nonzero passes now run in the complete replaying solver, whose exact
-source correspondence, full runtime/code bounds and polynomial closure construct
-a fixed-backend executable certificate. The concrete DLog-hardness endpoint is
-proved with the original signing and forking losses.
-
-The short nonzero public statement and nonuniform family theorem are now proved.
-Both derive security from the actual solver certificate; the family proof derives
-the nonzero-field loss from the original inverse-field-size assumption.
-
-Remaining: finish API/documentation retirement and the full integration checks.
-A conventional machine instantiation is needed only if making that stronger
-coverage claim.
-
-Establish security for general efficient attackers for the signature routes in
-this repository. Keep the reduction wrappers in our abstract arithmetic machine,
-prove their concrete overhead, and compose them with attackers whose internal
-algorithms need not use that language. AGM routes retain the algebraic-output
-requirement; ordinary ROM routes do not acquire it.
-
-This is the current plan for the efficiency and attacker-coverage work. Earlier
-Schnorr parity completion records concern their stated source-game and certified
-machine results, not completion of this broader objective.
+Remaining: complete the full integration suite and the final requirement audit.
+Targeted replacement/public/source-resource/assumption checks have passed serially
+under the existing compiler limits. The broader goal remains active until full
+integration and the audit finish. The detailed implementation checkpoints below
+record the evidence and historical intermediate states.
 
 ## Existing results and limits
 
@@ -3755,13 +3475,38 @@ and AGM public regressions, and aggregate import pass serially within the existi
 compiler limits. All 13 final compiler logs are empty; axiom footprints remain
 standard. This is targeted verification, not the final full-suite result.
 
+### Eager AGM API retirement, 2026-10-15
+
+The BLS/OOPS/Proximity `*_lazy_agm_of_dlog_machine_hardness` wrappers are removed,
+as is BLS's `ArithmeticAttackerCertificate` alias. Their public replacements are
+`agm_security` and `agm_security_two_budgets` in each scheme's `Statement.lean`.
+The OOPS/Proximity `ArithmeticStatement` paths now import the current public
+statements without restoring retired declarations. The arithmetic-source BLS
+co-CDH theorem and Schnorr's separately scoped endpoints remain.
+
+Original eager probability definitions and source/compiler/resource lemmas remain
+for reference and exact coupling. Their regression fixtures still check both
+complete eager solver certificates. Public axiom checks now cover all seven
+current route statements. Assumption guards reject the retired wrappers and alias;
+the retained arithmetic co-CDH interface keeps its source-certificate checks.
+The [migration guide](API-MIGRATION.md) explains why migration requires the new
+backend/attacker/hardness contracts rather than a textual renaming.
+
+The updated BLS arithmetic module and 13 sequential integration targets passed:
+three public statements, two migration modules, aggregate imports, original AGM
+source/compiler fixtures, assumption/retirement guards, all-seven endpoint axiom
+checks, BLS and weighted general interfaces, retained co-CDH certificate and
+arbitrary-message transport. Logs are in `/private/tmp/agm-api-retirement-check`;
+only the pre-existing upstream representation `#check` emits informational output.
+The full suite and completion audit are still pending.
+
 ### Remaining integration work
 
 All conditional general-caller route endpoints and nonuniform family corollaries
-are now proved. Finish API/documentation retirement after replacement callers
-pass, and run the full integration suite serially within the existing resource
-limits. Preserve Proximity's collision qualification and distinguish these
-conditional fixed-backend results from a conventional-machine instantiation.
+are proved and the superseded eager AGM API is retired. Run the full integration
+suite serially within the existing resource limits, then audit the whole plan
+against source and validation evidence. Preserve Proximity's collision qualification
+and distinguish conditional fixed-backend results from conventional-machine adequacy.
 
 ## Implementation order and completion checks
 
@@ -5530,8 +5275,9 @@ additional axioms or proof-resource overrides.
 - [x] Present the full-field ROM endpoints through the simple public scheme/parameter,
   qualified-adversary, query-allowance, game, and bound interface described above;
   keep execution/encoding certificates internal and hardness scope explicit.
-- [ ] Update status documentation and retire superseded eager runtime endpoints
-  once replacement proofs and callers pass their checks.
+- [x] Update status documentation and retire superseded eager runtime endpoints
+  after replacement proofs and affected callers pass their checks.
+- [ ] Run the full integration suite and complete the requirement-by-requirement audit.
 
 For each endpoint, require a proved semantic/probability connection, a derived
 solver resource certificate, and a hardness assumption covering that solver's
@@ -5561,7 +5307,7 @@ corollary. General Schnorr full-field ROM now also has its complete native
 certificate, short concrete statement and derived nonuniform family theorem.
 The nonzero-nonce route now also has a complete native certificate, derived
 polynomial resources, concrete hardness transport, short public statement and
-nonuniform family theorem. Continue with API/documentation retirement and full
-integration checks.
+nonuniform family theorem. Eager API retirement and affected-caller checks are
+complete. Continue with full integration checks and the final requirement audit.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine claim. The broader plan remains open.
