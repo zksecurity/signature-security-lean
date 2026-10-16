@@ -4,7 +4,10 @@ Seven general-attacker security routes, all with lazy random-oracle source games
 Each bound names explicit reduction algorithms. Their axiom footprints are exactly
 `[propext, Classical.choice, Quot.sound]`.
 
-Start with the [GitHub review guide](review-guide.md).
+Start with the [short game and bound presentation](review-guide.md).
+The mathematical games are in each scheme's `Game.lean`, independent of machine
+contracts. The public statements use those games through exact adapters; the
+execution model and resource formulas stay in the supporting layer.
 
 The [paper-facing OOPS corollary](review-guide.md#paper-facing-statements) uses a
 fixed-degree signing-call limit. BLS intentionally retains the type-3 co-CDH formulation

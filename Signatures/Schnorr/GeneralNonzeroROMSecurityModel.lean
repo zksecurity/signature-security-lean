@@ -1,3 +1,4 @@
+import Signatures.Schnorr.Game
 import Signatures.Model.CyclicCurveNonzeroSampling
 import Signatures.Schnorr.GeneralROMSecurityModel
 import Signatures.Schnorr.GeneralNonzeroROMParameters
@@ -42,13 +43,8 @@ and require the message to be unsigned. Signing samples uniformly from nonzero
 scalars. All hash/signing/final-verification calls share the same initially empty lazy oracle. The model's generator equals the
 curve's generator by `ROMSecurityModel.generator_eq`. -/
 noncomputable def romEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
-    (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool := by
-  classical
-  let F := curve.Scalar securityParameter
-  let G := curve.Group securityParameter
-  let M := model.Message securityParameter
-  letI : DecidableEq (M × G) := Classical.decEq _
-  exact (simulateQ (M × G →ₒ F).romImpl (SignatureAlg.unforgeableExperiment adversary.source)).run' ∅
+    (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
+  Schnorr.Game.nonzeroRom curve securityParameter adversary.source.main
 
 /-- Supremum of DLog success in the same fixed backend: sample `x`, run the
 solver on `(g, x • g)`, and test its answer against `x`. Every challenge fits

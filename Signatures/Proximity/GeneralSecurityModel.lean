@@ -1,3 +1,4 @@
+import Signatures.Proximity.Game
 import Signatures.Runtime.WeightedSecurityModel
 import Signatures.Proximity.GeneralAGMParameters
 
@@ -45,44 +46,16 @@ def agmReductionTime (securityParameter dimension : Nat) (queries : QueryAllowan
 bases. Fresh collisions remain wins when the signature verifies; they are not rejected.
 The secret is uniform over the whole field, including zero. -/
 noncomputable def agmEufCmaGame (securityParameter dimension : Nat) {queries : QueryAllowance}
-    (adversary : AlgebraicAdversary curve securityParameter dimension queries) : ProbComp Bool := by
-  classical
-  let F := curve.Scalar securityParameter
-  let G₁ := curve.SignatureGroup securityParameter
-  let Gₜ := curve.TargetGroup securityParameter
-  let Slot := model.Label securityParameter
-  let g₁ := curve.generator securityParameter
-  let g₂ := curve.keyGenerator securityParameter
-  exact (simulateQ Model.LazyAGM.lazyImpl (do
-    let secret ← (liftM ($ᵗ F) : OracleComp (Model.LazyAGM.baseSpec (Option (Fin dimension) × Slot) G₁) F)
-    let result ← Model.LazyAGM.interactiveRun (LazyAGM.terms) secret adversary.source g₁ (secret • g₂)
-    match result.data, result.groups .signature with
-    | some (forgery, signedMessages), [signature] =>
-        let target ← Model.LazyAGM.evalTerms (LazyAGM.terms forgery.mstar)
-        return decide (
-          AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) signature g₂ =
-            AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) target (secret • g₂) ∧
-          forgery.mstar ∉ signedMessages)
-    | _, _ => return false)).run' ∅
+    (adversary : AlgebraicAdversary curve securityParameter dimension queries) : ProbComp Bool :=
+  Game.agm curve securityParameter dimension adversary.source
 
 /-- Actual fresh-collision probability in the same source interaction. Every
 signed vector, including repetitions and other slots, contributes with its
 returned signing coefficient. Missing coefficients are zero. This event does
 not require a valid signature and is not assumed negligible. -/
 noncomputable def freshCollisionGame (securityParameter dimension : Nat) {queries : QueryAllowance}
-    (adversary : AlgebraicAdversary curve securityParameter dimension queries) : ProbComp Bool := by
-  classical
-  let F := curve.Scalar securityParameter
-  let G₁ := curve.SignatureGroup securityParameter
-  let Slot := model.Label securityParameter
-  let g₂ := curve.keyGenerator securityParameter
-  exact (simulateQ Model.LazyAGM.lazyImpl (do
-    let secret ← (liftM ($ᵗ F) : OracleComp (Model.LazyAGM.baseSpec (Option (Fin dimension) × Slot) G₁) F)
-    let (out, transcript) ← Model.LazyAGM.run LazyAGM.terms secret adversary.source (secret • g₂)
-    let signed := transcript.2.map Prod.fst
-    return decide (out.mstar ∉ signed ∧
-      out.mstar.1 = fun k => (signed.mapIdx fun n m =>
-        Model.LazyAGM.tokenCoeff out.ξ n * m.1 k).sum))).run' ∅
+    (adversary : AlgebraicAdversary curve securityParameter dimension queries) : ProbComp Bool :=
+  Game.collision curve securityParameter dimension adversary.source
 
 /-- Supremum of `(1,1)`-DLog success over implementations in the same fixed
 backend. A solver receives `(g₁, x • g₁, g₂, x • g₂)` and must recover uniform x.

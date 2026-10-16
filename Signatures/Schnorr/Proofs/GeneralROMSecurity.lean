@@ -38,7 +38,11 @@ theorem UnrestrictedAdversary.query_allowances (securityParameter : Nat) (querie
 theorem romEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : UnrestrictedAdversary curve securityParameter queries) :
     romEufCmaGame curve securityParameter adversary =
-      ROM.game (model.parameters securityParameter queries).generator adversary.source := rfl
+      ROM.game (model.parameters securityParameter queries).generator adversary.source := by
+  classical
+  simp only [romEufCmaGame, Schnorr.Game.rom, ROM.game,
+    SignatureAlg.unforgeableExperiment, ROMSecurityModel.generator_eq]
+  congr!
 
 theorem romDLogSuccessBound_eq (securityParameter : Nat) (queries : QueryAllowance) (time : Nat) :
     romDLogSuccessBound curve securityParameter queries time =

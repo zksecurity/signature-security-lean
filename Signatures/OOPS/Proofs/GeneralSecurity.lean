@@ -30,7 +30,7 @@ theorem agmEufCmaGame_eq (securityParameter degree : Nat) {queries : QueryAllowa
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) degree adversary.source := by
   classical
   rw [LazyAGM.game_eq_of_decidableEq]
-  simp only [agmEufCmaGame, Model.LazyAGM.game, Model.LazyAGM.experiment, LazyAGM.admissible]
+  simp only [agmEufCmaGame, Game.agm, Model.LazyAGM.game, Model.LazyAGM.experiment, LazyAGM.admissible]
   congr! 6
   split <;> split <;> simp_all
 

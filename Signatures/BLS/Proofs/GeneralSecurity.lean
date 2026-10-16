@@ -34,7 +34,7 @@ theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
       LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
   classical
-  simp [agmEufCmaGame, LazyAGM.game, Model.LazyAGM.game, Model.LazyAGM.experiment,
+  simp [agmEufCmaGame, Game.agm, LazyAGM.game, Model.LazyAGM.game, Model.LazyAGM.experiment,
     LazyAGM.terms, Model.LazyAGM.evalTerms]
   apply bind_congr
   intro keyAndCache
@@ -133,7 +133,7 @@ theorem cocdhEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
       CoCDH.Tight.blsEufLazyPK (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
   classical
-  simp only [cocdhEufCmaGame, CoCDH.Tight.blsEufLazyPK, CoCDH.Tight.blsEufTightPK]
+  simp only [cocdhEufCmaGame, Game.rom, CoCDH.Tight.blsEufLazyPK, CoCDH.Tight.blsEufTightPK]
   apply bind_congr
   intro secret
   apply bind_congr

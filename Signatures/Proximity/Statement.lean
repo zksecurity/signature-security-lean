@@ -1,35 +1,36 @@
 import Signatures.Proximity.Proofs.GeneralSecurity
 
-/-! Proximity AGM security for general implemented algebraic attackers. Given a
-curve, security parameter, dimension, query allowances and adversary, bound the
-probability of forging a valid fresh vector/slot pair.
+/-! Proximity security. Fix the curve, security parameter, query allowances and
+execution model, then quantify over the attacker. `Game.lean` contains the game
+without machine contracts. Proofs and derived budgets stay in supporting files.
 
-The DLog bound is an explicit supremum over implementations in the same fixed
-backend, at the proved input/code/time limits. The derived reduction time charges
-dimension-dependent term generation, attacker execution, lazy queries and extraction.
-The original function-vector/optional-coordinate game is preserved exactly.
-Fresh collisions contribute their actual source-game probability; the game does
-not reject them and this theorem does not assume they are negligible.
-
-The model supplies individual primitive/encoding contracts and attacker limits,
-with no finished-reduction efficiency premise. A hardness assumption is needed
-to make the DLog term small. Definitions are in `GeneralSecurityModel.lean`,
-and proofs are in `Proofs/GeneralSecurity.lean`. -/
+Below, `p` is the group order and `εDL` is the DLog success bound at the proved
+reduction budget, in the same execution model. A hardness assumption makes it
+small. The notation expands to the existing resource-indexed quantities.
+The collision term is the actual source-game event; collisions are not rejected.
+-/
 
 namespace Proximity
 
+section AGM
+
+variable (curve : Model.PairingCurve) [AGMSecurityModel curve]
+  (securityParameter dimension : Nat) (queries : QueryAllowance)
+
+local notation "p" => (curve.order securityParameter : ENNReal)
+local notation "εDL" => dlogSuccessBound curve securityParameter dimension queries (agmReductionTime curve securityParameter dimension queries)
+local notation "EUFCMA" => agmEufCmaGame curve securityParameter dimension
+local notation "Collision" => freshCollisionGame curve securityParameter dimension
+
+/-- Every resource-bounded algebraic attacker satisfies this forgery bound. -/
 theorem agm_security
-    (curve : Model.PairingCurve) [AGMSecurityModel curve]
-    (securityParameter dimension : Nat)
-    (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
-    𝒟[agmEufCmaGame curve securityParameter dimension adversary] {true} ≤
-      2 * dlogSuccessBound curve securityParameter dimension queries
-        (agmReductionTime curve securityParameter dimension queries) +
-      1 / (curve.order securityParameter : ENNReal) +
-      𝒟[freshCollisionGame curve securityParameter dimension adversary] {true} :=
+    𝒟[EUFCMA adversary] {true} ≤ 2 * εDL + 1 / p + 𝒟[Collision adversary] {true} :=
   Proofs.agm_security_common_budget curve securityParameter dimension queries adversary
 
+end AGM
+
+/-- Optional sharper refinement: give the two DLog solvers separate budgets. -/
 theorem agm_security_two_budgets
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter dimension : Nat)

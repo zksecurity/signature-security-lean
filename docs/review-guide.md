@@ -3,35 +3,82 @@
 Lazy random-oracle security for BLS, OOPS, Proximity, and Schnorr, including
 both Schnorr nonce conventions and its separate AGM route.
 
-For Schnorr, follow the separate [game, rewinding, and cost review](SCHNORR.md).
-Its [bit-machine endpoint](../Signatures/Schnorr/BitStatement.lean) uses the same
-source game and a fully costed compiled solver, with explicit rejection-sampling
-error and a separate static code/data budget. Follow
-[the implementation evidence](BIT-COMPLEXITY.md) for its memory,
-arithmetic, randomness, and probability refinements.
-It includes the source certificate, exact reduction bridge, public costed theorem,
-and a separate test review. The pairing-based routes are detailed below.
-Kernel checking proves each implication from its hypotheses; it does not establish paper/model alignment.
+Start with the mathematical game and the public statement:
 
-For the new general-attacker BLS AGM endpoint, start at
-[`BLS.agm_security`](../Signatures/BLS/Statement.lean): curve, security parameter,
-query allowances, and algebraic adversary, followed by the named game's probability
-bound: `2 * dlogSuccessBound(agmReductionTime) + 1/groupOrder`.
-`agmReductionTime` is the maximum of the two proved reduction times. Use
-`agm_security_two_budgets` for the sharper bound with separate times.
-The [declared execution model](../Signatures/BLS/GeneralSecurityModel.lean) and
-[detailed resource records](../Signatures/BLS/GeneralAGMParameters.lean) remain inspectable. The full
-[resource-indexed theorem](../Signatures/Runtime/BackendLazyAGMSecurity.lean)
-constructs both native solver certificates before applying DLog hardness.
-The same public file also contains `BLS.cocdh_security`, with an unrestricted
-attacker and `coronFactor(signingQueries) * coCDHSuccessBound(cocdhReductionTime)`.
-The time allowance is the complete proved Coron runtime. Its resources are in
-[`GeneralCoCDHParameters.lean`](../Signatures/BLS/GeneralCoCDHParameters.lean).
-The public proof bodies are in
-[`Proofs/GeneralSecurity.lean`](../Signatures/BLS/Proofs/GeneralSecurity.lean).
-The [plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md) distinguishes this completed
-conditional route and family results from remaining integration verification and final audit and
-the separate conventional-machine instantiation claim.
+| Scheme | Game, independent of the execution model | Security statement |
+| --- | --- | --- |
+| BLS | [Game.lean](../Signatures/BLS/Game.lean) | [Statement.lean](../Signatures/BLS/Statement.lean) |
+| Schnorr | [Game.lean](../Signatures/Schnorr/Game.lean) | [Statement.lean](../Signatures/Schnorr/Statement.lean) |
+| OOPS | [Game.lean](../Signatures/OOPS/Game.lean) | [Statement.lean](../Signatures/OOPS/Statement.lean) |
+| Proximity | [Game.lean](../Signatures/Proximity/Game.lean) | [Statement.lean](../Signatures/Proximity/Statement.lean) |
+
+The common EUF-CMA game is:
+
+```text
+Generate a secret key and give its public key to the attacker.
+Answer adaptive hash and signing queries using one shared random oracle.
+Receive the attacker's proposed message and signature.
+Accept exactly when the signature verifies and the message was never signed.
+```
+
+OOPS additionally limits distinct signed scalar messages on the forged topic to
+its degree. Proximity uses the full vector/slot pair for freshness and measures
+its collision event separately. Schnorr keeps full-field and nonzero signing
+nonces as distinct variants. AGM routes require algebraic group explanations;
+BLS co-CDH and Schnorr ROM do not. Internal computation is unrestricted within
+the declared resource class.
+
+Fix the curve, security parameter, query allowances and execution model once.
+The main BLS AGM theorem then reads:
+
+```lean
+theorem agm_security
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    𝒟[EUFCMA adversary] {true} ≤ 2 * εDL + 1 / p :=
+  Proofs.agm_security_common_budget curve securityParameter queries adversary
+```
+
+Here `p` is the group order. `εDL` is the DLog success bound at the **derived
+complete reduction budget**, in the same execution model as the attacker.
+For pairing-based AGM routes this is `(1,1)`-DLog; for Schnorr it is ordinary
+DLog. The short names are local notation: Lean still sees the original game,
+hardness supremum and derived time bound. No hypothesis or loss is removed.
+
+Writing `h` and `s` for hash and signing allowances, the concrete bounds are:
+
+| Route | Forgery probability at most |
+| --- | --- |
+| BLS AGM, OOPS AGM | `2 εDL + 1/p` |
+| BLS co-CDH ROM | `coronFactor(s) εcoCDH` |
+| Schnorr AGM | `εDL + (h+1)/p + s(s+h)/p` |
+| Schnorr ROM, full-field nonces | `s(s+h)/p + (h+1)/p + sqrt((h+1) εDL)` |
+| Schnorr ROM, nonzero nonces | `s(s+h)/(p−1) + (h+1)/p + sqrt((h+1) εDL)` |
+| Proximity AGM | `2 εDL + 1/p + Pr[fresh collision]` |
+
+Each hardness quantity uses its own route's proved budget. It becomes a useful
+numerical bound under the corresponding hardness assumption. The Coron factor
+is `((s+1)⁻¹ (s/(s+1))^s)⁻¹`, including factor one at `s = 0`.
+The separate-budget AGM refinements remain available below the main theorems.
+
+The asymptotic reading is: under the relevant nonuniform hardness and parameter
+growth assumptions, polynomial-resource attacker families have negligible forgery
+probability. Proximity gives collision probability plus negligible error, and
+requires negligible collisions for negligible forgery. These family results
+retain one fixed execution model and account for polynomial stored code/advice;
+see the [completed plan and family endpoints](GENERAL-ADVERSARY-REDUCTION-PLAN.md).
+
+Only the supporting layer needs execution contracts, primitive and encoding
+costs, sampler profiles, native solver certificates, and the expanded resource
+formulas. They remain inspectable in each `General*SecurityModel.lean` and
+`General*Parameters.lean`; proof bodies stay in `Proofs/`. The mathematical games
+import no runtime modules. The future Caliper/conventional-machine instantiation
+is separate from this public presentation.
+
+For a deeper Schnorr review, follow [the game, rewinding, and cost review](SCHNORR.md).
+Its separately scoped [bit-machine endpoint](../Signatures/Schnorr/BitStatement.lean)
+and [implementation evidence](BIT-COMPLEXITY.md) retain their sampling-error and
+static code/data conventions. Kernel checking proves each implication from its
+hypotheses; it does not establish paper/model alignment.
 
 [Game ledger](SECURITY-GAMES.md) · [Source tree](../Signatures) ·
 [Regression tests](../SignaturesTest) ·
@@ -90,8 +137,9 @@ Their model and adversary definitions expose the distinct execution and resource
 The short [OOPS](../Signatures/OOPS/Statement.lean) and
 [Proximity](../Signatures/Proximity/Statement.lean) statements additionally take
 the degree or dimension. They preserve their original source games and derive
-both native reduction budgets from general caller resources. Their models and
-expanded games are in `GeneralSecurityModel.lean`; their proof bodies are in
+both native reduction budgets from general caller resources. Their mathematical
+games are in `Game.lean`; execution contracts and hardness budgets are in
+`GeneralSecurityModel.lean`; their proof bodies are in
 `Proofs/GeneralSecurity.lean`.
 The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and
 [Proximity](../Signatures/Proximity/GeneralAGMFamilyStatement.lean) family statements

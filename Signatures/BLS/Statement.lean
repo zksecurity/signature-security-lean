@@ -1,64 +1,54 @@
 import Signatures.BLS.Proofs.GeneralSecurity
 import Signatures.BLS.ArithmeticStatement
 
-/-! BLS security: given a curve, security parameter, query allowances and an
-adversary, bound the probability of forging a valid signature on an unsigned message.
+/-! BLS security. Fix the curve, security parameter, query allowances and
+execution model, then quantify over the attacker. `Game.lean` contains the game
+without machine contracts. Proofs and derived budgets stay in supporting files.
 
-* AGM: forgery probability ≤ 2 × DLog success + 1 / group order.
-* Unrestricted ROM: forgery probability ≤ Coron factor × co-CDH success.
-
-`𝒟[game] {true}` is the probability that the game accepts the forgery. Hashing,
-signing and verification share an initially empty lazy random oracle.
-The success bounds are suprema over executable hardness solvers, with the same
-fixed backend and derived input/code/time limits as the reductions. They need
-hardness assumptions to be small. They are not extra assumptions that our
-reductions are efficient.
-
-`agmReductionTime` is the maximum of the two proved DLog reduction times;
-`cocdhReductionTime` is the proved Coron reduction time. The sharper two-budget
-AGM bound is also available below. The model fixes primitive/encoding contracts
-and attacker resource limits; the adversary supplies its own implemented code,
-resource proofs and query bounds. Its internal computation is unrestricted;
-only the AGM route also requires algebraic group outputs.
-
-Inspect these definitions in `GeneralSecurityModel.lean`, the component contracts
-in `GeneralAGMParameters.lean` / `GeneralCoCDHParameters.lean`, and the proofs in
-`Proofs/GeneralSecurity.lean`. The arithmetic-source co-CDH statement remains in
-`ArithmeticStatement.lean`; eager-table AGM wrappers have been retired. -/
+Below, `p` is the group order and `εDL` is the DLog success bound at the proved
+reduction budget, in the same execution model. A hardness assumption makes it
+small. The notation expands to the existing resource-indexed quantities.
+-/
 
 namespace BLS
 
-/-- Every algebraic adversary within the declared resources and query allowances
-has forgery probability at most twice the `(1,1)`-DLog success bound plus `1/|F|`. -/
+section AGM
+
+variable (curve : Model.PairingCurve) [AGMSecurityModel curve]
+  (securityParameter : Nat) (queries : QueryAllowance)
+
+local notation "p" => (curve.order securityParameter : ENNReal)
+local notation "εDL" => dlogSuccessBound curve securityParameter queries (agmReductionTime curve securityParameter queries)
+local notation "EUFCMA" => agmEufCmaGame curve securityParameter
+
+/-- Every resource-bounded algebraic attacker satisfies this forgery bound. -/
 theorem agm_security
-    (curve : Model.PairingCurve) [AGMSecurityModel curve]
-    (securityParameter : Nat)
-    (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter queries) :
-    𝒟[agmEufCmaGame curve securityParameter adversary] {true} ≤
-      2 * dlogSuccessBound curve securityParameter queries
-        (agmReductionTime curve securityParameter queries) +
-      1 / (curve.order securityParameter : ENNReal) :=
+    𝒟[EUFCMA adversary] {true} ≤ 2 * εDL + 1 / p :=
   Proofs.agm_security_common_budget curve securityParameter queries adversary
 
-/-- Every unrestricted adversary within the declared resources and query allowances
-has forgery probability at most the Coron factor times the co-CDH success bound.
-For `s` signing queries, `coronFactor s = ((s+1)⁻¹ * (s/(s+1))^s)⁻¹`;
-in particular, `coronFactor 0 = 1`. -/
+end AGM
+
+section CoCDH
+
+variable (curve : Model.PairingCurve) [CoCDHSecurityModel curve]
+  (securityParameter : Nat) (queries : QueryAllowance)
+
+-- The Coron factor depends only on signing calls; at zero calls it is one.
+-- εcoCDH uses the complete proved Coron reduction budget in the same model.
+local notation "εcoCDH" => coCDHSuccessBound curve securityParameter queries
+  (cocdhReductionTime curve securityParameter queries)
+local notation "EUFCMA" => cocdhEufCmaGame curve securityParameter
+
+/-- Every resource-bounded unrestricted attacker satisfies this ROM bound. -/
 theorem cocdh_security
-    (curve : Model.PairingCurve) [CoCDHSecurityModel curve]
-    (securityParameter : Nat)
-    (queries : QueryAllowance)
     (adversary : UnrestrictedAdversary curve securityParameter queries) :
-    𝒟[cocdhEufCmaGame curve securityParameter adversary] {true} ≤
-      Model.coronFactor queries.sign *
-        coCDHSuccessBound curve securityParameter queries
-          (cocdhReductionTime curve securityParameter queries) :=
+    𝒟[EUFCMA adversary] {true} ≤ Model.coronFactor queries.sign * εcoCDH :=
   Proofs.cocdh_security curve securityParameter queries adversary
 
-/-- Sharper AGM bound using each reduction's own runtime. The good branch handles
-a nonzero extraction denominator; the bad branch uses independent affine masks
-for the zero-denominator case. The remaining probability loss is `1/|F|`. -/
+end CoCDH
+
+/-- Optional sharper refinement: give the two DLog solvers separate budgets. -/
 theorem agm_security_two_budgets
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter : Nat)

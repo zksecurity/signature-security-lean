@@ -19,12 +19,32 @@ interfaces and their hardness scope. Original eager probability/resource lemmas
 remain supporting references, and the retained arithmetic-source co-CDH and
 Schnorr endpoints keep their distinct scopes.
 
-The conditional reduction plan is complete: the final requirement audit and
-current-tree integration verification passed all 1,054 targets (924 library
-modules and 130 regression modules). This includes the sharper BLS cache bound
+The conditional reduction plan is complete: its final requirement audit and
+integration verification passed all 1,054 targets (924 library modules and
+130 regression modules) at that checkpoint. This includes the sharper BLS cache bound
 `qH + qS + 1` for both actual list-cache reductions. The detailed implementation
 checkpoints below record the evidence and historical intermediate states;
 the completion evidence map links every checklist item to its proof and tests.
+
+## Public presentation follow-up, 2026-10-16
+
+The mathematical games now live in each scheme's `Game.lean`, without runtime
+imports or execution-contract arguments. Public model adapters connect them to
+the same source games; exact equalities preserve the original experiments.
+The main concrete statements use local mathematical notation for the game,
+group order, query counts and resource-indexed hardness terms. This notation
+expands to the existing statements, keeping their assumptions and losses intact.
+Proofs, native runtime/code formulas, and primitive contracts remain in supporting
+files. The [review guide](review-guide.md) starts with the simple game and all
+concrete bounds, then explains the asymptotic reading and links the details.
+The conventional-machine/Caliper abstraction remains separate, as requested.
+Current-tree verification passed all 1,059 targets (928 library modules and
+131 regressions), checking changed targets and their dependency closures against
+the verified baseline. All changed proof/test logs are empty; existing warnings
+remain reviewed. The original public assumption/axiom guards and the new
+[game-separation checks](../SignaturesTest/PublicGames.lean) passed. The four game
+modules have no runtime or execution-contract imports, including transitive local
+imports. No theorem assumptions, probability losses or cost contracts changed.
 
 ## Existing results and limits
 

@@ -1,31 +1,35 @@
 import Signatures.OOPS.Proofs.GeneralSecurity
 
-/-! OOPS AGM security for general implemented algebraic attackers. Given a
-curve, security parameter, degree, query allowances and adversary, bound the
-probability of forging a valid fresh scalar/topic pair. Winning also requires at
-most `degree` distinct signed scalar messages on the forged topic.
+/-! OOPS security. Fix the curve, security parameter, query allowances and
+execution model, then quantify over the attacker. `Game.lean` contains the game
+without machine contracts. Proofs and derived budgets stay in supporting files.
 
-The DLog bound is an explicit supremum over implementations in the same fixed
-backend, at the proved input/code/time limits. The reduction time includes
-degree-dependent term generation, attacker execution, lazy queries and extraction.
-The model fixes individual primitive/encoding contracts and attacker limits.
-It does not assume a finished reduction is efficient. A hardness assumption is
-needed to make the DLog term small. Inspect `GeneralSecurityModel.lean` for the
-games and bounds, and `Proofs/GeneralSecurity.lean` for the proofs. -/
+Below, `p` is the group order and `εDL` is the DLog success bound at the proved
+reduction budget, in the same execution model. A hardness assumption makes it
+small. The notation expands to the existing resource-indexed quantities.
+The game also checks at most `degree` distinct signed messages on the forged topic.
+-/
 
 namespace OOPS
 
+section AGM
+
+variable (curve : Model.PairingCurve) [AGMSecurityModel curve]
+  (securityParameter degree : Nat) (queries : QueryAllowance)
+
+local notation "p" => (curve.order securityParameter : ENNReal)
+local notation "εDL" => dlogSuccessBound curve securityParameter degree queries (agmReductionTime curve securityParameter degree queries)
+local notation "EUFCMA" => agmEufCmaGame curve securityParameter degree
+
+/-- Every resource-bounded algebraic attacker satisfies this forgery bound. -/
 theorem agm_security
-    (curve : Model.PairingCurve) [AGMSecurityModel curve]
-    (securityParameter degree : Nat)
-    (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter degree queries) :
-    𝒟[agmEufCmaGame curve securityParameter degree adversary] {true} ≤
-      2 * dlogSuccessBound curve securityParameter degree queries
-        (agmReductionTime curve securityParameter degree queries) +
-      1 / (curve.order securityParameter : ENNReal) :=
+    𝒟[EUFCMA adversary] {true} ≤ 2 * εDL + 1 / p :=
   Proofs.agm_security_common_budget curve securityParameter degree queries adversary
 
+end AGM
+
+/-- Optional sharper refinement: give the two DLog solvers separate budgets. -/
 theorem agm_security_two_budgets
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter degree : Nat)

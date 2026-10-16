@@ -29,7 +29,7 @@ theorem agmEufCmaGame_eq (securityParameter dimension : Nat) {queries : QueryAll
       LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
   classical
-  simp only [agmEufCmaGame, LazyAGM.game, Model.LazyAGM.game, Model.LazyAGM.experiment, true_and]
+  simp only [agmEufCmaGame, Game.agm, LazyAGM.game, Model.LazyAGM.game, Model.LazyAGM.experiment, true_and]
   congr! 6
   split <;> split <;> simp_all
 
@@ -38,7 +38,7 @@ theorem freshCollisionGame_eq (securityParameter dimension : Nat) {queries : Que
     freshCollisionGame curve securityParameter dimension adversary =
       LazyAGM.collisionGame (curve.keyGenerator securityParameter) adversary.source := by
   classical
-  simp only [freshCollisionGame, LazyAGM.collisionGame, LazyAGM.collisionExperiment, LazyAGM.Collision]
+  simp only [freshCollisionGame, Game.collision, LazyAGM.collisionGame, LazyAGM.collisionExperiment, LazyAGM.Collision]
   congr! 8
   exact decide_eq_decide.mpr Iff.rfl
 

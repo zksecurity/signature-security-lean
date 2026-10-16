@@ -1,3 +1,4 @@
+import Signatures.OOPS.Game
 import Signatures.Runtime.WeightedSecurityModel
 import Signatures.OOPS.GeneralAGMParameters
 
@@ -45,26 +46,8 @@ def agmReductionTime (securityParameter degree : Nat) (queries : QueryAllowance)
 bases. The winning predicate limits distinct signed scalar messages on the target topic to degree.
 The secret is uniform over the whole field, including zero. -/
 noncomputable def agmEufCmaGame (securityParameter degree : Nat) {queries : QueryAllowance}
-    (adversary : AlgebraicAdversary curve securityParameter degree queries) : ProbComp Bool := by
-  classical
-  let F := curve.Scalar securityParameter
-  let G₁ := curve.SignatureGroup securityParameter
-  let Gₜ := curve.TargetGroup securityParameter
-  let Topic := model.Label securityParameter
-  let g₁ := curve.generator securityParameter
-  let g₂ := curve.keyGenerator securityParameter
-  exact (simulateQ Model.LazyAGM.lazyImpl (do
-    let secret ← (liftM ($ᵗ F) : OracleComp (Model.LazyAGM.baseSpec (Topic × Fin (degree + 1)) G₁) F)
-    let result ← Model.LazyAGM.interactiveRun (LazyAGM.terms degree) secret adversary.source g₁ (secret • g₂)
-    match result.data, result.groups .signature with
-    | some (forgery, signedMessages), [signature] =>
-        let target ← Model.LazyAGM.evalTerms (LazyAGM.terms degree forgery.mstar)
-        return decide (
-          ((signedMessages.filter fun m => m.2 = forgery.mstar.2).map Prod.fst).toFinset.card ≤ degree ∧
-          AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) signature g₂ =
-            AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) target (secret • g₂) ∧
-          forgery.mstar ∉ signedMessages)
-    | _, _ => return false)).run' ∅
+    (adversary : AlgebraicAdversary curve securityParameter degree queries) : ProbComp Bool :=
+  Game.agm curve securityParameter degree adversary.source
 
 /-- Supremum of `(1,1)`-DLog success over implementations in the same fixed
 backend. A solver receives `(g₁, x • g₁, g₂, x • g₂)` and must recover uniform x.

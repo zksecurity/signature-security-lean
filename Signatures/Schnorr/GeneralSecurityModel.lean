@@ -1,3 +1,4 @@
+import Signatures.Schnorr.Game
 import Signatures.Model.CyclicCurve
 import Signatures.Schnorr.GeneralAGMParameters
 
@@ -65,20 +66,8 @@ def agmReductionTime (securityParameter : Nat) (queries : QueryAllowance) : Nat 
 oracle. Signing records messages; malformed requests permanently prevent a win.
 The source handler samples a fresh nonce and returns its commitment on signing. -/
 noncomputable def agmEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
-    (adversary : AlgebraicAdversary curve securityParameter queries) : ProbComp Bool := by
-  let F := curve.Scalar securityParameter
-  let G := curve.Group securityParameter
-  let M := model.Message securityParameter
-  let g := curve.generator securityParameter
-  exact (simulateQ (unifFwdImpl (M × G →ₒ F) + randomOracle (spec := M × G →ₒ F)) (do
-    let secret ← liftComp ($ᵗ F) (AGM.BaseSpec F G M)
-    let ((out, _basis), state) ← (adversary.source.run (AGM.handler g secret) (AGM.initial g (secret • g))).run {}
-    match out.value.groups () with
-    | [R] =>
-        let (m, z) := out.value.data
-        let challenge : F ← (AGM.BaseSpec F G M).query (.inr (m, R))
-        return !state.malformed && decide (m ∉ state.signed ∧ z • g = R + challenge • (secret • g))
-    | _ => return false)).run' ∅
+    (adversary : AlgebraicAdversary curve securityParameter queries) : ProbComp Bool :=
+  Schnorr.Game.agm curve securityParameter adversary.source
 
 /-- Supremum of DLog success in the same fixed backend: draw uniform x, give
 the solver `(g, x • g)`, and test whether it returns x. Every challenge fits the

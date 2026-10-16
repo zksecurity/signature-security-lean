@@ -1,3 +1,4 @@
+import Signatures.BLS.Game
 import Signatures.Model.PairingCurve
 import Signatures.BLS.GeneralAGMParameters
 import Signatures.BLS.GeneralCoCDHParameters
@@ -9,7 +10,7 @@ import Signatures.BLS.GeneralCoCDHParameters
 to co-CDH. Both use `ExecutionModel` and the common query-allowance type; their
 component contracts, output types, native reductions and hardness classes differ.
 
-Each game is written out below, and each success measure is an explicit supremum
+The games are in `Game.lean`; each success measure below is an explicit supremum
 over solvers in the fixed backend at the derived code/input/time bounds. This is
 a concrete resource model. Polynomial families and a conventional-machine
 instantiation need further hypotheses when making those stronger claims.
@@ -95,25 +96,8 @@ lazy random oracle: `hash(m) = H(m)` and `sign(m) = secret • H(m)`.
 The certified AGM runner records signed messages and returns the candidate group point.
 The secret is sampled uniformly from the whole scalar field, including zero. -/
 noncomputable def agmEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
-    (adversary : AlgebraicAdversary curve securityParameter queries) : ProbComp Bool := by
-  classical
-  let F := curve.Scalar securityParameter
-  let G₁ := curve.SignatureGroup securityParameter
-  let Gₜ := curve.TargetGroup securityParameter
-  let M := model.Message securityParameter
-  let g₁ := curve.generator securityParameter
-  let g₂ := curve.keyGenerator securityParameter
-  exact (simulateQ Model.LazyAGM.lazyImpl (do
-    let secret ← (liftM ($ᵗ F) : OracleComp (Model.LazyAGM.baseSpec M G₁) F)
-    let result ← Model.LazyAGM.interactiveRun LazyAGM.terms secret adversary.source g₁ (secret • g₂)
-    match result.data, result.groups .signature with
-    | some (forgery, signedMessages), [signature] =>
-        let hash : G₁ ← liftM ((Model.LazyAGM.baseSpec M G₁).query (.inr forgery.mstar))
-        return decide (
-          AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) signature g₂ =
-            AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) hash (secret • g₂) ∧
-          forgery.mstar ∉ signedMessages)
-    | _, _ => return false)).run' ∅
+    (adversary : AlgebraicAdversary curve securityParameter queries) : ProbComp Bool :=
+  Game.agm curve securityParameter adversary.source
 
 /-- Supremum of success probabilities for `(1,1)`-DLog: sample `x` uniformly,
 give a solver `(g₁, x • g₁, g₂, x • g₂)`, and test whether it returns `x`.
@@ -160,20 +144,8 @@ signs it with the secret key. Hashing, signing and final verification share that
 cache. `cacheForgeryPK` appends the verifier's hash lookup before the final test.
 The secret is uniform over the whole scalar field, including zero. -/
 noncomputable def cocdhEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
-    (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool := by
-  classical
-  let F := curve.Scalar securityParameter
-  let Gₜ := curve.TargetGroup securityParameter
-  let g₁ := curve.generator securityParameter
-  let g₂ := curve.keyGenerator securityParameter
-  exact do
-    let secret ← ($ᵗ F : ProbComp F)
-    let ((message, signature), state) ←
-      (simulateQ (CoCDH.Tight.realOracle (F := F) g₁ (secret • g₁))
-        (CoCDH.Tight.cacheForgeryPK adversary.source (secret • g₂))).run ((fun _ => none), ∅)
-    return decide (AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) signature g₂ =
-      AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ)
-        (((state.1 message).getD 0) • g₁) (secret • g₂)) && decide (message ∉ state.2)
+    (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
+  Game.rom curve securityParameter adversary.source
 
 /-- Supremum of co-CDH success: sample a scalar `x` and group point `h`, give a
 solver `(g₁, g₂, x • g₁, x • g₂, h)`, and test whether it returns `x • h`.

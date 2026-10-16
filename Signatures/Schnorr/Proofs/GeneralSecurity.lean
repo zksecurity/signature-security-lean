@@ -29,7 +29,7 @@ theorem AlgebraicAdversary.query_allowances (securityParameter : Nat) (queries :
 theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter queries) :
     agmEufCmaGame curve securityParameter adversary = AGM.game (curve.generator securityParameter) adversary.source := by
-  simp only [agmEufCmaGame, AGM.game, AGM.experiment]
+  simp only [agmEufCmaGame, Game.agm, AGM.game, AGM.experiment]
   congr! 8
   funext motive groups singleton fallback
   cases groups with
