@@ -282,10 +282,13 @@ have exact source correspondence and original-resource runtime/code bounds.
 Adaptive reservations include `2*qField + qNonzero + 1` tape cells per request;
 complete caller/pass runtime has polynomial closure from original resources.
 
-Remaining: install both nonzero passes in the replaying solver and derive its
-complete resources and fixed-backend certificate, expose concrete/family security,
-then finish API/documentation
-retirement. A conventional machine instantiation is needed only if making that
+Both actual nonzero passes now run in the complete replaying solver, whose exact
+source correspondence, full runtime/code bounds and polynomial closure construct
+a fixed-backend executable certificate. The concrete DLog-hardness endpoint is
+proved with the original signing and forking losses.
+
+Remaining: expose the nonzero short public and nonuniform family statements,
+then finish API/documentation retirement. A conventional machine instantiation is needed only if making that
 stronger coverage claim.
 
 Establish security for general efficient attackers for the signature routes in
@@ -308,7 +311,7 @@ machine results, not completion of this broader objective.
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Complete native replaying solver with exact source correspondence, derived runtime/code certificate, short public concrete statement and nonuniform polynomial-family security. The original quadratic forking bound is retained; the public bound exposes its square-root consequence. General unrestricted callers and arbitrary messages are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional full-field nonce route is complete. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| Schnorr nonzero-nonce ROM | Named lazy reduction with the original probability bound; finite-cache pass/replay/extraction has exact computation correspondence and query-dependent cache capacities. Native signing, dispatcher, arbitrary caller and complete pass have exact source correspondence and derived runtime/code bounds; complete pass runtime has polynomial closure from original resources. Inverse nonzero-field size inherits negligibility from inverse field size. | Install both actual nonzero passes in the replaying solver, derive complete solver resources and connect fixed-backend concrete/family security. Full-field runtime certificates do not automatically cover this variant. |
+| Schnorr nonzero-nonce ROM | Complete native replaying solver with exact source correspondence, derived runtime/code bounds and polynomial closure, fixed-backend executable certificate and concrete DLog-hardness transport. Both actual nonzero passes and both original samplers are charged. The original signing and forking losses are preserved. | Expose short public and nonuniform family security from the derived certificate. Full-field runtime certificates do not automatically cover this variant. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
 machine bounds explicitly charge full-domain initialization and sums. For BLS
@@ -3658,20 +3661,66 @@ The new implementation modules, expanded regression, existing full-field handler
 and caller regressions, and aggregate import are checked serially within the
 existing compiler resource limits; theorem axiom footprints remain standard.
 
+### Complete nonzero replaying solver and concrete hardness, 2026-10-15
+
+The [original pass resource records](../Signatures/Runtime/BackendSchnorrNonzeroPassResources.lean)
+retain both sampler execution profiles and the full adaptive tape reservation.
+Their [numeric time inputs](../Signatures/Runtime/BackendSchnorrNonzeroPassTime.lean)
+derive complete pass polynomial runtime without restricting numeric sampling
+arities or requiring a finite message universe.
+
+The [actual fork](../Signatures/Runtime/BackendSchnorrNonzeroFork.lean) installs
+both nonzero passes in the generic replay controller. Exact source equality and
+output shape are proved from measured arbitrary-caller execution and the two
+original sampling laws. Its [complete runtime bound](../Signatures/Runtime/BackendSchnorrNonzeroForkBudget.lean)
+derives both pass, selector and replacement-sampler budgets internally, retaining
+the distinction between narrow tape entries and complete controller frames.
+[Stored code](../Signatures/Runtime/BackendSchnorrNonzeroForkDescription.lean) and
+[polynomial runtime](../Signatures/Runtime/BackendSchnorrNonzeroForkPolynomial.lean)
+charge the complete installed fork.
+
+The [complete solver](../Signatures/Runtime/BackendSchnorrNonzeroSolver.lean)
+executes setup, that fork, guarded extraction and both fallback paths. Its entire
+computation equals the named nonzero lazy reduction; it uses the original field
+sampler for replacement challenges and extraction fallback. The
+[runtime/output theorem](../Signatures/Runtime/BackendSchnorrNonzeroSolverBudget.lean)
+and [stored-code theorem](../Signatures/Runtime/BackendSchnorrNonzeroSolverDescription.lean)
+are derived from original resources. Both [runtime](../Signatures/Runtime/BackendSchnorrNonzeroSolverPolynomial.lean)
+and [stored code](../Signatures/Runtime/BackendSchnorrNonzeroDescriptionPolynomial.lean)
+have polynomial closure. The description proof uses a proved numerical envelope
+over shared component formulas and both actual signing programs; it assumes no
+finished solver budget.
+
+The [fixed-backend certificate](../Signatures/Runtime/BackendSchnorrNonzeroSolverWithin.lean)
+combines exact semantics and full runtime/code bounds. The
+[concrete security theorem](../Signatures/Runtime/BackendSchnorrNonzeroSecurity.lean)
+constructs that witness before applying DLog hardness. The signing loss remains
+`qS*(qS+qH)/(|F|-1)` and the quadratic forking loss still uses `1/|F|`.
+The [original description inputs](../Signatures/Runtime/BackendSchnorrNonzeroDescriptionInputs.lean)
+and [caller allowance lemma](../Signatures/Runtime/BackendSchnorrNonzeroDescriptionAllowance.lean)
+prepare the remaining short public and nonuniform family interfaces.
+
+[Complete-solver regressions](../SignaturesTest/SchnorrNonzeroSolver.lean) cover
+adaptive private sampling with an uncountable message type, exact computation
+correspondence, both original sampling profiles, actual nonzero pass installation,
+derived executable membership and the original probability denominator. They
+reject finite-universe, restricted-attacker syntax and finished-component budget
+premises and check standard axiom footprints. All 16 new implementation modules,
+the new regression, the existing full-field fork and solver regressions, and the
+aggregate import pass serially under the existing compiler limits. Their final
+logs contain no warnings or errors.
+
 ### Remaining Schnorr variant work
 
 The conditional general-caller full-field ROM and AGM routes are complete.
-For the nonzero-nonce route, signing, dispatch, arbitrary caller execution and
-one complete native pass now have proved source/runtime/code correspondence.
-Install both actual nonzero passes in the existing generic replay controller and
-derive whole-solver runtime/code bounds and polynomial closure from original
-resources.
-The finite-cache pass and complete source replay already refine the named lazy
-probability reduction exactly. Assemble the complete fixed-backend solver
-certificate and expose concrete/public and nonuniform family security. Preserve
-the original signing collision denominator; the full-field certificate does not implicitly cover the
-extra sampler and repair branch. Finish API/documentation retirement after the
-replacement callers pass. A conventional-machine instantiation remains a stronger
+For the nonzero-nonce route, the complete native solver now has exact source
+correspondence, derived runtime/code bounds and polynomial closure, a fixed-backend
+executable certificate and concrete DLog-hardness transport. Expose the short
+public statement and derive nonuniform family security from original polynomial
+resources. Preserve the original signing collision denominator `|F|-1`, using
+the proved inverse-nonzero-field growth lemma. The full-field certificate does
+not implicitly cover the extra sampler and repair branch. Finish API/documentation
+retirement after the replacement callers pass. A conventional-machine instantiation remains a stronger
 claim than the conditional fixed-backend endpoints.
 
 ## Implementation order and completion checks
@@ -5426,9 +5475,11 @@ additional axioms or proof-resource overrides.
   caller resource proofs from both original sampler profiles and attacker measurements.
 - [x] Assemble the actual nonzero native pass, prove exact source correspondence,
   derive full runtime/code/output bounds and polynomial runtime closure.
-- [ ] Install both nonzero native passes in the replaying solver; derive complete
+- [x] Install both nonzero native passes in the replaying solver; derive complete
   solver runtime/code bounds, polynomial closure and fixed-backend executable membership.
-- [ ] Complete the separate nonzero-nonce concrete/public and family security endpoints.
+- [x] Apply fixed-backend DLog hardness to the derived nonzero solver certificate,
+  preserving the original signing and quadratic forking losses.
+- [ ] Complete the separate nonzero-nonce short public and nonuniform family security endpoints.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
   and derived resources; keep proofs separate and preserve the original query losses.
 - [x] Derive the Schnorr AGM polynomial solver resources and nonuniform family
@@ -5468,6 +5519,8 @@ its collision qualification. Schnorr AGM now also has its complete native resour
 certificate, short concrete security theorem and derived polynomial-family
 corollary. General Schnorr full-field ROM now also has its complete native
 certificate, short concrete statement and derived nonuniform family theorem.
-Continue with the separate nonzero-nonce variant, then API/documentation retirement.
+The nonzero-nonce route now also has a complete native certificate, derived
+polynomial resources and concrete hardness transport. Continue with its short
+public and nonuniform family endpoints, then API/documentation retirement.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine claim. The broader plan remains open.

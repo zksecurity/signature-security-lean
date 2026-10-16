@@ -32,6 +32,10 @@ import Signatures.Runtime.SchnorrNonzeroListReduction
 import Signatures.Runtime.SchnorrNonzeroListGrowth
 import Signatures.Runtime.BackendSchnorrNonzeroPassPolynomial
 import Signatures.Runtime.BackendSchnorrNonzeroPassDescription
+import Signatures.Runtime.BackendSchnorrNonzeroSecurity
+import Signatures.Runtime.BackendSchnorrNonzeroSolverPolynomial
+import Signatures.Runtime.BackendSchnorrNonzeroDescriptionPolynomial
+import Signatures.Runtime.BackendSchnorrNonzeroDescriptionAllowance
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.BackendSchnorrAGMReadBudget
@@ -286,9 +290,11 @@ private samplers and common-store signer now have exact source correspondence
 and complete runtime/code bounds, with polynomial closure from original resources.
 The nonzero dispatcher, arbitrary caller and complete native pass now also have
 exact source correspondence, derived runtime/code/output bounds and polynomial
-runtime closure from original resources. Installing both passes in the replaying
-solver and deriving whole-solver certification and concrete/family hardness
-endpoints remain open.
+runtime closure from original resources. Both actual passes now compose into the
+complete replaying solver, with exact source correspondence, derived runtime/code
+bounds, polynomial closure and a fixed-backend executable certificate. The concrete
+DLog-hardness endpoint preserves the nonzero signing loss. The short public and
+nonuniform family endpoints remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

@@ -270,8 +270,13 @@ resources. The [complete native pass](../Signatures/Runtime/BackendSchnorrNonzer
 has exact source correspondence, [full runtime/output bounds](../Signatures/Runtime/BackendSchnorrNonzeroPassBudget.lean),
 [code accounting](../Signatures/Runtime/BackendSchnorrNonzeroPassDescription.lean)
 and [polynomial runtime closure](../Signatures/Runtime/BackendSchnorrNonzeroPassPolynomial.lean).
-Installation of both passes in the replaying solver, complete fixed-backend
-certification and concrete/family hardness endpoints remain open.
+Both actual nonzero passes now run in the [complete replaying solver](../Signatures/Runtime/BackendSchnorrNonzeroSolver.lean).
+Exact source correspondence, complete runtime/code bounds and their polynomial
+closure construct its [fixed-backend executable certificate](../Signatures/Runtime/BackendSchnorrNonzeroSolverWithin.lean).
+The [concrete hardness endpoint](../Signatures/Runtime/BackendSchnorrNonzeroSecurity.lean)
+applies DLog hardness to that derived certificate, preserving the original
+`|F|-1` signing denominator. The short public and nonuniform family endpoints
+remain open.
 These results do not claim a conventional-machine instantiation.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers

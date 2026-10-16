@@ -15,7 +15,8 @@ certificate and runtime/code bounds in the same fixed backend as the attacker.
 The [family corollary](../Signatures/Schnorr/GeneralROMFamilyStatement.lean) concludes
 negligible forgery for polynomial unrestricted attacker families under nonuniform
 DLog hardness and negligible inverse field size. The separate nonzero-nonce
-variant still needs its general efficiency endpoint.
+variant now has a complete fixed-backend solver certificate and concrete hardness
+endpoint; its short public and nonuniform family statements remain open.
 
 The [arithmetic-source ROM statement](../Signatures/Schnorr/ArithmeticStatement.lean)
 proves ordinary programmable-ROM EUF-CMA security from fixed-generator DLog
@@ -602,8 +603,19 @@ it has exact source correspondence on every raw tape,
 [complete runtime/output bounds](../Signatures/Runtime/BackendSchnorrNonzeroPassBudget.lean),
 [stored-code accounting](../Signatures/Runtime/BackendSchnorrNonzeroPassDescription.lean)
 and [polynomial runtime closure](../Signatures/Runtime/BackendSchnorrNonzeroPassPolynomial.lean)
-from original resources. Installing both passes in the complete replaying solver,
-fixed-backend membership and public/family hardness endpoints remain open.
+from original resources. The [installed fork](../Signatures/Runtime/BackendSchnorrNonzeroFork.lean)
+now runs both actual nonzero passes. The [complete solver](../Signatures/Runtime/BackendSchnorrNonzeroSolver.lean)
+executes setup, replay, guarded extraction and fallback with exact source equality
+to the named nonzero lazy reduction. Its [runtime/output bound](../Signatures/Runtime/BackendSchnorrNonzeroSolverBudget.lean)
+and [stored-code bound](../Signatures/Runtime/BackendSchnorrNonzeroSolverDescription.lean)
+follow from original caller, sampler, primitive and representation resources.
+Both [runtime](../Signatures/Runtime/BackendSchnorrNonzeroSolverPolynomial.lean)
+and [stored code](../Signatures/Runtime/BackendSchnorrNonzeroDescriptionPolynomial.lean)
+have polynomial closure. The [executable certificate](../Signatures/Runtime/BackendSchnorrNonzeroSolverWithin.lean)
+is constructed from these proofs before the [concrete security theorem](../Signatures/Runtime/BackendSchnorrNonzeroSecurity.lean)
+applies fixed-backend DLog hardness. The signing loss keeps its denominator
+`|F|-1`; the forking loss still uses `|F|`. Short public and nonuniform family
+statements remain open.
 
 [Field-growth closure](../Signatures/Model/NonzeroFieldGrowth.lean) proves
 `1/(|F|-1) <= 2/|F|`; negligible inverse field size suffices for the nonzero loss.
@@ -620,6 +632,10 @@ two original sampler execution profiles and primitive/local resource contracts.
 They also execute all three new dispatcher branches and guard exact nonzero pass
 semantics, measured arbitrary-caller resource recovery, the extra tape reservation,
 complete pass runtime and standard axioms.
+[Complete-solver regressions](../SignaturesTest/SchnorrNonzeroSolver.lean) additionally
+check adaptive private sampling over an uncountable message type, exact whole-solver
+source equality, both original sampling profiles, the actual installed nonzero
+passes, derived executable membership and the original signing loss.
 
 ## Adaptive Algebraic Group Model
 
@@ -896,7 +912,8 @@ its [separate proof](../Signatures/Schnorr/Proofs/GeneralAGMFamily.lean), gives
 negligible forgery under nonuniform DLog hardness and negligible inverse field
 size. Both original query losses are polynomial multiples of that inverse.
 This remains a conditional fixed-backend result. The full-field ROM endpoint is
-also complete; the nonzero-nonce runtime extension remains separate work.
+also complete; the nonzero-nonce route now has derived whole-solver resources and
+concrete hardness transport, with its short public and family endpoints still open.
 
 ## What Efficiency Is Certified
 
