@@ -251,8 +251,15 @@ derive its nonuniform executable family in one fixed backend. The
 [asymptotic corollary](../Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
 concludes negligible forgery under DLog hardness and negligible inverse field
 size. Messages may be arbitrary, and numerical random ranges need not be
-polynomial. General-caller Schnorr ROM replay and its nonzero-nonce extension
-remain open; these results do not claim a conventional-machine instantiation.
+polynomial. The full-field ROM route now also has a
+[short unrestricted-attacker statement](../Signatures/Schnorr/Statement.lean),
+complete replaying native solver certificates and a
+[nonuniform family corollary](../Signatures/Schnorr/GeneralROMFamilyStatement.lean)
+derived from original polynomial resources. The nonzero-nonce route now has a
+[lazy probability reduction](../Signatures/Schnorr/Proofs/NonzeroLazyROM.lean)
+preserving its original losses and a compiled signing kernel with source/code
+proofs; its complete runtime composition and security endpoints remain open.
+These results do not claim a conventional-machine instantiation.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers
 with assumed total costs. See the [runtime bounds and checked components](RUNTIME-CERTIFICATION.md).

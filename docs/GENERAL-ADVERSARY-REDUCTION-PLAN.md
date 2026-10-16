@@ -268,8 +268,12 @@ closure. Stored-code polynomial closure, fixed-backend executable certification
 and concrete hardness transport are now proved. The short public interface and
 nonuniform family security theorem now complete the full-field ROM route.
 
-Remaining: connect the separate nonzero-nonce Schnorr ROM variant to the general
-replay/cost framework, then finish API/documentation retirement. A conventional
+The nonzero-nonce route now has a named lazy reduction with the original
+probability bound and an implemented signing kernel with exact source/state laws,
+stored-code bounds and local repair costs.
+
+Remaining: compose its complete signing/pass/solver runtime and native replay
+certificates, expose concrete/family security, then finish API/documentation retirement. A conventional
 machine instantiation is needed only if making that stronger coverage claim.
 
 Establish security for general efficient attackers for the signature routes in
@@ -292,7 +296,7 @@ machine results, not completion of this broader objective.
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Complete native replaying solver with exact source correspondence, derived runtime/code certificate, short public concrete statement and nonuniform polynomial-family security. The original quadratic forking bound is retained; the public bound exposes its square-root consequence. General unrestricted callers and arbitrary messages are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional full-field nonce route is complete. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| Schnorr nonzero-nonce ROM | Separate probability reduction and nonce-simulation proof. | Instantiate the general replay/cost framework for this variant; full-field runtime certificates do not automatically cover it. |
+| Schnorr nonzero-nonce ROM | Named lazy reduction with the original probability bound and internally derived reference cover. Native three-draw signing kernel has exact source/state laws, stored-code bounds and polynomial code growth; its repair expression has derived runtime/output-size and polynomial bounds. Inverse nonzero-field size inherits negligibility from inverse field size. | Complete signing/pass/solver resource composition and connect fixed-backend concrete/family security. Full-field runtime certificates do not automatically cover this variant. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
 machine bounds explicitly charge full-domain initialization and sums. For BLS
@@ -3459,14 +3463,62 @@ AGM restrictions, finite message/group premises and supplied finished solver
 budgets. The existing AGM public regression and aggregate import are also checked
 serially under default proof limits.
 
+### Nonzero-nonce lazy security and signing implementation, 2026-10-15
+
+The [generic lazy Fiat--Shamir algorithm](../Signatures/Schnorr/LazyFiatShamir.lean)
+accepts the actual protocol and signing simulator. Its
+[security proof](../Signatures/Schnorr/Proofs/LazyFiatShamir.lean) derives a finite
+reference cover internally, proves equality of the complete extracted-witness
+law and key-averaged experiment, and applies the established complete-private-tape
+bound. The cover is absent from the algorithm. Private randomness is retained
+across both executions, including the post-challenge suffix; challenge replay
+and final verification keep their existing semantics. The original full-field
+algorithm is definitionally the corresponding specialization.
+
+The [nonzero algorithm](../Signatures/Schnorr/NonzeroLazyROMReduction.lean) installs
+the exact finite repair simulator from the separate source scheme. Its
+[probability endpoint](../Signatures/Schnorr/Proofs/NonzeroLazyROM.lean) preserves
+`qS*(qS+qH)/(|F|-1)` signing loss and the full-field `1/|F|` fork term. It takes
+ordinary signing/hash allowances, with no finite message domain, private-family
+list, private-query capacity or attacker-language certificate. Group finiteness
+is derived internally from the finite field and generator bijection.
+
+The [signing syntax](../Signatures/Runtime/SchnorrNonzeroSigning.lean) executes two
+field draws and one unconditional nonzero draw. It repairs commitment and response
+together, then programs the repaired target while preserving earlier cache entries
+on collision. The [native program](../Signatures/Runtime/BackendSchnorrNonzeroSigning.lean)
+proves exact store sequencing and a full stored-description bound counting both
+field sampler occurrences and the nonzero sampler. Polynomial code growth follows
+from original sampler and primitive descriptions. Its
+[source theorem](../Signatures/Runtime/BackendSchnorrNonzeroSigningSource.lean)
+identifies the compiled kernel with the established simulator plus cache update.
+The [local repair bound](../Signatures/Runtime/BackendSchnorrNonzeroRepairCost.lean)
+charges the identity comparison, selected arithmetic, projections and retained
+branch environment, with output-size and polynomial runtime proofs. These local
+results do not yet certify the full signing/replaying solver.
+
+[Field-growth closure](../Signatures/Model/NonzeroFieldGrowth.lean) proves
+`1/(n-1) <= 2/n` for `n >= 2`, hence the nonzero signing loss needs no stronger
+field-growth assumption. [Regressions](../SignaturesTest/SchnorrNonzeroLazyROM.lean)
+check uncountable messages, adaptive private sampling, the final hash slot,
+full-field specialization, both repair branches, unconditional third-draw order,
+collision preservation, zero public keys and standard axiom footprints.
+All nine new implementation/proof modules, the new regression, the existing
+nonzero regression and aggregate import pass serially under default proof limits.
+The existing regression emits two pre-existing deprecated-probability-API warnings;
+the new targets emit none.
+
 ### Remaining Schnorr variant work
 
 The conditional general-caller full-field ROM and AGM routes are complete.
-Separately connect the [nonzero-nonce variant](../Signatures/Schnorr/Proofs/NonzeroSecurity.lean)
-to an implemented reduction with derived complete replay/runtime/code bounds,
-then expose concrete and family endpoints. Its signing simulator changes the
-commitment law and collision denominator; the full-field certificate does not
-implicitly prove this variant. Finish API/documentation retirement after the
+For the nonzero-nonce route, compose the new signing kernel's full runtime with
+both field draws, the nonzero sampler, cache programming and retained frames.
+Refine the complete finite-cache pass to the named lazy probability reduction,
+install both native replay passes and derive their original-resource runtime/code
+bounds. Then assemble the complete fixed-backend solver certificate and expose
+concrete/public and nonuniform family security. Preserve the original signing
+collision denominator; the full-field certificate does not implicitly cover the
+extra sampler and repair branch. Finish API/documentation retirement after the
 replacement callers pass. A conventional-machine instantiation remains a stronger
 claim than the conditional fixed-backend endpoints.
 
@@ -5206,7 +5258,13 @@ additional axioms or proof-resource overrides.
 - [x] Derive whole-solver stored-code polynomial closure and construct the
   fixed-backend executable certificate from its source/runtime/code theorems.
 - [x] Complete general Schnorr full-field ROM replay and security.
-- [ ] Complete the separate nonzero-nonce ROM efficiency and security endpoints.
+- [x] Give the nonzero-nonce route a named lazy replay reduction with the original
+  probability bound and internally derived reference cover.
+- [x] Implement its three-draw signing kernel, prove exact source/store laws and
+  stored-code polynomial closure, and derive local repair runtime/output bounds.
+- [x] Derive negligible inverse nonzero-field size from the existing field-growth assumption.
+- [ ] Complete nonzero signing/pass/solver runtime and native replay composition.
+- [ ] Complete the separate nonzero-nonce concrete/public and family security endpoints.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
   and derived resources; keep proofs separate and preserve the original query losses.
 - [x] Derive the Schnorr AGM polynomial solver resources and nonuniform family

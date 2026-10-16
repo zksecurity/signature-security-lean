@@ -531,7 +531,7 @@ so it does not need a separate input-data width premise.
 ## Nonzero Signing Nonces
 
 [NonzeroSecurity.security](../Signatures/Schnorr/Proofs/NonzeroSecurity.lean)
-proves a separate native ROM theorem for uniformly nonzero signing nonces.
+proves a separate source probability theorem for uniformly nonzero signing nonces.
 Secret keys and challenges still range over all of `F`, and verification is
 unchanged, including for identity commitments in attempted forgeries.
 With `delta = Adv_EUF-CMA - qS*(qS+qH)/(|F|-1)`, it proves
@@ -549,6 +549,33 @@ distribution is uniform on the nonidentity group elements, giving collision
 bound `1/(|F|-1)`. The named reduction uses this simulator directly.
 This theorem is a probability reduction; the full-field machine and bit
 certificates above are not claimed for this variant.
+
+The [named lazy reduction](../Signatures/Schnorr/NonzeroLazyROMReduction.lean) now
+has the [same security bound](../Signatures/Schnorr/Proofs/NonzeroLazyROM.lean).
+It records encountered private draws and retains them across replay, including
+draws after the selected challenge. It takes neither a private-family list nor
+an eager seed budget. The [generic replay proof](../Signatures/Schnorr/Proofs/LazyFiatShamir.lean)
+derives its reference cover internally and transports the complete extracted
+witness distribution. Arbitrary message types and source query allowances are
+preserved; the simulator and both original denominators are unchanged.
+
+The [signing program](../Signatures/Runtime/SchnorrNonzeroSigning.lean) implements
+two field draws, one unconditional nonzero draw, commitment repair and cache
+programming. Its [native compilation](../Signatures/Runtime/BackendSchnorrNonzeroSigning.lean)
+has exact state-passing semantics and a complete stored-code bound, with polynomial
+closure from original sampler/primitive descriptions. The
+[source law](../Signatures/Runtime/BackendSchnorrNonzeroSigningSource.lean) identifies
+the actual compiled routine with the established nonzero simulator and cache
+update. The [repair expression](../Signatures/Runtime/BackendSchnorrNonzeroRepairCost.lean)
+has derived local runtime, output-size and polynomial bounds. Complete signing,
+pass and solver runtime composition, fixed-backend membership and public/family
+security endpoints remain open.
+
+[Field-growth closure](../Signatures/Model/NonzeroFieldGrowth.lean) proves
+`1/(|F|-1) <= 2/|F|`; negligible inverse field size suffices for the nonzero loss.
+[Regressions](../SignaturesTest/SchnorrNonzeroLazyROM.lean) check uncountable message
+types, adaptive private sampling, the final-verifier hash slot, exact draw order,
+both repair branches, cache collisions, zero public keys and standard axioms.
 
 ## Adaptive Algebraic Group Model
 
@@ -824,8 +851,8 @@ The [family theorem](../Signatures/Schnorr/GeneralAGMFamilyStatement.lean), with
 its [separate proof](../Signatures/Schnorr/Proofs/GeneralAGMFamily.lean), gives
 negligible forgery under nonuniform DLog hardness and negligible inverse field
 size. Both original query losses are polynomial multiples of that inverse.
-This remains a conditional fixed-backend result; general ROM replay and the
-nonzero-nonce runtime extension remain separate work.
+This remains a conditional fixed-backend result. The full-field ROM endpoint is
+also complete; the nonzero-nonce runtime extension remains separate work.
 
 ## What Efficiency Is Certified
 

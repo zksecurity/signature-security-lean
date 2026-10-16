@@ -23,6 +23,10 @@ import Signatures.Schnorr.GeneralROMFamilyStatement
 import Signatures.Schnorr.BitStatement
 import Signatures.Schnorr.SeededBitStatement
 import Signatures.Schnorr.Proofs.NonzeroSecurity
+import Signatures.Schnorr.Proofs.NonzeroLazyROM
+import Signatures.Model.NonzeroFieldGrowth
+import Signatures.Runtime.BackendSchnorrNonzeroSigningSource
+import Signatures.Runtime.BackendSchnorrNonzeroRepairCost
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.BackendSchnorrAGMReadBudget
