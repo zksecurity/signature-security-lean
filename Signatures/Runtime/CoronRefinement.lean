@@ -21,7 +21,7 @@ variable {F G₁ G₂ M : Type} [Field F] [SampleableType F]
 noncomputable def nativeReply (g X h : G₁) (qS : Nat) (signing : Bool) (m : M) :
     StateT (NativeState F M qS) ProbComp G₁ := fun state => do
   let signed := if signing then insert m state.1.2 else state.1.2
-  let rho ← (BLS.CoCDH.Tight.getDlogS (F := F) m).run (state.1.1, signed)
+  let rho ← (BLS.ROM.Internal.getDlogS (F := F) m).run (state.1.1, signed)
   let k ← ((M →ₒ Fin (qS + 1)).randomOracle m).run state.2
   pure ((if signing then (if k.1 = 0 then 0 else rho.1 • X)
     else rho.1 • g + if k.1 = 0 then h else 0), (rho.2, k.2))
@@ -30,7 +30,7 @@ omit [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] in
 theorem nativeReply_run (g X h : G₁) (qS : Nat) (signing : Bool) (m : M)
     (state : NativeState F M qS) :
     (nativeReply g X h qS signing m).run state = (do
-      let rho ← (BLS.CoCDH.Tight.getDlogS (F := F) m).run
+      let rho ← (BLS.ROM.Internal.getDlogS (F := F) m).run
         (state.1.1, if signing then insert m state.1.2 else state.1.2)
       let k ← ((M →ₒ Fin (qS + 1)).randomOracle m).run state.2
       pure ((if signing then (if k.1 = 0 then 0 else rho.1 • X)
@@ -61,7 +61,7 @@ theorem reply_refines (cost : PrimitiveCosts) (sampling : SamplingCosts)
       signReply_value (F := F) (G₂ := G₂) (M := M) cost]
 
 noncomputable def nativeOracle (g X h : G₁) (qS : Nat) :
-    QueryImpl (BLS.CoCDH.Tight.advSpec M G₁) (StateT (NativeState F M qS) ProbComp) :=
+    QueryImpl (BLS.ROM.advSpec M G₁) (StateT (NativeState F M qS) ProbComp) :=
   fun q => match q with
   | .inl (.inl n) => fun state =>
       (fun x => (x, state)) <$> (liftM (unifSpec.query n) : ProbComp (Fin (n + 1)))
@@ -72,7 +72,7 @@ omit [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] in
 /-- Flattening the two original state transformers gives the same per-query behavior.
 The original signing set and both lazy caches are retained in this correspondence. -/
 theorem nativeOracle_original (g X h : G₁) (qS : Nat)
-    (q : (BLS.CoCDH.Tight.advSpec M G₁).Domain) (state : NativeState F M qS) :
+    (q : (BLS.ROM.advSpec M G₁).Domain) (state : NativeState F M qS) :
     (nativeOracle g X h qS q).run state =
       (fun p => (p.1.1, (p.1.2, p.2))) <$>
         (simulateQ (BLS.CoCDH.lazyCoinImpl (D := M) (R := Fin (qS + 1)))
@@ -88,11 +88,11 @@ theorem nativeOracle_original (g X h : G₁) (qS : Nat)
       roSim.run_liftM, map_bind, bind_map_left]
 
 noncomputable def sourceSemantics (randomBound : Nat) :
-    Semantics (cryptoBase F G₁ G₂ M M) (Command randomBound) (BLS.CoCDH.Tight.advSpec M G₁) :=
+    Semantics (cryptoBase F G₁ G₂ M M) (Command randomBound) (BLS.ROM.advSpec M G₁) :=
   fun cmd arg => match cmd with
-  | .random n => liftM ((BLS.CoCDH.Tight.advSpec M G₁).query (.inl (.inl n.val)))
-  | .hash => liftM ((BLS.CoCDH.Tight.advSpec M G₁).query (.inl (.inr arg)))
-  | .sign => liftM ((BLS.CoCDH.Tight.advSpec M G₁).query (.inr arg))
+  | .random n => liftM ((BLS.ROM.advSpec M G₁).query (.inl (.inl n.val)))
+  | .hash => liftM ((BLS.ROM.advSpec M G₁).query (.inl (.inr arg)))
+  | .sign => liftM ((BLS.ROM.advSpec M G₁).query (.inr arg))
 
 theorem handler_refines (cost : PrimitiveCosts) (sampling : SamplingCosts)
     (g X h : G₁) (qS randomBound : Nat) {a b} (cmd : Command randomBound a b)
@@ -131,7 +131,7 @@ theorem simulation_refines (cost : PrimitiveCosts) (sampling : SamplingCosts)
 omit [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] in
 /-- Per-query correspondence extends to arbitrary adaptive `OracleComp` continuations. -/
 theorem nativeOracle_run (g X h : G₁) (qS : Nat) {α : Type}
-    (oa : OracleComp (BLS.CoCDH.Tight.advSpec M G₁) α) (state : NativeState F M qS) :
+    (oa : OracleComp (BLS.ROM.advSpec M G₁) α) (state : NativeState F M qS) :
     (simulateQ (nativeOracle g X h qS) oa).run state =
       (fun p => (p.1.1, (p.1.2, p.2))) <$>
         (simulateQ (BLS.CoCDH.lazyCoinImpl (D := M) (R := Fin (qS + 1)))

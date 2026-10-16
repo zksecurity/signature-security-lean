@@ -5,6 +5,8 @@ import Signatures.LinearFunctional.Proofs.LazyAGMCoupling
 Finite topics are used in this comparison proof only. `LazyAGMArbitraryTopics`
 removes that restriction; deriving native execution budgets remains separate. -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel Model.LazyAGM
 
 namespace OOPS.LazyAGM.Proofs

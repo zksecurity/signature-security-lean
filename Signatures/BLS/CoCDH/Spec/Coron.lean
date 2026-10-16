@@ -20,7 +20,9 @@ is `ρ·g₁ + h` and signing aborts (returns `0`); otherwise the hash is `ρ·g
 This module is statement-level: only the reduction definitions (no proofs).
 -/
 
-open OracleComp OracleSpec AlgebraicGroupModel BLS.CoCDH.Tight
+open BLS.ROM
+
+open OracleComp OracleSpec BilinearGroup BLS.CoCDH.Tight
 
 namespace BLS.CoCDH
 
@@ -58,7 +60,7 @@ noncomputable def coronOracleLazy (g₁ X₁ h : G₁) (qS : ℕ) :
           StateT ((M → Option F) × Finset M)
             (OracleComp (unifSpec + (M →ₒ Fin (qS + 1)))) (Fin (n + 1)))
     | Sum.inl (Sum.inr m) => do
-        let ρ ← (liftM (getDlogS (F := F) m) :
+        let ρ ← (liftM (BLS.ROM.Internal.getDlogS (F := F) m) :
           StateT ((M → Option F) × Finset M)
             (OracleComp (unifSpec + (M →ₒ Fin (qS + 1)))) F)
         let k ← (liftM (liftM ((M →ₒ Fin (qS + 1)).query m) :
@@ -68,7 +70,7 @@ noncomputable def coronOracleLazy (g₁ X₁ h : G₁) (qS : ℕ) :
         pure (ρ • g₁ + (if k = 0 then h else 0))
     | Sum.inr m => do
         modify (fun s => (s.1, insert m s.2))
-        let ρ ← (liftM (getDlogS (F := F) m) :
+        let ρ ← (liftM (BLS.ROM.Internal.getDlogS (F := F) m) :
           StateT ((M → Option F) × Finset M)
             (OracleComp (unifSpec + (M →ₒ Fin (qS + 1)))) F)
         let k ← (liftM (liftM ((M →ₒ Fin (qS + 1)).query m) :
@@ -79,7 +81,7 @@ noncomputable def coronOracleLazy (g₁ X₁ h : G₁) (qS : ℕ) :
 
 /-- The computation inside the lazy reduction, before interpreting its persistent coin oracle. -/
 noncomputable def coronReductionProgram (g₁ X₁ : G₁) (X₂ : G₂) (h : G₁) (qS : ℕ)
-    (adv : TightAdvPK M G₁ G₂) :
+    (adv : AdversaryPK M G₁ G₂) :
     OracleComp (unifSpec + (M →ₒ Fin (qS + 1))) G₁ := do
   let ((mstar, σstar), st) ←
     (simulateQ (coronOracleLazy (F := F) g₁ X₁ h qS) (adv X₂)).run
@@ -87,7 +89,7 @@ noncomputable def coronReductionProgram (g₁ X₁ : G₁) (X₂ : G₂) (h : G�
   pure (σstar - ((st.1 mstar).getD 0) • X₁)
 
 /-- **The Coron co-CDH reduction** from a lazy-ROM BLS forger, with lazy per-message coins. -/
-noncomputable def coronReductionLazyPK (qS : ℕ) (adv : TightAdvPK M G₁ G₂) :
+noncomputable def coronReductionLazyPK (qS : ℕ) (adv : AdversaryPK M G₁ G₂) :
     CoCDHAdversary F G₁ G₂ :=
   fun g₁ _g₂ X₁ X₂ h =>
     (simulateQ (lazyCoinImpl (D := M) (R := Fin (qS + 1)))

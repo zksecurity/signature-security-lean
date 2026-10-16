@@ -44,7 +44,7 @@ theorem collision_map [Semiring F] (f : U → S) (hf : Function.Injective f)
 variable [Field F] [SampleableType F] [DecidableEq S] [DecidableEq U]
   [AddCommGroup G₁] [Module F G₁] [SampleableType G₁]
   [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
-  [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+  [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
 
 theorem game_map (f : U → S) (hf : Function.Injective f) (g₁ : G₁) (g₂ : G₂)
     (A : Adversary F (Option (Fin ℓ) × U) ((Fin ℓ → F) × U) G₁ G₂) :
@@ -55,7 +55,7 @@ theorem game_map (f : U → S) (hf : Function.Injective f) (g₁ : G₁) (g₂ :
     (fun _ _ => True) (fun _ _ => True) (by intros; rfl) g₁ g₂ A
 
 omit [SampleableType G₁] [DecidableEq S] [DecidableEq U]
-    [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] in
+    [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] in
 theorem collisionExperiment_map (f : U → S) (hf : Function.Injective f) (g₂ : G₂)
     (A : Adversary F (Option (Fin ℓ) × U) ((Fin ℓ → F) × U) G₁ G₂) :
     collisionExperiment g₂ (mapAdversary (index f) (message f) A) =
@@ -74,7 +74,7 @@ theorem collisionExperiment_map (f : U → S) (hf : Function.Injective f) (g₂ 
     simp [mapTranscript, List.map_map, Function.comp_def]
   simp only [htr, collision_map f hf]
 
-omit [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] in
+omit [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] in
 theorem collisionGame_map (f : U → S) (hf : Function.Injective f) (g₂ : G₂)
     (A : Adversary F (Option (Fin ℓ) × U) ((Fin ℓ → F) × U) G₁ G₂) :
     collisionGame g₂ (mapAdversary (index f) (message f) A) = collisionGame g₂ A := by
@@ -83,7 +83,7 @@ theorem collisionGame_map (f : U → S) (hf : Function.Injective f) (g₂ : G₂
   exact lazyRun_rename (index f) (index_injective f hf) _
 
 omit [DecidableEq U] [AddCommGroup Gₜ] [Module F Gₜ]
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] in
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] in
 theorem collisionGame_congr_generated (g₂ : G₂)
     (A B : Adversary F (Option (Fin ℓ) × S) ((Fin ℓ → F) × S) G₁ G₂)
     (h : ∀ r : F, A.main (r • g₂) = B.main (r • g₂)) : collisionGame g₂ A = collisionGame g₂ B := by
@@ -97,7 +97,7 @@ theorem collisionGame_congr_generated (g₂ : G₂)
 
 omit [SampleableType F] [AddCommGroup G₁] [Module F G₁]
     [DecidableEq S] [DecidableEq U] [SampleableType G₁]
-    [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] in
+    [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] in
 theorem exists_restricted_publicKeys [Finite F] [Finite G₁] (g₂ : G₂)
     (A : Adversary F (Option (Fin ℓ) × S) ((Fin ℓ → F) × S) G₁ G₂) :
     ∃ cover : Finset S,

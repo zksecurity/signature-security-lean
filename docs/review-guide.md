@@ -28,6 +28,11 @@ nonces as distinct variants. AGM routes require algebraic group explanations;
 BLS co-CDH and Schnorr ROM do not. Internal computation is unrestricted within
 the declared resource class.
 
+Pairing is shared mathematical data: [`BilinearGroup.pairing`](../Signatures/Model/BilinearGroup.lean)
+and its bilinearity laws are independent of the AGM restriction. Both the BLS co-CDH
+and AGM games use this interface; nondegeneracy at the chosen generators is supplied
+separately by [`PairingCurve`](../Signatures/Model/PairingCurve.lean).
+
 Fix the curve, security parameter, query allowances and execution model once.
 The main BLS AGM theorem then reads:
 
@@ -123,12 +128,17 @@ actually returned to the adversary join its tracked basis, alongside the initial
 OOPS fixes `d` for the entire game and checks its target-topic distinct-message limit at
 the end. Proximity measures fresh linear collisions separately; the game does not reject them.
 
-The **non-AGM BLS co-CDH route** has its own
-[fully annotated game](../Signatures/BLS/CoCDH/Spec/LazyGame.lean): `realOracle` handles
-randomness, hashing, and signing; `getDlogS` maintains the private lazy hash-exponent cache;
-`blsEufLazyPK` arranges the final hash lookup and calls `blsEufTightPK` for key generation,
-execution, and the winning check. This adversary returns a raw candidate signature and
-does not supply an algebraic explanation.
+The **non-AGM BLS game** uses the scheme-level
+[ordinary ROM interface](../Signatures/BLS/Spec/ROM.lean): `BLS.ROM.oracle` handles
+the named requests `Request.random`, `Request.hash`, and `Request.sign`.
+Its `State` structure has `hashExponents` and `signedMessages` fields; `hashScalar`
+maintains the private lazy hash-exponent cache. The
+[`cacheForgeryPK` wrapper](../Signatures/BLS/Spec/ROMInterface.lean) appends the verifier's
+hash lookup. In [`BLS.Game.rom`](../Signatures/BLS/Game.lean),
+`simulateQ` runs this program using that handler, and `.run` supplies the empty initial
+state. This adversary returns a raw candidate signature without an algebraic explanation.
+An [exact state-encoding proof](../Signatures/BLS/Proofs/ROM.lean) connects this readable
+handler to the tuple representation used internally by the co-CDH reduction proofs.
 
 ## Results
 

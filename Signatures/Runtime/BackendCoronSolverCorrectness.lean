@@ -80,11 +80,11 @@ code and is proved to terminate through the selected query-fuel bound. -/
 theorem program_denote_original (sampling : Machine.SamplingCosts) (qS fuel : Nat)
     (sourceProgram : G₂ → OracleComp (generalSpec M G₁ randomBound) (M × G₁))
     (hprogram : R.machine.ImplementsWithin sourceProgram fuel)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : ∀ pk, simulateQ (generalSource randomBound) (sourceProgram pk) = adv pk)
     (g : G₁) (g₂ : G₂) (X : G₁) (pk : G₂) (h : G₁) :
     (program rep bd ports sampler boundary data samplingCode cost primitive R qS fuel).denote (g, g₂, X, pk, h, ()) =
-      BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv) g g₂ X pk h := by
+      BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv) g g₂ X pk h := by
   rw [program_reference_denote rep bd ports sampler boundary data samplingCode cost primitive R sampling]
   exact generalSolverRun_erase R cost sampling g X h g₂ pk qS fuel sourceProgram hprogram adv (hsource pk)
 
@@ -92,12 +92,12 @@ theorem program_erase_original (control : ControlCosts) (queryCost : (i : Nat) �
     (sampling : Machine.SamplingCosts) (qS fuel : Nat)
     (sourceProgram : G₂ → OracleComp (generalSpec M G₁ randomBound) (M × G₁))
     (hprogram : R.machine.ImplementsWithin sourceProgram fuel)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : ∀ pk, simulateQ (generalSource randomBound) (sourceProgram pk) = adv pk)
     (g : G₁) (g₂ : G₂) (X : G₁) (pk : G₂) (h : G₁) :
     Run.value <$> (program rep bd ports sampler boundary data samplingCode cost primitive R qS fuel).run
       control queryCost (g, g₂, X, pk, h, ()) =
-        BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv) g g₂ X pk h := by
+        BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv) g g₂ X pk h := by
   rw [Code.run_erase]
   exact program_denote_original rep bd ports sampler boundary data samplingCode cost primitive R sampling
     qS fuel sourceProgram hprogram adv hsource g g₂ X pk h

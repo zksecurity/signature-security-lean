@@ -47,7 +47,7 @@ run_meta do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let type ← inferType param
-        for forbidden in #[`Model.PairingCurve, `AlgebraicGroupModel.BilinearPairing,
+        for forbidden in #[`Model.PairingCurve, `BilinearGroup.BilinearPairing,
             ``Bounds, ``GeneralCaller.Budget, ``Solver.program, ``Solver.terminal,
             ``Handler.caller, ``Extraction.code,
             `Signatures.Runtime.AGM.SourceCertificate, `Signatures.Runtime.Schnorr.SourceCertificate] do

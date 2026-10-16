@@ -3,6 +3,10 @@ import VCVio.OracleComp.QueryTracking.QueryBound
 
 /-! Hardness cannot be applied outside its certified class, and query bounds are not time bounds. -/
 
+open BLS.ROM
+
+open BilinearGroup
+
 open OracleComp
 
 namespace SignaturesTest.Hardness
@@ -31,11 +35,11 @@ open AlgebraicGroupModel BLS.CoCDH.Tight in
 example {F M G₁ G₂ Gₜ : Type} [Field F] [SampleableType F] [DecidableEq M]
     [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
     [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ]
-    (g₁ : G₁) (g₂ : G₂) (adv : TightAdvPK M G₁ G₂) :
+    (g₁ : G₁) (g₂ : G₂) (adv : AdversaryPK M G₁ G₂) :
     blsEufLazyPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv = (do
       let x ← ($ᵗ F : ProbComp F)
       let ((m, sig), st) ←
-        (simulateQ (realOracle (F := F) g₁ (x • g₁))
+        (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁))
           (cacheForgeryPK adv (x • g₂))).run ((fun _ => none), ∅)
       pure (decide (pairing (F := F) (Gₜ := Gₜ) sig g₂ =
           pairing (F := F) (Gₜ := Gₜ) (((st.1 m).getD 0) • g₁) (x • g₂)) &&

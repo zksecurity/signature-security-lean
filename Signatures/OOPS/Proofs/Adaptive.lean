@@ -8,6 +8,8 @@ import Signatures.LinearFunctional.Proofs.Adaptive
 
 /-! # OOPS extraction from the private-table proof backend -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel AlgebraicGroupModel.LinFunctional
 open OOPS.Handle (oopsWMulti targetMessages forgery_coeff_ne_zero_multi)
 

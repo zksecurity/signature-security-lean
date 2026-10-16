@@ -3,6 +3,8 @@ import Signatures.BLS.Proofs.LazyAGMTransport
 /-! Injective message renaming preserves the actual BLS AGM source game,
 including the certified interaction adapter, final hash, and freshness test. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec Model.LazyAGM BLS.LazyAGM.Reduction AlgebraicGroupModel
 open BLS.CoCDH.MessageTransport
 

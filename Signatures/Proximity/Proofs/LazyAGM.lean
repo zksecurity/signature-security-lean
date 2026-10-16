@@ -2,6 +2,8 @@ import Signatures.Proximity.Spec.LazyAGM
 import Signatures.Proximity.Proofs.Adaptive
 import Signatures.LinearFunctional.Proofs.LazyAGM
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel AlgebraicGroupModel.LinFunctional
 open Model.LazyAGM Model.LazyAGM.Proofs
 

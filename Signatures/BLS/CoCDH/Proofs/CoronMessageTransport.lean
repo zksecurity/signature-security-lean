@@ -6,6 +6,8 @@ import Signatures.Runtime.CoronErasure
 complete named solver. The existing flattened semantics is used only to prove
 equality; no new solver implementation or runtime cost is assumed. -/
 
+open BLS.ROM
+
 open OracleComp OracleSpec BLS.CoCDH.Tight Signatures.Runtime.Coron
 
 namespace BLS.CoCDH.MessageTransport
@@ -56,7 +58,7 @@ theorem nativeOracle_project (g X h : G₁) (qS : Nat) (q : (advSpec N G₁).Dom
   · simpa only [messageQueries, simulateQ_HasQuery_query, nativeOracle] using
       nativeReply_project f hf g X h qS true n st
 
-theorem nativeReduction_mapMessages (g X h : G₁) (qS : Nat) (adv : TightAdv N G₁) :
+theorem nativeReduction_mapMessages (g X h : G₁) (qS : Nat) (adv : Adversary N G₁) :
     nativeReduction (F := F) g X h qS (mapMessages f adv) =
       nativeReduction (F := F) g X h qS adv := by
   rw [nativeReduction_cached, nativeReduction_cached, ← mapMessages_cacheForgery]
@@ -69,7 +71,7 @@ theorem nativeReduction_mapMessages (g X h : G₁) (qS : Nat) (adv : TightAdv N 
   rfl
 
 theorem coronReductionLazyPK_mapMessages {G₂ : Type} (g X h : G₁) (g₂ pk : G₂) (qS : Nat)
-    (adv : TightAdvPK N G₁ G₂) :
+    (adv : AdversaryPK N G₁ G₂) :
     coronReductionLazyPK (F := F) qS (cacheForgeryPK (fun key => mapMessages f (adv key))) g g₂ X pk h =
       coronReductionLazyPK (F := F) qS (cacheForgeryPK adv) g g₂ X pk h := by
   rw [← nativeReduction_original, ← nativeReduction_original]
@@ -77,7 +79,7 @@ theorem coronReductionLazyPK_mapMessages {G₂ : Type} (g X h : G₁) (g₂ pk :
 
 omit hf [DecidableEq N] in
 theorem coronReductionLazyPK_congr_at {G₂ : Type} (g X h : G₁) (g₂ pk : G₂) (qS : Nat)
-    (adv adv' : TightAdvPK M G₁ G₂) (hkey : adv pk = adv' pk) :
+    (adv adv' : AdversaryPK M G₁ G₂) (hkey : adv pk = adv' pk) :
     coronReductionLazyPK (F := F) qS (cacheForgeryPK adv) g g₂ X pk h =
       coronReductionLazyPK (F := F) qS (cacheForgeryPK adv') g g₂ X pk h := by
   rw [← nativeReduction_original, ← nativeReduction_original, hkey]
@@ -86,7 +88,7 @@ variable {G₂ : Type} [AddCommGroup G₂] [Module F G₂] [SampleableType G₁]
 
 omit hf [DecidableEq N] in
 theorem coCDHExp_coron_congr_generated (g : G₁) (g₂ : G₂) (qS : Nat)
-    (adv adv' : TightAdvPK M G₁ G₂) (hkey : ∀ r : F, adv (r • g₂) = adv' (r • g₂)) :
+    (adv adv' : AdversaryPK M G₁ G₂) (hkey : ∀ r : F, adv (r • g₂) = adv' (r • g₂)) :
     coCDHExp (F := F) g g₂ (coronReductionLazyPK (F := F) qS (cacheForgeryPK adv)) =
       coCDHExp (F := F) g g₂ (coronReductionLazyPK (F := F) qS (cacheForgeryPK adv')) := by
   unfold coCDHExp
@@ -96,7 +98,7 @@ theorem coCDHExp_coron_congr_generated (g : G₁) (g₂ : G₂) (qS : Nat)
   intro h
   rw [coronReductionLazyPK_congr_at g (r • g) h g₂ (r • g₂) qS adv adv' (hkey r)]
 
-theorem coCDHExp_coron_mapMessages (g : G₁) (g₂ : G₂) (qS : Nat) (adv : TightAdvPK N G₁ G₂) :
+theorem coCDHExp_coron_mapMessages (g : G₁) (g₂ : G₂) (qS : Nat) (adv : AdversaryPK N G₁ G₂) :
     coCDHExp (F := F) g g₂
         (coronReductionLazyPK (F := F) qS (cacheForgeryPK (fun pk => mapMessages f (adv pk)))) =
       coCDHExp (F := F) g g₂ (coronReductionLazyPK (F := F) qS (cacheForgeryPK adv)) := by

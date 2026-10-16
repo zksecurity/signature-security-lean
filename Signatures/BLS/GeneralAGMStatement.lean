@@ -21,7 +21,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   [SampleableType G₁] [Fintype G₁]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq Gₜ] [DecidableEq M]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
-  [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+  [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
 
 omit [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ] in
 /-- Construct both native implementations with the complete derived time, stored-code,
@@ -107,7 +107,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   [∀ n, AddCommGroup (G₁ n)] [∀ n, Module (F n) (G₁ n)]
   [∀ n, AddCommGroup (G₂ n)] [∀ n, Module (F n) (G₂ n)]
   [∀ n, AddCommGroup (Gₜ n)] [∀ n, Module (F n) (Gₜ n)]
-  [∀ n, AlgebraicGroupModel.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
+  [∀ n, BilinearGroup.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
 
 /-- Concrete security at any selected security parameter. This pointwise
 statement imposes no asymptotic claim on arbitrary parameter families. -/

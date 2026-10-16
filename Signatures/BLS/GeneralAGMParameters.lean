@@ -12,6 +12,8 @@ These are pointwise concrete parameters. A family can instantiate them at each
 security parameter; calling an arbitrary family polynomial-time still requires
 polynomial bounds on its allowances and primitive costs. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
 open PFunctor.DynSystem.DynComputation
 open Signatures.Runtime Signatures.Runtime.BackendProgram Signatures.Runtime.Coron

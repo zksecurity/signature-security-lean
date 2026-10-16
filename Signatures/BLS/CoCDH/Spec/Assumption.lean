@@ -3,7 +3,7 @@ Copyright (c) 2026 zkSecurity. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
-import Signatures.AlgebraicGroupModel.Spec.BilinearGroup
+import Signatures.Model.BilinearGroup
 import VCVio.OracleComp.Constructions.SampleableType
 
 /-!
@@ -21,7 +21,7 @@ type-3 there is no map carrying `x` onto an arbitrary `G₁` point.  This is CDH
 co-hint; a BLS forgery on the challenge point `h` is exactly a co-CDH solution `x·h`.
 -/
 
-open OracleComp AlgebraicGroupModel
+open OracleComp BilinearGroup
 
 namespace BLS.CoCDH
 

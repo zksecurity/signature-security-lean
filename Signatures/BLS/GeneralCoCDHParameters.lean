@@ -6,6 +6,8 @@ import Signatures.BLS.QueryAllowance
 The operation, representation and backend contracts are fixed before choosing an
 attacker. Neither algebraic output nor completed-reduction efficiency is assumed. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
 open PFunctor.DynSystem.DynComputation
 open Signatures.Runtime Signatures.Runtime.BackendProgram Signatures.Runtime.Coron
@@ -114,7 +116,7 @@ variable (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ :
 /-- Any realized attacker with its own code/execution/query bounds. It returns an
 arbitrary group point; no algebraic representation of that point is required. -/
 structure Adversary where
-  source : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂
+  source : BLS.ROM.AdversaryPK M G₁ G₂
   program : G₂ → OracleComp (generalSpec M G₁ P.randomBound) (M × G₁)
   caller : GeneralCaller.Caller (Q := Q) (bd := P.bd)
   realizes : caller.machine.Implements program
@@ -147,7 +149,7 @@ end Parameters
 theorem reduction_within (A : Adversary P) :
     coCDHWithin P.rep P.backend P.descriptionSizes P.factor P.description
       P.generator P.keyGenerator P.inputWidth P.solverCode P.solverTime
-      (BLS.CoCDH.coronReductionLazyPK (F := F) P.queries.sign (BLS.CoCDH.Tight.cacheForgeryPK A.source)) := by
+      (BLS.CoCDH.coronReductionLazyPK (F := F) P.queries.sign (BLS.ROM.cacheForgeryPK A.source)) := by
   have hchallenge : ∀ r : F, ∀ h : G₁,
       Q.size (P.rep.env inputTypes) (P.generator, P.keyGenerator, r • P.generator, r • P.keyGenerator, h, ()) ≤
         P.inputWidth := by

@@ -53,7 +53,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   (comparisonTime scalarTime coinTime opTime handlerAdapterTime solverAdapterTime dynamicTime : Nat → Nat)
   (bound : Nat → ExecutionCost)
   (instructionSize handlerPortSize solverPortSize : Nat → Nat)
-  (adv : ∀ n, BLS.CoCDH.Tight.TightAdvPK (M n) (G₁ n) (G₂ n))
+  (adv : ∀ n, BLS.ROM.AdversaryPK (M n) (G₁ n) (G₂ n))
 
 def codeBudget (n : Nat) : Nat :=
   factor * (descriptionSizes.localSize (R n).initCode + 2 * descriptionSizes.localSize (R n).headCode +
@@ -71,7 +71,7 @@ def timeBudget (n : Nat) : Nat :=
 
 noncomputable def algorithm (n : Nat) (input : Env (cryptoBase (F n) (G₁ n) (G₂ n) (M n) (M n)) inputTypes) :
     ProbComp (G₁ n) :=
-  BLS.CoCDH.coronReductionLazyPK (F := F n) (qS n) (BLS.CoCDH.Tight.cacheForgeryPK (adv n))
+  BLS.CoCDH.coronReductionLazyPK (F := F n) (qS n) (BLS.ROM.cacheForgeryPK (adv n))
     input.1 input.2.1 input.2.2.1 input.2.2.2.1 input.2.2.2.2.1
 
 variable

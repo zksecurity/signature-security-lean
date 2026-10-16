@@ -26,7 +26,7 @@ it is not a solver-cost premise. -/
 def Parameters.configuration {F G₁ G₂ Gₜ K M : Type} [Field F] [SampleableType F]
     [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
     [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
-    [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     {index : Index}
     (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (K := K) (M := M) index) :
     Configuration.{v, w, x} Q unifSpec :=
@@ -41,7 +41,7 @@ variable {F G₁ G₂ Gₜ K M : Nat → Type}
   [∀ n, AddCommGroup (G₁ n)] [∀ n, Module (F n) (G₁ n)]
   [∀ n, AddCommGroup (G₂ n)] [∀ n, Module (F n) (G₂ n)]
   [∀ n, AddCommGroup (Gₜ n)] [∀ n, Module (F n) (Gₜ n)]
-  [∀ n, AlgebraicGroupModel.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
+  [∀ n, BilinearGroup.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
   {index : Nat → Index}
   (parameters : ∀ n, Parameters (Q := Q) (F := F n) (G₁ := G₁ n) (G₂ := G₂ n) (Gₜ := Gₜ n) (K := K n) (M := M n) (index n))
 

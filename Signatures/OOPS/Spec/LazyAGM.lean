@@ -36,7 +36,7 @@ noncomputable def game {F T G₁ G₂ Gₜ : Type}
     -- G2 holds verification keys and Gt holds pairing values, both with F-scalar actions.
     [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
     -- The verifier uses this pairing; security theorems separately require nondegeneracy.
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     -- Degree d is fixed for the whole game, not chosen separately in each signing query.
     (g₁ : G₁) (g₂ : G₂) (d : Nat)
     -- A hashes topic/degree indices, signs scalar/topic pairs, and returns an algebraic forgery.
@@ -52,7 +52,7 @@ theorem game_eq_of_decidableEq {F T G₁ G₂ Gₜ : Type}
     [Field F] [SampleableType F] [DecidableEq F] [DecidableEq T]
     [AddCommGroup G₁] [Module F G₁] [SampleableType G₁]
     [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     (g₁ : G₁) (g₂ : G₂) (d : Nat)
     (A : Model.LazyAGM.Adversary F (T × Fin (d + 1)) (F × T) G₁ G₂) :
     game (Gₜ := Gₜ) g₁ g₂ d A =

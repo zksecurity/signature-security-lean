@@ -132,7 +132,7 @@ example : materialize 1 (⟨(), 2, [], [5]⟩ : Output Nat Unit)
 example {F I M G₁ G₂ Gₜ : Type} [Field F] [SampleableType F]
     [AddCommGroup G₁] [Module F G₁] [SampleableType G₁]
     [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     (terms : M → List (I × F)) (admissible : M → List M → Prop)
     (g₁ : G₁) (g₂ : G₂) (A : Adversary F I M G₁ G₂) :
     experiment (Gₜ := Gₜ) terms admissible g₁ g₂ A = (by
@@ -143,8 +143,8 @@ example {F I M G₁ G₂ Gₜ : Type} [Field F] [SampleableType F]
         let σ := out.β • g₁ + weightedReplies out.γ tr.1 + weightedReplies out.ξ tr.2
         let target ← evalTerms (terms out.mstar)
         pure (decide (admissible out.mstar (tr.2.map Prod.fst) ∧
-          AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) σ g₂ =
-            AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) target (α • g₂) ∧
+          BilinearGroup.pairing (F := F) (Gₜ := Gₜ) σ g₂ =
+            BilinearGroup.pairing (F := F) (Gₜ := Gₜ) target (α • g₂) ∧
           out.mstar ∉ tr.2.map Prod.fst))) := by
   rw [experiment_eq]
   apply bind_congr

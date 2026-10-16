@@ -1,5 +1,5 @@
 import Signatures.Runtime.Cache
-import Signatures.BLS.CoCDH.Spec.LazyGame
+import Signatures.BLS.Spec.ROMInternal
 import VCVio.OracleComp.QueryTracking.RandomOracle.Basic
 
 /-! Exact representation bridges for the compiled cache. `cacheMap` is a proof-level
@@ -69,13 +69,13 @@ theorem cacheHandler_getDlogS (P : Primitives base Op) (H : Handler base Cmd uni
     (signed : Finset (key.Value base)) :
     (fun z => (z.1.value, (cacheMap z.2, signed))) <$>
         (cacheHandler P H eq draw default k).run xs =
-      (BLS.CoCDH.Tight.getDlogS (F := val.Value base) k).run (cacheMap xs, signed) := by
+      (BLS.ROM.Internal.getDlogS (F := val.Value base) k).run (cacheMap xs, signed) := by
   have h := congrArg (Functor.map (fun p : val.Value base × (key.Value base → Option (val.Value base)) =>
     (p.1, (p.2, signed)))) (cacheHandler_map P H eq draw heq k default xs)
   cases hc : cacheMap xs k with
-  | some v => simpa [hc, BLS.CoCDH.Tight.getDlogS] using h
+  | some v => simpa [hc, BLS.ROM.Internal.getDlogS] using h
   | none =>
-      simpa [hc, BLS.CoCDH.Tight.getDlogS, bind_pure_comp, ← hdraw] using h
+      simpa [hc, BLS.ROM.Internal.getDlogS, bind_pure_comp, ← hdraw] using h
 
 /-- The coin-cache representation is VCVio's `QueryCache`, not an eager sampled table. -/
 def listQueryCache {K V : Type} [DecidableEq K] (xs : List (K × V)) : (K →ₒ V).QueryCache :=

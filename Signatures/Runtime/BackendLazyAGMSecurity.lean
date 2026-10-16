@@ -6,6 +6,8 @@ Both complete solver resource witnesses are constructed, then supplied to DLog
 hardness in that same implementation class. The message type is arbitrary;
 algebraicity is expressed by the source game, independently of local code. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor Model.LazyAGM AlgebraicGroupModel
 open PFunctor.DynSystem.DynComputation
 
@@ -23,7 +25,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   [SampleableType G₁] [Fintype G₁]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]
-  [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ]
+  [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ]
   {iface : Interface (C := C) unifSpec} {randomBound : Nat}
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ M M))
   (bd : Boundary C (generalSpec M G₁ randomBound).toPFunctor G₂

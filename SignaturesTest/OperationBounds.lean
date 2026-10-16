@@ -37,13 +37,13 @@ example : (proximityWeight 0 (none, true)
 example : goodTotalBound 10 0 0 0 0 1 = 93 := rfl
 example : badTotalBound 10 0 0 0 1 = 123 := rfl
 
-private def adaptive : OracleComp (BLS.CoCDH.Tight.advSpec Unit Bool) (Unit × Bool) := do
-  let h ← liftM ((BLS.CoCDH.Tight.advSpec Unit Bool).query (.inl (.inr ())))
+private def adaptive : OracleComp (BLS.ROM.advSpec Unit Bool) (Unit × Bool) := do
+  let h ← liftM ((BLS.ROM.advSpec Unit Bool).query (.inl (.inr ())))
   if h then
-    let _ ← liftM ((BLS.CoCDH.Tight.advSpec Unit Bool).query (.inl (.inr ())))
+    let _ ← liftM ((BLS.ROM.advSpec Unit Bool).query (.inl (.inr ())))
     pure ((), h)
   else
-    let _ ← liftM ((BLS.CoCDH.Tight.advSpec Unit Bool).query (.inr ()))
+    let _ ← liftM ((BLS.ROM.advSpec Unit Bool).query (.inr ()))
     pure ((), h)
 
 private theorem adaptive_budget : Model.OperationCost.Bounded BLS.CoCDH.Cost.kind
@@ -56,15 +56,15 @@ example : ¬ IsQueryBoundP adaptive (fun q => BLS.CoCDH.Cost.kind q = 1) 1 := by
   simp [adaptive, BLS.CoCDH.Cost.kind]
 
 example (z : (Unit × Bool) × Multiplicative Nat)
-    (hz : z ∈ support (costDist (BLS.CoCDH.Tight.cacheForgery adaptive) BLS.CoCDH.Cost.groupModel)) :
+    (hz : z ∈ support (costDist (BLS.ROM.cacheForgery adaptive) BLS.CoCDH.Cost.groupModel)) :
     Multiplicative.toAdd z.2 ≤ 7 :=
   BLS.CoCDH.Cost.source_group_bound adaptive 0 2 1 adaptive_budget z hz
 
 -- The final hash is present even when the adversary makes no queries.
-example : ¬ IsQueryBoundP (BLS.CoCDH.Tight.cacheForgery
-    (pure ((), false) : OracleComp (BLS.CoCDH.Tight.advSpec Unit Bool) (Unit × Bool)))
+example : ¬ IsQueryBoundP (BLS.ROM.cacheForgery
+    (pure ((), false) : OracleComp (BLS.ROM.advSpec Unit Bool) (Unit × Bool)))
     (fun q => BLS.CoCDH.Cost.kind q = 1) 0 := by
-  simp [BLS.CoCDH.Tight.cacheForgery, BLS.CoCDH.Cost.kind]
+  simp [BLS.ROM.cacheForgery, BLS.CoCDH.Cost.kind]
 
 section Erasure
 

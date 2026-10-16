@@ -5,13 +5,15 @@ import Signatures.Model.FiniteDomain
 include every adaptive query and final forgery, over all possible oracle replies.
 They are proof artifacts, not reduction tables or efficiency bounds. -/
 
+open BLS.ROM
+
 open OracleComp OracleSpec
 
 namespace BLS.CoCDH.Tight
 
 variable {M G₁ : Type}
 
-def MessageCovered (cover : Finset M) (adv : TightAdv M G₁) : Prop :=
+def MessageCovered (cover : Finset M) (adv : Adversary M G₁) : Prop :=
   allPathsSatisfy
     (fun q => match q with
       | .inl (.inl _) => True
@@ -19,7 +21,7 @@ def MessageCovered (cover : Finset M) (adv : TightAdv M G₁) : Prop :=
       | .inr m => m ∈ cover)
     (fun out => out.1 ∈ cover) (fun _ => Set.univ) adv
 
-theorem exists_message_cover {K : Type} [Finite K] [Finite G₁] (adv : K → TightAdv M G₁) :
+theorem exists_message_cover {K : Type} [Finite K] [Finite G₁] (adv : K → Adversary M G₁) :
     ∃ cover : Finset M, ∀ k, MessageCovered cover (adv k) := by
   classical
   let queryLabels : (advSpec M G₁).Domain → Finset M := fun q => match q with
@@ -51,7 +53,7 @@ def messageQueries {N : Type} (f : N → M) : QueryImpl (advSpec N G₁) (Oracle
     | .inl (.inr m) => query (spec := advSpec M G₁) (.inl (.inr (f m)))
     | .inr m => query (spec := advSpec M G₁) (.inr (f m))
 
-def mapMessages {N : Type} (f : N → M) (adv : TightAdv N G₁) : TightAdv M G₁ :=
+def mapMessages {N : Type} (f : N → M) (adv : Adversary N G₁) : Adversary M G₁ :=
   (Prod.map f id <$> simulateQ (messageQueries (G₁ := G₁) f) adv : OracleComp (advSpec M G₁) (M × G₁))
 
 theorem mapMessages_query_bind {N : Type} (f : N → M) (q : (advSpec N G₁).Domain)
@@ -62,8 +64,8 @@ theorem mapMessages_query_bind {N : Type} (f : N → M) (q : (advSpec N G₁).Do
 
 /-- Restriction uses coverage proofs to retain each message exactly. No default
 message, query truncation, or rejection of an adaptive path is introduced. -/
-noncomputable def restrictMessages (cover : Finset M) (adv : TightAdv M G₁)
-    (h : MessageCovered cover adv) : TightAdv {m // m ∈ cover} G₁ := by
+noncomputable def restrictMessages (cover : Finset M) (adv : Adversary M G₁)
+    (h : MessageCovered cover adv) : Adversary {m // m ∈ cover} G₁ := by
   change OracleComp (advSpec {m // m ∈ cover} G₁) ({m // m ∈ cover} × G₁)
   induction adv using OracleComp.recOn with
   | pure out =>
@@ -108,7 +110,7 @@ theorem restrictMessages_sign (cover : Finset M) (m : M) (next : G₁ → Oracle
 
 /-- Restricting to the finite proof domain and embedding it back gives the
 original interactive program exactly, including adaptive private randomness. -/
-theorem mapMessages_restrictMessages (cover : Finset M) (adv : TightAdv M G₁)
+theorem mapMessages_restrictMessages (cover : Finset M) (adv : Adversary M G₁)
     (h : MessageCovered cover adv) :
     mapMessages Subtype.val (restrictMessages cover adv h) = adv := by
   induction adv using OracleComp.recOn with
@@ -122,9 +124,9 @@ theorem mapMessages_restrictMessages (cover : Finset M) (adv : TightAdv M G₁)
         funext r
         exact ih r _
 
-theorem MessageCovered.cacheForgery {cover : Finset M} {adv : TightAdv M G₁}
+theorem MessageCovered.cacheForgery {cover : Finset M} {adv : Adversary M G₁}
     (h : MessageCovered cover adv) : MessageCovered cover (cacheForgery adv) := by
-  unfold MessageCovered BLS.CoCDH.Tight.cacheForgery
+  unfold MessageCovered BLS.ROM.cacheForgery
   rw [allPathsSatisfy_bind_iff]
   apply Signatures.FiniteDomain.allPaths_mono adv (fun _ hq => hq) _ h
   intro out hout
@@ -133,8 +135,8 @@ theorem MessageCovered.cacheForgery {cover : Finset M} {adv : TightAdv M G₁}
 
 /-- Every finite family of attackers has an exact finite-message presentation.
 Only the proof uses the possibly large union of all adaptive branches. -/
-theorem exists_restricted_family {K : Type} [Finite K] [Finite G₁] (adv : K → TightAdv M G₁) :
-    ∃ cover : Finset M, ∃ restricted : K → TightAdv {m // m ∈ cover} G₁,
+theorem exists_restricted_family {K : Type} [Finite K] [Finite G₁] (adv : K → Adversary M G₁) :
+    ∃ cover : Finset M, ∃ restricted : K → Adversary {m // m ∈ cover} G₁,
       ∀ k, mapMessages Subtype.val (restricted k) = adv k := by
   obtain ⟨cover, hcover⟩ := exists_message_cover adv
   exact ⟨cover, fun k => restrictMessages cover (adv k) (hcover k),

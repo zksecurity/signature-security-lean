@@ -39,7 +39,7 @@ theorem admissible_map [DecidableEq F] [DecidableEq T] [DecidableEq U]
 variable [Field F] [SampleableType F] [DecidableEq F] [DecidableEq T] [DecidableEq U]
   [AddCommGroup G₁] [Module F G₁] [SampleableType G₁]
   [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
-  [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+  [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
 
 theorem game_map (f : U → T) (hf : Function.Injective f) (g₁ : G₁) (g₂ : G₂)
     (A : Adversary F (U × Fin (d + 1)) (F × U) G₁ G₂) :
@@ -52,7 +52,7 @@ theorem game_map (f : U → T) (hf : Function.Injective f) (g₁ : G₁) (g₂ :
 
 omit [SampleableType F] [AddCommGroup G₁] [Module F G₁]
     [DecidableEq F] [DecidableEq T] [DecidableEq U] [SampleableType G₁]
-    [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] in
+    [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] in
 theorem exists_restricted_publicKeys [Finite F] [Finite G₁] (g₂ : G₂) (d : Nat)
     (A : Adversary F (T × Fin (d + 1)) (F × T) G₁ G₂) :
     ∃ cover : Finset T,

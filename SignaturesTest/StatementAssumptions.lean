@@ -22,19 +22,19 @@ example {F G : Type} [Field F] [AddCommGroup G] [Module F G] (g : G) :
 -- checks the converse by reconstructing both former premises.
 example {F G₁ G₂ Gₜ : Type} [Field F]
     [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
-    [AddCommGroup Gₜ] [Module F Gₜ] [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     (g₁ : G₁) (g₂ : G₂)
     (hgen : Function.Bijective (fun c : F => c • g₁))
     (hinj : Function.Injective
-      (fun z : G₁ => AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) z g₂)) :
+      (fun z : G₁ => BilinearGroup.pairing (F := F) (Gₜ := Gₜ) z g₂)) :
     Function.Surjective (fun c : F => c • g₁) ∧
-      (AlgebraicGroupModel.pairing (F := F) g₁ g₂ : Gₜ) ≠ 0 := by
+      (BilinearGroup.pairing (F := F) g₁ g₂ : Gₜ) ≠ 0 := by
   refine ⟨hgen.2, ?_⟩
   intro hz
   apply zero_ne_one (α := F)
   apply hgen.1
   apply hinj
-  simp only [AlgebraicGroupModel.pairing_smul_left, hz, smul_zero]
+  simp only [BilinearGroup.pairing_smul_left, hz, smul_zero]
 
 open Lean Meta Elab Command
 

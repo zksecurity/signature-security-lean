@@ -16,6 +16,8 @@ The adaptive proof uses the uniform linear-functional collision bound and the fi
 algebra below. These definitions impose no ordering on when the representation is produced.
 -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel AlgebraicGroupModel.LinFunctional Finset
 
 namespace AlgebraicGroupModel.LinFunctional

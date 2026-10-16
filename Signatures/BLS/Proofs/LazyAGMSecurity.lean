@@ -6,6 +6,8 @@ two lazy, transcript-extracting solvers. This probability theorem does not asser
 their runtime bounds. `LazyAGMArbitraryMessages` uses this finite-domain helper
 to prove the bound for arbitrary message types. -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel Model.LazyAGM MeasureTheory
 
 namespace BLS.LazyAGM.Reduction

@@ -7,13 +7,15 @@ import VCVio.OracleComp.SimSemantics.StateT.StateProjection
 counts, and lazy state. These are exact computation laws, with no enumeration
 or cardinality bound on the message domains. -/
 
+open BLS.ROM
+
 open OracleComp OracleSpec
 
 namespace BLS.CoCDH.Tight
 
 variable {N M G₁ : Type}
 
-theorem mapMessages_signing_bound (f : N → M) (adv : TightAdv N G₁) (qS : Nat) :
+theorem mapMessages_signing_bound (f : N → M) (adv : Adversary N G₁) (qS : Nat) :
     IsQueryBoundP (mapMessages f adv) (fun i => Sum.isRight i = true) qS ↔
       IsQueryBoundP adv (fun i => Sum.isRight i = true) qS := by
   induction adv using OracleComp.inductionOn generalizing qS with
@@ -25,7 +27,7 @@ theorem mapMessages_signing_bound (f : N → M) (adv : TightAdv N G₁) (qS : Na
       rcases q with ((n | m) | m) <;>
         simp [messageQueries, isQueryBoundP_query_bind_iff, ih]
 
-theorem mapMessages_cacheForgery (f : N → M) (adv : TightAdv N G₁) :
+theorem mapMessages_cacheForgery (f : N → M) (adv : Adversary N G₁) :
     mapMessages f (cacheForgery adv) = cacheForgery (mapMessages f adv) := by
   simp [mapMessages, cacheForgery, simulateQ_bind, messageQueries,
     map_bind, bind_map_left, bind_pure_comp]
@@ -80,8 +82,8 @@ theorem projectState_update (st : (M → Option F) × Finset M) (n : N) (x : Opt
 variable [SampleableType F]
 
 theorem getDlogS_project (n : N) (st : (M → Option F) × Finset M) :
-    Prod.map id (projectState f hf) <$> (getDlogS (F := F) (f n)).run st =
-      (getDlogS (F := F) n).run (projectState f hf st) := by
+    Prod.map id (projectState f hf) <$> (BLS.ROM.Internal.getDlogS (F := F) (f n)).run st =
+      (BLS.ROM.Internal.getDlogS (F := F) n).run (projectState f hf st) := by
   rw [getDlogS_run, getDlogS_run]
   change Prod.map id (projectState f hf) <$> (match st.1 (f n) with
     | some rho => pure (rho, st)
@@ -94,15 +96,15 @@ variable [SMul F G₁]
 theorem realOracle_project (g X : G₁) (q : (advSpec N G₁).Domain)
     (st : (M → Option F) × Finset M) :
     Prod.map id (projectState f hf) <$>
-      (simulateQ (realOracle (F := F) g X) (messageQueries f q)).run st =
-      (realOracle (F := F) g X q).run (projectState f hf st) := by
+      (simulateQ (BLS.ROM.Internal.oracle (F := F) g X) (messageQueries f q)).run st =
+      (BLS.ROM.Internal.oracle (F := F) g X q).run (projectState f hf st) := by
   rcases q with ((n | m) | m)
-  · simp [messageQueries, realOracle, Functor.map_map]
-  · simp only [messageQueries, simulateQ_HasQuery_query, realOracle, StateT.run_bind,
+  · simp [messageQueries, BLS.ROM.Internal.oracle, Functor.map_map]
+  · simp only [messageQueries, simulateQ_HasQuery_query, BLS.ROM.Internal.oracle, StateT.run_bind,
       StateT.run_pure, map_bind]
     rw [← getDlogS_project f hf m st, bind_map_left]
     simp
-  · simp only [messageQueries, simulateQ_HasQuery_query, realOracle, StateT.run_bind,
+  · simp only [messageQueries, simulateQ_HasQuery_query, BLS.ROM.Internal.oracle, StateT.run_bind,
       StateT.run_modify, StateT.run_pure, pure_bind, map_bind]
     rw [← projectState_insert f hf st m, ← getDlogS_project f hf m (st.1, insert (f m) st.2),
       bind_map_left]
@@ -112,7 +114,7 @@ end State
 
 section Games
 
-open AlgebraicGroupModel
+open BilinearGroup
 
 variable {F G₂ Gₜ : Type} [Field F] [SampleableType F]
   [DecidableEq N] [DecidableEq M]
@@ -120,15 +122,15 @@ variable {F G₂ Gₜ : Type} [Field F] [SampleableType F]
   [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ]
 
 theorem blsEufTightPK_mapMessages (f : N → M) (hf : Function.Injective f)
-    (g : G₁) (g₂ : G₂) (adv : TightAdvPK N G₁ G₂) :
+    (g : G₁) (g₂ : G₂) (adv : AdversaryPK N G₁ G₂) :
     blsEufTightPK (F := F) (Gₜ := Gₜ) g g₂ (fun pk => mapMessages f (adv pk)) =
       blsEufTightPK (F := F) (Gₜ := Gₜ) g g₂ adv := by
   classical
   unfold blsEufTightPK
   apply bind_congr
   intro x
-  have hs := run_messageQueries_project f (realOracle (F := F) g (x • g))
-    (realOracle (F := F) g (x • g)) (projectState f hf)
+  have hs := run_messageQueries_project f (BLS.ROM.Internal.oracle (F := F) g (x • g))
+    (BLS.ROM.Internal.oracle (F := F) g (x • g)) (projectState f hf)
     (realOracle_project f hf g (x • g)) (adv (x • g₂)) ((fun _ => none), ∅)
   rw [projectState_empty] at hs
   simp only [mapMessages, simulateQ_map, StateT.run_map, bind_map_left]
@@ -138,7 +140,7 @@ theorem blsEufTightPK_mapMessages (f : N → M) (hf : Function.Injective f)
   simp [projectState, Function.comp_def]
 
 theorem blsEufLazyPK_mapMessages (f : N → M) (hf : Function.Injective f)
-    (g : G₁) (g₂ : G₂) (adv : TightAdvPK N G₁ G₂) :
+    (g : G₁) (g₂ : G₂) (adv : AdversaryPK N G₁ G₂) :
     blsEufLazyPK (F := F) (Gₜ := Gₜ) g g₂ (fun pk => mapMessages f (adv pk)) =
       blsEufLazyPK (F := F) (Gₜ := Gₜ) g g₂ adv := by
   unfold blsEufLazyPK cacheForgeryPK

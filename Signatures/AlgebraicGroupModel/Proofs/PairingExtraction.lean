@@ -3,7 +3,7 @@ Copyright (c) 2026 zkSecurity. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
-import Signatures.AlgebraicGroupModel.Spec.BilinearGroup
+import Signatures.Model.BilinearGroup
 import Signatures.AlgebraicGroupModel.Spec.AffineForm
 
 /-!
@@ -12,6 +12,8 @@ import Signatures.AlgebraicGroupModel.Spec.AffineForm
 Pairing verification turns an algebraic representation into the scalar relation used by
 the generic extraction-probability split.
 -/
+
+open BilinearGroup
 
 namespace AlgebraicGroupModel
 

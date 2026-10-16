@@ -5,6 +5,8 @@ class. Whole-solver certificates are derived from component contracts and a
 general attacker's own resources, then used to bound its two reduction advantages.
 No source-game probability theorem or completed-solver budget is an assumption. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
 open Signatures.Runtime Signatures.Runtime.BackendProgram
 open Signatures.Runtime.WeightedAGM Signatures.Runtime.WeightedAGM.NativeSolver

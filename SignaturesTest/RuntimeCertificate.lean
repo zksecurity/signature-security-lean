@@ -11,8 +11,8 @@ private abbrev F := ZMod 5
 private def cost := PrimitiveCosts.unit
 private def sampling : Machine.SamplingCosts := ⟨1, fun _ => 1⟩
 
-private def constantAdv : BLS.CoCDH.Tight.TightAdvPK Bool F F :=
-  fun _ => (pure (false, 0) : OracleComp (BLS.CoCDH.Tight.advSpec Bool F) (Bool × F))
+private def constantAdv : BLS.ROM.AdversaryPK Bool F F :=
+  fun _ => (pure (false, 0) : OracleComp (BLS.ROM.advSpec Bool F) (Bool × F))
 
 private def constantCode : Program CryptoOp (Command 1)
     (challengeInputs ++ [message]) (.pair message point₁) :=
@@ -36,14 +36,14 @@ example : cert.targetBudget sampling 0 = 309 := by
 
 -- This certifies the exact named solver, including final hashing and extraction.
 example : coCDHWithin (M := Bool) cost sampling 309
-    (BLS.CoCDH.coronReductionLazyPK (F := F) 0 (BLS.CoCDH.Tight.cacheForgeryPK constantAdv)) := by
+    (BLS.CoCDH.coronReductionLazyPK (F := F) 0 (BLS.ROM.cacheForgeryPK constantAdv)) := by
   have hb := cert.within sampling 0
   simpa [SourceCertificate.targetBudget, cert, machineReductionBound, finishBound, replyBase,
     machineSampling, sampling, cost, PrimitiveCosts.unit, Env.load, Ty.load] using hb
 
 example (g g₂ X X₂ h : F) :
     Run.value <$> (cert.package 0).run cost sampling (g, g₂, X, X₂, h, ()) =
-      BLS.CoCDH.coronReductionLazyPK (F := F) 0 (BLS.CoCDH.Tight.cacheForgeryPK constantAdv)
+      BLS.CoCDH.coronReductionLazyPK (F := F) 0 (BLS.ROM.cacheForgeryPK constantAdv)
         g g₂ X X₂ h := by
   rw [Machine.Package.run_eq]
   simp only [Functor.map_map]
@@ -60,7 +60,7 @@ example : (Ty.load (base := cryptoBase F F F Bool Bool) (.list .nat) [0, 2]).ste
 example : ¬ (∀ (g g₂ X X₂ h : F),
     constantCode.denote (arithmetic F F F Bool Bool cost) (sourceSemantics 1)
       (g, g₂, X, X₂, h, false, ()) =
-      (pure (decide (X₂ = 0), 0) : OracleComp (BLS.CoCDH.Tight.advSpec Bool F) (Bool × F))) := by
+      (pure (decide (X₂ = 0), 0) : OracleComp (BLS.ROM.advSpec Bool F) (Bool × F))) := by
   intro he
   have hz := he 0 0 0 0 0
   simp [constantCode, Program.denote, Expr.denote, Var.get, arithmetic] at hz

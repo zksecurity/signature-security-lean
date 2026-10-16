@@ -2,6 +2,8 @@ import Signatures
 import SignaturesTest.FiniteMessages
 import Lean.Util.CollectAxioms
 
+open BLS.ROM
+
 open OracleComp OracleSpec BLS.CoCDH.Tight
 
 namespace SignaturesTest.MessageTransport
@@ -10,8 +12,8 @@ namespace SignaturesTest.MessageTransport
 -- Only its finite generated-key family needs a common proof cover.
 def key (seed : Bool) : Nat := if seed then 100 else 200
 
-example (adv : TightAdvPK Nat Bool Nat) :
-    ∃ cover : Finset Nat, ∃ restricted : TightAdvPK {m // m ∈ cover} Bool Nat,
+example (adv : AdversaryPK Nat Bool Nat) :
+    ∃ cover : Finset Nat, ∃ restricted : AdversaryPK {m // m ∈ cover} Bool Nat,
       ∀ seed, mapMessages Subtype.val (restricted (key seed)) = adv (key seed) :=
   exists_restricted_publicKeys key adv
 

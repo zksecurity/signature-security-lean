@@ -82,7 +82,7 @@ theorem program_within
       GeneralCaller.Budget R (generalReplies M G₁ randomBound) generalKind fuel pk localTime queries)
     (sourceProgram : G₂ → OracleComp (generalSpec M G₁ randomBound) (M × G₁))
     (hprogram : R.machine.ImplementsWithin sourceProgram fuel)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : ∀ pk, simulateQ (generalSource randomBound) (sourceProgram pk) = adv pk)
     (instructionSize handlerPortSize solverPortSize : Nat)
     (instructionDescriptions : NativeInstructionDescriptions rep cost primitive descriptionSizes qS instructionSize)
@@ -95,11 +95,11 @@ theorem program_within
         4000 * allowance + 40 * instructionSize + 4 * handlerPortSize + 3 * solverPortSize + 500))
       (nativeSolverTime overhead inputWidth width routeWidth cap fuel localTime tickTime queries
         comparisonTime scalarTime coinTime opTime handlerAdapterTime solverAdapterTime dynamicTime)
-      (fun input => BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv)
+      (fun input => BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv)
         input.1 input.2.1 input.2.2.1 input.2.2.2.1 input.2.2.2.2.1) := by
   have he : ∀ input,
       (program rep bd ports sampler boundary data samplingCode cost primitive R qS fuel).denote input =
-        BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv)
+        BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv)
           input.1 input.2.1 input.2.2.1 input.2.2.2.1 input.2.2.2.2.1 := by
     rintro ⟨g, g₂, X, pk, h, u⟩
     cases u

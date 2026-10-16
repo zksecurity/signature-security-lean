@@ -1,5 +1,6 @@
 import Signatures.BLS.GeneralSecurityModel
 import Signatures.BLS.GeneralAGMStatement
+import Signatures.BLS.Proofs.ROM
 
 /-! Proofs for the public BLS AGM/DLog and unrestricted co-CDH statements.
 First connect the displayed games and allowances to the original source games.
@@ -132,15 +133,7 @@ theorem cocdhEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     cocdhEufCmaGame curve securityParameter adversary =
       CoCDH.Tight.blsEufLazyPK (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
-  classical
-  simp only [cocdhEufCmaGame, Game.rom, CoCDH.Tight.blsEufLazyPK, CoCDH.Tight.blsEufTightPK]
-  apply bind_congr
-  intro secret
-  apply bind_congr
-  rintro ⟨⟨message, signature⟩, state⟩
-  congr 1
-  apply Bool.eq_iff_iff.mpr
-  simp only [Bool.and_eq_true, decide_eq_true_eq]
+  exact Game.rom_eq_source curve securityParameter adversary.source
 
 /-- Every unrestricted attacker within the declared resources and query allowances
 obeys this EUF-CMA bound. `solverTime` charges the complete native Coron reduction,
@@ -165,7 +158,7 @@ theorem Proofs.cocdh_security
   have fits := GeneralCoCDH.reduction_within resources adversary
   have solverBound : Model.coCDHAdvantage resources.generator resources.keyGenerator
       (CoCDH.coronReductionLazyPK (F := curve.Scalar securityParameter) resources.queries.sign
-        (CoCDH.Tight.cacheForgeryPK adversary.source)) ≤
+        (BLS.ROM.cacheForgeryPK adversary.source)) ≤
       coCDHSuccessBound curve securityParameter queries resources.solverTime :=
     le_iSup_of_le _ (le_iSup_of_le fits le_rfl)
   simpa only [resources, cocdhEufCmaGame_eq, CoCDHSecurityModel.queries_eq,

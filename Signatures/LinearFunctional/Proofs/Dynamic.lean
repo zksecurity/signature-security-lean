@@ -16,6 +16,8 @@ query count `Q` and reuses the fixed-`Q` algebra pointwise.
 No sampling order is imposed here; `Adaptive.lean` handles concrete-base-dependent adversaries.
 -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel Finset
 
 namespace AlgebraicGroupModel.LinFunctional

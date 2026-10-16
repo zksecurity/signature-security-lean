@@ -25,6 +25,8 @@ No target, message, coefficient, or base is fixed before the adversary runs, and
 used.
 -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel Finset
 
 namespace AlgebraicGroupModel.LinFunctional

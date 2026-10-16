@@ -33,7 +33,7 @@ the source cannot use the other fields to change its behavior. -/
 -- Certify source code, not a runtime assumption about an arbitrary Lean function.
 structure SourceCertificate (cost : PrimitiveCosts) (randomBound localTime : Nat)
     -- The three all-path query caps are random calls, hash calls (qH), and signing calls.
-    (queries : Fin 3 → Nat) (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂) where
+    (queries : Fin 3 → Nat) (adv : BLS.ROM.AdversaryPK M G₁ G₂) where
   -- Describe fixed first-order data carried by the source implementation.
   dataTypes : List (Ty CryptoAtom)
   -- These values are fixed independently of the challenge; loading them is charged below.
@@ -59,7 +59,7 @@ def coCDHWithin (cost : PrimitiveCosts) (sampling : Machine.SamplingCosts)
     (fun env => solver env.1 env.2.1 env.2.2.1 env.2.2.2.1 env.2.2.2.2.1)
 
 variable {cost : PrimitiveCosts} {randomBound localTime : Nat} {queries : Fin 3 → Nat}
-  {adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂}
+  {adv : BLS.ROM.AdversaryPK M G₁ G₂}
 
 def SourceCertificate.package (cert : SourceCertificate (F := F) cost randomBound localTime queries adv)
     (qS : Nat) : Machine.Package (cryptoBase F G₁ G₂ M M) challengeInputs point₁ where
@@ -83,7 +83,7 @@ theorem SourceCertificate.within
     (cert : SourceCertificate (F := F) cost randomBound localTime queries adv)
     (sampling : Machine.SamplingCosts) (qS : Nat) :
     coCDHWithin (M := M) cost sampling (cert.targetBudget sampling qS)
-      (BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv)) := by
+      (BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv)) := by
   refine ⟨cert.package qS, ?_, ?_⟩
   · intro env
     rcases env with ⟨g, g₂, X, X₂, h, ⟨⟩⟩

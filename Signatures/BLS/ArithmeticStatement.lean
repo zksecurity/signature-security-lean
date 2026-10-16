@@ -22,6 +22,8 @@ Original eager probability and resource lemmas remain in their supporting module
 see `docs/API-MIGRATION.md` for the replacement interfaces.
 -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel
 open Signatures.Runtime Signatures.Runtime.Coron
 open scoped ENNReal
@@ -49,7 +51,7 @@ theorem bls_eufcma_of_cocdh_machine_hardness
     -- Fix the public base points and signing-call limit used in the Coron loss.
     (g₁ : G₁) (g₂ : G₂) (qS : Nat)
     -- The adaptive forger is inferred from cert; it need not be algebraic.
-    {adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂}
+    {adv : BLS.ROM.AdversaryPK M G₁ G₂}
     -- Every signature-group point must be a scalar multiple of g1.
     (hgen : Function.Surjective (fun r : F => r • g₁))
     -- Require a nonzero pairing of the chosen base points.
@@ -81,7 +83,7 @@ theorem bls_eufcma_of_cocdh_machine_hardness
   have reduction :
       𝒟[BLS.CoCDH.Tight.blsEufLazyPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv] {true} ≤
         Model.coronFactor qS * Model.coCDHAdvantage g₁ g₂
-          (BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv)) := by
+          (BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv)) := by
      classical
     let : Fintype F := Fintype.ofFinite F
     let : Fintype G₁ := Fintype.ofSurjective (fun r : F => r • g₁) hgen

@@ -1,6 +1,6 @@
 import Signatures.Model.PairingCurve
 import Signatures.BLS.Spec.LazyAGM
-import Signatures.BLS.CoCDH.Spec.LazyGame
+import Signatures.BLS.Spec.ROM
 
 /-! BLS security games, independent of any execution model or resource certificate.
 Read the experiment below as: sample a key, run the attacker with adaptive
@@ -27,7 +27,7 @@ abbrev AlgebraicAdversary := Model.LazyAGM.Adversary (curve.Scalar securityParam
   Message Message (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter)
 
 /-- Arbitrary message/signature output, without algebraic explanations. -/
-abbrev UnrestrictedAdversary := CoCDH.Tight.TightAdvPK Message
+abbrev UnrestrictedAdversary := ROM.AdversaryPK Message
   (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter)
 
 /-- A win requires validity and freshness. -/
@@ -41,8 +41,8 @@ noncomputable def agm
     | some (forgery, signedMessages), [signature] =>
         let hash : 𝔾₁ ← liftM ((Model.LazyAGM.baseSpec Message 𝔾₁).query (.inr forgery.mstar))
         return decide (
-          AlgebraicGroupModel.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
-            AlgebraicGroupModel.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂) ∧
+          BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
+            BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂) ∧
           forgery.mstar ∉ signedMessages)
     | _, _ => return false)).run' ∅
 
@@ -53,10 +53,12 @@ noncomputable def rom
   exact do
     let secret ← ($ᵗ 𝔽 : ProbComp 𝔽)
     let ((message, signature), state) ←
-      (simulateQ (CoCDH.Tight.realOracle (F := 𝔽) g₁ (secret • g₁))
-        (CoCDH.Tight.cacheForgeryPK adversary (secret • g₂))).run ((fun _ => none), ∅)
-    return decide (AlgebraicGroupModel.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
-      AlgebraicGroupModel.pairing (F := 𝔽) (Gₜ := 𝔾ₜ)
-        (((state.1 message).getD 0) • g₁) (secret • g₂)) && decide (message ∉ state.2)
+      -- Answer A's hash/signing queries, then cache the verifier's hash of A's final message.
+      (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁))
+        (ROM.cacheForgeryPK adversary (secret • g₂))).run ROM.State.empty
+    return decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
+      BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ)
+        (((state.hashExponents message).getD 0) • g₁) (secret • g₂)) &&
+      decide (message ∉ state.signedMessages)
 
 end BLS.Game

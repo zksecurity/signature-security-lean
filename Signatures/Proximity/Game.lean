@@ -36,8 +36,8 @@ noncomputable def agm
     | some (forgery, signedMessages), [signature] =>
         let target ← Model.LazyAGM.evalTerms (LazyAGM.terms forgery.mstar)
         return decide (
-          AlgebraicGroupModel.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
-            AlgebraicGroupModel.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) target (secret • g₂) ∧
+          BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
+            BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) target (secret • g₂) ∧
           forgery.mstar ∉ signedMessages)
     | _, _ => return false)).run' ∅
 

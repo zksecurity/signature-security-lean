@@ -25,7 +25,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   [∀ n, AddCommGroup (G₁ n)] [∀ n, Module (F n) (G₁ n)]
   [∀ n, AddCommGroup (G₂ n)] [∀ n, Module (F n) (G₂ n)]
   [∀ n, AddCommGroup (Gₜ n)] [∀ n, Module (F n) (Gₜ n)]
-  [∀ n, AlgebraicGroupModel.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
+  [∀ n, BilinearGroup.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
 
 /-- Polynomial-resource algebraic attackers have negligible forgery success
 under nonuniform DLog hardness in the fixed backend and negligible `1 / |F|`.

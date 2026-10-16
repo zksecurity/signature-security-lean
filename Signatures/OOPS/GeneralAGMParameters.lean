@@ -4,6 +4,8 @@ import Signatures.Runtime.GeneralWeightedParameters
 topic and degree; signing inputs contain a scalar and topic. Query counts and
 all execution/code limits belong to the fixed resource model. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
 open Signatures.Runtime Signatures.Runtime.BackendProgram
 open Signatures.Runtime.WeightedAGM

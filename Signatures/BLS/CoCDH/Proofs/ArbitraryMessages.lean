@@ -7,7 +7,9 @@ cover of the attacker's adaptive tree is used only inside the proof; exact game
 and solver transport returns the original lazy computations. Neither the
 attacker nor the executed reduction enumerates this cover. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel BLS.CoCDH.Tight
+open BLS.ROM
+
+open OracleComp OracleSpec BilinearGroup BLS.CoCDH.Tight
 
 namespace BLS.CoCDH.Proofs
 
@@ -16,7 +18,7 @@ variable {F M G₁ G₂ Gₜ : Type} [Field F] [SampleableType F] [Fintype F] [D
   [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ]
 
-theorem security_arbitrary_messages (g : G₁) (g₂ : G₂) (qS : Nat) (adv : TightAdvPK M G₁ G₂)
+theorem security_arbitrary_messages (g : G₁) (g₂ : G₂) (qS : Nat) (adv : AdversaryPK M G₁ G₂)
     (hgen : Function.Bijective (fun r : F => r • g))
     (hinj : Function.Injective (fun z : G₁ => pairing (F := F) (Gₜ := Gₜ) z g₂))
     (hqs : ∀ r : F, IsQueryBoundP (adv (r • g₂)) (fun i => Sum.isRight i = true) qS) :
@@ -25,7 +27,7 @@ theorem security_arbitrary_messages (g : G₁) (g₂ : G₂) (qS : Nat) (adv : T
         (coronReductionLazyPK (F := F) qS (cacheForgeryPK adv)) := by
   classical
   obtain ⟨cover, restricted, heq⟩ := exists_restricted_publicKeys (fun r : F => r • g₂) adv
-  let mapped : TightAdvPK M G₁ G₂ := fun pk => mapMessages Subtype.val (restricted pk)
+  let mapped : AdversaryPK M G₁ G₂ := fun pk => mapMessages Subtype.val (restricted pk)
   have hkey : ∀ r : F, adv (r • g₂) = mapped (r • g₂) := fun r => (heq r).symm
   have hsource := (blsEufLazyPK_congr_generated (Gₜ := Gₜ) g g₂ adv mapped hkey).trans
     (blsEufLazyPK_mapMessages (Gₜ := Gₜ) Subtype.val Subtype.val_injective g g₂ restricted)

@@ -6,6 +6,8 @@ import Signatures.BLS.Proofs.LazyAGMList
 over generated keys and all adaptive reply paths. Exact transport returns the
 original game and both lazy solvers, without executing or charging that cover. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec Model.LazyAGM AlgebraicGroupModel
 open BLS.LazyAGM.Reduction
 

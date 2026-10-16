@@ -6,6 +6,8 @@ import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
 Both complete native reduction certificates are derived before applying hardness.
 The original source game and its probability loss are preserved. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
 open Signatures.Runtime Signatures.Runtime.BackendProgram
 open Signatures.Runtime.WeightedAGM

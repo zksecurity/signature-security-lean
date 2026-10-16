@@ -35,7 +35,7 @@ theorem finish_erase (cost : PrimitiveCosts) (sampling : SamplingCosts)
     lookup_getD (arithmetic F G₁ G₂ M M cost) CryptoOp.messageEq (fun _ _ => rfl)]
 
 noncomputable def nativeReduction (g X h : G₁) (qS : Nat)
-    (oa : BLS.CoCDH.Tight.TightAdv M G₁) : ProbComp G₁ := do
+    (oa : BLS.ROM.Adversary M G₁) : ProbComp G₁ := do
   let p ← (simulateQ (nativeOracle (F := F) g X h qS) oa).run
     ((fun _ => none, ∅), ∅)
   nativeFinish g X h qS p.1 p.2
@@ -63,12 +63,12 @@ theorem reduction_erase_native (cost : PrimitiveCosts) (sampling : SamplingCosts
 
 omit [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] in
 theorem nativeReduction_cached (g X h : G₁) (qS : Nat)
-    (oa : BLS.CoCDH.Tight.TightAdv M G₁) :
+    (oa : BLS.ROM.Adversary M G₁) :
     nativeReduction (F := F) g X h qS oa =
       (fun p => p.1.2 - (p.2.1.1 p.1.1).getD 0 • X) <$>
-        (simulateQ (nativeOracle (F := F) g X h qS) (BLS.CoCDH.Tight.cacheForgery oa)).run
+        (simulateQ (nativeOracle (F := F) g X h qS) (BLS.ROM.cacheForgery oa)).run
           ((fun _ => none, ∅), ∅) := by
-  simp [nativeReduction, nativeFinish, BLS.CoCDH.Tight.cacheForgery, nativeOracle,
+  simp [nativeReduction, nativeFinish, BLS.ROM.cacheForgery, nativeOracle,
     map_bind, bind_pure_comp]
 
 omit [AddCommGroup G₂] [Module F G₂] in
@@ -76,12 +76,12 @@ omit [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] in
 /-- No distribution-only replacement is needed: the complete native solver is exactly
 the existing named reduction, including `cacheForgeryPK`. -/
 theorem nativeReduction_original (g X h : G₁) (g₂ X₂ : G₂) (qS : Nat)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂) :
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂) :
     nativeReduction (F := F) g X h qS (adv X₂) =
-      BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv) g g₂ X X₂ h := by
+      BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv) g g₂ X X₂ h := by
   rw [nativeReduction_cached, nativeOracle_run]
   simp [BLS.CoCDH.coronReductionLazyPK, BLS.CoCDH.coronReductionProgram,
-    BLS.CoCDH.Tight.cacheForgeryPK, StateT.run'_eq, bind_pure_comp]
+    BLS.ROM.cacheForgeryPK, StateT.run'_eq, bind_pure_comp]
 
 /-- Complete evaluator erasure for an implementation of the adversary at the actual key.
 The semantic premise identifies source code, not a finished solver or a runtime budget. -/
@@ -89,10 +89,10 @@ theorem reduction_erase (cost : PrimitiveCosts) (sampling : SamplingCosts)
     (g X h : G₁) (g₂ X₂ : G₂) (qS randomBound : Nat) {Γ}
     (code : Program CryptoOp (Command randomBound) Γ (.pair message point₁))
     (env : Env (cryptoBase F G₁ G₂ M M) Γ)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : code.denote (arithmetic F G₁ G₂ M M cost) (sourceSemantics randomBound) env = adv X₂) :
     Run.value <$> reduction cost sampling g X h qS randomBound code env =
-      BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv) g g₂ X X₂ h := by
+      BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv) g g₂ X X₂ h := by
   rw [reduction_erase_native, hsource]
   exact nativeReduction_original g X h g₂ X₂ qS adv
 

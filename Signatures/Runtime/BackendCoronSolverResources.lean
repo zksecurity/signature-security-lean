@@ -72,7 +72,7 @@ theorem program_within_of_resources
     (htick : ∀ n ≤ fuel, ∀ encoded ≤ 3 * routeWidth, control.loop n encoded ≤ tickTime)
     (sourceProgram : G₂ → OracleComp (generalSpec M G₁ randomBound) (M × G₁))
     (hprogram : R.machine.Implements sourceProgram)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : ∀ pk, simulateQ (generalSource randomBound) (sourceProgram pk) = adv pk)
     (instructionSize handlerPortSize solverPortSize : Nat)
     (instructionDescriptions : NativeInstructionDescriptions rep cost primitive descriptionSizes qS instructionSize)
@@ -85,7 +85,7 @@ theorem program_within_of_resources
         4000 * allowance + 40 * instructionSize + 4 * handlerPortSize + 3 * solverPortSize + 500))
       (nativeSolverTime overhead inputWidth width routeWidth cap fuel (bound.work + 2 * bound.queries + 2) tickTime (fun _ => bound.queries)
         comparisonTime scalarTime coinTime opTime handlerAdapterTime solverAdapterTime dynamicTime)
-      (fun input => BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv)
+      (fun input => BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv)
         input.1 input.2.1 input.2.2.1 input.2.2.2.1 input.2.2.2.2.1) := by
   apply program_within rep bd ports sampler boundary data samplingCode cost primitive control queryCost
     sizes lists mono routing localLaws dispatchLaws dataLaws primitiveBound R backend descriptionSizes factor

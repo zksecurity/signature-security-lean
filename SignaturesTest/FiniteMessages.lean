@@ -1,13 +1,15 @@
 import Signatures.BLS.CoCDH.Proofs.FiniteMessages
 import Lean.Util.CollectAxioms
 
+open BLS.ROM
+
 open OracleComp OracleSpec BLS.CoCDH.Tight
 
 namespace SignaturesTest.FiniteMessages
 
 -- Infinite message type, private randomness, an answer-dependent signing
 -- message, a repeated hash, and an unseen final-forgery message.
-def adaptive : TightAdv Nat Bool :=
+def adaptive : Adversary Nat Bool :=
   (do
     let r : Fin 2 ← query (spec := advSpec Nat Bool) (.inl (.inl 1))
     let b : Bool ← query (spec := advSpec Nat Bool) (.inl (.inr (if r = 0 then 11 else 13)))

@@ -1,5 +1,5 @@
 import Signatures.Model.CoCDH
-import Signatures.AlgebraicGroupModel.Spec.BilinearGroup
+import Signatures.Model.BilinearGroup
 import Signatures.AlgebraicGroupModel.Spec.Representation
 import Mathlib.Data.List.Indexes
 import VCVio.OracleComp.QueryTracking.RandomOracle.Simulation

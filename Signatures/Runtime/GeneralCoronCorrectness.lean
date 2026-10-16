@@ -10,10 +10,10 @@ open PFunctor.DynSystem.DynComputation
 namespace Signatures.Runtime.Coron
 
 def generalSource {M G₁ : Type} (randomBound : Nat) :
-    QueryImpl (generalSpec M G₁ randomBound) (OracleComp (BLS.CoCDH.Tight.advSpec M G₁))
-  | .inl (.inl n) => liftM ((BLS.CoCDH.Tight.advSpec M G₁).query (.inl (.inl n.val)))
-  | .inl (.inr m) => liftM ((BLS.CoCDH.Tight.advSpec M G₁).query (.inl (.inr m)))
-  | .inr m => liftM ((BLS.CoCDH.Tight.advSpec M G₁).query (.inr m))
+    QueryImpl (generalSpec M G₁ randomBound) (OracleComp (BLS.ROM.advSpec M G₁))
+  | .inl (.inl n) => liftM ((BLS.ROM.advSpec M G₁).query (.inl (.inl n.val)))
+  | .inl (.inr m) => liftM ((BLS.ROM.advSpec M G₁).query (.inl (.inr m)))
+  | .inr m => liftM ((BLS.ROM.advSpec M G₁).query (.inr m))
 
 variable {F G₁ G₂ M : Type} [Field F] [SampleableType F]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
@@ -136,11 +136,11 @@ theorem generalReduction_erase_original
     (g X h : G₁) (g₂ pk : G₂) (qS fuel : Nat)
     (program : G₂ → OracleComp (generalSpec M G₁ randomBound) (M × G₁))
     (hprogram : R.machine.ImplementsWithin program fuel)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : simulateQ (generalSource randomBound) (program pk) = adv pk) :
     Run.value <$> generalReduction (F := F) R cost sampling g X h pk qS fuel =
       some <$> BLS.CoCDH.coronReductionLazyPK (F := F) qS
-        (BLS.CoCDH.Tight.cacheForgeryPK adv) g g₂ X pk h := by
+        (BLS.ROM.cacheForgeryPK adv) g g₂ X pk h := by
   rw [generalReduction_erase_native R cost sampling g X h pk qS fuel program hprogram, hsource]
   rw [nativeReduction_original g X h g₂ pk qS adv]
 
@@ -159,11 +159,11 @@ theorem generalSolverRun_erase
     (g X h : G₁) (g₂ pk : G₂) (qS fuel : Nat)
     (program : G₂ → OracleComp (generalSpec M G₁ randomBound) (M × G₁))
     (hprogram : R.machine.ImplementsWithin program fuel)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : simulateQ (generalSource randomBound) (program pk) = adv pk) :
     Run.value <$> generalSolverRun (F := F) R cost sampling g X h pk qS fuel =
       BLS.CoCDH.coronReductionLazyPK (F := F) qS
-        (BLS.CoCDH.Tight.cacheForgeryPK adv) g g₂ X pk h := by
+        (BLS.ROM.cacheForgeryPK adv) g g₂ X pk h := by
   have he := congrArg (Functor.map (fun x : Option G₁ => x.getD 0))
     (generalReduction_erase_original (F := F) R cost sampling g X h g₂ pk qS fuel program hprogram adv hsource)
   simpa [generalSolverRun, Functor.map_map] using he

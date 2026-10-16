@@ -20,7 +20,7 @@ noncomputable def game {F M G₁ G₂ Gₜ : Type}
     -- Verification keys live in G2; pairing results live in Gt. Both support F-scalars.
     [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
     -- Supply a bilinear pairing; generator and nondegeneracy premises belong to the theorems.
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     -- Fix the two base points and A; both hash indices and signed messages have type M.
     (g₁ : G₁) (g₂ : G₂) (A : Model.LazyAGM.Adversary F M M G₁ G₂) : ProbComp Bool :=
   -- Run the shared lazy game. True adds no extra condition beyond validity and freshness.

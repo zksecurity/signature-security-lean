@@ -22,7 +22,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   [∀ n, AddCommGroup (G₁ n)] [∀ n, Module (F n) (G₁ n)]
   [∀ n, AddCommGroup (G₂ n)] [∀ n, Module (F n) (G₂ n)]
   [∀ n, AddCommGroup (Gₜ n)] [∀ n, Module (F n) (Gₜ n)]
-  [∀ n, AlgebraicGroupModel.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
+  [∀ n, BilinearGroup.BilinearPairing (F n) (G₁ n) (G₂ n) (Gₜ n)]
   {degree : Nat → Nat}
   (parameters : ∀ n, Parameters (Q := Q) (F := F n) (G₁ := G₁ n) (G₂ := G₂ n)
     (Gₜ := Gₜ n) (K := K n) (M := M n) (degree n))

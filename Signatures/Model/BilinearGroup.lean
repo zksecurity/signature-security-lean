@@ -6,15 +6,15 @@ Authors: Kobi Gurkan
 import Mathlib.Algebra.Module.Basic
 
 /-!
-# Abstract (type-3) bilinear pairings
+# Abstract bilinear pairings
 
-`mathlib` formalises the elliptic-curve group law (`WeierstrassCurve`) but not the Weil/Tate
-pairing, so for pairing-based signatures we axiomatise the structure a security proof actually
-uses: a bilinear, nondegenerate map `e : G₁ × G₂ → Gₜ`.  This is the standard abstract-bilinear-
-group model (type-3, `G₁ ≠ G₂`, no efficient isomorphism between them).
+The shared mathematical interface for a bilinear map `e : G₁ × G₂ → Gₜ`.
+It is independent of any adversary model and is used by both ordinary and AGM security games.
+Nondegeneracy at the chosen generators is a separate hypothesis in the curve interface and
+security theorems. This class does not impose distinct source groups or computational assumptions.
 -/
 
-namespace AlgebraicGroupModel
+namespace BilinearGroup
 
 /-- An abstract bilinear pairing `e : G₁ × G₂ → Gₜ` over scalar field `F`. -/
 class BilinearPairing (F G₁ G₂ Gₜ : Type) [Field F]
@@ -54,4 +54,4 @@ variable {F G₁ G₂ Gₜ : Type} [Field F] [AddCommGroup G₁] [Module F G₁]
 
 end lemmas
 
-end AlgebraicGroupModel
+end BilinearGroup

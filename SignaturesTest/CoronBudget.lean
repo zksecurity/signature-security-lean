@@ -2,6 +2,8 @@ import Signatures.BLS.CoCDH.Proofs.QueryBound
 
 /-! Signing-only budgets must ignore randomness, hash queries, and the final verification hash. -/
 
+open BLS.ROM
+
 open OracleComp OracleSpec BLS.CoCDH.Tight
 
 namespace SignaturesTest.CoronBudget
@@ -34,7 +36,7 @@ example : IsQueryBoundP (cacheForgery hashesAndRandomness)
   simp [cacheForgery, hashesAndRandomness]
 
 -- Generated keys need not cover G₂: the second coordinate here is always zero.
-private def keyDependent {F : Type} [Field F] [DecidableEq F] : TightAdvPK Nat Nat (F × F) :=
+private def keyDependent {F : Type} [Field F] [DecidableEq F] : AdversaryPK Nat Nat (F × F) :=
   fun pk => if pk.2 = 0 then hashesAndRandomness else repeatedSigning
 
 example {F : Type} [Field F] [DecidableEq F] (x : F) :
@@ -49,11 +51,11 @@ example {F : Type} [Field F] [DecidableEq F] :
   simpa [keyDependent, repeatedSigning] using h (0, 1)
 
 -- Cache hits draw no new randomness; misses sample once without changing prior signing history.
-example : (getDlogS (F := Fin 5) 7).run ((fun _ : Nat => some 2), {3}) =
+example : (BLS.ROM.Internal.getDlogS (F := Fin 5) 7).run ((fun _ : Nat => some 2), {3}) =
     pure (2, (fun _ => some 2), {3}) := by
   rw [getDlogS_run]
 
-example : (getDlogS (F := Fin 5) 7).run ((fun _ : Nat => none), {3}) =
+example : (BLS.ROM.Internal.getDlogS (F := Fin 5) 7).run ((fun _ : Nat => none), {3}) =
     (do let ρ ← ($ᵗ (Fin 5) : ProbComp (Fin 5))
         pure (ρ, Function.update (fun _ => none) 7 (some ρ), {3})) := by
   rw [getDlogS_run]

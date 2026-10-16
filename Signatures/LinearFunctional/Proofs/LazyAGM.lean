@@ -7,6 +7,8 @@ import VCVio.OracleComp.SimSemantics.StateT.PreservesInv
 
 /-! # Lazy-oracle coupling and adaptive algebraic extraction -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec AlgebraicGroupModel AlgebraicGroupModel.LinFunctional
 
 namespace Model.LazyAGM.Proofs

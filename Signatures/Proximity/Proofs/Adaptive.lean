@@ -7,6 +7,8 @@ import Signatures.LinearFunctional.Proofs.Adaptive
 
 /-! # Proximity extraction with an explicit fresh-collision probability -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel AlgebraicGroupModel.LinFunctional
 
 namespace Proximity.Proofs

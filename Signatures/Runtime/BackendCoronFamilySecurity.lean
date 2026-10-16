@@ -10,6 +10,8 @@ exact finite-domain transport, with no message-universe enumeration at runtime.
 This is conditional on a fixed quantitative backend and its primitive contracts;
 it does not claim a conventional-machine adequacy theorem. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor
 open PFunctor.DynSystem.DynComputation
 
@@ -60,7 +62,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   (comparisonTime scalarTime coinTime opTime handlerAdapterTime solverAdapterTime dynamicTime : Nat → Nat)
   (bound : Nat → ExecutionCost)
   (instructionSize handlerPortSize solverPortSize : Nat → Nat)
-  (adv : ∀ n, BLS.CoCDH.Tight.TightAdvPK (M n) (G₁ n) (G₂ n))
+  (adv : ∀ n, BLS.ROM.AdversaryPK (M n) (G₁ n) (G₂ n))
 
 variable
   (hh : ∀ n, header n ≤ width n) (hm : ∀ n, messageWidth n ≤ width n)

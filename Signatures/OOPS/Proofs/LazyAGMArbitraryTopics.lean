@@ -5,6 +5,8 @@ import Signatures.OOPS.Proofs.LazyAGMTopicTransport
 The finite topic presentation is used only in the proof and is never enumerated
 by either weighted list-cache reduction. -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel Model.LazyAGM
 open Model.LazyAGM.WeightedReduction Model.LazyAGM.WeightedTransport
 open OOPS.LazyAGM.TopicTransport

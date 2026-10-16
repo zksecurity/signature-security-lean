@@ -4,6 +4,8 @@ import Signatures.LinearFunctional.Proofs.LazyAGMTransport
 interaction, target evaluation, freshness, and any transported admissibility
 predicate. Equality only at generated keys is enough for the game and solvers. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec Model.LazyAGM Model.LazyAGM.WeightedReduction AlgebraicGroupModel
 open BLS.CoCDH.MessageTransport
 open BLS.LazyAGM.MessageTransport (mapOutput evalTerms_map)

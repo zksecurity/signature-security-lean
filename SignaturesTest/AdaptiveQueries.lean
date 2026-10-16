@@ -1,11 +1,12 @@
 import Signatures.Model.LazyAGM
-import Signatures.BLS.CoCDH.Spec.LazyGame
+import Signatures.BLS.Spec.ROMInternal
 
 /-! Reply-dependent queries, stopping, and outputs in both lazy oracle interfaces.
 These are execution tests, not cryptographic hardness claims. -/
 
+open BLS.ROM
+
 open OracleComp OracleSpec
-open BLS.CoCDH.Tight
 
 namespace SignaturesTest.AdaptiveQueries
 

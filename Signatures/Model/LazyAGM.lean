@@ -134,7 +134,7 @@ theorem interactiveRun_eq (terms : M → List (ι × F)) (α : F)
 -- Add the target-group operations needed for the mathematical signature-verification check.
 noncomputable def experiment {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
     -- Pairing connects signature points in G1 with keys in G2.
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     -- terms specifies the scheme; admissible may impose an additional transcript condition.
     (terms : M → List (ι × F)) (admissible : M → List M → Prop)
     -- The game fixes its base points and adversary before sampling the secret key.
@@ -158,9 +158,9 @@ noncomputable def experiment {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
         -- First require the scheme-specific condition, such as OOPS's target-topic degree bound.
         pure (decide (admissible out.mstar signed ∧
           -- The left pairing uses the supplied signature, not a point decoded from ordinary data.
-          AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) σ g₂ =
+          BilinearGroup.pairing (F := F) (Gₜ := Gₜ) σ g₂ =
             -- It must equal the pairing of the message's weighted base sum with the public key.
-            AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) target (α • g₂) ∧
+            BilinearGroup.pairing (F := F) (Gₜ := Gₜ) target (α • g₂) ∧
           -- Finally require exact-message freshness; for OOPS/Proximity M includes topic/slot.
           out.mstar ∉ signed))
     -- Adapter rejection, missing metadata, or any other G1-list length cannot win.
@@ -169,7 +169,7 @@ noncomputable def experiment {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
 omit [SampleableType G₁] in
 /-- Integration preserves the original game computation, not just its success probability. -/
 theorem experiment_eq {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
     (terms : M → List (ι × F)) (admissible : M → List M → Prop)
     (g₁ : G₁) (g₂ : G₂) (A : Adversary F ι M G₁ G₂) :
     experiment (Gₜ := Gₜ) terms admissible g₁ g₂ A = (by
@@ -180,8 +180,8 @@ theorem experiment_eq {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
     let σ := materialize g₁ out tr
     let target ← evalTerms (terms out.mstar)
     pure (decide (admissible out.mstar (tr.2.map Prod.fst) ∧
-      AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) σ g₂ =
-        AlgebraicGroupModel.pairing (F := F) (Gₜ := Gₜ) target (α • g₂) ∧
+      BilinearGroup.pairing (F := F) (Gₜ := Gₜ) σ g₂ =
+        BilinearGroup.pairing (F := F) (Gₜ := Gₜ) target (α • g₂) ∧
       out.mstar ∉ tr.2.map Prod.fst))) := by
   classical
   simp only [experiment, interactiveRun_eq, bind_map_left, Interactive.observe,
@@ -203,7 +203,7 @@ noncomputable def lazyImpl [DecidableEq ι] :
 -- Close the source experiment by supplying its actual lazy random-oracle interpretation.
 noncomputable def game {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
     -- Pairing is used for winning; index equality is used for the shared base cache.
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] [DecidableEq ι]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] [DecidableEq ι]
     -- These two functions distinguish BLS, OOPS, and Proximity without changing the runner.
     (terms : M → List (ι × F)) (admissible : M → List M → Prop)
     -- A fully interpreted game is a probabilistic Boolean computation, not yet a probability.
@@ -214,7 +214,7 @@ noncomputable def game {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
 -- Turn the same experiment into a numerical success probability in extended nonnegative reals.
 noncomputable def advantage {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
     -- Use exactly the pairing and cache requirements of game; no hardness premise is added.
-    [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ] [DecidableEq ι]
+    [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] [DecidableEq ι]
     -- Keep the scheme's weighted bases and additional winning condition unchanged.
     (terms : M → List (ι × F)) (admissible : M → List M → Prop)
     -- Fix the same game parameters; ENNReal is the probability value's ambient type.

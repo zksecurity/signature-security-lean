@@ -7,6 +7,8 @@ primitive prices before choosing a general attacker. The attacker supplies only
 its own measured execution, code and query bounds and exact source realization.
 The complete reduction budgets are derived, not assumed. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
 open PFunctor.DynSystem.DynComputation
 open Signatures.Runtime Signatures.Runtime.BackendProgram

@@ -5,6 +5,8 @@ import Signatures.Proximity.Proofs.LazyAGMSlotTransport
 The source game and actual fresh-collision term are preserved by the same
 finite proof presentation; no slot universe is enumerated at runtime. -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel Model.LazyAGM
 open Model.LazyAGM.WeightedReduction Model.LazyAGM.WeightedTransport
 open Proximity.LazyAGM.SlotTransport

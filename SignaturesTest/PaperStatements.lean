@@ -2,6 +2,8 @@ import Signatures.PaperStatements
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
+open BilinearGroup
+
 namespace SignaturesTest.PaperStatements
 
 private instance : Fact (Nat.Prime 5) := ⟨by decide⟩

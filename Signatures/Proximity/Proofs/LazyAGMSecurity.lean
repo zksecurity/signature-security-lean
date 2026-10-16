@@ -5,6 +5,8 @@ import Signatures.LinearFunctional.Proofs.LazyAGMCoupling
 fresh-collision probability. This finite-slot helper is transported to arbitrary
 slots in `LazyAGMArbitrarySlots`; no solver enumerates the slot domain. -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel Model.LazyAGM
 
 namespace Proximity.LazyAGM.Proofs

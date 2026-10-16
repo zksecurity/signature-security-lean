@@ -4,6 +4,8 @@ import Signatures.LinearFunctional.Proofs.LazyAGM
 /-! OOPS game comparison for the paper's fixed-degree signing-call convention, including repeats.
 Compose callGame_le_game with the machine-bounded OOPS statement for a security bound. -/
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel
 open scoped ENNReal
 

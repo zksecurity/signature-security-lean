@@ -2,6 +2,8 @@ import Signatures.BLS.Spec.LazyAGM
 import Signatures.BLS.Proofs.Nondegeneracy
 import Signatures.LinearFunctional.Proofs.LazyAGM
 
+open BilinearGroup
+
 open OracleComp AlgebraicGroupModel AlgebraicGroupModel.LinFunctional
 open Model.LazyAGM Model.LazyAGM.Proofs
 

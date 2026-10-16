@@ -31,7 +31,9 @@ drew `c = 1`.  As the coins are independent of the (view-determined) run, this h
 (optimized at `δ = 1/(q_S+1)`, this is the `≈ e·(q_S+1)` Coron bound).
 -/
 
-open AlgebraicGroupModel
+open BLS.ROM
+
+open BilinearGroup
 
 namespace BLS.CoCDH.Coron
 
@@ -81,7 +83,7 @@ lemma evalSPMF_bind_proj_congr {β σ σ' γ : Type} (proj : σ → σ')
 
 /-- A fixed-public-key Coron BLS computation with private uniform randomness, hash queries, and
 signing queries.  The public-key-aware proof instantiates this computation pointwise. -/
-abbrev CoronAdv (M G₁ : Type) := TightAdv M G₁
+abbrev CoronAdv (M G₁ : Type) := Adversary M G₁
 
 /-- A public-key-indexed family of Coron adversaries. -/
 abbrev CoronAdvPK (M G₁ G₂ : Type) := G₂ → CoronAdv M G₁
@@ -95,7 +97,7 @@ per-`k` coupling is a fixed translation.  The public reduction defined below use
 `evalSPMF_lazyCoin_eq_table` proves that it has exactly this analysis distribution. -/
 
 /-- **Eager-coin Coron oracle** (state = the real dlog cache).  Coin `c_m = (k m = 0)` is read from the
-fixed coin function `k`; the dlog is lazy via `getDlogS`.  Hash `m`: `ρ·g₁ + c_m·h`.  Sign `m`: abort
+fixed coin function `k`; the dlog is lazy via `BLS.ROM.Internal.getDlogS`.  Hash `m`: `ρ·g₁ + c_m·h`.  Sign `m`: abort
 (`0`) if `c_m = 1`, else `ρ·X₁`. -/
 noncomputable def coronOracleK (g₁ X₁ h : G₁) (qS : ℕ) (k : M → Fin (qS + 1)) :
     QueryImpl (advSpec M G₁) (StateT ((M → Option F) × Finset M) ProbComp) :=
@@ -104,11 +106,11 @@ noncomputable def coronOracleK (g₁ X₁ h : G₁) (qS : ℕ) (k : M → Fin (q
         (liftM (unifSpec.query n : ProbComp (Fin (n + 1))) :
           StateT ((M → Option F) × Finset M) ProbComp (Fin (n + 1)))
     | Sum.inl (Sum.inr m) => do
-        let ρ ← getDlogS (F := F) m
+        let ρ ← BLS.ROM.Internal.getDlogS (F := F) m
         pure (ρ • g₁ + (if k m = 0 then h else 0))
     | Sum.inr m => do
         modify (fun s => (s.1, insert m s.2))
-        let ρ ← getDlogS (F := F) m
+        let ρ ← BLS.ROM.Internal.getDlogS (F := F) m
         pure (if k m = 0 then (0 : G₁) else ρ • X₁)
 
 /-- **Eager-coin analysis companion** (signs everything, using `xh = x·h`). -/
@@ -119,11 +121,11 @@ noncomputable def realCoronK (g₁ X₁ h xh : G₁) (qS : ℕ) (k : M → Fin (
         (liftM (unifSpec.query n : ProbComp (Fin (n + 1))) :
           StateT ((M → Option F) × Finset M) ProbComp (Fin (n + 1)))
     | Sum.inl (Sum.inr m) => do
-        let ρ ← getDlogS (F := F) m
+        let ρ ← BLS.ROM.Internal.getDlogS (F := F) m
         pure (ρ • g₁ + (if k m = 0 then h else 0))
     | Sum.inr m => do
         modify (fun s => (s.1, insert m s.2))
-        let ρ ← getDlogS (F := F) m
+        let ρ ← BLS.ROM.Internal.getDlogS (F := F) m
         pure (ρ • X₁ + (if k m = 0 then xh else 0))
 
 /-- Eager bad event: some *signed* message drew the challenge coin (`k m = 0`, i.e. `c_m = 1`). -/
@@ -243,10 +245,10 @@ omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 cached. -/
 lemma cacheForgery_run_support (g₁ X₁ : G₁) (adv : CoronAdv M G₁) (qS : ℕ)
     (hqs : ∀ out ∈ support
-      ((simulateQ (realOracle (F := F) g₁ X₁) adv).run ((fun _ => none), ∅)),
+      ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ X₁) adv).run ((fun _ => none), ∅)),
       out.2.2.card ≤ qS) :
     ∀ out ∈ support
-      ((simulateQ (realOracle (F := F) g₁ X₁) (cacheForgery adv)).run
+      ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ X₁) (cacheForgery adv)).run
         ((fun _ => none), ∅)),
       out.2.2.card ≤ qS ∧ (out.2.1 out.1.1).isSome := by
   intro out hout
@@ -257,11 +259,11 @@ lemma cacheForgery_run_support (g₁ X₁ : G₁) (adv : CoronAdv M G₁) (qS : 
   obtain ⟨p, hp, hout⟩ := hout
   subst hout
   have hp' : p ∈ support
-      ((realOracle (F := F) g₁ X₁ (Sum.inl (Sum.inr w.1.1))).run w.2) := by
-    rw [show simulateQ (realOracle (F := F) g₁ X₁)
+      ((BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inr w.1.1))).run w.2) := by
+    rw [show simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ X₁)
         (liftM ((advSpec M G₁).query (Sum.inl (Sum.inr w.1.1))) :
           OracleComp (advSpec M G₁) G₁) =
-        realOracle (F := F) g₁ X₁ (Sum.inl (Sum.inr w.1.1)) by simp] at hp
+        BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inr w.1.1)) by simp] at hp
     exact hp
   obtain ⟨hsigned, hcached⟩ := realOracle_hash_state g₁ X₁ w.1.1 w.2 p hp'
   refine ⟨?_, hcached⟩
@@ -426,9 +428,9 @@ lemma realCoronK_step_proj_unif (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ)
     (k : M → Fin (qS + 1)) (n : ℕ) (s : (M → Option F) × Finset M) :
     𝒮[(realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inl (Sum.inl n))).run s >>=
         fun z => pure (z.1, projCK ρh qS k z.2)]
-      = 𝒮[(realOracle (F := F) g₁ X₁ (Sum.inl (Sum.inl n))).run
+      = 𝒮[(BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inl n))).run
           (projCK ρh qS k s)] := by
-  simp [realCoronK, realOracle, StateT.run_monadLift]
+  simp [realCoronK, BLS.ROM.Internal.oracle, StateT.run_monadLift]
 
 omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 /-- **Coupling A′ eager, hash step.** -/
@@ -436,19 +438,19 @@ lemma realCoronK_step_proj_inl (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k :
     (hh : h = ρh • g₁) (s : (M → Option F) × Finset M) :
     𝒮[(realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inl (Sum.inr m))).run s >>=
         fun z => pure (z.1, projCK ρh qS k z.2)]
-      = 𝒮[(realOracle (F := F) g₁ X₁ (Sum.inl (Sum.inr m))).run
+      = 𝒮[(BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inr m))).run
           (projCK ρh qS k s)] := by
   have hval : ∀ ρ : F, ρ • g₁ + (if k m = 0 then h else (0 : G₁))
       = (ρ + (if k m = 0 then ρh else 0)) • g₁ := by
     intro ρ; rw [hh]; by_cases hk : k m = 0 <;> simp [hk, add_smul]
   have hL : ((realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inl (Sum.inr m))).run s
         >>= fun z => pure (z.1, projCK ρh qS k z.2))
-      = ((getDlogS (F := F) m).run s >>= fun w =>
+      = ((BLS.ROM.Internal.getDlogS (F := F) m).run s >>= fun w =>
           pure (w.1 • g₁ + (if k m = 0 then h else 0), projCK ρh qS k w.2)) := by
     simp only [realCoronK, StateT.run_bind, StateT.run_pure, bind_assoc, pure_bind]
-  have hR : (realOracle (F := F) g₁ X₁ (Sum.inl (Sum.inr m))).run (projCK ρh qS k s)
-      = (getDlogS (F := F) m).run (projCK ρh qS k s) >>= fun v => pure (v.1 • g₁, v.2) := by
-    simp only [realOracle, StateT.run_bind, StateT.run_pure]
+  have hR : (BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inr m))).run (projCK ρh qS k s)
+      = (BLS.ROM.Internal.getDlogS (F := F) m).run (projCK ρh qS k s) >>= fun v => pure (v.1 • g₁, v.2) := by
+    simp only [BLS.ROM.Internal.oracle, StateT.run_bind, StateT.run_pure]
   rw [hL, hR, getDlogS_run, getDlogS_run,
     show (projCK ρh qS k s).1 m = (s.1 m).map (fun ρ => ρ + (if k m = 0 then ρh else 0)) from rfl]
   cases hsm : s.1 m with
@@ -463,20 +465,20 @@ omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 lemma realCoronK_step_proj_inr (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k : M → Fin (qS + 1)) (m : M)
     (hxh : xh = ρh • X₁) (s : (M → Option F) × Finset M) :
     𝒮[(realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inr m)).run s >>= fun z => pure (z.1, projCK ρh qS k z.2)]
-      = 𝒮[(realOracle (F := F) g₁ X₁ (Sum.inr m)).run (projCK ρh qS k s)] := by
+      = 𝒮[(BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inr m)).run (projCK ρh qS k s)] := by
   have hval : ∀ ρ : F, ρ • X₁ + (if k m = 0 then xh else (0 : G₁))
       = (ρ + (if k m = 0 then ρh else 0)) • X₁ := by
     intro ρ; rw [hxh]; by_cases hk : k m = 0 <;> simp [hk, add_smul]
   have hL : ((realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inr m)).run s
         >>= fun z => pure (z.1, projCK ρh qS k z.2))
-      = ((getDlogS (F := F) m).run (s.1, insert m s.2) >>= fun w =>
+      = ((BLS.ROM.Internal.getDlogS (F := F) m).run (s.1, insert m s.2) >>= fun w =>
           pure (w.1 • X₁ + (if k m = 0 then xh else 0), projCK ρh qS k w.2)) := by
     simp only [realCoronK, StateT.run_bind, StateT.run_modify, StateT.run_pure, bind_assoc,
       pure_bind]
-  have hR : (realOracle (F := F) g₁ X₁ (Sum.inr m)).run (projCK ρh qS k s)
-      = (getDlogS (F := F) m).run ((projCK ρh qS k s).1, insert m (projCK ρh qS k s).2)
+  have hR : (BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inr m)).run (projCK ρh qS k s)
+      = (BLS.ROM.Internal.getDlogS (F := F) m).run ((projCK ρh qS k s).1, insert m (projCK ρh qS k s).2)
           >>= fun v => pure (v.1 • X₁, v.2) := by
-    simp only [realOracle, StateT.run_bind, StateT.run_modify, StateT.run_pure, pure_bind]
+    simp only [BLS.ROM.Internal.oracle, StateT.run_bind, StateT.run_modify, StateT.run_pure, pure_bind]
   rw [hL, hR, getDlogS_run, getDlogS_run,
     show ((projCK ρh qS k s).1, insert m (projCK ρh qS k s).2).1 m
         = (s.1 m).map (fun ρ => ρ + (if k m = 0 then ρh else 0)) from rfl]
@@ -497,7 +499,7 @@ theorem coupling_A'_K (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k : M → Fi
     ∀ s : (M → Option F) × Finset M,
       𝒮[(simulateQ (realCoronK (F := F) g₁ X₁ h xh qS k) adv).run s
           >>= fun z => pure (z.1, projCK ρh qS k z.2)]
-        = 𝒮[(simulateQ (realOracle (F := F) g₁ X₁) adv).run (projCK ρh qS k s)] := by
+        = 𝒮[(simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ X₁) adv).run (projCK ρh qS k s)] := by
   induction adv using OracleComp.inductionOn with
   | pure a => intro s; simp only [simulateQ_pure, StateT.run_pure, pure_bind]
   | query_bind q k' ih =>
@@ -506,9 +508,9 @@ theorem coupling_A'_K (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k : M → Fi
         id_map, StateT.run_bind]
       refine evalSPMF_bind_proj_congr (projCK ρh qS k)
         ((realCoronK (F := F) g₁ X₁ h xh qS k q).run s)
-        ((realOracle (F := F) g₁ X₁ q).run (projCK ρh qS k s))
+        ((BLS.ROM.Internal.oracle (F := F) g₁ X₁ q).run (projCK ρh qS k s))
         (fun b t => (simulateQ (realCoronK (F := F) g₁ X₁ h xh qS k) (k' b)).run t)
-        (fun b t => (simulateQ (realOracle (F := F) g₁ X₁) (k' b)).run t)
+        (fun b t => (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ X₁) (k' b)).run t)
         ?_ (fun b t => ih b t)
       rcases q with (n | m) | m
       · exact realCoronK_step_proj_unif g₁ X₁ h xh ρh qS k n s
@@ -625,16 +627,16 @@ open scoped ENNReal in
 loses only the factor `δ(1−δ)^{q_S}`: the coins are independent of the run, and on an accepting outcome
 `m* ∉ signed`, so `coin_prob_eq` gives `δ(1−δ)^{|signed|} ≥ δ(1−δ)^{q_S}` (using `|signed| ≤ q_S`). -/
 lemma coin_factor_run (qS : ℕ) (g₁ : G₁) (g₂ : G₂) (x : F) (adv : CoronAdv M G₁)
-    (hqs : ∀ out ∈ support ((simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)),
+    (hqs : ∀ out ∈ support ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)),
         out.2.2.card ≤ qS) :
     ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
         * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-              | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
+              | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
       ≤ ∑' k : M → Fin (qS + 1), Pr[= k | $ᵗ (M → Fin (qS + 1))]
           * Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-                | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)] := by
+                | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)] := by
   classical
-  set run := (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅) with hrun
+  set run := (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅) with hrun
   set c := (qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS with hc
   have hR : (∑' k : M → Fin (qS + 1), Pr[= k | $ᵗ (M → Fin (qS + 1))]
         * Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out | run])
@@ -685,7 +687,7 @@ lemma reduction_lb (g₁ : G₁) (g₂ : G₂) (x ρh : F) (qS : ℕ) (k : M →
     (adv : CoronAdv M G₁)
     (hinj : Function.Injective (fun z : G₁ => pairing (F := F) (Gₜ := Gₜ) z g₂)) :
     Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-        | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
+        | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
       ≤ Pr[fun z => z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)
         | (simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k) adv).run ((fun _ => none), ∅)] := by
   classical
@@ -694,13 +696,13 @@ lemma reduction_lb (g₁ : G₁) (g₂ : G₂) (x ρh : F) (qS : ℕ) (k : M →
     ((fun _ => none), ∅)
   rw [projCK_empty] at hd
   have hA : Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-        | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
+        | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
       = Pr[fun z => accR (Gₜ := Gₜ) g₁ g₂ x (z.1, projCK ρh qS k z.2)
               ∧ coinE qS k (z.1, projCK ρh qS k z.2)
         | (simulateQ (realCoronK (F := F) g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) qS k) adv).run
             ((fun _ => none), ∅)] := by
     rw [show Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-        | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
+        | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
       = Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
         | (simulateQ (realCoronK (F := F) g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) qS k) adv).run
             ((fun _ => none), ∅) >>= fun z => pure (z.1, projCK ρh qS k z.2)]
@@ -733,11 +735,11 @@ open scoped ENNReal in
 lower bound (`reduction_lb`), averaged over the challenge dlog `ρ_h` and coin function `k`. -/
 lemma per_x (g₁ : G₁) (g₂ : G₂) (x : F) (qS : ℕ) (adv : CoronAdv M G₁)
     (hinj : Function.Injective (fun z : G₁ => pairing (F := F) (Gₜ := Gₜ) z g₂))
-    (hqs : ∀ out ∈ support ((simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)),
+    (hqs : ∀ out ∈ support ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)),
         out.2.2.card ≤ qS) :
     ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
         * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-              | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
+              | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
       ≤ ∑' ρh : F, Pr[= ρh | $ᵗ F] * ∑' k : M → Fin (qS + 1), Pr[= k | $ᵗ (M → Fin (qS + 1))]
           * Pr[fun z => z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)
             | (simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k) adv).run
@@ -746,10 +748,10 @@ lemma per_x (g₁ : G₁) (g₂ : G₂) (x : F) (qS : ℕ) (adv : CoronAdv M G�
   have hsum1 : ∑' ρh : F, Pr[= ρh | $ᵗ F]
       * (((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
           * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-                | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)])
+                | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)])
       = ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
           * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-                | (simulateQ (realOracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)] := by
+                | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)] := by
     rw [ENNReal.tsum_mul_right, tsum_probOutput_eq_sub, probFailure_uniformSample, tsub_zero, one_mul]
   rw [← hsum1]
   refine ENNReal.tsum_le_tsum fun ρh => mul_le_mul_right (le_trans h1 ?_) _
@@ -768,11 +770,11 @@ theorem bls_eufcma_le_cocdh_coron_pk [SampleableType G₁] [Fintype G₁] [Decid
     (hgenbij : Function.Bijective (fun r : F => r • g₁))
     (hinj : Function.Injective (fun z : G₁ => pairing (F := F) (Gₜ := Gₜ) z g₂))
     (hqs : ∀ x : F, ∀ out ∈ support
-        ((simulateQ (realOracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
+        ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
           ((fun _ => none), ∅)),
         out.2.2.card ≤ qS)
     (hq : ∀ x : F, ∀ out ∈ support
-        ((simulateQ (realOracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
+        ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
           ((fun _ => none), ∅)),
         (pairing (F := F) (Gₜ := Gₜ) out.1.2 g₂
               = pairing (F := F) (Gₜ := Gₜ) (((out.2.1 out.1.1).getD 0) • g₁) (x • g₂)
@@ -799,7 +801,7 @@ theorem bls_eufcma_le_cocdh_coron_pk [SampleableType G₁] [Fintype G₁] [Decid
       exact ⟨by exact_mod_cast h.ne', by simp⟩
   have ha : Pr[= true | blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]
       = ∑' x : F, Pr[= x | $ᵗ F] * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-          | (simulateQ (realOracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
+          | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
               ((fun _ => none), ∅)] := by
     simp only [blsEufTightPK]
     rw [probOutput_bind_eq_tsum]
@@ -855,11 +857,11 @@ query for the forgery message, so cachedness is derived rather than assumed.  `h
 number of distinct messages recorded by the signing oracle; hash queries are unrestricted.  The
 co-CDH reduction on the right also samples dlogs and hidden Coron coins on demand. -/
 theorem bls_eufcma_le_cocdh_coron_lazy_pk [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ]
-    (g₁ : G₁) (g₂ : G₂) (qS : ℕ) (adv : TightAdvPK M G₁ G₂)
+    (g₁ : G₁) (g₂ : G₂) (qS : ℕ) (adv : AdversaryPK M G₁ G₂)
     (hgenbij : Function.Bijective (fun r : F => r • g₁))
     (hinj : Function.Injective (fun z : G₁ => pairing (F := F) (Gₜ := Gₜ) z g₂))
     (hqs : ∀ x : F, ∀ out ∈ support
-        ((simulateQ (realOracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
+        ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
           ((fun _ => none), ∅)),
         out.2.2.card ≤ qS) :
     Pr[= true | blsEufLazyPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]

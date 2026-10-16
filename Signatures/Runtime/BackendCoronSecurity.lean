@@ -8,6 +8,8 @@ contracts, then supplied to hardness in that same backend. The exact probability
 transport now allows arbitrary message types. No conventional-machine adequacy
 theorem is asserted. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor
 open PFunctor.DynSystem.DynComputation
 
@@ -77,7 +79,7 @@ theorem security_of_resources
     (htick : ∀ n ≤ fuel, ∀ encoded ≤ 3 * routeWidth, control.loop n encoded ≤ tickTime)
     (sourceProgram : G₂ → OracleComp (generalSpec M G₁ randomBound) (M × G₁))
     (hprogram : R.machine.Implements sourceProgram)
-    (adv : BLS.CoCDH.Tight.TightAdvPK M G₁ G₂)
+    (adv : BLS.ROM.AdversaryPK M G₁ G₂)
     (hsource : ∀ pk, simulateQ (generalSource randomBound) (sourceProgram pk) = adv pk)
     (instructionSize handlerPortSize solverPortSize : Nat)
     (instructionDescriptions : NativeInstructionDescriptions rep cost primitive descriptionSizes qS instructionSize)
@@ -109,7 +111,7 @@ theorem security_of_resources
     hf hc hg hw handlerCaps solverCaps dynamicSamples values ops samples bound hrun recovery hdecoded hstate hhead
     hfuel htick sourceProgram hprogram adv hsource instructionSize handlerPortSize solverPortSize
     instructionDescriptions handlerDescriptions solverDescriptions
-  have hsolver := hardness (BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.CoCDH.Tight.cacheForgeryPK adv))
+  have hsolver := hardness (BLS.CoCDH.coronReductionLazyPK (F := F) qS (BLS.ROM.cacheForgeryPK adv))
     ⟨hchallenge, Within.mono backend descriptionSizes factor description certificate hcode htime⟩
   refine (BLS.CoCDH.Proofs.security_arbitrary_messages g g₂ qS adv hgen hinj hqs).trans ?_
   gcongr

@@ -30,10 +30,10 @@ private theorem noQueries_budget (m : Bool) (sigma : F) :
 example (m : Bool) (sigma : F) :
     Run.value <$> Coron.reduction (F := F) (G₂ := F) cost sampling 1 2 3 0 1 noQueries (m, sigma, ()) =
       BLS.CoCDH.coronReductionLazyPK (F := F) 0
-        (BLS.CoCDH.Tight.cacheForgeryPK
-          (fun _ : F => (pure (m, sigma) : OracleComp (BLS.CoCDH.Tight.advSpec Bool F) (Bool × F)))) 1 1 2 4 3 :=
+        (BLS.ROM.cacheForgeryPK
+          (fun _ : F => (pure (m, sigma) : OracleComp (BLS.ROM.advSpec Bool F) (Bool × F)))) 1 1 2 4 3 :=
   Coron.reduction_erase cost sampling 1 2 3 1 4 0 1 noQueries (m, sigma, ())
-    (fun _ : F => (pure (m, sigma) : OracleComp (BLS.CoCDH.Tight.advSpec Bool F) (Bool × F))) rfl
+    (fun _ : F => (pure (m, sigma) : OracleComp (BLS.ROM.advSpec Bool F) (Bool × F))) rfl
 
 example (m : Bool) (sigma : F) (z : Run F)
     (hz : z ∈ support (Coron.reduction (F := F) (G₂ := F) cost sampling (1 : F) 2 3 0 1 noQueries (m, sigma, ()))) :

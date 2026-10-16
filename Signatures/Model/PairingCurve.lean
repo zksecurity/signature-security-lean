@@ -28,13 +28,13 @@ structure PairingCurve where
   [targetGroup : ∀ n, AddCommGroup (TargetGroup n)]
   [targetModule : ∀ n, Module (Scalar n) (TargetGroup n)]
   [targetEquality : ∀ n, DecidableEq (TargetGroup n)]
-  [pairing : ∀ n, AlgebraicGroupModel.BilinearPairing
+  [pairing : ∀ n, BilinearGroup.BilinearPairing
     (Scalar n) (SignatureGroup n) (KeyGroup n) (TargetGroup n)]
   generator : ∀ n, SignatureGroup n
   keyGenerator : ∀ n, KeyGroup n
   generates : ∀ n, Function.Bijective (fun r : Scalar n => r • generator n)
   pairingInjective : ∀ n, Function.Injective (fun r : Scalar n =>
-    r • (AlgebraicGroupModel.pairing (F := Scalar n) (generator n) (keyGenerator n) : TargetGroup n))
+    r • (BilinearGroup.pairing (F := Scalar n) (generator n) (keyGenerator n) : TargetGroup n))
 
 attribute [instance] PairingCurve.scalarField PairingCurve.scalarSampling PairingCurve.scalarFinite
   PairingCurve.scalarEquality PairingCurve.signatureGroup PairingCurve.signatureModule

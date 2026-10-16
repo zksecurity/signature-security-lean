@@ -6,6 +6,8 @@ realization uses the equivalent tuple/finite-index representation. Only its own
 code, supported execution resources and original-source query counts are supplied;
 both reduction certificates are derived separately. -/
 
+open BilinearGroup
+
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
 open Signatures.Runtime Signatures.Runtime.BackendProgram
 open Signatures.Runtime.WeightedAGM

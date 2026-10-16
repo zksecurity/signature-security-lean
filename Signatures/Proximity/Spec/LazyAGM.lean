@@ -49,7 +49,7 @@ variable {F S G₁ G₂ Gₜ : Type} {ℓ : Nat}
   -- G2 contains verification keys; Gt contains pairing values; both support F-scalars.
   [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
   -- The verifier is parameterized by this bilinear pairing.
-  [AlgebraicGroupModel.BilinearPairing F G₁ G₂ Gₜ]
+  [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
 
 -- Fix the signature-group generator input and verification-key base point.
 noncomputable def game (g₁ : G₁) (g₂ : G₂)

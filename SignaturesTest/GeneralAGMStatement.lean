@@ -171,7 +171,7 @@ example (curve : Model.PairingCurve) [BLS.CoCDHSecurityModel curve]
 example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
     (securityParameter : Nat) (queries : BLS.QueryAllowance)
     (adversary : BLS.UnrestrictedAdversary curve securityParameter queries) :
-    BLS.CoCDH.Tight.TightAdvPK (model.Message securityParameter)
+    BLS.ROM.AdversaryPK (model.Message securityParameter)
       (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter) := adversary.source
 
 example (curve : Model.PairingCurve) [BLS.CoCDHSecurityModel curve]
