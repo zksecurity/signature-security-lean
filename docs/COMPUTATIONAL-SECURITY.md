@@ -257,8 +257,12 @@ complete replaying native solver certificates and a
 [nonuniform family corollary](../Signatures/Schnorr/GeneralROMFamilyStatement.lean)
 derived from original polynomial resources. The nonzero-nonce route now has a
 [lazy probability reduction](../Signatures/Schnorr/Proofs/NonzeroLazyROM.lean)
-preserving its original losses and a compiled signing kernel with source/code
-proofs; its complete runtime composition and security endpoints remain open.
+preserving its original losses. Its compiled signing kernel now has complete
+source/runtime/code and polynomial bounds. The
+[finite-cache replay solver](../Signatures/Runtime/SchnorrNonzeroListReduction.lean)
+has exact computation correspondence and query-dependent cache capacities.
+Native sampler installation and complete pass/solver resource composition,
+fixed-backend certification and concrete/family hardness endpoints remain open.
 These results do not claim a conventional-machine instantiation.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers

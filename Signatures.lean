@@ -27,6 +27,9 @@ import Signatures.Schnorr.Proofs.NonzeroLazyROM
 import Signatures.Model.NonzeroFieldGrowth
 import Signatures.Runtime.BackendSchnorrNonzeroSigningSource
 import Signatures.Runtime.BackendSchnorrNonzeroRepairCost
+import Signatures.Runtime.BackendSchnorrNonzeroSigningBudget
+import Signatures.Runtime.SchnorrNonzeroListReduction
+import Signatures.Runtime.SchnorrNonzeroListGrowth
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.BackendSchnorrAGMReadBudget
@@ -274,7 +277,10 @@ original probability losses. `Schnorr.agm_security` exposes the short public
 statement. Polynomial closure of the complete native time/code formulas and
 `Schnorr.GeneralAGM.Family.security_asymptotic` are proved in one fixed backend,
 under polynomial component resources, DLog hardness and negligible inverse field
-size. General-caller ROM replay and the nonzero-nonce variant remain open.
+size. General-caller full-field ROM replay is also complete. The nonzero-nonce
+variant has a complete native signing budget, finite-cache pass correspondence,
+cache capacities and exact finite replay/extraction semantics. Its whole-solver
+native resource composition and concrete/family hardness endpoints remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

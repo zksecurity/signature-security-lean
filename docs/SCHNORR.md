@@ -567,15 +567,29 @@ closure from original sampler/primitive descriptions. The
 [source law](../Signatures/Runtime/BackendSchnorrNonzeroSigningSource.lean) identifies
 the actual compiled routine with the established nonzero simulator and cache
 update. The [repair expression](../Signatures/Runtime/BackendSchnorrNonzeroRepairCost.lean)
-has derived local runtime, output-size and polynomial bounds. Complete signing,
-pass and solver runtime composition, fixed-backend membership and public/family
-security endpoints remain open.
+has derived local runtime, output-size and polynomial bounds. The
+[complete signing budget](../Signatures/Runtime/BackendSchnorrNonzeroSigningBudget.lean)
+now composes all three actual sampler costs, arithmetic, cache programming and
+retained environments, with distinct intermediate store invariants and polynomial
+closure from original resource families.
+
+The [finite-cache pass](../Signatures/Runtime/SchnorrNonzeroListPass.lean) has exact
+adaptive trace correspondence, and the
+[finite replay/extraction solver](../Signatures/Runtime/SchnorrNonzeroListReduction.lean)
+has exactly the named lazy reduction's computation and original security bound.
+[Capacities](../Signatures/Runtime/SchnorrNonzeroListGrowth.lean) are at most
+`qS + qH` managed entries and `qH + 1` live entries, independent of the message
+universe. Native sampler installation, complete pass/solver runtime composition,
+fixed-backend membership and public/family hardness endpoints remain open.
 
 [Field-growth closure](../Signatures/Model/NonzeroFieldGrowth.lean) proves
 `1/(|F|-1) <= 2/|F|`; negligible inverse field size suffices for the nonzero loss.
 [Regressions](../SignaturesTest/SchnorrNonzeroLazyROM.lean) check uncountable message
 types, adaptive private sampling, the final-verifier hash slot, exact draw order,
-both repair branches, cache collisions, zero public keys and standard axioms.
+both repair branches, cache collisions, zero public keys, finite solver equality,
+cache capacities and standard axioms. [Budget guards](../SignaturesTest/SchnorrNonzeroSigningBudget.lean)
+ensure the signing theorem assumes only the three original sampler budgets and
+primitive/local costs, rather than a finished component budget.
 
 ## Adaptive Algebraic Group Model
 

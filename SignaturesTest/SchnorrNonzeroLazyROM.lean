@@ -2,6 +2,8 @@ import Signatures.Schnorr.Proofs.NonzeroLazyROM
 import Signatures.Model.NonzeroFieldGrowth
 import Signatures.Runtime.BackendSchnorrNonzeroSigningSource
 import Signatures.Runtime.BackendSchnorrNonzeroRepairCost
+import Signatures.Runtime.SchnorrNonzeroListReduction
+import Signatures.Runtime.SchnorrNonzeroListGrowth
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -36,6 +38,20 @@ private theorem privateOnly_queries (pk : F) :
 example (pk : F) : IsQueryBoundP (Schnorr.NonzeroNonce.LazyROM.main 1 pk privateOnly)
     (· = Sum.inr ()) 1 :=
   Schnorr.NonzeroNonce.LazyROM.main_hashBound 1 pk privateOnly 0 0 privateOnly_queries
+
+-- The entire finite solver has the same computation over an uncountable message type.
+example (qH : Nat) :
+    NonzeroListROM.dlogReduction (G₂ := F) (K := Nat) 1 privateOnly qH =
+      Schnorr.NonzeroNonce.LazyROM.dlogReduction 1 privateOnly qH :=
+  NonzeroListROM.dlogReduction_eq_lazy 1 privateOnly qH
+
+-- Even large adaptive private queries leave room only for the final live hash.
+example (pk : F) (out : cachePassOutput.Value (cryptoBase F F F Nat Messages))
+    (h : out ∈ support ((NonzeroListROM.pass (privateOnly.main pk)).run ((1, pk), [], []))) :
+    out.2.2.1.length = 0 ∧ out.2.2.2.length ≤ 1 := by
+  have hc := NonzeroListROM.pass_capacities (G₂ := F) (K := Nat)
+    (privateOnly.main pk) 0 0 (privateOnly_queries pk) 1 pk out h
+  exact ⟨Nat.eq_zero_of_le_zero hc.2.1, hc.2.2⟩
 
 example :
     let eps := 𝒟[Schnorr.NonzeroNonce.game 1 privateOnly] {true} -
@@ -82,6 +98,12 @@ run_meta do
       ``NonzeroSigning.Native.code_denote, ``NonzeroSigning.Native.code_source, ``NonzeroSigning.Native.code_description,
       ``NonzeroSigning.Native.codeDescription_polynomial, ``NonzeroSigning.Native.repair_expression_time,
       ``NonzeroSigning.Native.repair_output_size, ``NonzeroSigning.Native.repairTime_polynomial,
+      ``NonzeroListROM.nativeImpl_run, ``NonzeroListROM.nativeImpl_sign, ``NonzeroListROM.handler_refines,
+      ``NonzeroListROM.pass_refines, ``NonzeroListROM.nativePass_valid, ``NonzeroListROM.nativePass_trace,
+      ``NonzeroListROM.pass_valid, ``NonzeroListROM.pass_trace, ``NonzeroListROM.fork_extract,
+      ``NonzeroListROM.dlogReduction_eq_lazy, ``NonzeroListROM.security,
+      ``NonzeroListROM.handler_growth, ``NonzeroListROM.simulate_growth,
+      ``NonzeroListROM.pass_growth, ``NonzeroListROM.pass_capacities,
       ``Model.inv_pred_le_twice_inv, ``Model.negligible_inv_pred, ``Model.negligible_inv_card_sub_one] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
@@ -98,13 +120,27 @@ run_meta do
   unless (security.find? (fun e => e.isAppOfArity ``HSub.hSub 6 &&
       e.getAppArgs[0]!.isConstOf ``Nat && e.getAppArgs[4]!.isAppOf ``Fintype.card)).isSome do
     throwError "Keep the nonzero signing denominator as cardinality minus one"
-  for name in #[``Schnorr.NonzeroNonce.LazyROM.security, ``Schnorr.NonzeroNonce.LazyROM.dlogReduction] do
+  let .defnInfo impl ← getConstInfo ``NonzeroListROM.nativeImpl
+    | throwError "Keep the nonzero interpreter inspectable"
+  unless (impl.value.find? (fun e => e.isConstOf ``Schnorr.NonzeroNonce.simTranscript)).isSome do
+    throwError "The finite pass must use the actual nonzero simulator"
+  let finiteSecurity := (← getConstInfo ``NonzeroListROM.security).type
+  for required in #[``Schnorr.NonzeroNonce.game, ``NonzeroListROM.dlogReduction] do
+    unless (finiteSecurity.find? (fun e => e.isConstOf required)).isSome do
+      throwError "Finite security must connect the original nonzero game to its finite solver"
+  for forbidden in #[``Schnorr.ROM.game, ``Schnorr.LazyROM.dlogReduction,
+      ``Schnorr.FixedTape.finiteBounds] do
+    if (finiteSecurity.find? (fun e => e.isConstOf forbidden)).isSome then
+      throwError "Do not replace the nonzero game or solver with the full-field route"
+  for name in #[``Schnorr.NonzeroNonce.LazyROM.security, ``Schnorr.NonzeroNonce.LazyROM.dlogReduction,
+      ``NonzeroListROM.security, ``NonzeroListROM.dlogReduction, ``NonzeroListROM.pass_trace,
+      ``NonzeroListROM.pass_capacities] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let declaration ← getFVarLocalDecl param
         if #[`privateFamilies, `qR, `bound, `hseed].contains declaration.userName then
           throwError "{name}: proof-only seed input"
-        if #[`M, `G].contains declaration.userName then
+        if #[`M, `G, `G₁, `G₂].contains declaration.userName then
           for premise in params do
             let type ← inferType premise
             if (type.isAppOf ``Finite || type.isAppOf ``Fintype || type.isAppOf ``Countable) &&
