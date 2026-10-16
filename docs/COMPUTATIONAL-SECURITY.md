@@ -1,10 +1,11 @@
 # Computational-security status
 
-**Status: internal probability reductions, concrete operation ledgers,
-and public arithmetic-machine security statements for all five routes are proved,
-including both AGM branches and Schnorr's full replay reduction.
-Schnorr additionally has a precompiled bit-cell security theorem with explicit
-sampling error. No conventional-machine PPT or hardware-timing theorem is claimed.**
+**Status: the general-attacker concrete and nonuniform family endpoints are
+proved for BLS/co-CDH, BLS/OOPS/Proximity AGM, Schnorr AGM and both Schnorr ROM
+nonce conventions, conditional on explicit fixed-backend contracts. Complete
+reduction runtime and stored-code bounds are derived. Proximity retains its
+collision term. Final API retirement and integration checks remain in progress;
+no conventional-machine PPT or hardware-timing theorem is claimed.**
 
 BLS co-CDH additionally exposes
 [`Coron.NativeSolver.security_of_resources`](../Signatures/Runtime/BackendCoronSecurity.lean),
@@ -35,7 +36,7 @@ game and solver. A finite cover of all adaptive requests and final outputs is
 used only inside the proof; no executable code enumerates it. The cover ranges
 over generated public keys, so the public-key type need not be finite either.
 The arithmetic-source endpoint also uses this stronger probability result.
-The general-attacker results and remaining Schnorr/family work are tracked in the
+The general-attacker results and remaining API/integration work are tracked in the
 [current plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md).
 
 The new [lazy BLS AGM solvers](../Signatures/BLS/Spec/LazyAGMReduction.lean)
@@ -275,8 +276,11 @@ Exact source correspondence, complete runtime/code bounds and their polynomial
 closure construct its [fixed-backend executable certificate](../Signatures/Runtime/BackendSchnorrNonzeroSolverWithin.lean).
 The [concrete hardness endpoint](../Signatures/Runtime/BackendSchnorrNonzeroSecurity.lean)
 applies DLog hardness to that derived certificate, preserving the original
-`|F|-1` signing denominator. The short public and nonuniform family endpoints
-remain open.
+`|F|-1` signing denominator. The [short public statement](../Signatures/Schnorr/Statement.lean),
+`Schnorr.NonzeroNonce.rom_security`, and [nonuniform family theorem](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean)
+now follow from that certificate. [Family resources](../Signatures/Schnorr/GeneralNonzeroROMFamilyResources.lean)
+derive polynomial complete solver time/code, and the family proof derives
+negligible inverse nonzero-field size from the same inverse-field growth assumption.
 These results do not claim a conventional-machine instantiation.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers

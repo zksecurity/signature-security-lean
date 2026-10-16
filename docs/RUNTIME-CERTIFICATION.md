@@ -20,8 +20,15 @@ types and representations may vary with the security parameter. This result is
 conditional on primitive/encoding contracts and covers arbitrary message types
 without any runtime dependence on the full message-domain cardinality.
 The original arithmetic-source results documented below remain available.
-Conventional-machine instantiation and the
-remaining signature routes are still open.
+The other general-attacker route endpoints are now also proved: BLS/OOPS/Proximity
+AGM, Schnorr AGM, and Schnorr ROM with full-field or nonzero nonces. Each has a
+complete native certificate, public concrete statement and nonuniform family
+corollary in one fixed backend. Proximity retains its collision qualification.
+The nonzero Schnorr [public statement](../Signatures/Schnorr/Statement.lean) and
+[family theorem](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean) charge
+both original samplers and preserve the `|F|-1` signing denominator.
+Final API retirement and integration checks remain; conventional-machine
+instantiation is a separate stronger claim.
 
 For BLS AGM, both new lazy solvers now have exact probability correspondence and
 a proved finite-list cache representation, with the same success bound over
@@ -117,7 +124,7 @@ concludes negligible forgery success under nonuniform DLog hardness and negligib
 inverse field size. Its assumptions bound components and attacker resources;
 they do not assume completed-solver efficiency.
 The [general adversary plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md#lazy-bls-agm-progress-2026-10-14)
-tracks the remaining schemes, family corollaries, and interface work.
+tracks the completed route certificates and remaining API/integration work.
 The complete AGM machine certificates documented below cover the older eager solvers.
 
 OOPS and Proximity now have [native term generators](../Signatures/Runtime/BackendWeightedTerms.lean)

@@ -1,5 +1,6 @@
 import Signatures.Schnorr.Proofs.GeneralSecurity
 import Signatures.Schnorr.Proofs.GeneralROMSecurity
+import Signatures.Schnorr.Proofs.GeneralNonzeroROMSecurity
 import Signatures.Schnorr.ArithmeticStatement
 
 /-! Schnorr security: given a curve, security parameter, query allowances and
@@ -28,7 +29,10 @@ code. Its direct bound is signing loss plus `(qH+1)/|F|` plus the square root of
 remains in `Proofs/GeneralROM.lean`; public ROM proofs and inspectable definitions
 are in `Proofs/GeneralROMSecurity.lean` and `GeneralROMSecurityModel.lean`.
 Its nonuniform polynomial-family corollary is in `GeneralROMFamilyStatement.lean`.
-These general ROM endpoints use full-field signing nonces. -/
+The separate `NonzeroNonce.rom_security` theorem uses nonzero signing nonces;
+its signing loss has denominator `|F|-1`. Its original contracts and proofs are
+in `GeneralNonzeroROMParameters.lean` and `Proofs/GeneralNonzeroROM.lean`; the
+family endpoint is in `GeneralNonzeroROMFamilyStatement.lean`. -/
 
 namespace Schnorr
 
@@ -46,6 +50,22 @@ theorem rom_security
       ((queries.hash + 1 : ENNReal) *
         romDLogSuccessBound curve securityParameter queries (romReductionTime curve securityParameter queries)) ^ (1 / 2 : ℝ) :=
   Proofs.rom_security curve securityParameter queries adversary
+
+/-- Every unrestricted implemented attacker within the declared resource and
+query allowances has nonzero-nonce ROM forgery probability bounded by DLog success
+and the original simulation/forking losses, with signing denominator `|F|-1`.
+The real exponent `1/2` is a square root. -/
+theorem NonzeroNonce.rom_security
+    (curve : Model.CyclicCurve) [NonzeroNonce.ROMSecurityModel curve]
+    (securityParameter : Nat)
+    (queries : QueryAllowance)
+    (adversary : NonzeroNonce.UnrestrictedAdversary curve securityParameter queries) :
+    𝒟[NonzeroNonce.romEufCmaGame curve securityParameter adversary] {true} ≤
+      (queries.sign : ENNReal) * (queries.sign + queries.hash) * ((curve.order securityParameter - 1 : Nat) : ENNReal)⁻¹ +
+      (queries.hash + 1 : ENNReal) * (curve.order securityParameter : ENNReal)⁻¹ +
+      ((queries.hash + 1 : ENNReal) *
+        NonzeroNonce.romDLogSuccessBound curve securityParameter queries (NonzeroNonce.romReductionTime curve securityParameter queries)) ^ (1 / 2 : ℝ) :=
+  NonzeroNonce.Proofs.rom_security curve securityParameter queries adversary
 
 /-- Any algebraic adversary within the declared resources and query allowances
 has forgery probability bounded by DLog success and the original query losses. -/

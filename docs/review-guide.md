@@ -1,6 +1,7 @@
 # Signature security review
 
-Five lazy random-oracle security routes for BLS, OOPS, Proximity, and Schnorr.
+Lazy random-oracle security for BLS, OOPS, Proximity, and Schnorr, including
+both Schnorr nonce conventions and its separate AGM route.
 
 For Schnorr, follow the separate [game, rewinding, and cost review](SCHNORR.md).
 Its [bit-machine endpoint](../Signatures/Schnorr/BitStatement.lean) uses the same
@@ -29,7 +30,8 @@ The time allowance is the complete proved Coron runtime. Its resources are in
 The public proof bodies are in
 [`Proofs/GeneralSecurity.lean`](../Signatures/BLS/Proofs/GeneralSecurity.lean).
 The [plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md) distinguishes this completed
-concrete route from the remaining scheme and family work.
+conditional route and family results from remaining API/integration work and
+the separate conventional-machine instantiation claim.
 
 [Game ledger](SECURITY-GAMES.md) · [Source tree](../Signatures) ·
 [Regression tests](../SignaturesTest) ·

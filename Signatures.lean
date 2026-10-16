@@ -20,6 +20,7 @@ import Signatures.LinearFunctional.Proofs.LazyAGMCacheBound
 import Signatures.Schnorr.Statement
 import Signatures.Schnorr.GeneralAGMFamilyStatement
 import Signatures.Schnorr.GeneralROMFamilyStatement
+import Signatures.Schnorr.GeneralNonzeroROMFamilyStatement
 import Signatures.Schnorr.BitStatement
 import Signatures.Schnorr.SeededBitStatement
 import Signatures.Schnorr.Proofs.NonzeroSecurity
@@ -293,8 +294,10 @@ exact source correspondence, derived runtime/code/output bounds and polynomial
 runtime closure from original resources. Both actual passes now compose into the
 complete replaying solver, with exact source correspondence, derived runtime/code
 bounds, polynomial closure and a fixed-backend executable certificate. The concrete
-DLog-hardness endpoint preserves the nonzero signing loss. The short public and
-nonuniform family endpoints remain open.
+DLog-hardness endpoint preserves the nonzero signing loss. The short public
+`Schnorr.NonzeroNonce.rom_security` statement and its nonuniform family corollary
+now derive security from those certificates. The family proof uses polynomial
+original resources and the same negligible inverse-field-size assumption.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.

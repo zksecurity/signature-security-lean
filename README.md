@@ -15,8 +15,8 @@ are included, along with both AGM branches.
 Schnorr also has a concrete bit-heap-machine theorem, charging both replay runs,
 input loading, arithmetic, memory scans, and sampling, with explicit rejection error
 and a separate stored-code/data bound;
-see the [Schnorr review path](docs/SCHNORR.md). The nonzero-nonce ROM theorem remains
-a probability reduction; the general-caller Schnorr AGM endpoint is described below.
+see the [Schnorr review path](docs/SCHNORR.md). The general-caller endpoints for
+Schnorr AGM and both ROM nonce conventions are described below.
 Operation ledgers also cover the four pairing-based routes. See
 [computational-security status](docs/COMPUTATIONAL-SECURITY.md).
 
@@ -55,7 +55,12 @@ nonce signing/forking losses and a square-root DLog bound. Its complete replayin
 solver has derived runtime/code bounds, and its
 [nonuniform family corollary](Signatures/Schnorr/GeneralROMFamilyStatement.lean)
 concludes negligible forgery from polynomial original resources in one fixed
-backend. The nonzero-nonce variant still needs its general efficiency endpoint.
+backend. The same file now exposes `Schnorr.NonzeroNonce.rom_security`, with
+signing denominator `|F|-1`, derived complete solver resources, and a separate
+[nonuniform family corollary](Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean).
+Its family proof needs the same negligible inverse-field-size assumption.
+All general-attacker route endpoints are proved; API retirement and final
+integration checks remain tracked in the plan.
 A conventional machine instantiation is separate from these conditional results.
 
 Start with the [GitHub review guide](docs/review-guide.md) or the

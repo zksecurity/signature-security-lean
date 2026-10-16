@@ -287,9 +287,13 @@ source correspondence, full runtime/code bounds and polynomial closure construct
 a fixed-backend executable certificate. The concrete DLog-hardness endpoint is
 proved with the original signing and forking losses.
 
-Remaining: expose the nonzero short public and nonuniform family statements,
-then finish API/documentation retirement. A conventional machine instantiation is needed only if making that
-stronger coverage claim.
+The short nonzero public statement and nonuniform family theorem are now proved.
+Both derive security from the actual solver certificate; the family proof derives
+the nonzero-field loss from the original inverse-field-size assumption.
+
+Remaining: finish API/documentation retirement and the full integration checks.
+A conventional machine instantiation is needed only if making that stronger
+coverage claim.
 
 Establish security for general efficient attackers for the signature routes in
 this repository. Keep the reduction wrappers in our abstract arithmetic machine,
@@ -311,7 +315,7 @@ machine results, not completion of this broader objective.
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Complete native replaying solver with exact source correspondence, derived runtime/code certificate, short public concrete statement and nonuniform polynomial-family security. The original quadratic forking bound is retained; the public bound exposes its square-root consequence. General unrestricted callers and arbitrary messages are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional full-field nonce route is complete. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| Schnorr nonzero-nonce ROM | Complete native replaying solver with exact source correspondence, derived runtime/code bounds and polynomial closure, fixed-backend executable certificate and concrete DLog-hardness transport. Both actual nonzero passes and both original samplers are charged. The original signing and forking losses are preserved. | Expose short public and nonuniform family security from the derived certificate. Full-field runtime certificates do not automatically cover this variant. |
+| Schnorr nonzero-nonce ROM | Complete native replaying solver, derived runtime/code certificate, short public concrete statement and nonuniform family security. Both original samplers and both actual nonzero passes are charged. The signing denominator remains `|F|-1`; inverse nonzero-field growth follows from the original field-growth premise. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
 machine bounds explicitly charge full-domain initialization and sums. For BLS
@@ -3710,18 +3714,54 @@ the new regression, the existing full-field fork and solver regressions, and the
 aggregate import pass serially under the existing compiler limits. Their final
 logs contain no warnings or errors.
 
-### Remaining Schnorr variant work
+### Nonzero Schnorr public and nonuniform family endpoints, 2026-10-15
 
-The conditional general-caller full-field ROM and AGM routes are complete.
-For the nonzero-nonce route, the complete native solver now has exact source
-correspondence, derived runtime/code bounds and polynomial closure, a fixed-backend
-executable certificate and concrete DLog-hardness transport. Expose the short
-public statement and derive nonuniform family security from original polynomial
-resources. Preserve the original signing collision denominator `|F|-1`, using
-the proved inverse-nonzero-field growth lemma. The full-field certificate does
-not implicitly cover the extra sampler and repair branch. Finish API/documentation
-retirement after the replacement callers pass. A conventional-machine instantiation remains a stronger
-claim than the conditional fixed-backend endpoints.
+The [original-resource parameters](../Signatures/Schnorr/GeneralNonzeroROMParameters.lean)
+package both sampling programs, separate nonzero first/replay pass contracts,
+primitive/encoding laws and attacker allowances. The unrestricted attacker supplies
+its own arbitrary implementation, execution, stored-code/advice and query proofs.
+There is no finite-message or algebraic premise and no completed solver budget.
+[The resource proof](../Signatures/Schnorr/Proofs/GeneralNonzeroROM.lean) constructs
+the actual nonzero fixed-backend certificate, then proves the original quadratic
+bound and its square-root consequence.
+
+`Schnorr.NonzeroNonce.rom_security` in [Statement.lean](../Signatures/Schnorr/Statement.lean)
+has four explicit inputs: curve, security parameter, query allowances and
+unrestricted adversary. Its conclusion displays the actual game, signing loss
+with denominator `|F|-1`, forking loss with denominator `|F|`, and DLog success
+at the derived reduction time. The [model](../Signatures/Schnorr/GeneralNonzeroROMSecurityModel.lean)
+exposes the game and fixed-backend supremum, and [public proofs](../Signatures/Schnorr/Proofs/GeneralNonzeroROMSecurity.lean)
+remain separate. The shared execution-model structure introduces no full-field
+resource assumption. [Nonzero curve sampling](../Signatures/Model/CyclicCurveNonzeroSampling.lean)
+provides the semantic uniform source distribution; actual sampling code and cost
+remain original execution contracts.
+
+[Family resources](../Signatures/Schnorr/GeneralNonzeroROMFamilyResources.lean)
+derive polynomial complete solver time/code and actual nonuniform membership in
+one fixed backend. The [asymptotic statement](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean)
+concludes negligible original-game forgery under DLog hardness and negligible
+inverse field size. Its [proof](../Signatures/Schnorr/Proofs/GeneralNonzeroROMFamily.lean)
+derives negligible inverse nonzero-field size internally. Fields, groups and
+message types may vary with the security parameter.
+
+[Public/family regressions](../SignaturesTest/SchnorrGeneralNonzeroROMStatement.lean)
+check the short interface, separate proof placement, both original samplers,
+actual nonzero pass contracts, inspectable game/hardness definitions, original
+signing denominator, fixed backend and derived polynomial membership. They reject
+completed-solver budgets, restricted attacker syntax, algebraicity, finite-message
+requirements and accidental full-field resource substitution. The eight new
+implementation modules, updated public statement, new regression, existing ROM
+and AGM public regressions, and aggregate import pass serially within the existing
+compiler limits. All 13 final compiler logs are empty; axiom footprints remain
+standard. This is targeted verification, not the final full-suite result.
+
+### Remaining integration work
+
+All conditional general-caller route endpoints and nonuniform family corollaries
+are now proved. Finish API/documentation retirement after replacement callers
+pass, and run the full integration suite serially within the existing resource
+limits. Preserve Proximity's collision qualification and distinguish these
+conditional fixed-backend results from a conventional-machine instantiation.
 
 ## Implementation order and completion checks
 
@@ -5479,7 +5519,7 @@ additional axioms or proof-resource overrides.
   solver runtime/code bounds, polynomial closure and fixed-backend executable membership.
 - [x] Apply fixed-backend DLog hardness to the derived nonzero solver certificate,
   preserving the original signing and quadratic forking losses.
-- [ ] Complete the separate nonzero-nonce short public and nonuniform family security endpoints.
+- [x] Complete the separate nonzero-nonce short public and nonuniform family security endpoints.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
   and derived resources; keep proofs separate and preserve the original query losses.
 - [x] Derive the Schnorr AGM polynomial solver resources and nonuniform family
@@ -5520,7 +5560,8 @@ certificate, short concrete security theorem and derived polynomial-family
 corollary. General Schnorr full-field ROM now also has its complete native
 certificate, short concrete statement and derived nonuniform family theorem.
 The nonzero-nonce route now also has a complete native certificate, derived
-polynomial resources and concrete hardness transport. Continue with its short
-public and nonuniform family endpoints, then API/documentation retirement.
+polynomial resources, concrete hardness transport, short public statement and
+nonuniform family theorem. Continue with API/documentation retirement and full
+integration checks.
 Preserve the distinction between the proved conditional native endpoint and
 an instantiated conventional-machine claim. The broader plan remains open.

@@ -15,8 +15,9 @@ certificate and runtime/code bounds in the same fixed backend as the attacker.
 The [family corollary](../Signatures/Schnorr/GeneralROMFamilyStatement.lean) concludes
 negligible forgery for polynomial unrestricted attacker families under nonuniform
 DLog hardness and negligible inverse field size. The separate nonzero-nonce
-variant now has a complete fixed-backend solver certificate and concrete hardness
-endpoint; its short public and nonuniform family statements remain open.
+variant now has the parallel public `Schnorr.NonzeroNonce.rom_security` statement,
+with signing denominator `|F|-1`, and a [nonuniform family corollary](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean).
+Both use the proved nonzero solver certificate and preserve the original game.
 
 The [arithmetic-source ROM statement](../Signatures/Schnorr/ArithmeticStatement.lean)
 proves ordinary programmable-ROM EUF-CMA security from fixed-generator DLog
@@ -614,8 +615,28 @@ and [stored code](../Signatures/Runtime/BackendSchnorrNonzeroDescriptionPolynomi
 have polynomial closure. The [executable certificate](../Signatures/Runtime/BackendSchnorrNonzeroSolverWithin.lean)
 is constructed from these proofs before the [concrete security theorem](../Signatures/Runtime/BackendSchnorrNonzeroSecurity.lean)
 applies fixed-backend DLog hardness. The signing loss keeps its denominator
-`|F|-1`; the forking loss still uses `|F|`. Short public and nonuniform family
-statements remain open.
+`|F|-1`; the forking loss still uses `|F|`.
+
+The [public statement](../Signatures/Schnorr/Statement.lean),
+`Schnorr.NonzeroNonce.rom_security`, takes the curve, security parameter, query
+allowances and unrestricted adversary. It displays the actual game's probability,
+the two distinct denominators and DLog success at the derived time budget.
+The [model](../Signatures/Schnorr/GeneralNonzeroROMSecurityModel.lean) exposes its
+game and fixed-backend hardness supremum; [original contracts](../Signatures/Schnorr/GeneralNonzeroROMParameters.lean)
+retain both sampler programs and both nonzero pass resource records. The shared
+execution model does not require full-field pass budgets. The attacker supplies
+its own implementation, measured work, code/advice and query bounds, with no
+algebraic restriction or finite-message premise. [Supporting proofs](../Signatures/Schnorr/Proofs/GeneralNonzeroROM.lean)
+construct executable membership and preserve both the quadratic and square-root bounds;
+[public proofs](../Signatures/Schnorr/Proofs/GeneralNonzeroROMSecurity.lean) remain separate.
+
+The [family resources](../Signatures/Schnorr/GeneralNonzeroROMFamilyResources.lean)
+derive complete polynomial time/code and nonuniform executable membership.
+The [family statement](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean)
+concludes negligible original-game forgery under DLog hardness in one fixed backend
+and negligible `1/|F|`. Its [proof](../Signatures/Schnorr/Proofs/GeneralNonzeroROMFamily.lean)
+derives negligible `1/(|F|-1)` internally; fields, groups and messages may vary with
+the security parameter. This completes the conditional nonzero-nonce ROM route.
 
 [Field-growth closure](../Signatures/Model/NonzeroFieldGrowth.lean) proves
 `1/(|F|-1) <= 2/|F|`; negligible inverse field size suffices for the nonzero loss.
@@ -636,6 +657,9 @@ complete pass runtime and standard axioms.
 check adaptive private sampling over an uncountable message type, exact whole-solver
 source equality, both original sampling profiles, the actual installed nonzero
 passes, derived executable membership and the original signing loss.
+[Public/family guards](../SignaturesTest/SchnorrGeneralNonzeroROMStatement.lean)
+check the four-input interface, inspectable game/hardness definitions, original
+sampler contracts, fixed backend, varying types and standard axiom footprints.
 
 ## Adaptive Algebraic Group Model
 
@@ -912,8 +936,8 @@ its [separate proof](../Signatures/Schnorr/Proofs/GeneralAGMFamily.lean), gives
 negligible forgery under nonuniform DLog hardness and negligible inverse field
 size. Both original query losses are polynomial multiples of that inverse.
 This remains a conditional fixed-backend result. The full-field ROM endpoint is
-also complete; the nonzero-nonce route now has derived whole-solver resources and
-concrete hardness transport, with its short public and family endpoints still open.
+also complete, as is the separate nonzero-nonce ROM route, including its short
+public statement and derived nonuniform family theorem.
 
 ## What Efficiency Is Certified
 
