@@ -1,9 +1,11 @@
 import Signatures.BLS.Proofs.LazyAGMSecurity
 import Signatures.BLS.Proofs.LazyAGMList
+import Signatures.BLS.Proofs.LazyAGMCacheBound
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec Model.LazyAGM BLS.LazyAGM.Reduction
+open Model.LazyAGM.WeightedReduction (hashQuery signingQuery)
 
 namespace SignaturesTest.LazyAGMReduction
 
@@ -84,6 +86,53 @@ example : IsTotalQueryBound (badProgram 1 3 2 2 signFirst) 7 := by
   apply badProgram_queries (q := 3)
   simp [signFirst, IsTotalQueryBound]
 
+-- The sharper bound counts hash/sign requests, including repeated calls, rather
+-- than extraction rereads. It applies to every supported output/cache pair.
+example (z : ZMod 5 × List (Nat × ZMod 5))
+    (hz : z ∈ support ((simulateQ privateListOracle (goodProgram 1 3 3 signFirst)).run [])) :
+    z.2.length ≤ 4 := by
+  apply goodList_cache_bound_by_kind 1 3 3 signFirst 2 1 ?_ ?_ z hz
+  all_goals simp [signFirst, isQueryBoundP_query_bind_iff, hashQuery, signingQuery]
+
+example (z : ZMod 5 × List (Nat × (ZMod 5 × ZMod 5)))
+    (hz : z ∈ support ((simulateQ privateListOracle (badProgram 1 3 2 2 signFirst)).run [])) :
+    z.2.length ≤ 4 := by
+  apply badList_cache_bound_by_kind 1 3 2 2 signFirst 2 1 ?_ ?_ z hz
+  all_goals simp [signFirst, isQueryBoundP_query_bind_iff, hashQuery, signingQuery]
+
+-- Private randomness and an oracle reply choose later messages. The private
+-- random query consumes no cache entry in either branch.
+example (z : ZMod 5 × List (Nat × ZMod 5))
+    (hz : z ∈ support ((simulateQ privateListOracle (goodProgram 1 3 3 adaptive)).run [])) :
+    z.2.length ≤ 3 := by
+  apply goodList_cache_bound_by_kind 1 3 3 adaptive 1 1 ?_ ?_ z hz
+  all_goals simp [adaptive, isQueryBoundP_query_bind_iff, hashQuery, signingQuery]
+
+example (z : ZMod 5 × List (Nat × (ZMod 5 × ZMod 5)))
+    (hz : z ∈ support ((simulateQ privateListOracle (badProgram 1 3 2 2 adaptive)).run [])) :
+    z.2.length ≤ 3 := by
+  apply badList_cache_bound_by_kind 1 3 2 2 adaptive 1 1 ?_ ?_ z hz
+  all_goals simp [adaptive, isQueryBoundP_query_bind_iff, hashQuery, signingQuery]
+
+private def randomOnly : Adversary (ZMod 5) Nat Nat (ZMod 5) (ZMod 5) where
+  main _ := do
+    let index : Fin 1000001 ← liftM ((advSpec Nat Nat (ZMod 5)).query (.inl (.inl 1000000)))
+    pure ⟨index.val, 1, [], []⟩
+
+-- With zero hash/sign allowances, even a large private range leaves room for
+-- only the final target. The message domain remains the infinite type Nat.
+example (z : ZMod 5 × List (Nat × ZMod 5))
+    (hz : z ∈ support ((simulateQ privateListOracle (goodProgram 1 3 3 randomOnly)).run [])) :
+    z.2.length ≤ 1 := by
+  apply goodList_cache_bound_by_kind 1 3 3 randomOnly 0 0 ?_ ?_ z hz
+  all_goals simp [randomOnly, hashQuery, signingQuery]
+
+example (z : ZMod 5 × List (Nat × (ZMod 5 × ZMod 5)))
+    (hz : z ∈ support ((simulateQ privateListOracle (badProgram 1 3 2 2 randomOnly)).run [])) :
+    z.2.length ≤ 1 := by
+  apply badList_cache_bound_by_kind 1 3 2 2 randomOnly 0 0 ?_ ?_ z hz
+  all_goals simp [randomOnly, hashQuery, signingQuery]
+
 -- First bindings win even for a supplied cache with duplicate keys.
 example : ((privateListOracle (M := Nat) (R := ZMod 5)) (.inr 7)).run [(7, 2), (7, 4)] =
     pure ((2 : ZMod 5), [(7, 2), (7, 4)]) := by
@@ -131,14 +180,18 @@ run_cmd liftTermElabM do
       ``privateRun_transcript, ``evalTerms_queries, ``goodProgram_queries, ``badProgram_queries,
       ``privateListOracle_projection, ``privateListRun_projection, ``privateListRun_erase,
       ``privateListOracle_growth, ``privateListRun_growth, ``goodReductionList_eq,
-      ``badReductionList_eq, ``goodList_cache_bound, ``badList_cache_bound] do
+      ``badReductionList_eq, ``goodList_cache_bound, ``badList_cache_bound,
+      ``weighted_goodProgram_eq, ``weighted_badProgram_eq,
+      ``goodList_cache_bound_by_kind, ``badList_cache_bound_by_kind] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
   for name in #[``goodReductionLazy, ``badReductionLazy, ``privateRun_table,
       ``goodProgram_table, ``badProgram_table, ``traceValue_eq_mapIdx,
       ``goodReductionList, ``badReductionList, ``privateListRun_projection,
-      ``goodProgram_queries, ``badProgram_queries, ``goodList_cache_bound, ``badList_cache_bound] do
+      ``goodProgram_queries, ``badProgram_queries, ``goodList_cache_bound, ``badList_cache_bound,
+      ``weighted_goodProgram_eq, ``weighted_badProgram_eq,
+      ``goodList_cache_bound_by_kind, ``badList_cache_bound_by_kind] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
         let type ← inferType param

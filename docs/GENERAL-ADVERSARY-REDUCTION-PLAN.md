@@ -1,6 +1,6 @@
 # General adversary reduction plan
 
-Updated 2026-10-15. All seven conditional general-attacker routes now have
+Updated 2026-10-16. All seven conditional general-attacker routes now have
 proved complete solver resources, short public concrete statements and nonuniform
 family security: BLS co-CDH, BLS/OOPS/Proximity AGM, Schnorr AGM, and Schnorr ROM
 with either full-field or nonzero nonces. The source games and probability losses
@@ -19,11 +19,12 @@ interfaces and their hardness scope. Original eager probability/resource lemmas
 remain supporting references, and the retained arithmetic-source co-CDH and
 Schnorr endpoints keep their distinct scopes.
 
-Remaining: complete the full integration suite and the final requirement audit.
-Targeted replacement/public/source-resource/assumption checks have passed serially
-under the existing compiler limits. The broader goal remains active until full
-integration and the audit finish. The detailed implementation checkpoints below
-record the evidence and historical intermediate states.
+The conditional reduction plan is complete: the final requirement audit and
+current-tree integration verification passed all 1,054 targets (924 library
+modules and 130 regression modules). This includes the sharper BLS cache bound
+`qH + qS + 1` for both actual list-cache reductions. The detailed implementation
+checkpoints below record the evidence and historical intermediate states;
+the completion evidence map links every checklist item to its proof and tests.
 
 ## Existing results and limits
 
@@ -150,10 +151,8 @@ packaging for parameterized families with polynomial resource/primitive bounds
 and the required asymptotic hardness. They are not a prerequisite for the soundness
 of the concrete theorem.
 
-The existing BLS source-machine endpoint now names its specialized certificate
-`ArithmeticAttackerCertificate` and explains the separate DLog success bounds.
-This removes generic identity-conversion clutter without changing its restricted
-attacker class or eager implementation. The public replacement is now
+The former BLS source-machine AGM endpoint and its specialized
+`ArithmeticAttackerCertificate` alias are retired. The public replacement is
 [`BLS.agm_security`](../Signatures/BLS/Statement.lean), with four explicit inputs:
 curve, security parameter, query allowances, and algebraic adversary. The
 [`AGMSecurityModel`](../Signatures/BLS/GeneralSecurityModel.lean) fixes the backend and
@@ -165,7 +164,9 @@ derived solver times. The sharper sum of the two separately budgeted terms is
 `agm_security_two_budgets`. The DLog bound is the supremum over
 all solvers within the fixed backend's code/input/time limits, not an assumed
 advantage of the constructed reduction. Numerical hardness bounds are separate.
-Apply this simple interface consistently across the remaining routes.
+The same public interface is implemented for all seven routes, with OOPS's degree
+and Proximity's dimension as additional explicit inputs. Supporting proof bodies
+remain in separate files.
 
 Earlier public-interface revision, 2026-10-14: the earlier `BLS.GeneralAGM.security P A`
 bundling was still too opaque for the requested English description. The new
@@ -292,6 +293,17 @@ attempts on one transcript. The target is the existing `(1,1)`-DLog challenge
    maps with polynomial, possibly quadratic, overhead are sufficient initially.
    No loop or package data may enumerate the complete message universe.
 
+Audit finding resolved, 2026-10-16: the earlier BLS list-cache lemmas gave the
+conservative `K <= 2*q + 1` bound from total queries. The new
+[sharp BLS cache proof](../Signatures/BLS/Proofs/LazyAGMCacheBound.lean) connects
+the weighted singleton specialization to the entire actual BLS good/bad query
+computations. `goodList_cache_bound_by_kind` and `badList_cache_bound_by_kind`
+prove `K <= qH + qS + 1` for every supported joint output/cache. Private random
+requests and extraction rereads add no entries. The existing polynomial runtime
+certificates remain valid with their conservative capacities. Regression cases
+cover repeated requests, adaptive queries, and private randomness with zero
+hash/sign allowances, on the infinite message type `Nat`.
+
 Sparsity here is relative to the message universe. The attacker may use every
 reply it received; no additional sparsity condition is imposed on its output.
 The current security argument additionally uses freshness to prove a nonzero
@@ -308,7 +320,9 @@ existing certificates before their replacements and callers are validated.
 The efficient implementation must not enumerate message indices. Exact transport
 of the probability proof to arbitrary message types is now complete, using finite
 execution covers only inside the proof. This discharges the former finite-domain
-probability obligation; the lazy native resource/composition obligations remain.
+probability obligation. Both lazy native resource/composition certificates and
+their polynomial-family corollary are proved and passed full integration
+verification and the final audit.
 
 ## OOPS and Proximity extensions
 
@@ -3500,13 +3514,98 @@ arbitrary-message transport. Logs are in `/private/tmp/agm-api-retirement-check`
 only the pre-existing upstream representation `#check` emits informational output.
 The full suite and completion audit are still pending.
 
-### Remaining integration work
+### Integration verification, 2026-10-16
 
-All conditional general-caller route endpoints and nonuniform family corollaries
-are proved and the superseded eager AGM API is retired. Run the full integration
-suite serially within the existing resource limits, then audit the whole plan
-against source and validation evidence. Preserve Proximity's collision qualification
-and distinguish conditional fixed-backend results from conventional-machine adequacy.
+The fresh serial rebuild at `06b5a93` passed all 923 local library modules and
+130 regression modules. All four public statement modules (covering seven
+concrete routes), all seven family endpoints, the full native solver certificate
+chains, and their assumption/axiom guards passed. The run checked source-snapshot
+equality before reporting success. The pinned third-party dependencies were reused.
+
+The sharper BLS cache proof and six supported-outcome regressions now also pass,
+with empty logs. They connect the singleton weighted invariant to the actual
+BLS computations and cover both branches over infinite messages. Current-tree
+verification passed all 1,054 targets using source/dependency fingerprints: it
+reused unchanged successful baseline targets and recompiled every changed/new
+target and dependent. The final source snapshot was unchanged. The new total is
+924 library modules and 130 regressions.
+
+Both runs use one compiler at a time, `-j1 -M8192`, with the pinned toolchain and
+dependencies. No compiler-limit overrides were added; older scoped source settings
+remain unchanged. Older probability modules emit reviewed API deprecations and
+proof-style/unused-argument warnings. The upstream compatibility test prints its
+expected `#check AGM.GroupRepresentation` output. New sharp-cache proof/test logs
+are empty; the entire suite is not claimed to be warning-free.
+
+The completion audit traced the shared caller/encoding/implementation class,
+all route-to-hardness connections, fixed-backend family scope, finite-domain proof
+transport, and the original OOPS admissibility and Proximity collision conditions.
+It covered complete native BLS/weighted extraction, Schnorr AGM's all-shape
+extraction and whole-solver composition, and ROM's installed two-pass replay and
+sampler costs, including the nonzero route. The measured attacker and primitive
+resources imply the completed solvers' runtime, representation, and stored-code
+bounds; these final bounds are not premises. Regression gates cover repeated
+queries, unseen targets, coefficient shape, adaptive reply paths, malformed
+outputs, and private random families first used during replay.
+
+All current-tree logs have been reviewed: no errors, admissions or unclassified
+output remain. The requirement-by-requirement audit is complete. The conditional
+fixed-backend plan has no remaining proof or integration tasks. Conventional-machine
+adequacy is a separate stronger claim, and Proximity retains its collision
+qualification.
+
+### Completion evidence map, completed 2026-10-16
+
+The numbers below refer to the 120 checklist items at the end of this plan.
+This maps every item to its proof and verification scope. All listed final
+regression gates passed in the completed integration verification. The detailed
+checkpoints retain component-level source links and earlier targeted results.
+
+The co-CDH review traced `program_within_of_resources` through measured caller
+reachability, complete native handler and terminal budgets, source equality at
+every challenge, and the stored-description bound. Its primitive contracts price
+individual operations and samplers; they do not assume that a cache, dispatcher,
+or completed solver is efficient. Family regression guards were also inspected
+for all seven routes: actual original resources, fixed backend, polynomial
+code/advice, preserved game/loss, and the standard axiom footprint.
+
+| Checklist items | Source evidence and final regression gate |
+| --- | --- |
+| 1 | [Measured callers](../Signatures/Runtime/GeneralCallerResources.lean), [executable membership](../Signatures/Runtime/BackendWithin.lean), [nonuniform convention](../Signatures/Runtime/BackendFamily.lean); [caller tests](../SignaturesTest/GeneralCaller.lean), [backend assembly tests](../SignaturesTest/BackendAssembly.lean). |
+| 2 | [Complete co-CDH certificate from original resources](../Signatures/Runtime/BackendCoronSolverResources.lean), [source equality](../Signatures/Runtime/BackendCoronSolverCorrectness.lean), [whole runtime](../Signatures/Runtime/BackendCoronSolverBudget.lean), [stored code](../Signatures/Runtime/BackendCoronSolverDescription.lean); [family scope tests](../SignaturesTest/BackendFamilies.lean). |
+| 3 | [Lazy BLS source](../Signatures/BLS/Spec/LazyAGMReduction.lean), [list refinement](../Signatures/BLS/Proofs/LazyAGMList.lean), [arbitrary-message transport](../Signatures/BLS/Proofs/LazyAGMArbitraryMessages.lean); [adaptive/cache regressions](../SignaturesTest/LazyAGMReduction.lean). |
+| 4–11 | [Native replies](../Signatures/Runtime/BackendLazyAGMReplyBudget.lean), [chronological rows](../Signatures/Runtime/BackendTokenRows.lean), [private reads](../Signatures/Runtime/BackendLazyAGMReadBudget.lean), [good](../Signatures/Runtime/BackendLazyAGMGoodExtractionBudget.lean)/[bad](../Signatures/Runtime/BackendLazyAGMBadExtractionBudget.lean) complete extraction; [native extraction regressions](../SignaturesTest/BackendLazyAGMExtraction.lean). |
+| 12–15 | [Caller resources](../Signatures/Runtime/BackendLazyAGMCallerResources.lean), [complete native witnesses](../Signatures/Runtime/BackendLazyAGMSolverWithin.lean); [whole-solver tests](../SignaturesTest/BackendLazyAGMSolver.lean). |
+| 16–17 | [BLS public statements](../Signatures/BLS/Statement.lean), [family statement](../Signatures/BLS/GeneralAGMFamilyStatement.lean); [public-interface guards](../SignaturesTest/GeneralAGMStatement.lean), [family guards](../SignaturesTest/AGMFamilies.lean). |
+| 18–19 | [Weighted cache theorem](../Signatures/LinearFunctional/Proofs/LazyAGMCacheBound.lean), [OOPS transport](../Signatures/OOPS/Proofs/LazyAGMArbitraryTopics.lean), [Proximity transport](../Signatures/Proximity/Proofs/LazyAGMArbitrarySlots.lean); [weighted reduction regressions](../SignaturesTest/WeightedAGMReduction.lean). |
+| 20–23 | [Native term generators](../Signatures/Runtime/BackendWeightedTerms.lean), [structured comparisons](../Signatures/Runtime/BackendWeightedKeyEquality.lean), [complete reads](../Signatures/Runtime/BackendWeightedReadBudget.lean); [term](../SignaturesTest/WeightedTerms.lean) and [cache](../SignaturesTest/WeightedCache.lean) regressions. |
+| 24–26 | [Evaluator budget](../Signatures/Runtime/BackendWeightedEvaluateBudget.lean), [source encoding](../Signatures/Runtime/BackendWeightedEvaluateEncoding.lean); [evaluator regressions](../SignaturesTest/WeightedEvaluate.lean). |
+| 27–29 | [Coefficient expansion budget](../Signatures/Runtime/BackendWeightedCoefficientBudget.lean); [chronology/scaling regressions](../SignaturesTest/WeightedCoefficients.lean). |
+| 30–33 | [Oracle budget](../Signatures/Runtime/BackendWeightedOracleBudget.lean), [caller composition](../Signatures/Runtime/BackendWeightedOracleCallerBudget.lean); [reply](../SignaturesTest/WeightedReply.lean), [handler](../SignaturesTest/WeightedHandler.lean), and [oracle budget](../SignaturesTest/WeightedOracleBudget.lean) tests. |
+| 34–38 | [Good](../Signatures/Runtime/BackendWeightedGoodExtractionBudget.lean)/[bad](../Signatures/Runtime/BackendWeightedBadExtractionBudget.lean) extraction, [measured caller recovery](../Signatures/Runtime/BackendWeightedOracleCallerResources.lean), [complete solver witnesses](../Signatures/Runtime/BackendWeightedSolverWithin.lean); [extraction](../SignaturesTest/WeightedExtraction.lean) and [solver](../SignaturesTest/BackendWeightedSolver.lean) tests. |
+| 39–41 | [OOPS concrete proof](../Signatures/OOPS/Proofs/GeneralAGM.lean), [Proximity concrete proof](../Signatures/Proximity/Proofs/GeneralAGM.lean), [original polynomial resources](../Signatures/Runtime/GeneralWeightedFamilyResources.lean); [public/collision guards](../SignaturesTest/WeightedGeneralSecurity.lean), [family guards](../SignaturesTest/WeightedFamilies.lean). |
+| 42–44 | [Schnorr AGM finite execution](../Signatures/Runtime/SchnorrAGMExecution.lean), [capacities](../Signatures/Runtime/SchnorrAGMGrowth.lean), [complete read](../Signatures/Runtime/BackendSchnorrAGMReadBudget.lean); [finite-cache](../SignaturesTest/SchnorrAGMFiniteCache.lean) and [native read](../SignaturesTest/BackendSchnorrAGMRead.lean) tests. |
+| 45–51 | [Flattening](../Signatures/Runtime/BackendSchnorrAGMFlattenBudget.lean), [hash dispatch](../Signatures/Runtime/BackendSchnorrAGMHashDispatchBudget.lean), [signing dispatch](../Signatures/Runtime/BackendSchnorrAGMSigningDispatchBudget.lean), [private randomness](../Signatures/Runtime/BackendSchnorrAGMRandomBudget.lean); corresponding [flattening](../SignaturesTest/BackendSchnorrAGMFlatten.lean), [hash](../SignaturesTest/BackendSchnorrAGMHashDispatch.lean), [signing](../SignaturesTest/BackendSchnorrAGMSigningDispatch.lean), and [randomness](../SignaturesTest/BackendSchnorrAGMRandom.lean) regressions. |
+| 52–55 | [Primitive-derived handler budget](../Signatures/Runtime/BackendSchnorrAGMHandlerPrimitiveBudget.lean), [caller resource recovery](../Signatures/Runtime/BackendSchnorrAGMCallerResources.lean); [handler](../SignaturesTest/BackendSchnorrAGMHandler.lean) and [resource](../SignaturesTest/BackendSchnorrAGMResources.lean) guards. |
+| 56–62 | [Complete extraction](../Signatures/Runtime/BackendSchnorrAGMExtractionBudget.lean), [measured output conversion](../Signatures/Runtime/BackendSchnorrAGMExtractionResources.lean), [whole-solver witness](../Signatures/Runtime/BackendSchnorrAGMSolverWithin.lean); [extraction](../SignaturesTest/BackendSchnorrAGMExtraction.lean) and [solver](../SignaturesTest/BackendSchnorrAGMSolver.lean) tests. |
+| 63–67 | [Joint lazy fork](../Signatures/Runtime/SeededLazyFork.lean); [deferred-sampling](../SignaturesTest/SeededDeferred.lean), [joint fork](../SignaturesTest/SeededLazyFork.lean), and [actual Schnorr lazy security](../SignaturesTest/SchnorrLazyROM.lean) regressions. |
+| 68–76 | [Raw tape capacities](../Signatures/Runtime/SchnorrRawTapeBounds.lean), [complete native controller](../Signatures/Runtime/BackendSchnorrRawForkBudget.lean); [raw tape](../SignaturesTest/SchnorrRawTape.lean) and [native fork](../SignaturesTest/BackendSchnorrRawFork.lean) tests. |
+| 77–84 | [Original sampler resource transport](../Signatures/Runtime/BackendSchnorrPrivateSamplingResources.lean), [installed signing budget](../Signatures/Runtime/BackendSchnorrROMSigningBudget.lean); [finite-list pass](../SignaturesTest/SchnorrROMList.lean), [execution profiles](../SignaturesTest/BackendExecutionProfile.lean), [sampling](../SignaturesTest/SchnorrPrivateSampling.lean), and [kernel budgets](../SignaturesTest/SchnorrROMKernelBudget.lean) tests. |
+| 85–90 | [Handler source law](../Signatures/Runtime/BackendSchnorrROMHandlerSource.lean), [caller resources](../Signatures/Runtime/BackendSchnorrROMCallerResources.lean), [complete pass budget](../Signatures/Runtime/BackendSchnorrROMPassBudget.lean); [caller](../SignaturesTest/SchnorrROMCaller.lean), [pass](../SignaturesTest/SchnorrROMPass.lean), and [original-resource](../SignaturesTest/SchnorrROMResources.lean) tests. |
+| 91–96 | [Complete selector](../Signatures/Runtime/BackendSchnorrROMSelectionBudget.lean), [installed fork budget](../Signatures/Runtime/BackendSchnorrROMForkBudget.lean), [polynomial closure](../Signatures/Runtime/BackendSchnorrROMForkPolynomial.lean); [selector](../SignaturesTest/SchnorrROMSelection.lean) and [fork](../SignaturesTest/SchnorrROMFork.lean) tests. |
+| 97–101 | [Complete ROM solver budget](../Signatures/Runtime/BackendSchnorrROMSolverBudget.lean), [polynomial closure](../Signatures/Runtime/BackendSchnorrROMSolverPolynomial.lean), [executable witness](../Signatures/Runtime/BackendSchnorrROMSolverWithin.lean); [whole-solver regressions](../SignaturesTest/SchnorrROMSolver.lean). |
+| 102–112 | [Nonzero solver resources](../Signatures/Runtime/BackendSchnorrNonzeroSolverBudget.lean), [separate executable witness](../Signatures/Runtime/BackendSchnorrNonzeroSolverWithin.lean), [family security proof](../Signatures/Schnorr/Proofs/GeneralNonzeroROMFamily.lean); [lazy probability](../SignaturesTest/SchnorrNonzeroLazyROM.lean), [three private draws](../SignaturesTest/SchnorrNonzeroPrivateSigning.lean), [complete solver](../SignaturesTest/SchnorrNonzeroSolver.lean), and [public/family guards](../SignaturesTest/SchnorrGeneralNonzeroROMStatement.lean). |
+| 113–114 | [Schnorr AGM public statement](../Signatures/Schnorr/Statement.lean), [family theorem](../Signatures/Schnorr/GeneralAGMFamilyStatement.lean); [public](../SignaturesTest/SchnorrGeneralStatement.lean) and [family](../SignaturesTest/SchnorrAGMFamilies.lean) guards. |
+| 115–117 | [ROM concrete proof](../Signatures/Schnorr/Proofs/GeneralROM.lean), [family theorem](../Signatures/Schnorr/GeneralROMFamilyStatement.lean); [public/family guards](../SignaturesTest/SchnorrGeneralROMStatement.lean). |
+| 118 | [Migration guide](API-MIGRATION.md), [current security-game scope](SECURITY-GAMES.md); [legacy/public assumption guards](../SignaturesTest/StatementAssumptions.lean) and [retained arithmetic fixtures](../SignaturesTest/RuntimeAGMSource.lean). |
+| 119 | [Exact singleton specialization and both sharp BLS cache bounds](../Signatures/BLS/Proofs/LazyAGMCacheBound.lean); [six supported-outcome regressions, standard-axiom and arbitrary-message guards](../SignaturesTest/LazyAGMReduction.lean). |
+| 120 | Completed fresh baseline rebuild (1,053 targets) and current-tree verification (1,054 targets), source-snapshot/dependency checks, all-log review, public/family axiom and assumption guards, and this requirement-by-requirement evidence map. |
+
+The full-build manifest was checked against the actual Lake library declarations:
+the baseline includes all 923 local library modules and all 130 regression
+submodules, with no omitted local target. The added BLS cache module brings the
+current total to 924 library modules. Third-party dependencies remain pinned and
+are reused; current-tree verification checks source and dependency fingerprints.
 
 ## Implementation order and completion checks
 
@@ -5277,7 +5376,9 @@ additional axioms or proof-resource overrides.
   keep execution/encoding certificates internal and hardness scope explicit.
 - [x] Update status documentation and retire superseded eager runtime endpoints
   after replacement proofs and affected callers pass their checks.
-- [ ] Run the full integration suite and complete the requirement-by-requirement audit.
+- [x] Prove the explicitly requested BLS cache cap `qH + qS + 1` for both list
+  solvers, connecting the singleton weighted-cache invariant to the actual BLS programs.
+- [x] Run the full integration suite and complete the requirement-by-requirement audit.
 
 For each endpoint, require a proved semantic/probability connection, a derived
 solver resource certificate, and a hardness assumption covering that solver's

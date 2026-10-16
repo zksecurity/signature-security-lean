@@ -8,7 +8,9 @@ Start with the [GitHub review guide](review-guide.md).
 
 The [paper-facing OOPS corollary](review-guide.md#paper-facing-statements) uses a
 fixed-degree signing-call limit. BLS intentionally retains the type-3 co-CDH formulation
-with an explicit co-hint and no G2-to-G1 map. The core games and runtime endpoints are unchanged.
+with an explicit co-hint and no G2-to-G1 map. These paper-facing choices preserve
+the underlying games and probability bounds; the current execution interfaces
+are described below.
 
 The public statements accept general backend-realized callers and derive complete
 native solver budgets. The eager-table AGM wrappers are retired; see the
@@ -43,10 +45,13 @@ under DLog hardness and negligible inverse field size. Proximity gives the
 original collision probability plus negligible error; negligible forgery also
 requires negligible collisions for the same source-adversary family.
 
-Schnorr uses no algebraicity restriction. Its programmable-ROM reduction simulates
+Schnorr's ROM routes use no algebraicity restriction. Its separate AGM route
+requires algebraic representations. The programmable-ROM reduction simulates
 signatures, then replays a recorded prefix with a new challenge. The theorem bounds
 `delta * (delta/(qH+1) - 1/|F|)` by budget-bounded DLog hardness, where
-`delta = Adv - qS*(qS+qH)/|F|` uses truncated subtraction. Both full runs are charged;
+`delta = Adv - qS*(qS+qH)/|F|` uses truncated subtraction for full-field nonces.
+For nonzero nonces, the signing-loss denominator is `|F|-1`; the fork term still
+uses `|F|`. Both full runs are charged;
 see [Schnorr's game and runtime review](SCHNORR.md).
 
 The old public-table schemes, adversary interface, security wrappers, and source-game bridges
