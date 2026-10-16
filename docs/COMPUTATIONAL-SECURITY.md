@@ -261,8 +261,11 @@ preserving its original losses. Its compiled signing kernel now has complete
 source/runtime/code and polynomial bounds. The
 [finite-cache replay solver](../Signatures/Runtime/SchnorrNonzeroListReduction.lean)
 has exact computation correspondence and query-dependent cache capacities.
-Native sampler installation and complete pass/solver resource composition,
-fixed-backend certification and concrete/family hardness endpoints remain open.
+The [installed private samplers and common-store signer](../Signatures/Runtime/BackendSchnorrNonzeroComponentsBudget.lean)
+now have complete runtime/code bounds and polynomial closure from separate
+original sampler profiles, with every private-tape transition charged.
+Complete dispatcher/caller/pass/solver resource composition, fixed-backend
+certification and concrete/family hardness endpoints remain open.
 These results do not claim a conventional-machine instantiation.
 
 Full certification uses a first-order executable runtime, rather than extending the ledgers

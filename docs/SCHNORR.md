@@ -579,7 +579,19 @@ adaptive trace correspondence, and the
 has exactly the named lazy reduction's computation and original security bound.
 [Capacities](../Signatures/Runtime/SchnorrNonzeroListGrowth.lean) are at most
 `qS + qH` managed entries and `qH + 1` live entries, independent of the message
-universe. Native sampler installation, complete pass/solver runtime composition,
+universe.
+
+Both original samplers now have a
+[native private-tape installation](../Signatures/Runtime/BackendSchnorrNonzeroPrivateSigning.lean)
+with exact source correspondence on every tape. Their separate original execution
+profiles derive the [complete installed runtime](../Signatures/Runtime/BackendSchnorrNonzeroPrivateBudget.lean),
+including `2*qField + qNonzero` saved-cell growth. The
+[common-store signer](../Signatures/Runtime/BackendSchnorrNonzeroComponents.lean)
+preserves the configuration and live cache while executing both adapters. Its
+[complete budget](../Signatures/Runtime/BackendSchnorrNonzeroComponentsBudget.lean)
+and [polynomial closure](../Signatures/Runtime/BackendSchnorrNonzeroComponentsPolynomial.lean)
+follow from original sampler, primitive, width and interface resources.
+Dispatcher/caller/pass and complete replaying-solver resource composition,
 fixed-backend membership and public/family hardness endpoints remain open.
 
 [Field-growth closure](../Signatures/Model/NonzeroFieldGrowth.lean) proves
@@ -590,6 +602,10 @@ both repair branches, cache collisions, zero public keys, finite solver equality
 cache capacities and standard axioms. [Budget guards](../SignaturesTest/SchnorrNonzeroSigningBudget.lean)
 ensure the signing theorem assumes only the three original sampler budgets and
 primitive/local costs, rather than a finished component budget.
+[Installed-code regressions](../SignaturesTest/SchnorrNonzeroPrivateSigning.lean)
+execute interleaved replay families on the actual common-store signer, including
+cache collisions and both repair branches. Its budget guards permit only the
+two original sampler execution profiles and primitive/local resource contracts.
 
 ## Adaptive Algebraic Group Model
 

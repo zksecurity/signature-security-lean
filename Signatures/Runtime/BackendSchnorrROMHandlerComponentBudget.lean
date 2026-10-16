@@ -259,21 +259,21 @@ theorem finalHash_bound_of_native
         (by omega) (by omega) hi).2
       simpa only [← Nat.mul_assoc, Nat.reduceMul, fee] using h
 
-theorem signing_bound_of_native [Q.IsDistributive]
-    (uniform : UniformSampling.Ports (Q := Q) rep.data (iface := iface))
-    (ports : NativePrivate.Ports (Q := Q) rep (iface := iface))
-    (sampler : Code Q unifSpec iface rep.data.unit (rep.ty scalar))
+/-- The common-store adapters depend only on the signer's input/output encoding
+and proved core budget. Both nonce conventions use these same executed adapters. -/
+theorem signing_wrap_bound
+    (core : Code Q unifSpec iface (rep.ty (taped signingArgsTy))
+      (rep.ty (taped (.pair signatureTy hashCache))))
     (width tapeWidth mc lc sc rc nextSavedCap bodyTime : Nat)
     (hh : header ≤ width) (ht : header ≤ tapeWidth) (hu : Q.size rep.data.unit () ≤ width)
     (hs : sc ≤ nextSavedCap) (hw : (6 * (nextSavedCap + rc) + 3) * tapeWidth ≤ width)
     (hbody : Bounds control queryCost
-      (NativeCache.signing rep data cost primitive (rep.ty NativeUniform.stateTy)
-        (NativePrivate.code rep data cost primitive uniform ports sampler))
+      core
       (fun p => NativeCache.SigningInput (Q := Q) rep width mc p.1 ∧
         NativeUniform.StateBound (Q := Q) rep tapeWidth sc rc p.2)
       (fun p => NativeCache.SigningOutput (Q := Q) rep width (mc + 1) p.1 ∧
         NativeUniform.StateBound (Q := Q) rep tapeWidth nextSavedCap rc p.2) bodyTime) :
-    Bounds control queryCost (signing rep data cost primitive uniform ports sampler)
+    Bounds control queryCost (wrap rep data cost primitive keepCacheTy signingInput signingOutput core)
       (InputBound (Q := Q) rep message width width tapeWidth mc lc sc rc)
       (InputBound (Q := Q) rep signatureTy (3 * width) width tapeWidth (mc + 1) lc nextSavedCap rc)
       (bodyTime + 2061 * overhead (8192 * frameWidth width mc lc)) := by
@@ -308,7 +308,7 @@ theorem signing_bound_of_native [Q.IsDistributive]
   have hkeep (saved) (hc : KeepBound (Q := Q) rep width lc saved) : Q.size (rep.ty keepCacheTy) saved ≤ W := by
     have h := keep_size rep sizes lists width lc hh saved hc
     dsimp [W, frameWidth]; nlinarith only [h, Nat.zero_le (mc * width), Nat.zero_le (lc * width)]
-  suffices hall : Bounds control queryCost (signing rep data cost primitive uniform ports sampler) pre post
+  suffices hall : Bounds control queryCost (wrap rep data cost primitive keepCacheTy signingInput signingOutput core) pre post
       (bodyTime + 1028 * fee + 1028 * fee + 5 * overhead (1024 * W)) by
     have hbudget : bodyTime + 1028 * fee + 1028 * fee + 5 * overhead (1024 * W) ≤
         bodyTime + 2061 * overhead (8192 * W) := by
@@ -343,6 +343,27 @@ theorem signing_bound_of_native [Q.IsDistributive]
       have h := (signingOutput_cost rep data cost primitive sizes laws dataLaws mono output (32 * W)
         (by omega) (by omega) hi).2
       simpa only [← Nat.mul_assoc, Nat.reduceMul, fee] using h
+
+theorem signing_bound_of_native [Q.IsDistributive]
+    (uniform : UniformSampling.Ports (Q := Q) rep.data (iface := iface))
+    (ports : NativePrivate.Ports (Q := Q) rep (iface := iface))
+    (sampler : Code Q unifSpec iface rep.data.unit (rep.ty scalar))
+    (width tapeWidth mc lc sc rc nextSavedCap bodyTime : Nat)
+    (hh : header ≤ width) (ht : header ≤ tapeWidth) (hu : Q.size rep.data.unit () ≤ width)
+    (hs : sc ≤ nextSavedCap) (hw : (6 * (nextSavedCap + rc) + 3) * tapeWidth ≤ width)
+    (hbody : Bounds control queryCost
+      (NativeCache.signing rep data cost primitive (rep.ty NativeUniform.stateTy)
+        (NativePrivate.code rep data cost primitive uniform ports sampler))
+      (fun p => NativeCache.SigningInput (Q := Q) rep width mc p.1 ∧
+        NativeUniform.StateBound (Q := Q) rep tapeWidth sc rc p.2)
+      (fun p => NativeCache.SigningOutput (Q := Q) rep width (mc + 1) p.1 ∧
+        NativeUniform.StateBound (Q := Q) rep tapeWidth nextSavedCap rc p.2) bodyTime) :
+    Bounds control queryCost (signing rep data cost primitive uniform ports sampler)
+      (InputBound (Q := Q) rep message width width tapeWidth mc lc sc rc)
+      (InputBound (Q := Q) rep signatureTy (3 * width) width tapeWidth (mc + 1) lc nextSavedCap rc)
+      (bodyTime + 2061 * overhead (8192 * frameWidth width mc lc)) := by
+  exact signing_wrap_bound rep data cost primitive sizes lists laws dataLaws mono control queryCost routing
+    _ width tapeWidth mc lc sc rc nextSavedCap bodyTime hh ht hu hs hw hbody
 
 theorem random_bound_of_native
     (uniform : UniformSampling.Ports (Q := Q) rep.data (iface := iface))

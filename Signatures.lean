@@ -30,6 +30,7 @@ import Signatures.Runtime.BackendSchnorrNonzeroRepairCost
 import Signatures.Runtime.BackendSchnorrNonzeroSigningBudget
 import Signatures.Runtime.SchnorrNonzeroListReduction
 import Signatures.Runtime.SchnorrNonzeroListGrowth
+import Signatures.Runtime.BackendSchnorrNonzeroComponentsPolynomial
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.BackendSchnorrAGMReadBudget
@@ -279,8 +280,11 @@ statement. Polynomial closure of the complete native time/code formulas and
 under polynomial component resources, DLog hardness and negligible inverse field
 size. General-caller full-field ROM replay is also complete. The nonzero-nonce
 variant has a complete native signing budget, finite-cache pass correspondence,
-cache capacities and exact finite replay/extraction semantics. Its whole-solver
-native resource composition and concrete/family hardness endpoints remain open.
+cache capacities and exact finite replay/extraction semantics. Its installed
+private samplers and common-store signer now have exact source correspondence
+and complete runtime/code bounds, with polynomial closure from original resources.
+Its whole-solver native resource composition and concrete/family hardness endpoints
+remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
