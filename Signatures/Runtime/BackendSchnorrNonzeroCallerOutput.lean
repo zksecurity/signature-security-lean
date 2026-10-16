@@ -1,0 +1,88 @@
+import Signatures.Runtime.BackendSchnorrNonzeroCallerResources
+import Signatures.Runtime.GeneralCallerOutput
+
+/-! Measured return sizes and termination for the actual native Schnorr caller.
+These bounds include a return at zero remaining fuel. All fields of the returned
+encoding are covered, independently of which request branches the attacker took. -/
+
+open OracleComp OracleSpec PFunctor
+open PFunctor.DynSystem.DynComputation
+
+namespace Signatures.Runtime.Schnorr.NonzeroListROM.NativeHandler
+
+open BackendProgram RawTape ListROM ListROM.NativeInterface ListROM.NativeComponents ListROM.NativeHandler
+
+universe v w
+
+variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
+  {Q : QuantitativeStepClass.{0, v, w} C}
+  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [QO : Q.HasOption] [OC : OptionCode (Q := Q)]
+  {F G₁ G₂ K M Input Output : Type} [Field F] [SampleableType F] [SampleableType Fˣ]
+  [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
+  [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
+  {iface : BackendProgram.Interface (C := C) unifSpec}
+  (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ K M))
+  (bd : Boundary C (sourceSpec F G₁ M).toPFunctor Input Output) (ports : Ports (Q := Q) rep bd)
+  (data : DataCode Q rep.data) (cost : PrimitiveCosts)
+  (primitive : {a b : Ty CryptoAtom} → (instr : CryptoOp a b) →
+    Q.Realizer (rep.ty a) (rep.ty b) ((arithmetic F G₁ G₂ K M cost).execute instr))
+  (uniform : UniformSampling.Ports (Q := Q) rep.data (iface := iface))
+  (privatePorts : NativePrivate.Ports (Q := Q) rep (iface := iface))
+  (fieldSampler nonzeroSampler : Code Q unifSpec iface rep.data.unit (rep.ty scalar))
+  (fieldLaw : fieldSampler.denote () = ($ᵗ F : ProbComp F))
+  (nonzeroLaw : nonzeroSampler.denote () = (fun a : Fˣ => (a : F)) <$> ($ᵗ Fˣ))
+  (control : ControlCosts) (queryCost : (i : Nat) → unifSpec.Range i → Nat)
+  (R : GeneralCaller.Caller (Q := Q) (bd := bd))
+
+include fieldLaw nonzeroLaw
+
+theorem caller_reference_denote (fuel : Nat) (input : Input) (saved : Shared.Store F G₁ M) :
+    (caller rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler R fuel).denote (input, saved) =
+      (fun p => (p.1.value, p.2)) <$>
+        ((GeneralCaller.run R (executed rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler control queryCost) fuel input).run saved) := by
+  have hhandler : (fun q => Run.value <$> executed rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler control queryCost q) =
+      source (G₂ := G₂) (K := K) := by
+    funext q saved
+    change (Run.value <$> executed rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler control queryCost q).run saved = _
+    rw [StateT.run_map]
+    exact executed_erase rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler fieldLaw nonzeroLaw control queryCost q saved
+  rw [caller_denote rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler fieldLaw nonzeroLaw R]
+  have h := congrArg (fun computation => computation.run saved)
+    (GeneralCaller.runFrom_erase R (executed rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler control queryCost)
+      fuel (R.machine.init input))
+  rw [hhandler, GeneralCaller.denoteFrom_eq_runWith] at h
+  simp only [runWithInput, GeneralCaller.run, bind_pure_comp, StateT.run_map, Functor.map_map] at h ⊢
+  exact h.symm
+
+theorem caller_output_invariant (inv : Nat → R.machine.State → Prop) (valid : Output → Prop)
+    (hstep : ∀ n state, inv (n + 1) state → ∀ q next,
+      R.machine.view state = .inr ⟨q, next⟩ → ∀ answer, inv n (next answer))
+    (hreturn : ∀ n state, inv n state → ∀ out, R.machine.view state = .inl out → valid out)
+    (fuel : Nat) (input : Input) (hi : inv fuel (R.machine.init input)) (saved : Shared.Store F G₁ M)
+    (z : Run (Option Output × (Shared.Store F G₁ M)))
+    (hz : z ∈ support ((caller rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler R fuel).run control queryCost (input, saved)))
+    (out : Output) (hout : z.value.1 = some out) : valid out := by
+  have hv := Code.value_mem_denote control queryCost
+    (caller rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler R fuel) (input, saved) z hz
+  rw [caller_reference_denote rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler fieldLaw nonzeroLaw control queryCost R, support_map] at hv
+  obtain ⟨p, hp, he⟩ := hv
+  exact GeneralCaller.run_output_invariant R (executed rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler control queryCost)
+    inv valid hstep hreturn fuel input hi saved p hp out ((congrArg Prod.fst he).trans hout)
+
+variable (bound : ExecutionCost) (hrun : R.RunsWithin (fun _ => bound))
+
+include hrun
+
+theorem caller_output_size_of_resources {header : Nat} (sizes : SizeLaws Q header)
+    (fuel : Nat) (input : Input) (saved : Shared.Store F G₁ M)
+    (z : Run (Option Output × (Shared.Store F G₁ M)))
+    (hz : z ∈ support ((caller rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler R fuel).run control queryCost (input, saved)))
+    (out : Output) (hout : z.value.1 = some out) : Q.size bd.out out ≤ bound.peakHeadSize := by
+  exact caller_output_invariant rep bd ports data cost primitive uniform privatePorts fieldSampler nonzeroSampler fieldLaw nonzeroLaw control queryCost R
+    (fun _ => GeneralCaller.Reachable R) (fun out => Q.size bd.out out ≤ bound.peakHeadSize)
+    (fun _ state hs q next hv answer => GeneralCaller.reachable_step R state hs q next hv answer)
+    (fun _ state hs out hv => reachable_output bd sizes R bound hrun state hs out hv)
+    fuel input (GeneralCaller.reachable_init R input) saved z hz out hout
+
+end Signatures.Runtime.Schnorr.NonzeroListROM.NativeHandler

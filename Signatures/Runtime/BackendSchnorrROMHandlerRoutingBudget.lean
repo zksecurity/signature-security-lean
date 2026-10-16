@@ -39,7 +39,9 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
 
 include sizes lists laws mono routing dispatchLaws
 
-theorem code_bound_of_components
+/-- Routing works for any executed signer with its proved component bound. -/
+theorem codeWithSigning_bound_of_components
+    (signer : Code Q unifSpec iface (rep.ty (withStore message)) (rep.ty (withStore signatureTy)))
     (width tapeWidth mc lc sc rc nextSavedCap arityCap portWidth requestTime tagTime randomTime hashTime signingTime : Nat)
     (hh : header ≤ width) (ht : header ≤ tapeWidth) (hs : sc ≤ nextSavedCap)
     (hw : (6 * (nextSavedCap + rc) + 3) * tapeWidth ≤ width)
@@ -51,10 +53,10 @@ theorem code_bound_of_components
     (hhash : Bounds control queryCost (NativeComponents.hash rep data cost primitive sampler)
       (InputBound (Q := Q) rep hashKey (3 * width) width tapeWidth mc lc sc rc)
       (InputBound (Q := Q) rep scalar (3 * width) width tapeWidth (mc + 1) (lc + 1) nextSavedCap rc) hashTime)
-    (hsigning : Bounds control queryCost (NativeComponents.signing rep data cost primitive uniform privatePorts sampler)
+    (hsigning : Bounds control queryCost signer
       (InputBound (Q := Q) rep message width width tapeWidth mc lc sc rc)
       (InputBound (Q := Q) rep signatureTy (3 * width) width tapeWidth (mc + 1) (lc + 1) nextSavedCap rc) signingTime) :
-    Bounds control queryCost (code rep bd ports data cost primitive uniform privatePorts sampler)
+    Bounds control queryCost (codeWithSigning rep bd ports data cost primitive uniform sampler signer)
       (fun p => RequestBound (Q := Q) rep width arityCap p.1 ∧ StoreBound (Q := Q) rep width tapeWidth mc lc sc rc p.2)
       (fun p => Q.size bd.idx p.1 ≤ portWidth ∧ StoreBound (Q := Q) rep width tapeWidth (mc + 1) (lc + 1) nextSavedCap rc p.2)
       (handlerTime overhead (frameWidth width mc lc portWidth) randomTime hashTime signingTime requestTime tagTime) := by
@@ -94,10 +96,10 @@ theorem code_bound_of_components
       (rep.ty storeTy) ports.hashTag (NativeComponents.hash rep data cost primitive sampler)
       reqH replyH pre post W portWidth tagTime hashTime (by omega) hW.2.1 hreqH
       (fun c h => h.trans (by omega)) hpre hpost caps.hashTag hhash
-  have hsign : Bounds control queryCost (signing rep bd ports data cost primitive uniform privatePorts sampler)
+  have hsign : Bounds control queryCost (tagged rep bd ports.signingTag signer)
       preS final (signingTime + tagTime + 26 * fee) :=
     retainedTag_bound_of_width sizes laws mono control queryCost routing (rep.ty message) (rep.ty signatureTy) bd.idx
-      (rep.ty storeTy) ports.signingTag (NativeComponents.signing rep data cost primitive uniform privatePorts sampler)
+      (rep.ty storeTy) ports.signingTag signer
       reqS replyS pre post W portWidth tagTime signingTime (by omega) hW.2.1 hreqS
       (fun sig h => h.trans (by omega)) hpre hpost caps.signingTag hsigning
   let preI := fun p : (Nat ⊕ (M × G₁)) × Shared.Store F G₁ M =>
@@ -127,10 +129,10 @@ theorem code_bound_of_components
       exact ⟨by omega, by omega⟩
   let preO := fun p : NativeInterface.Request G₁ M × Shared.Store F G₁ M =>
     Sum.elim (fun args => preI (args, p.2)) (fun msg => preS (msg, p.2)) p.1
-  have ho : Bounds control queryCost (dispatch rep bd ports data cost primitive uniform privatePorts sampler)
+  have ho : Bounds control queryCost (dispatchWithSigning rep bd ports data cost primitive uniform sampler signer)
       preO final (max (max randomTime hashTime) signingTime + tagTime + 34 * fee) := by
     have h := branchStore_bound_of_width sizes mono control queryCost routing dispatchLaws (rep.ty storeTy)
-      (inner rep bd ports data cost primitive uniform sampler) (signing rep bd ports data cost primitive uniform privatePorts sampler)
+      (inner rep bd ports data cost primitive uniform sampler) (tagged rep bd ports.signingTag signer)
       preI preS final (4 * W) _ _ (by omega) hinnerSize
       (fun p h => ⟨(hreqS p.1 h.1).trans (by omega), (hpre p.2 h.2).trans (by omega)⟩) hi hsign
     exact Bounds.time_mono control queryCost h (by simp only [← Nat.mul_assoc, Nat.reduceMul]; dsimp only [fee]; omega)
@@ -142,7 +144,7 @@ theorem code_bound_of_components
     (RequestBound (Q := Q) rep width arityCap) (RequestBound (Q := Q) rep width arityCap) pre W requestTime
     (fun q h => (caps.request q h).1.trans hW.2.1) hpre
     (fun q h => ⟨h, hnsize q h, (caps.request q h).2⟩)
-  have hd : Bounds control queryCost (dispatch rep bd ports data cost primitive uniform privatePorts sampler)
+  have hd : Bounds control queryCost (dispatchWithSigning rep bd ports data cost primitive uniform sampler signer)
       sourcePre final (max (max randomTime hashTime) signingTime + tagTime + 34 * fee) := by
     apply Bounds.consequence control queryCost ho ?_ (fun _ h => h)
     rintro ⟨(n | k) | msg, saved⟩ h <;> exact h
@@ -156,12 +158,37 @@ theorem code_bound_of_components
     exact (sizes.prod_le _ _ p).trans (by omega)
   have hall := seq_bound_of_width mono control queryCost routing
     (.first (rep.ty storeTy) (.atomic ports.request))
-    (dispatch rep bd ports data cost primitive uniform privatePorts sampler)
+    (dispatchWithSigning rep bd ports data cost primitive uniform sampler signer)
     sourcePre sourcePre final (4 * W) _ _ hsrc hnat he hd
   apply Bounds.time_mono control queryCost hall
   have hfee := mono (show 32 * W ≤ 128 * W by omega)
   simp only [← Nat.mul_assoc, Nat.reduceMul]
   dsimp only [handlerTime, fee, W] at hfee ⊢
   omega
+
+theorem code_bound_of_components
+    (width tapeWidth mc lc sc rc nextSavedCap arityCap portWidth requestTime tagTime randomTime hashTime signingTime : Nat)
+    (hh : header ≤ width) (ht : header ≤ tapeWidth) (hs : sc ≤ nextSavedCap)
+    (hw : (6 * (nextSavedCap + rc) + 3) * tapeWidth ≤ width)
+    (hNat : ∀ n ≤ arityCap, Q.size rep.data.nat n ≤ tapeWidth)
+    (caps : PortCaps rep bd ports width tapeWidth arityCap portWidth requestTime tagTime)
+    (hrandom : Bounds control queryCost (NativeComponents.random rep data cost primitive uniform)
+      (fun p => p.1 ≤ arityCap ∧ StoreBound (Q := Q) rep width tapeWidth mc lc sc rc p.2)
+      (InputBound (Q := Q) rep .nat tapeWidth width tapeWidth (mc + 1) (lc + 1) nextSavedCap rc) randomTime)
+    (hhash : Bounds control queryCost (NativeComponents.hash rep data cost primitive sampler)
+      (InputBound (Q := Q) rep hashKey (3 * width) width tapeWidth mc lc sc rc)
+      (InputBound (Q := Q) rep scalar (3 * width) width tapeWidth (mc + 1) (lc + 1) nextSavedCap rc) hashTime)
+    (hsigning : Bounds control queryCost (NativeComponents.signing rep data cost primitive uniform privatePorts sampler)
+      (InputBound (Q := Q) rep message width width tapeWidth mc lc sc rc)
+      (InputBound (Q := Q) rep signatureTy (3 * width) width tapeWidth (mc + 1) (lc + 1) nextSavedCap rc) signingTime) :
+    Bounds control queryCost (code rep bd ports data cost primitive uniform privatePorts sampler)
+      (fun p => RequestBound (Q := Q) rep width arityCap p.1 ∧ StoreBound (Q := Q) rep width tapeWidth mc lc sc rc p.2)
+      (fun p => Q.size bd.idx p.1 ≤ portWidth ∧ StoreBound (Q := Q) rep width tapeWidth (mc + 1) (lc + 1) nextSavedCap rc p.2)
+      (handlerTime overhead (frameWidth width mc lc portWidth) randomTime hashTime signingTime requestTime tagTime) :=
+  codeWithSigning_bound_of_components rep bd ports data cost primitive uniform sampler
+    sizes lists laws mono control queryCost routing dispatchLaws
+    (NativeComponents.signing rep data cost primitive uniform privatePorts sampler)
+    width tapeWidth mc lc sc rc nextSavedCap arityCap portWidth requestTime tagTime randomTime hashTime signingTime
+    hh ht hs hw hNat caps hrandom hhash hsigning
 
 end Signatures.Runtime.Schnorr.ListROM.NativeHandler

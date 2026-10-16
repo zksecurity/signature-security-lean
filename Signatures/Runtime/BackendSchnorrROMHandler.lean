@@ -70,6 +70,24 @@ def code : Code Q unifSpec iface (StepClass.HasProd.prod bd.pos (rep.ty storeTy)
   .seq (.first (rep.ty storeTy) (.atomic ports.request))
     (dispatch rep bd ports data cost primitive uniform privatePorts sampler)
 
+/-- The shared dispatcher with an explicit executed signing component. -/
+def dispatchWithSigning
+    (signer : Code Q unifSpec iface (rep.ty (withStore message)) (rep.ty (withStore signatureTy))) :
+    Code Q unifSpec iface (StepClass.HasProd.prod (positions rep) (rep.ty storeTy))
+      (StepClass.HasProd.prod bd.idx (rep.ty storeTy)) :=
+  .seq (.atomic (QD.distribute (StepClass.HasSum.sum rep.data.nat (rep.ty hashKey))
+    (rep.ty message) (rep.ty storeTy)))
+    (.branch (inner rep bd ports data cost primitive uniform sampler)
+      (tagged rep bd ports.signingTag signer))
+
+/-- Request conversion and dispatch retain the actual supplied signer code. -/
+def codeWithSigning
+    (signer : Code Q unifSpec iface (rep.ty (withStore message)) (rep.ty (withStore signatureTy))) :
+    Code Q unifSpec iface (StepClass.HasProd.prod bd.pos (rep.ty storeTy))
+      (StepClass.HasProd.prod bd.idx (rep.ty storeTy)) :=
+  .seq (.first (rep.ty storeTy) (.atomic ports.request))
+    (dispatchWithSigning rep bd ports data cost primitive uniform sampler signer)
+
 omit QD QS [Field F] [SampleableType F] [AddCommGroup G₁] [Module F G₁]
   [AddCommGroup G₂] [Module F G₂] [DecidableEq F] [DecidableEq G₁]
   [DecidableEq G₂] [DecidableEq K] [DecidableEq M] in

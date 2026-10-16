@@ -277,9 +277,14 @@ has exactly the named lazy solver's computation. Managed/live capacities are
 samplers are now installed in the raw private tape. Their separate execution
 profiles derive the complete installed and common-store signing runtime/code
 bounds and polynomial closure, including `2*qField + qNonzero` tape growth.
+The actual nonzero dispatcher, arbitrary caller and complete native pass now
+have exact source correspondence and original-resource runtime/code bounds.
+Adaptive reservations include `2*qField + qNonzero + 1` tape cells per request;
+complete caller/pass runtime has polynomial closure from original resources.
 
-Remaining: compose the dispatcher, caller, pass and complete replaying solver
-resources, expose concrete/family security, then finish API/documentation
+Remaining: install both nonzero passes in the replaying solver and derive its
+complete resources and fixed-backend certificate, expose concrete/family security,
+then finish API/documentation
 retirement. A conventional machine instantiation is needed only if making that
 stronger coverage claim.
 
@@ -303,7 +308,7 @@ machine results, not completion of this broader objective.
 | Proximity AGM | Complete native certificates, concrete security, short public statements and derived polynomial family resources. The original optional-coordinate/function-vector game has forgery bounded by collision probability plus negligible error; negligible forgery additionally assumes negligible collisions. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route, including its collision qualification, is complete. |
 | Schnorr ROM | Complete native replaying solver with exact source correspondence, derived runtime/code certificate, short public concrete statement and nonuniform polynomial-family security. The original quadratic forking bound is retained; the public bound exposes its square-root consequence. General unrestricted callers and arbitrary messages are preserved. | Conventional-machine instantiation only if claiming that stronger model; the conditional full-field nonce route is complete. |
 | Schnorr AGM | Complete native runtime/code certificates, short concrete security statement and derived polynomial-family corollary from general-caller resources, with exact source correspondence, arbitrary messages and the original probability losses. Actual setup, conversions, optional-return/cutoff handling and extraction are charged. | Conventional-machine instantiation only if claiming that stronger model; the conditional backend route is complete. |
-| Schnorr nonzero-nonce ROM | Named lazy reduction with the original probability bound; finite-cache pass/replay/extraction has exact computation correspondence and query-dependent cache capacities. Native private-tape and common-store signing have complete source/state/runtime/code and polynomial bounds derived from both original sampler profiles. Inverse nonzero-field size inherits negligibility from inverse field size. | Compose dispatcher/caller/pass/solver resources, then connect fixed-backend concrete/family security. Full-field runtime certificates do not automatically cover this variant. |
+| Schnorr nonzero-nonce ROM | Named lazy reduction with the original probability bound; finite-cache pass/replay/extraction has exact computation correspondence and query-dependent cache capacities. Native signing, dispatcher, arbitrary caller and complete pass have exact source correspondence and derived runtime/code bounds; complete pass runtime has polynomial closure from original resources. Inverse nonzero-field size inherits negligibility from inverse field size. | Install both actual nonzero passes in the replaying solver, derive complete solver resources and connect fixed-backend concrete/family security. Full-field runtime certificates do not automatically cover this variant. |
 
 The existing bounds are not absent or silently assumed. The pairing-based AGM
 machine bounds explicitly charge full-domain initialization and sums. For BLS
@@ -3599,12 +3604,68 @@ All new theorem axiom footprints are standard. The implementation modules,
 new regression, existing full-field handler regression and aggregate import
 are checked serially under the existing compiler resource limits.
 
+### Nonzero dispatcher, general caller and complete native pass, 2026-10-15
+
+The [actual dispatcher](../Signatures/Runtime/BackendSchnorrNonzeroHandler.lean)
+installs the three-draw nonzero signer and reuses the unchanged random/hash
+components. A generic executed-signing parameter was factored out of the shared
+routing proof; the old full-field API and behavior remain unchanged. The new
+handler's complete computation, dependent reply, both caches, configuration and
+replay tape equal the nonzero source handler. Arbitrary implemented callers
+inherit exact source correspondence, with termination derived from measured
+query resources rather than a separate cover or arithmetic-language restriction.
+
+The [dispatcher budget](../Signatures/Runtime/BackendSchnorrNonzeroHandlerBudget.lean)
+is derived from both original sampler profiles and local primitive/port/encoding
+contracts. One request grows each cache by at most one entry and saves at most
+`2*qField + qNonzero + 1` tape cells; the extra one covers random/hash requests.
+The [reservation theorem](../Signatures/Runtime/BackendSchnorrNonzeroHandlerReserve.lean)
+preserves room for all future adaptive calls while charging runtime at fixed
+maximum capacities. The
+[arbitrary caller resource theorem](../Signatures/Runtime/BackendSchnorrNonzeroCallerResources.lean)
+recovers request, state and head invariants from the attacker's measured execution
+and representation recovery laws. It derives the full caller cost, including
+original attacker work, dispatch, initialization, loop control and retained state.
+No completed-handler/caller runtime premise remains at this endpoint.
+[Caller return sizes](../Signatures/Runtime/BackendSchnorrNonzeroCallerOutput.lean)
+are also recovered from measured resources, including return at zero fuel.
+
+The [complete native pass](../Signatures/Runtime/BackendSchnorrNonzeroPass.lean)
+now executes setup, this actual nonzero caller, output conversions and final
+live-cache hashing. Its source theorem is equality with the nonzero finite-cache
+pass on every raw tape, and sufficient measured query fuel guarantees a singleton
+completed result. Its
+[complete runtime/output bound](../Signatures/Runtime/BackendSchnorrNonzeroPassBudget.lean)
+charges all these programs from original resources, including the extra sampler
+and repair costs. [Stored-code bounds](../Signatures/Runtime/BackendSchnorrNonzeroPassDescription.lean)
+include both original samplers, the attacker's description, all request/reply and
+pass boundary conversions, and cutoff/final-hash code.
+[Dispatcher](../Signatures/Runtime/BackendSchnorrNonzeroHandlerPolynomial.lean),
+[caller](../Signatures/Runtime/BackendSchnorrNonzeroCallerPolynomial.lean) and
+[complete pass runtime](../Signatures/Runtime/BackendSchnorrNonzeroPassPolynomial.lean)
+have polynomial closure from original resource families. Numeric sampling arities
+and loop-counter magnitudes are not required to be polynomial.
+
+[Regressions](../SignaturesTest/SchnorrNonzeroPrivateSigning.lean) now execute all
+three dispatcher branches, including nonzero commitment repair, malformed raw
+random replies and conflicting managed/live cache values. The theorem guards
+require exact nonzero source/pass correspondence, both original sampler profiles,
+measured arbitrary attacker execution, future-call reservations including the
+nonzero draw, and derived complete runtime formulas. They reject finished-component
+budget premises, restricted-attacker syntax and finite-universe requirements, and
+check the actual dispatcher/pass definitions for accidental full-field substitution.
+The new implementation modules, expanded regression, existing full-field handler
+and caller regressions, and aggregate import are checked serially within the
+existing compiler resource limits; theorem axiom footprints remain standard.
+
 ### Remaining Schnorr variant work
 
 The conditional general-caller full-field ROM and AGM routes are complete.
-For the nonzero-nonce route, compose the now-complete common-store signer with
-handler dispatch and arbitrary caller execution. Install both complete native
-replay passes and derive their original-resource runtime/code bounds.
+For the nonzero-nonce route, signing, dispatch, arbitrary caller execution and
+one complete native pass now have proved source/runtime/code correspondence.
+Install both actual nonzero passes in the existing generic replay controller and
+derive whole-solver runtime/code bounds and polynomial closure from original
+resources.
 The finite-cache pass and complete source replay already refine the named lazy
 probability reduction exactly. Assemble the complete fixed-backend solver
 certificate and expose concrete/public and nonuniform family security. Preserve
@@ -5361,7 +5422,12 @@ additional axioms or proof-resource overrides.
 - [x] Install both original nonzero-route samplers in the private replay handler;
   derive complete installed/common-store signing time/code and polynomial bounds
   from separate original execution profiles, including all three tape transitions.
-- [ ] Complete nonzero native dispatcher/caller/pass/solver resources and replay composition.
+- [x] Complete nonzero native dispatcher, adaptive reservation and arbitrary
+  caller resource proofs from both original sampler profiles and attacker measurements.
+- [x] Assemble the actual nonzero native pass, prove exact source correspondence,
+  derive full runtime/code/output bounds and polynomial runtime closure.
+- [ ] Install both nonzero native passes in the replaying solver; derive complete
+  solver runtime/code bounds, polynomial closure and fixed-backend executable membership.
 - [ ] Complete the separate nonzero-nonce concrete/public and family security endpoints.
 - [x] Add the short Schnorr AGM public statement with inspectable game, hardness
   and derived resources; keep proofs separate and preserve the original query losses.

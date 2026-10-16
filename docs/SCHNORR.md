@@ -591,7 +591,18 @@ preserves the configuration and live cache while executing both adapters. Its
 [complete budget](../Signatures/Runtime/BackendSchnorrNonzeroComponentsBudget.lean)
 and [polynomial closure](../Signatures/Runtime/BackendSchnorrNonzeroComponentsPolynomial.lean)
 follow from original sampler, primitive, width and interface resources.
-Dispatcher/caller/pass and complete replaying-solver resource composition,
+The [nonzero dispatcher](../Signatures/Runtime/BackendSchnorrNonzeroHandler.lean)
+and [arbitrary caller budget](../Signatures/Runtime/BackendSchnorrNonzeroCallerResources.lean)
+now compose this signer with the unchanged hash/random operations. Adaptive
+reservations charge `2*qField + qNonzero + 1` tape cells per request, with caller
+invariants recovered from measured attacker resources. The
+[actual complete pass](../Signatures/Runtime/BackendSchnorrNonzeroPass.lean)
+includes setup, caller execution, output conversion and final live hashing;
+it has exact source correspondence on every raw tape,
+[complete runtime/output bounds](../Signatures/Runtime/BackendSchnorrNonzeroPassBudget.lean),
+[stored-code accounting](../Signatures/Runtime/BackendSchnorrNonzeroPassDescription.lean)
+and [polynomial runtime closure](../Signatures/Runtime/BackendSchnorrNonzeroPassPolynomial.lean)
+from original resources. Installing both passes in the complete replaying solver,
 fixed-backend membership and public/family hardness endpoints remain open.
 
 [Field-growth closure](../Signatures/Model/NonzeroFieldGrowth.lean) proves
@@ -606,6 +617,9 @@ primitive/local costs, rather than a finished component budget.
 execute interleaved replay families on the actual common-store signer, including
 cache collisions and both repair branches. Its budget guards permit only the
 two original sampler execution profiles and primitive/local resource contracts.
+They also execute all three new dispatcher branches and guard exact nonzero pass
+semantics, measured arbitrary-caller resource recovery, the extra tape reservation,
+complete pass runtime and standard axioms.
 
 ## Adaptive Algebraic Group Model
 

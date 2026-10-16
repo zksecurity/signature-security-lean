@@ -264,7 +264,13 @@ has exact computation correspondence and query-dependent cache capacities.
 The [installed private samplers and common-store signer](../Signatures/Runtime/BackendSchnorrNonzeroComponentsBudget.lean)
 now have complete runtime/code bounds and polynomial closure from separate
 original sampler profiles, with every private-tape transition charged.
-Complete dispatcher/caller/pass/solver resource composition, fixed-backend
+The [actual nonzero dispatcher and caller](../Signatures/Runtime/BackendSchnorrNonzeroCallerResources.lean)
+now have derived runtime bounds and adaptive capacity reservations from original
+resources. The [complete native pass](../Signatures/Runtime/BackendSchnorrNonzeroPass.lean)
+has exact source correspondence, [full runtime/output bounds](../Signatures/Runtime/BackendSchnorrNonzeroPassBudget.lean),
+[code accounting](../Signatures/Runtime/BackendSchnorrNonzeroPassDescription.lean)
+and [polynomial runtime closure](../Signatures/Runtime/BackendSchnorrNonzeroPassPolynomial.lean).
+Installation of both passes in the replaying solver, complete fixed-backend
 certification and concrete/family hardness endpoints remain open.
 These results do not claim a conventional-machine instantiation.
 

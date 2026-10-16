@@ -30,7 +30,8 @@ import Signatures.Runtime.BackendSchnorrNonzeroRepairCost
 import Signatures.Runtime.BackendSchnorrNonzeroSigningBudget
 import Signatures.Runtime.SchnorrNonzeroListReduction
 import Signatures.Runtime.SchnorrNonzeroListGrowth
-import Signatures.Runtime.BackendSchnorrNonzeroComponentsPolynomial
+import Signatures.Runtime.BackendSchnorrNonzeroPassPolynomial
+import Signatures.Runtime.BackendSchnorrNonzeroPassDescription
 import Signatures.Schnorr.Proofs.AGMSecurity
 import Signatures.Runtime.SchnorrAGMSecurity
 import Signatures.Runtime.BackendSchnorrAGMReadBudget
@@ -283,8 +284,11 @@ variant has a complete native signing budget, finite-cache pass correspondence,
 cache capacities and exact finite replay/extraction semantics. Its installed
 private samplers and common-store signer now have exact source correspondence
 and complete runtime/code bounds, with polynomial closure from original resources.
-Its whole-solver native resource composition and concrete/family hardness endpoints
-remain open.
+The nonzero dispatcher, arbitrary caller and complete native pass now also have
+exact source correspondence, derived runtime/code/output bounds and polynomial
+runtime closure from original resources. Installing both passes in the replaying
+solver and deriving whole-solver certification and concrete/family hardness
+endpoints remain open.
 
 The public security statements' axiom footprints are exactly
 `propext`, `Classical.choice`, and `Quot.sound`.
