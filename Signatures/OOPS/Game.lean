@@ -1,5 +1,6 @@
 import Signatures.Model.PairingCurve
 import Signatures.OOPS.Spec.LazyAGM
+import Signatures.Model.AlgebraicOracle
 
 /-! OOPS security games, independent of any execution model or resource certificate.
 Read the experiment below as: sample a key, run the attacker with adaptive
@@ -9,6 +10,7 @@ Oracle dispatch and algebraic explanation bookkeeping are in the imported spec.
 Security bounds are in `Statement.lean`; execution contracts remain separate. -/
 
 open OracleComp OracleSpec
+open Model
 
 namespace OOPS.Game
 
@@ -29,17 +31,14 @@ abbrev AlgebraicAdversary := Model.LazyAGM.Adversary (curve.Scalar securityParam
 noncomputable def agm
     (adversary : AlgebraicAdversary curve securityParameter degree (Topic := Topic)) : ProbComp Bool := by
   classical
-  exact (simulateQ Model.LazyAGM.lazyImpl (do
-    let secret ← (liftM ($ᵗ 𝔽) : OracleComp (Model.LazyAGM.baseSpec (Topic × Fin (degree + 1)) 𝔾₁) 𝔽)
-    let result ← Model.LazyAGM.interactiveRun (LazyAGM.terms degree) secret adversary g₁ (secret • g₂)
-    match result.data, result.groups .signature with
-    | some (forgery, signedMessages), [signature] =>
-        let target ← Model.LazyAGM.evalTerms (LazyAGM.terms degree forgery.mstar)
-        return decide (
-          LazyAGM.admissible degree forgery.mstar signedMessages ∧
-          BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
-            BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) target (secret • g₂) ∧
-          forgery.mstar ∉ signedMessages)
-    | _, _ => return false)).run' ∅
+  exact RandomOracle.run do
+    let secret ← RandomOracle.sample 𝔽
+    let forgery ← AlgebraicOracle.run (LazyAGM.terms degree) secret adversary g₁ (secret • g₂)
+    let hash ← AlgebraicOracle.hashMessage (LazyAGM.terms degree) forgery.message
+    return decide (
+      LazyAGM.admissible degree forgery.message forgery.signedMessages ∧
+      BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forgery.signature g₂ =
+        BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂) ∧
+      forgery.message ∉ forgery.signedMessages)
 
 end OOPS.Game

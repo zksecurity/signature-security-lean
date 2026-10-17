@@ -1,6 +1,5 @@
 import Signatures.Model.CyclicCurveNonzeroSampling
-import Signatures.Schnorr.Spec.AGM
-import Signatures.Schnorr.Spec.NonzeroNonce
+import Signatures.Schnorr.Spec.Oracle
 
 /-! Schnorr EUF-CMA games without execution contracts or resource certificates.
 The attacker receives the public key and adaptive hash/signing access. A win is
@@ -9,10 +8,11 @@ one initially empty lazy random oracle. Full-field and nonzero nonces are separa
 schemes; only the AGM route requires algebraic explanations.
 
 `signature` and `NonzeroNonce.signature` specify key generation, signing and
-verification. `Spec/AGM.lean` handles algebraic messages and malformed requests.
+verification. `Spec/Oracle.lean` handles ordinary and algebraic requests with named results.
 The security bounds are in `Statement.lean`; machine costs remain separate. -/
 
 open OracleComp OracleSpec
+open Model
 
 namespace Schnorr.Game
 
@@ -35,11 +35,12 @@ noncomputable def rom
   classical
   letI : DecidableEq (Message × 𝔾) := Classical.decEq _
   let scheme := signature 𝔽 𝔾 g Message
-  exact (simulateQ (Message × 𝔾 →ₒ 𝔽).romImpl (do
+  exact RandomOracle.run do
     let (publicKey, secretKey) ← scheme.keygen
-    let ((message, signature), signed) ← scheme.runWithSigningOracle publicKey secretKey (adversary publicKey)
-    let valid ← scheme.verify publicKey message signature
-    return !signed.wasQueried message && valid)).run' ∅
+    let forgery ← ROM.run scheme publicKey secretKey (adversary publicKey)
+    let challenge ← RandomOracle.hash (forgery.message, forgery.commitment)
+    return !forgery.signingLog.wasQueried forgery.message &&
+      decide (forgery.response • g = forgery.commitment + challenge • publicKey)
 
 /-- The same winning condition with uniformly sampled nonzero signing nonces. -/
 noncomputable def nonzeroRom
@@ -47,24 +48,26 @@ noncomputable def nonzeroRom
   classical
   letI : DecidableEq (Message × 𝔾) := Classical.decEq _
   let scheme := NonzeroNonce.signature (F := 𝔽) (M := Message) g
-  exact (simulateQ (Message × 𝔾 →ₒ 𝔽).romImpl (do
+  exact RandomOracle.run do
     let (publicKey, secretKey) ← scheme.keygen
-    let ((message, signature), signed) ← scheme.runWithSigningOracle publicKey secretKey (adversary publicKey)
-    let valid ← scheme.verify publicKey message signature
-    return !signed.wasQueried message && valid)).run' ∅
+    let forgery ← ROM.run scheme publicKey secretKey (adversary publicKey)
+    let challenge ← RandomOracle.hash (forgery.message, forgery.commitment)
+    return !forgery.signingLog.wasQueried forgery.message &&
+      decide (forgery.response • g = forgery.commitment + challenge • publicKey)
 
 /-- Algebraic Schnorr: the commitment is an explained group output.
 Malformed requests cannot win. The equation and freshness test are unchanged. -/
 noncomputable def agm
     (adversary : AlgebraicAdversary curve securityParameter (Message := Message)) : ProbComp Bool :=
-  (simulateQ (unifFwdImpl (Message × 𝔾 →ₒ 𝔽) + randomOracle (spec := Message × 𝔾 →ₒ 𝔽)) (do
-    let secret ← liftComp ($ᵗ 𝔽) (AGM.BaseSpec 𝔽 𝔾 Message)
-    let ((out, _basis), state) ← (adversary.run (AGM.handler g secret) (AGM.initial g (secret • g))).run {}
-    match out.value.groups () with
-    | [R] =>
-        let (message, z) := out.value.data
-        let challenge : 𝔽 ← (AGM.BaseSpec 𝔽 𝔾 Message).query (.inr (message, R))
-        return !state.malformed && decide (message ∉ state.signed ∧ z • g = R + challenge • (secret • g))
-    | _ => return false)).run' ∅
+  RandomOracle.run do
+    let secret ← RandomOracle.sample 𝔽
+    let result ← AGM.run g secret adversary
+    match result with
+    | some forgery =>
+        let challenge ← RandomOracle.hash (forgery.message, forgery.commitment)
+        return !forgery.state.malformed && decide (
+          forgery.message ∉ forgery.state.signedMessages ∧
+          forgery.response • g = forgery.commitment + challenge • (secret • g))
+    | none => return false
 
 end Schnorr.Game

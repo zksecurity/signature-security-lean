@@ -1,5 +1,6 @@
 import Signatures.Schnorr.GeneralNonzeroROMSecurityModel
 import Signatures.Schnorr.Proofs.GeneralNonzeroROM
+import Signatures.Schnorr.Proofs.Game
 
 /-! Proofs for the short general nonzero-nonce Schnorr ROM statement. The displayed game is
 the original source game, and its DLog term ranges over the same fixed backend
@@ -39,10 +40,9 @@ theorem romEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : UnrestrictedAdversary curve securityParameter queries) :
     romEufCmaGame curve securityParameter adversary =
       NonzeroNonce.game (model.parameters securityParameter queries).generator adversary.source := by
-  classical
-  simp only [romEufCmaGame, Schnorr.Game.nonzeroRom, NonzeroNonce.game,
-    SignatureAlg.unforgeableExperiment, ROMSecurityModel.generator_eq]
-  congr!
+  simpa only [romEufCmaGame, NonzeroNonce.game, SignatureAlg.unforgeableExperiment,
+    ROMSecurityModel.generator_eq] using
+    (Schnorr.Game.nonzeroRom_eq_source curve securityParameter ⟨adversary.source.main⟩)
 
 theorem romDLogSuccessBound_eq (securityParameter : Nat) (queries : QueryAllowance) (time : Nat) :
     romDLogSuccessBound curve securityParameter queries time =

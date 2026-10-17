@@ -1,5 +1,6 @@
 import Signatures.Model.PairingCurve
 import Signatures.Proximity.Spec.LazyAGM
+import Signatures.Model.AlgebraicOracle
 
 /-! Proximity security games, independent of any execution model or resource certificate.
 Read the experiment below as: sample a key, run the attacker with adaptive
@@ -9,6 +10,7 @@ Oracle dispatch and algebraic explanation bookkeeping are in the imported spec.
 Security bounds are in `Statement.lean`; execution contracts remain separate. -/
 
 open OracleComp OracleSpec
+open Model
 
 namespace Proximity.Game
 
@@ -29,28 +31,25 @@ abbrev AlgebraicAdversary := Model.LazyAGM.Adversary (curve.Scalar securityParam
 noncomputable def agm
     (adversary : AlgebraicAdversary curve securityParameter dimension (Slot := Slot)) : ProbComp Bool := by
   classical
-  exact (simulateQ Model.LazyAGM.lazyImpl (do
-    let secret ← (liftM ($ᵗ 𝔽) : OracleComp (Model.LazyAGM.baseSpec (Option (Fin dimension) × Slot) 𝔾₁) 𝔽)
-    let result ← Model.LazyAGM.interactiveRun (LazyAGM.terms) secret adversary g₁ (secret • g₂)
-    match result.data, result.groups .signature with
-    | some (forgery, signedMessages), [signature] =>
-        let target ← Model.LazyAGM.evalTerms (LazyAGM.terms forgery.mstar)
-        return decide (
-          BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
-            BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) target (secret • g₂) ∧
-          forgery.mstar ∉ signedMessages)
-    | _, _ => return false)).run' ∅
+  exact RandomOracle.run do
+    let secret ← RandomOracle.sample 𝔽
+    let forgery ← AlgebraicOracle.run LazyAGM.terms secret adversary g₁ (secret • g₂)
+    let hash ← AlgebraicOracle.hashMessage LazyAGM.terms forgery.message
+    return decide (
+      BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forgery.signature g₂ =
+        BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂) ∧
+      forgery.message ∉ forgery.signedMessages)
 
 /-- Observe the original fresh-collision event; it is not a rejection rule. -/
 noncomputable def collision
     (adversary : AlgebraicAdversary curve securityParameter dimension (Slot := Slot)) : ProbComp Bool := by
   classical
-  exact (simulateQ Model.LazyAGM.lazyImpl (do
-    let secret ← (liftM ($ᵗ 𝔽) : OracleComp (Model.LazyAGM.baseSpec (Option (Fin dimension) × Slot) 𝔾₁) 𝔽)
-    let (out, transcript) ← Model.LazyAGM.run LazyAGM.terms secret adversary (secret • g₂)
-    let signed := transcript.2.map Prod.fst
-    return decide (out.mstar ∉ signed ∧
-      out.mstar.1 = fun k => (signed.mapIdx fun n m =>
-        Model.LazyAGM.tokenCoeff out.ξ n * m.1 k).sum))).run' ∅
+  exact RandomOracle.run do
+    let secret ← RandomOracle.sample 𝔽
+    let forgery ← AlgebraicOracle.run LazyAGM.terms secret adversary g₁ (secret • g₂)
+    let (vector, _slot) := forgery.message
+    return decide (forgery.message ∉ forgery.signedMessages ∧
+      vector = fun k => (forgery.signedMessages.mapIdx fun n (signedVector, _) =>
+        Model.LazyAGM.tokenCoeff forgery.signingCoefficients n * signedVector k).sum)
 
 end Proximity.Game

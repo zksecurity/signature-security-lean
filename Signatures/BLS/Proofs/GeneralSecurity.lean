@@ -1,6 +1,7 @@
 import Signatures.BLS.GeneralSecurityModel
 import Signatures.BLS.GeneralAGMStatement
 import Signatures.BLS.Proofs.ROM
+import Signatures.BLS.Proofs.Game
 
 /-! Proofs for the public BLS AGM/DLog and unrestricted co-CDH statements.
 First connect the displayed games and allowances to the original source games.
@@ -34,16 +35,7 @@ theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     agmEufCmaGame curve securityParameter adversary =
       LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
-  classical
-  simp [agmEufCmaGame, Game.agm, LazyAGM.game, Model.LazyAGM.game, Model.LazyAGM.experiment,
-    LazyAGM.terms, Model.LazyAGM.evalTerms]
-  apply bind_congr
-  intro keyAndCache
-  apply bind_congr
-  intro resultAndCache
-  congr 2
-  split <;> split <;> simp_all
-  grind only
+  exact Game.agm_eq_source curve securityParameter adversary.source
 
 /-- Every algebraic attacker within the declared resources and query allowances obeys
 this EUF-CMA bound. `goodTime` and `badTime` are the complete derived reduction times.

@@ -1,5 +1,6 @@
 import Signatures.OOPS.GeneralSecurityModel
 import Signatures.OOPS.Proofs.GeneralAGM
+import Signatures.OOPS.Proofs.Game
 
 /-! Proofs for the public OOPS statements. The displayed games equal the
 original source games exactly. The native implementations meet the derived
@@ -28,11 +29,7 @@ theorem agmEufCmaGame_eq (securityParameter degree : Nat) {queries : QueryAllowa
     agmEufCmaGame curve securityParameter degree adversary =
       LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) degree adversary.source := by
-  classical
-  rw [LazyAGM.game_eq_of_decidableEq]
-  simp only [agmEufCmaGame, Game.agm, Model.LazyAGM.game, Model.LazyAGM.experiment, LazyAGM.admissible]
-  congr! 6
-  split <;> split <;> simp_all
+  exact Game.agm_eq_source curve securityParameter degree adversary.source
 
 theorem Proofs.agm_security
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]

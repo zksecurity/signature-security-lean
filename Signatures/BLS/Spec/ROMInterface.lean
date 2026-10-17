@@ -35,16 +35,5 @@ abbrev AdversaryPK (M G₁ G₂ : Type) := G₂ → Adversary M G₁
 abbrev hash {M G₁ : Type} (message : M) : OracleComp (advSpec M G₁) G₁ :=
   liftM ((advSpec M G₁).query (Request.hash message))
 
-/-- Run the attacker, then perform the verifier's hash lookup in the same cache. -/
-noncomputable def cacheForgery {M G₁ : Type} (adversary : Adversary M G₁) :
-    OracleComp (advSpec M G₁) (M × G₁) := do
-  let (message, signature) ← adversary
-  let _ ← hash (G₁ := G₁) message
-  return (message, signature)
-
-/-- Append verification's hash lookup after giving the attacker its public key. -/
-noncomputable def cacheForgeryPK {M G₁ G₂ : Type}
-    (adversary : AdversaryPK M G₁ G₂) : AdversaryPK M G₁ G₂ :=
-  fun publicKey => cacheForgery (adversary publicKey)
 
 end BLS.ROM

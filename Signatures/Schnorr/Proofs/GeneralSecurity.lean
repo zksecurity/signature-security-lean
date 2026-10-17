@@ -1,5 +1,6 @@
 import Signatures.Schnorr.GeneralSecurityModel
 import Signatures.Schnorr.Proofs.GeneralAGM
+import Signatures.Schnorr.Proofs.Game
 
 /-! Proofs for the public Schnorr AGM statement. The displayed game is exactly
 the source game, and the constructed solver belongs to the displayed resource
@@ -29,12 +30,7 @@ theorem AlgebraicAdversary.query_allowances (securityParameter : Nat) (queries :
 theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter queries) :
     agmEufCmaGame curve securityParameter adversary = AGM.game (curve.generator securityParameter) adversary.source := by
-  simp only [agmEufCmaGame, Game.agm, AGM.game, AGM.experiment]
-  congr! 8
-  funext motive groups singleton fallback
-  cases groups with
-  | nil => rfl
-  | cons R rest => cases rest <;> rfl
+  exact Game.agm_eq_source curve securityParameter adversary.source
 
 theorem Proofs.agm_security
     (curve : Model.CyclicCurve) [model : AGMSecurityModel curve]

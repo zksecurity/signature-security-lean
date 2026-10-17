@@ -58,19 +58,22 @@ theorem rom_eq_source (curve : Model.PairingCurve) (securityParameter : Nat)
         (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary := by
   classical
-  simp only [rom, CoCDH.Tight.blsEufLazyPK, CoCDH.Tight.blsEufTightPK]
+  simp only [rom, CoCDH.Tight.blsEufLazyPK, CoCDH.Tight.blsEufTightPK,
+    ROM.cacheForgeryPK, ROM.cacheForgery, simulateQ_bind, simulateQ_pure,
+    StateT.run_bind, StateT.run_pure, bind_assoc, pure_bind]
   apply bind_congr
   intro secret
   have hRun := ROM.run_encode (F := curve.Scalar securityParameter)
     (curve.generator securityParameter) (secret • curve.generator securityParameter)
-    (ROM.cacheForgeryPK adversary (secret • curve.keyGenerator securityParameter)) ROM.State.empty
+    (adversary (secret • curve.keyGenerator securityParameter)) ROM.State.empty
   simp only [ROM.Internal.encodeState, ROM.State.empty] at hRun
   rw [← hRun, bind_map_left]
   apply bind_congr
   rintro ⟨⟨message, signature⟩, state⟩
-  congr 1
-  apply Bool.eq_iff_iff.mpr
-  simp only [Bool.and_eq_true, decide_eq_true_eq]
-  rfl
+  rcases state with ⟨cache, signed⟩
+  cases h : cache message <;>
+    simp [ROM.hash, ROM.oracle, ROM.Internal.oracle, ROM.hashScalar, ROM.Internal.getDlogS,
+      ROM.Internal.encodeState, h, StateT.run_bind, StateT.run_get, StateT.run_pure,
+      StateT.run_modify, StateT.run_monadLift]
 
 end BLS.Game

@@ -10,6 +10,23 @@ import Signatures.BLS.Spec.ROM
 
 open OracleComp OracleSpec
 
+namespace BLS.ROM
+
+/-- Internal source-game adapter: append verification's hash lookup to the attacker. -/
+noncomputable def cacheForgery {M G₁ : Type} (adversary : Adversary M G₁) :
+    OracleComp (advSpec M G₁) (M × G₁) := do
+  let (message, signature) ← adversary
+  let _ ← hash (G₁ := G₁) message
+  return (message, signature)
+
+/-- Internal public-key adapter used by the existing co-CDH reduction proofs. -/
+noncomputable def cacheForgeryPK {M G₁ G₂ : Type}
+    (adversary : AdversaryPK M G₁ G₂) : AdversaryPK M G₁ G₂ :=
+  fun publicKey => cacheForgery (adversary publicKey)
+
+
+end BLS.ROM
+
 namespace BLS.ROM.Internal
 
 def encodeState {F M : Type} (state : BLS.ROM.State F M) : (M → Option F) × Finset M :=

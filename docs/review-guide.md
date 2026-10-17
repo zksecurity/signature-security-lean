@@ -95,23 +95,25 @@ below is a review template, not a claim that a paper audit has been completed.
 
 ## Game and oracle definitions
 
-The three AGM scheme files specialize a shared signature game; they are not the entire game.
-Read the implementation in this order:
+The BLS, OOPS, and Proximity AGM games share a readable oracle interface:
 
-1. [Oracle interface](../Signatures/Model/SignatureInterface.lean): `advSpec` allows private
-   randomness, base/hash queries, and signing queries. `Adversary.main` receives the public key
-   and may choose later queries using earlier replies.
-2. [Oracle dispatcher](../Signatures/Model/SignatureInteraction.lean): `Interactive.impl`
-   handles those three query variants. Randomness returns plain data; hash and signing each
-   return one tracked signature-group point. `compile` connects this interface to the
-   certified AGM adversary, and `initialInput` supplies the generator and public key.
-3. [Signing and winning check](../Signatures/Model/LazyAGM.lean): `signing` computes the
-   secret-key multiple of the message's weighted hash sum. `experiment` samples the key,
-   runs the adversary through `interactiveRun`, and checks the pairing equation, freshness,
-   and the scheme's additional condition, if any.
-4. [Lazy oracle and probability](../Signatures/Model/LazyAGM.lean): `lazyImpl` supplies the
-   persistent random-oracle cache. `game` starts that cache empty; `advantage` measures the
-   probability that the resulting experiment returns `true`.
+1. [Named requests and state](../Signatures/Model/AlgebraicOracle.lean): `Request.random`,
+   `Request.hash`, and `Request.sign` dispatch the three operations. The `State` record has
+   `hashReplies` and `signingReplies` fields. Only replies actually delivered to the attacker
+   enter these lists, including repeated requests.
+2. [Attacker execution](../Signatures/Model/AlgebraicOracle.lean): `run` evaluates the attacker's
+   algebraic explanation over its received points. Its `Result` names the candidate `message`,
+   `signature`, `signedMessages`, and `signingCoefficients`. `hashMessage` and `sign` implement
+   the scheme's finite weighted base sum and secret-key multiplication.
+3. [Shared random oracle](../Signatures/Model/RandomOracle.lean): `RandomOracle.run` supplies
+   one initially empty lazy oracle for the complete experiment. The public `Game.lean` files
+   show key generation, attacker execution, final hashing, the verification equation, and
+   freshness. OOPS also shows its distinct-message condition; Proximity exposes its collision
+   event separately.
+4. [Exact correspondence](../Signatures/Model/Proofs/AlgebraicOracle.lean): the record state
+   preserves the original grouped transcript and the complete source game. The existing
+   [certified interaction bridge](../Signatures/Model/SignatureInteraction.lean) connects that
+   transcript to the generic AGM execution. These are proved equalities for adaptive attackers.
 
 The scheme-specific hash inputs and signing rules are:
 
@@ -132,13 +134,23 @@ The **non-AGM BLS game** uses the scheme-level
 [ordinary ROM interface](../Signatures/BLS/Spec/ROM.lean): `BLS.ROM.oracle` handles
 the named requests `Request.random`, `Request.hash`, and `Request.sign`.
 Its `State` structure has `hashExponents` and `signedMessages` fields; `hashScalar`
-maintains the private lazy hash-exponent cache. The
-[`cacheForgeryPK` wrapper](../Signatures/BLS/Spec/ROMInterface.lean) appends the verifier's
-hash lookup. In [`BLS.Game.rom`](../Signatures/BLS/Game.lean),
-`simulateQ` runs this program using that handler, and `.run` supplies the empty initial
-state. This adversary returns a raw candidate signature without an algebraic explanation.
+maintains the private lazy hash-exponent cache. In
+[`BLS.Game.rom`](../Signatures/BLS/Game.lean), the attacker returns a message and signature,
+then the verifier explicitly calls `ROM.hash message` and checks the pairing equation.
+This query is needed even when the attacker never hashed its proposed message.
+`simulateQ` uses the same handler for the attacker and verification, and `.run` supplies
+`State.empty`. The public game reads no cached exponent and uses no cache wrapper.
+This adversary returns a raw candidate signature without an algebraic explanation.
 An [exact state-encoding proof](../Signatures/BLS/Proofs/ROM.lean) connects this readable
 handler to the tuple representation used internally by the co-CDH reduction proofs.
+
+The [Schnorr interfaces](../Signatures/Schnorr/Spec/Oracle.lean) use named requests and
+results with `message`, `commitment`, and `response` fields. The ordinary interface retains
+the signing log; the AGM interface also retains the signed-message state and malformed-request
+flag. Both ROM nonce conventions and the AGM game display the equation
+`response • generator = commitment + challenge • publicKey` in
+[`Schnorr.Game`](../Signatures/Schnorr/Game.lean). Their
+[exact game equalities](../Signatures/Schnorr/Proofs/Game.lean) preserve the existing source games.
 
 ## Results
 
@@ -431,8 +443,10 @@ premises, and test applications using only their explicit arguments.
   for all declarations in the generic AGM namespace.
 - [Signature execution bridge](../Signatures/Model/SignatureInteraction.lean): `compile_algebraic`
   certifies all paths and `Adversary.toInteractive_run` proves exact equality with the proof-side
-  runner. The [source experiment](../Signatures/Model/LazyAGM.lean) calls `interactiveRun`;
-  `experiment_eq` preserves the complete winning computation for all three AGM schemes.
+  runner. The [original source experiment](../Signatures/Model/LazyAGM.lean) calls `interactiveRun`;
+  `experiment_eq` preserves its complete winning computation. The readable record-state games
+  are connected to that experiment by
+  [`AlgebraicOracle.game_eq`](../Signatures/Model/Proofs/AlgebraicOracle.lean).
 - [Reply-dependent queries and stopping](../SignaturesTest/AdaptiveQueries.lean).
 - [Freshness, topic counting, and collision probabilities](../SignaturesTest/GameBoundaries.lean).
 - [Coron signing budgets](../SignaturesTest/CoronBudget.lean).

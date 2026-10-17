@@ -1,5 +1,6 @@
 import Signatures.Proximity.GeneralSecurityModel
 import Signatures.Proximity.Proofs.GeneralAGM
+import Signatures.Proximity.Proofs.Game
 
 /-! Proofs for the public Proximity statements. The displayed games equal the
 original source games exactly. The native implementations meet the derived
@@ -28,19 +29,13 @@ theorem agmEufCmaGame_eq (securityParameter dimension : Nat) {queries : QueryAll
     agmEufCmaGame curve securityParameter dimension adversary =
       LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
-  classical
-  simp only [agmEufCmaGame, Game.agm, LazyAGM.game, Model.LazyAGM.game, Model.LazyAGM.experiment, true_and]
-  congr! 6
-  split <;> split <;> simp_all
+  exact Game.agm_eq_source curve securityParameter dimension adversary.source
 
 theorem freshCollisionGame_eq (securityParameter dimension : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
     freshCollisionGame curve securityParameter dimension adversary =
       LazyAGM.collisionGame (curve.keyGenerator securityParameter) adversary.source := by
-  classical
-  simp only [freshCollisionGame, Game.collision, LazyAGM.collisionGame, LazyAGM.collisionExperiment, LazyAGM.Collision]
-  congr! 8
-  exact decide_eq_decide.mpr Iff.rfl
+  exact Game.collision_eq_source curve securityParameter dimension adversary.source
 
 theorem Proofs.agm_security
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
