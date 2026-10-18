@@ -29,6 +29,7 @@ import Signatures.Runtime.Caliper.ExpressionCompilation
 import Signatures.Runtime.Caliper.StagedFoldBounds
 import Signatures.Runtime.Caliper.StructuralBudgets
 import Signatures.Runtime.Caliper.ExpressionBounds
+import Signatures.Runtime.Caliper.ExpressionMemory
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -59,6 +60,9 @@ The complete original-expression compiler derives uniform time/code budgets
 structurally from primitive and final-conversion budgets, including fold input
 construction. Its budget-certified result erases to the original compiler result.
 Actual execution time and additional buffer usage satisfy the derived bounds.
+Dense register/descriptor reservations are also derived from primitive name
+limits and generated code size. Complete expression memory budgets include all
+initial capacity and every intermediate and final state of actual execution.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/

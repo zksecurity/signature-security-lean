@@ -128,8 +128,11 @@ Pinned upstreams:
   fold input construction. Only primitive instructions and final-layout
   conversions supply budgets; all constructor overhead is derived structurally.
   Attaching the budget proof preserves the original accepted code and rejections.
-  These budgets also bound actual running time and additional buffer usage;
-  initial storage and machine metadata retain their separate accounting.
+  The compiler also derives dense register/descriptor reservations from primitive
+  name limits and generated code size. Complete expression memory budgets count
+  code, metadata, all initial capacity and dynamic growth at every intermediate
+  and final state. Scheme families must still bound the primitive resources and
+  layout sizes as functions of the security parameter.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling

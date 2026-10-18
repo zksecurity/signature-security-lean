@@ -173,6 +173,48 @@ example : rejected.compileBudget rejectedBounds = none := rfl
 example : Subtype.val <$> choiceCode.compileBudget choiceBounds = choiceCode.compile (by decide) :=
   choiceCode.compileBudget_forget choiceBounds
 
+-- Two code words can name the final buffer. A code-length budget cannot
+-- replace a primitive's dense descriptor reservation.
+example : descriptionWords releaseLast.code = 2 ∧ releaseLast.code.memBound = 256 := by decide
+example : ¬ NamesAccounted releaseLast.code 0 := by
+  intro bound
+  have impossible : 256 ≤ 2 := bound.buffers
+  omega
+private theorem releaseNames : releaseCode.PrimitiveNames 256 :=
+  ⟨trivial, ⟨by decide, by decide⟩⟩
+private theorem differenceNames : differenceCode.PrimitiveNames 4 :=
+  ⟨⟨trivial, trivial⟩, ⟨by decide, by decide⟩⟩
+private theorem equalNames : equalCode.PrimitiveNames 4 :=
+  ⟨⟨trivial, trivial⟩, ⟨by decide, by decide⟩⟩
+private theorem choiceNames : choiceCode.PrimitiveNames 4 :=
+  ⟨equalNames, trivial, differenceNames⟩
+private theorem choiceAccepted : (choiceCode.compile (by decide)).isSome := by decide +kernel
+private def choiceProgram := (choiceCode.compile (by decide)).get choiceAccepted
+
+example : NamesBound choiceProgram.program.code 2460 :=
+  choiceCode.nameBounds choiceBounds choiceNames choiceProgram (Option.eq_some_of_isSome choiceAccepted)
+example : staticWords choiceProgram.program.code 4 201 ≤ 12296 :=
+  choiceCode.staticMemory_bound choiceBounds choiceNames choiceProgram (Option.eq_some_of_isSome choiceAccepted) 4 201
+
+-- The theorem applies to every represented input and includes all caller-owned
+-- capacity, even in buffer 200, through every intermediate and final state.
+example (tape : RandomTape 8) (value : input.Value) (before : State 8)
+    (represented : input.representation.Holds value before)
+    (registers : RegisterBound before 4) (buffers : before.SupportBound 201) :
+    ∃ after net peak, Caliper.Exec .unit tape choiceProgram.program.code before after
+        (choiceProgram.program.time value) net peak ∧
+      ∀ between, (Caliper.Reaches .unit tape choiceProgram.program.code before between ∨ between = after) →
+        (staticWords choiceProgram.program.code 4 201 : Int) +
+          between.liveMem (max 201 choiceProgram.program.code.memBound) ≤ 12872 + before.liveMem 201 := by
+  obtain ⟨after, net, peak, execution, _, _, memory⟩ :=
+    choiceCode.memoryBound choiceBounds choiceNames choiceProgram (Option.eq_some_of_isSome choiceAccepted)
+      tape value before represented 4 201 registers buffers
+  refine ⟨after, net, peak, execution, ?_⟩
+  intro between visited
+  have bound := (memory between visited).2.2.2
+  change _ ≤ ((12296 + before.liveMem 201 + 576 : Nat) : Int) at bound
+  omega
+
 open Lean in
 run_cmd do
   let allowed := [`propext, `Quot.sound, `Classical.choice]
@@ -183,7 +225,11 @@ run_cmd do
       ``boolCode, ``unitCode, ``consCode, ``widenedCode, ``foldCode, ``releaseLast, ``releaseCode, ``rejected,
       ``differenceBounds, ``equalBounds, ``choiceBounds, ``releaseBounds, ``rejectedBounds,
       ``Compilation.budget, ``Compilation.bounded, ``Compilation.exec_bounded,
-      ``Compilation.compileBudget, ``Compilation.compileBudget_forget] do
+      ``Compilation.compileBudget, ``Compilation.compileBudget_forget,
+      ``releaseNames, ``differenceNames, ``equalNames, ``choiceNames,
+      ``Retain.names, ``Pairing.names, ``Compilation.PrimitiveNames, ``Compilation.names,
+      ``Compilation.nameBounds, ``Compilation.staticMemory_bound, ``Compilation.memoryBound,
+      ``LocalReach.total_memory_bound, ``Budget.staticMemory_le] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

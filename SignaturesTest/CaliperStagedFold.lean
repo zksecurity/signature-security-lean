@@ -2,6 +2,7 @@ import Signatures.Runtime.Caliper.ExpressionCompilation
 import Signatures.Runtime.Caliper.StagedFoldBounds
 import Signatures.Runtime.Caliper.StructuralBudgets
 import Signatures.Runtime.Caliper.ExpressionBounds
+import Signatures.Runtime.Caliper.ExpressionMemory
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend
@@ -160,6 +161,17 @@ private def expressionProgram := (certificate.compile (by decide)).get expressio
 private theorem expressionBounded : expressionProgram.BoundedBy 7192 27146 :=
   certificate.bounded expressionBounds expressionProgram (Option.eq_some_of_isSome expressionAccepted)
 
+private theorem expressionNames : certificate.PrimitiveNames 3 := by
+  refine ⟨trivial, trivial, (fun _ => ⟨trivial, trivial⟩), ?_⟩
+  intro i
+  fin_cases i <;> constructor <;> decide +kernel
+example : NamesBound expressionProgram.program.code 27149 :=
+  certificate.nameBounds expressionBounds expressionNames expressionProgram (Option.eq_some_of_isSome expressionAccepted)
+example : staticWords expressionProgram.program.code 4 201 ≤ 135742 :=
+  certificate.staticMemory_bound expressionBounds expressionNames expressionProgram
+    (Option.eq_some_of_isSome expressionAccepted) 4 201
+example : (certificate.budget expressionBounds).memory 3 4 201 5 = 142939 := by decide
+
 example : (certificate.compileBudget expressionBounds).isSome = true := by decide +kernel
 example : Subtype.val <$> certificate.compileBudget expressionBounds = certificate.compile (by decide) :=
   certificate.compileBudget_forget expressionBounds
@@ -201,7 +213,9 @@ run_cmd do
       ``Compilation.compile, ``Compilation.exec, ``bodyCode, ``stops, ``certificate,
       ``bodiesBounded, ``stopsBounded, ``foldedBounded, ``expressionBounds, ``expressionBounded,
       ``Variable.bounded, ``Compilation.bounded, ``Compilation.exec_bounded,
-      ``Compilation.compileBudget, ``Compilation.compileBudget_forget] do
+      ``Compilation.compileBudget, ``Compilation.compileBudget_forget, ``expressionNames,
+      ``FoldStep.names, ``StagedFold.compile_names, ``Compilation.names,
+      ``Compilation.nameBounds, ``Compilation.staticMemory_bound, ``Compilation.memoryBound] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

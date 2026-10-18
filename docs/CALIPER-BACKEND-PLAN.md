@@ -389,9 +389,9 @@ Implemented and checked:
   [ImplementationBounds](../Signatures/Runtime/Caliper/ImplementationBounds.lean)
   provides uniform time/code bounds, composition, and the resulting actual
   execution-time and additional-buffer bounds. These do not replace the separate
-  initial-storage/register/descriptor account. Polynomial bounds on dense
-  register and buffer-name extents are still needed when instantiating families;
-  a bound on the number of code words alone does not bound operand magnitudes.
+  initial-storage/register/descriptor account. The expression name bounds below
+  now supply that metadata account from primitive name limits and generated code
+  size; code-word count alone cannot bound arbitrary primitive operand magnitudes.
   [StructuralBudgets](../Signatures/Runtime/Caliper/StructuralBudgets.lean) derives
   source-level bounds for projections, accepted shared-input pairing and cons,
   supporting structural proofs of the body budgets themselves.
@@ -425,13 +425,34 @@ Implemented and checked:
   construction. Expression regressions check every constructor, primitive
   budgets, fixed and growing folds, unchanged namespace rejection, and exact
   budget calculations (subtraction 188 steps/791 words; conditional 576/2456).
-  Dense register/buffer-name extents and scheme-family polynomial bounds remain
-  separate obligations; these time/code theorems do not discharge them.
+  These time/code theorems combine with the following metadata bounds.
+- [NameBounds](../Signatures/Runtime/Caliper/NameBounds.lean),
+  [StructuralNames](../Signatures/Runtime/Caliper/StructuralNames.lean),
+  [FoldNames](../Signatures/Runtime/Caliper/FoldNames.lean) and
+  [ExpressionNames](../Signatures/Runtime/Caliper/ExpressionNames.lean) prove that
+  every accepted original expression has at most `N + C` dense register slots
+  and buffer descriptors, where `N` bounds the names in supplied primitive/final
+  conversion code and `C` is the derived stored-code budget. No bound on the
+  finished expression is assumed. Saved-state calls choose a fresh buffer above
+  the callee's names; its extra descriptor fits within the wrapper's code count.
+  Pairing, branches, fixed folds and staged folds preserve this account.
+  The regression with a two-word `memFree 255` primitive demonstrates why `N`
+  cannot be inferred just from the primitive's description length.
+- [ExpressionMemory](../Signatures/Runtime/Caliper/ExpressionMemory.lean) combines
+  these results with actual execution. With initial register/buffer support bounds
+  `r`/`b`, initial buffer capacity `I`, and derived time bound `T`, total memory is
+  at most `C + max(r, N+C) + 3*max(b, N+C) + I + T`, at every intermediate and
+  final state. All initial caller-owned capacity is included. The static part is
+  at most `5*C + 4*N + r + 3*b`; thus metadata introduces no exponential term.
+  The growing-fold regression derives 27149 name slots and 135742 static words
+  from its supplied conversion-name limit of three and code budget of 27146.
+  These deliberately conservative bounds do not assert that arbitrary primitive
+  families are polynomial: scheme families must bound `N`, primitive time/code,
+  layout widths, traversal capacities and initial storage in the security parameter.
 
 Remaining integration sequence:
 
-1. Derive polynomial bounds on dense register/buffer-name extents. Compile derived
-   lookup/update expressions using these refinements. Implement encoded key/message
+1. Compile derived lookup/update expressions using these refinements. Implement encoded key/message
    equality and refine the source's unbounded `Nat` and lists along reachable
    executions. List construction, case analysis, capacity growth and folds are
    implemented, as are tag dispatch, projection/length and saved-state composition.
@@ -451,7 +472,9 @@ Remaining integration sequence:
    do not imply those contracts unchanged. The interactive compiler now proves
    source refinement for every control constructor, including counted iteration.
    Uniform runtime/additional-buffer bounds now follow from actual primitive
-   budgets. Checked emission proves generated-word acceptance and intermediate
+   budgets. Carry the expression name bounds through interactive wrappers and
+   oracle-call implementations when assembling scheme-family memory bounds.
+   Checked emission proves generated-word acceptance and intermediate
    descriptor bounds. Complete machine-memory bounds include
    static storage and every intermediate buffer state. These finite-program
    bounds still need parameter-indexed polynomial bounds for each scheme.
