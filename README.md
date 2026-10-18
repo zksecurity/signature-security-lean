@@ -171,8 +171,16 @@ Pinned upstreams:
   The refinement preserves the reply, stored challenge configuration, cache and
   both logs jointly. Derived time, code and complete intermediate-memory bounds
   charge every saved-frame copy. The bad branch constructs its pair sampler
-  from two scalar draws. Whole-reduction controllers and their reachable-state
-  composition remain to be connected.
+  from two scalar draws. A stored-tag dispatcher now executes either reply,
+  charging time for the selected branch and code space for both branches.
+  A shared invariant preserves configuration, cache and transcript domains and
+  reserves room along every supported adaptive source prefix. The query allowance
+  supplies the complete reply guard; no per-call capacity certificate is assumed.
+  Supported dispatcher returns carry the updated store and remaining reservation.
+  Two-call word-execution tests choose the next request from the first reply's
+  encoded bits, preserving cache/log storage through executed copies.
+  Whole-reduction controllers, final-forgery handling and extraction remain to
+  be connected.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.BLSReplySchemes
+import Signatures.Runtime.Caliper.BLSDispatchSchemes
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend
@@ -128,6 +128,38 @@ example (signing : Bool) : ((bad signing).lower port).staticWords 201 201 ≤
     (BLSResponse.bad_bounded layout.response scale add scale_bound add_bound scale_names.buffers (by decide) add_names.buffers signing)
     (BLSResponse.bad_names layout.response 3 scale add scale_names.accounted add_names.accounted scale_names.buffers (by decide) add_names.buffers signing) 201 201
 
+-- Stored request tags choose the two constructed handlers at run time.
+private def goodDispatch := BLSDispatch.goodCode (base := base) (key := .nat) (val := .atom ())
+  layout default primitives comparison comparison_correct port draw scale scale_names.buffers reserve
+private def badDispatch := BLSDispatch.badCode (base := base) (key := .nat) (val := .atom ())
+  layout default primitives comparison comparison_correct port draw scale scale_names.buffers reserve add add_names.buffers
+
+example : Interactive.TimeBound port .unit (BLSDispatch.input layout.good default).representation goodDispatch
+    (BLSDispatch.timeBudget (base := base) (key := .nat) (val := .atom ()) layout.good 4 (fun _ => BLSResponse.goodTime layout.response 6)) :=
+  BLSDispatch.good_time (base := base) (key := .nat) (val := .atom ()) layout default primitives comparison comparison_correct port draw scale scale_names.buffers reserve
+    draw_correct draw_time scale_bound
+example : Interactive.TimeBound port .unit (BLSDispatch.input layout.bad (layout.pairDefault default)).representation badDispatch
+    (BLSDispatch.timeBudget (base := base) (key := .nat) (val := .pair (.atom ()) (.atom ())) layout.bad
+      (PairSampling.timeBudget cache.value cache.value 4 4) (fun signing => BLSResponse.badTime layout.response signing 6 6)) :=
+  BLSDispatch.bad_time (base := base) (key := .nat) (val := .atom ()) layout default primitives comparison comparison_correct port draw scale scale_names.buffers reserve add add_names.buffers
+    draw_correct draw_time scale_bound add_bound
+
+example : (goodDispatch.lower port).descriptionWords ≤
+    BLSDispatch.codeBudget (base := base) (key := .nat) (val := .atom ()) layout.good 20 (fun _ => BLSResponse.goodWords layout.response 27) :=
+  BLSDispatch.good_words (base := base) (key := .nat) (val := .atom ()) layout default primitives comparison comparison_correct port draw scale scale_names.buffers reserve scale_bound draw_words
+example : (badDispatch.lower port).descriptionWords ≤
+    BLSDispatch.codeBudget (base := base) (key := .nat) (val := .pair (.atom ()) (.atom ())) layout.bad
+      (PairSampling.codeBudget cache.value cache.value 20 20) (fun signing => BLSResponse.badWords layout.response signing 27 27) :=
+  BLSDispatch.bad_words (base := base) (key := .nat) (val := .atom ()) layout default primitives comparison comparison_correct port draw scale scale_names.buffers reserve add add_names.buffers scale_bound add_bound draw_words
+
+example : (goodDispatch.lower port).DescriptionFits :=
+  BLSDispatch.descriptionFits (base := base) (key := .nat) (val := .atom ()) layout.good default primitives comparison comparison_correct port draw _ _ _ draw_fits draw_names (by decide)
+example : (badDispatch.lower port).DescriptionFits :=
+  BLSDispatch.descriptionFits (base := base) (key := .nat) (val := .pair (.atom ()) (.atom ())) layout.bad (layout.pairDefault default)
+    primitives comparison comparison_correct port _ _ _ _
+    (PairSampling.descriptionFits cache.value cache.value cache.wordFits cache.pairValueFits port draw draw draw_fits draw_fits draw_names (by decide))
+    (PairSampling.names cache.value cache.value cache.wordFits cache.pairValueFits port draw draw draw_names draw_names) (by decide)
+
 -- Run actual instructions, including queries. Inspect spare caller storage as well
 -- as the entire output frame, so returning just the right group element is insufficient.
 private structure Observation where
@@ -198,6 +230,35 @@ private def badSign : (layout.bad.input (0, 0) true).Value := ⟨(9, (2, 7, 11),
       CacheLayout.lookup, LookupLayout.table, LookupLayout.entry, layout, cache]
     decide⟩
 
+-- The source theorem covers any adaptive client with this query allowance.
+-- It does not enumerate or restrict the source's infinite Nat message type.
+private theorem initial_reserved : BLSReply.Reserved layout.good 2 ((7, 11), [], [], []) :=
+  ⟨goodMiss.property.1.2.1, goodMiss.property.1.2.2.1.2,
+    ⟨goodMiss.property.1.2.2.2.1.2, goodMiss.property.1.2.2.2.2.2⟩, by decide, by decide⟩
+
+example {A : Type} {main : OracleComp (Model.LazyAGM.advSpec Nat Nat (Word 10)) A}
+    {state : LazyAGM.State Nat (Fin 4) (Word 10)} {used : Nat}
+    (queries : AllQueriesSatisfy main (BLSRecord.allowedQuery layout.good.records))
+    (bounded : IsTotalQueryBound main 2) (signing : Bool) (message : Nat)
+    (next : (Model.LazyAGM.advSpec Nat Nat (Word 10)).Range (BLSRecord.request signing message) →
+      OracleComp (Model.LazyAGM.advSpec Nat Nat (Word 10)) A)
+    (path : SourcePrefix (LazyAGM.listOracle (fun rho : Fin 4 => rho • (7 : Word 10)) (fun rho : Fin 4 => rho • (11 : Word 10)))
+      main ([], [], []) (queryBind (BLSRecord.request signing message) next) state used) :
+    (layout.good.input 0 signing).valid (message, (7, 11), state) :=
+  BLSReply.prefix_ready (base := base) (key := .nat) (val := .atom ()) layout.good default primitives comparison comparison_correct
+    (BLSResponse.good layout.response scale) (BLSResponse.good_buffers layout.response scale scale_names.buffers) (layout.goodReserve reserve)
+    drawSource draw_law initial_reserved queries bounded signing message next path
+
+-- A tiny regression client reads the first reply's encoded point. A nonzero
+-- reply triggers signing a fresh message; zero triggers hashing the same one.
+-- Both requests keep the returned store by executing reads/copies in Caliper.
+-- No host-language decoding/re-encoding occurs between these calls.
+private def nextRequest (storeWords : Nat) (tag message : Word 10) : Interactive.Code 10 :=
+  .compute (Assembly.code ([.literal tag, .literal message] ++ Assembly.reads 0 1 storeWords))
+private def adaptive (handler : Interactive.Code 10) (storeWords : Nat) : Interactive.Code 10 :=
+  .seq handler (.seq (.compute (.imm 1 0 ;; .memLoad 1 0 1))
+    (.seq (.branch 1 (nextRequest storeWords 1 8) (nextRequest storeWords 0 9)) handler))
+
 -- These operational regressions use Lean's evaluator. They are not theorem
 -- assumptions; the general execution/refinement/resource proofs are checked above.
 open Lean in
@@ -212,6 +273,23 @@ run_cmd do
     throwError "BLS complete reply execution case 4 failed"
   unless execute _ badSign (bad true) [1] == some ⟨#[86, 2, 7, 11, 1, 9, 2, 3, 0, 0, 0, 1, 9, 43, 0, 0, 1, 9, 86, 0, 0], [], [1], #[77], 4, 99, 9⟩ do
     throwError "BLS complete reply execution case 5 failed"
+
+open Lean in
+run_cmd do
+  let goodInput := BLSDispatch.request layout.good default false goodMiss
+  let badInput := BLSDispatch.request layout.bad (layout.pairDefault default) false badMiss
+  unless execute _ goodInput (adaptive goodDispatch layout.good.store.representation.encoding.words) [3, 2, 1] ==
+      some ⟨#[22, 7, 11, 2, 8, 2, 9, 3, 1, 9, 21, 0, 0, 1, 8, 22, 0, 0], [.invoke, .input 3, .invoke, .input 2], [1], #[77], 4, 99, 9⟩ do
+    throwError "BLS dispatched adaptive fresh-sign case failed"
+  unless execute _ goodInput (adaptive goodDispatch layout.good.store.representation.encoding.words) [0, 2] ==
+      some ⟨#[0, 7, 11, 1, 9, 0, 0, 0, 2, 9, 0, 9, 0, 0, 0, 0, 0, 0], [.invoke, .input 0], [2], #[77], 4, 99, 9⟩ do
+    throwError "BLS dispatched adaptive hash-hit case failed"
+  unless execute _ badInput (adaptive badDispatch layout.bad.store.representation.encoding.words) [2, 3, 1, 1, 2] ==
+      some ⟨#[36, 2, 7, 11, 2, 8, 1, 1, 9, 2, 3, 1, 9, 43, 0, 0, 1, 8, 36, 0, 0], [.invoke, .input 2, .invoke, .input 3, .invoke, .input 1, .invoke, .input 1], [2], #[77], 4, 99, 9⟩ do
+    throwError "BLS paired dispatched adaptive fresh-sign case failed"
+  unless execute _ badInput (adaptive badDispatch layout.bad.store.representation.encoding.words) [0, 0, 2] ==
+      some ⟨#[0, 2, 7, 11, 1, 9, 0, 0, 0, 0, 0, 2, 9, 0, 9, 0, 0, 0, 0, 0, 0], [.invoke, .input 0, .invoke, .input 0], [2], #[77], 4, 99, 9⟩ do
+    throwError "BLS paired dispatched adaptive hash-hit case failed"
 
 example : ¬ (layout.good.input 0 false).valid (9, (7, 11), [(9, 3)], [(9, 21), (9, 21)], []) := by
   intro valid
@@ -231,7 +309,12 @@ example : ¬ (layout.good.input 0 false).valid (1024, (7, 11), [], [], []) := by
 open Lean in
 run_cmd do
   let allowed := [`propext, `Quot.sound, `Classical.choice]
-  for name in [``BLSReply.refines, ``BLSReply.denote_source, ``BLSReply.observe,
+  for name in [``BLSDispatch.refines, ``BLSDispatch.denote_source, ``BLSDispatch.observe,
+      ``BLSDispatch.time_bound, ``BLSDispatch.code_bound, ``BLSDispatch.descriptionFits, ``BLSDispatch.memoryBound,
+      ``BLSDispatch.good_time, ``BLSDispatch.bad_time, ``BLSDispatch.good_words, ``BLSDispatch.bad_words,
+      ``BLSDispatch.good_observe, ``BLSDispatch.bad_observe, ``BLSDispatch.returns_reserved,
+      ``BLSReply.reply_output, ``BLSReply.reply_reserved, ``BLSReply.query_reserved, ``BLSReply.prefix_reserved, ``BLSReply.prefix_ready,
+      ``BLSReply.refines, ``BLSReply.denote_source, ``BLSReply.observe,
       ``BLSReply.time_bound, ``BLSReply.code_bound, ``BLSReply.descriptionFits, ``BLSReply.memoryBound,
       ``BLSReply.good_time, ``BLSReply.bad_time, ``BLSReply.good_words, ``BLSReply.bad_words, ``BLSReply.good_observe, ``BLSReply.bad_observe,
       ``EncodedCacheRead.buffers, ``scale_bound, ``add_bound, ``draw_correct, ``draw_law] do

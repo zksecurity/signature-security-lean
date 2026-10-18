@@ -698,9 +698,33 @@ Implemented and checked:
   of unrelated caller contents, spare capacity, registers and tape position.
   The tests use word arithmetic to check wiring; curve implementations retain
   their named primitive obligations. Scalar uniformity is still an explicit
-  primitive law. The complete handler requires its cache hit-or-room and
-  selected-log-room invariants; connecting the existing prefix capacity proofs
-  through whole-reduction controllers remains integration work.
+  primitive law. Whole-reduction controller integration remains below.
+- [BLSReplyReachability](../Signatures/Runtime/Caliper/BLSReplyReachability.lean)
+  combines represented configuration, cache entries, transcript entries and
+  remaining capacity in one `Reserved` invariant. It holds along every supported
+  adaptive prefix of the original random/hash/sign oracle, from the initial
+  reservation and total query allowance. `prefix_ready` derives the complete
+  reply input guard. Reply-domain preservation follows from the constructed
+  handler's source law, without another global response-domain assumption.
+- [BLSDispatch](../Signatures/Runtime/Caliper/BLSDispatch.lean) executes the stored
+  hash/sign tag, branch and payload normalization. Time is bounded by the larger
+  reply budget plus `8*W+2`; stored code includes both reply bodies plus
+  `52*W+40`. The [memory proof](../Signatures/Runtime/Caliper/BLSDispatchMemory.lean)
+  charges static code, registers, descriptors, all initial buffer capacities and
+  intermediate allocation in the same supported execution.
+  [Source linkage](../Signatures/Runtime/Caliper/BLSDispatchSource.lean) identifies
+  the original joint reply/configuration/cache/transcript distribution and proves
+  that supported machine returns preserve the remaining reservation.
+  [Both scheme dispatchers](../Signatures/Runtime/Caliper/BLSDispatchSchemes.lean)
+  use the constructed good/bad responses and scalar/pair samplers, with primitive
+  implementation and sampling assumptions only. Adaptive operational regressions
+  inspect the first returned point's bits, then execute another hash/sign request
+  using copies of the stored configuration, cache and logs. Both repeated hits
+  and fresh signing misses are checked for both reductions. These small clients
+  are regressions; the prefix invariant quantifies over arbitrary source clients.
+  Random-query forwarding, whole-caller storage separation, final-forgery handling
+  and extraction are not implemented by this hash/sign dispatcher. Their capacity
+  accounting must also include the extraction's additional private-cache calls.
 
 Remaining integration sequence:
 
