@@ -546,16 +546,44 @@ Implemented and checked:
   insertion into empty/partly filled tables, unchanged caller storage and
   zero-word entries. Full-table misses and out-of-range component values are
   excluded by the input invariant. Scheme-level reachability must still prove
-  that invariant; effectful `cacheGetExpr` compilation remains to be integrated.
+  that invariant.
+- [CacheReadCompilation](../Signatures/Runtime/Caliper/CacheReadCompilation.lean)
+  constructs the original effectful `cacheGetExpr`. The source comparator's
+  equality theorem and a primitive draw's actual code/refinement are supplied;
+  every other cache operation is generated. Hits return the cached value without
+  invoking the draw. Misses save their frame beyond the lowered draw's buffer
+  footprint, call it, restore the frame and insert the returned value. All these
+  copies execute. The output observation equals the original source computation,
+  including its oracle-call tree. The primitive draw's sampling distribution is
+  not established by this generic composition theorem.
+  [CacheReadBounds](../Signatures/Runtime/Caliper/CacheReadBounds.lean) proves
+  `Tread = Tlookup+t+404*I+80*k+692*v+112*L+420` and
+  `Cread = Clookup+c+1339*I+260*k+2275*v+364*L+2526`, with `t,c` the primitive's
+  time and lowered-code budgets. The additional overhead is linear in widths.
+  [CacheReadMemory](../Signatures/Runtime/Caliper/CacheReadMemory.lean) includes
+  static code, dense metadata, all initial caller capacity and every visited
+  state: `5*Cread+4*max(5,s)+r+3*b+initialCapacity+Tread`, where `s` bounds the
+  primitive's register/buffer names. Stored-word acceptance is derived from the
+  primitive's accepted description and `s<2^w`, including the fresh saved buffer.
+  A one-query primitive regression checks no query/input consumption on full
+  hits, one query on misses, fresh zero, fixed capacity, and preservation of an
+  unrelated caller buffer/register and tape position. With one-word keys/values,
+  capacity two and a four-step/20-word draw, the universal budgets are 15437 steps
+  and 56159 code words. The source equality and axiom footprint are also checked.
+- [InteractiveNames](../Signatures/Runtime/Caliper/InteractiveNames.lean) derives
+  dense name bounds for lowered compute/sequence/tag-dispatch/saved-call wrappers.
+  It supplies the cache memory proof; the remaining scheme controllers still
+  need their own assembly and family bounds.
 
 Remaining integration sequence:
 
-1. Compile effectful cache reads. Fixed-capacity `cacheProgram`, encoded
+1. Compile the remaining scheme code and establish reachable-state invariants.
+   Fixed-capacity `cacheProgram` and `cacheGetExpr`, encoded
    key/message equality, the original
    atomic-comparison `Lookup`, and structured `LookupExpr` now have actual
    implementations and derived budgets, with total encoded lookup compilation
-   proved for all admitted layouts and total cache programming on its hit-or-room
-   domain. Prove successful emission for the remaining
+   proved for all admitted layouts and total cache programming/reads on their
+   hit-or-room domain (reads require a certified primitive draw). Prove successful emission for the remaining
    scheme code, and refine the source's unbounded
    `Nat` and lists along reachable executions. List construction, case analysis,
    capacity growth and folds are

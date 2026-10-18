@@ -32,6 +32,7 @@ import Signatures.Runtime.Caliper.ExpressionBounds
 import Signatures.Runtime.Caliper.ExpressionMemory
 import Signatures.Runtime.Caliper.LookupAcceptance
 import Signatures.Runtime.Caliper.CacheBounds
+import Signatures.Runtime.Caliper.CacheReadMemory
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -77,6 +78,11 @@ implementation on the proved hit-or-room domain, including full-table hits.
 Its time/code bounds add linear overhead to lookup; at most eight buffer slots
 are used, with complete intermediate-state memory accounting. Branch-local
 invariants come from the executed test, and removing padding requires paid copies.
+Effectful cache reads also implement the original source expression. Hits make
+no draw call; misses retain their frame across an actual primitive draw, then
+insert the returned value. Time/code and complete memory bounds include this
+saved-state copying and the primitive's own resources. Draw semantics and its
+implementation remain explicit primitive contracts, including sampling laws.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/

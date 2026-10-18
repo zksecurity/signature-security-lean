@@ -147,10 +147,15 @@ Pinned upstreams:
   require a proved free slot. Time/code overhead beyond lookup is linear in
   stored widths; the complete operation uses at most eight buffer slots and has
   a proved memory bound including code, metadata and all initial capacity.
+  Effectful cache reads also match the original source computation, including
+  oracle calls. Hits return the stored value without a draw; misses save their
+  frame across the primitive draw and insert its returned value. The proved
+  overhead charges all copying and I/O, with explicit primitive draw resources.
+  The sampling law remains a separate obligation of that primitive.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling
-  effectful cache reads, scheme-specific compilation
+  scheme-specific compilation
   and capacity invariants, and linking
   replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
