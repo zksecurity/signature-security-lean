@@ -31,6 +31,7 @@ import Signatures.Runtime.Caliper.StructuralBudgets
 import Signatures.Runtime.Caliper.ExpressionBounds
 import Signatures.Runtime.Caliper.ExpressionMemory
 import Signatures.Runtime.Caliper.LookupAcceptance
+import Signatures.Runtime.Caliper.CacheBounds
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -71,6 +72,11 @@ Structured-key lookup is normalized to this code using a proved source equality
 test, retaining its result and complete resource bounds.
 Encoded lookup compiles for every admitted layout, with at most seven buffer
 slots. Its total implementation is obtained from the existing checked compiler.
+The original cache-programming expression now has a total fixed-capacity
+implementation on the proved hit-or-room domain, including full-table hits.
+Its time/code bounds add linear overhead to lookup; at most eight buffer slots
+are used, with complete intermediate-state memory accounting. Branch-local
+invariants come from the executed test, and removing padding requires paid copies.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/

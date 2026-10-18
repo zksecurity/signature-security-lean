@@ -517,13 +517,45 @@ Implemented and checked:
   including capacity zero, and inherits the original source-result proof and
   time/code/memory bounds. Both lookup regression files now obtain acceptance
   from the general theorem; actual code still runs for all their operational tests.
+- [RestrictedLayout](../Signatures/Runtime/Caliper/RestrictedLayout.lean) records
+  additional proved domain invariants without changing bytes or code. Its decoder
+  predicate is mathematical; it supplies no free executable test.
+  [GuardedBranch](../Signatures/Runtime/Caliper/GuardedBranch.lean) executes the
+  Boolean test and tag selection, then gives each branch the invariant of its
+  observed result. Its copying, dispatch, time/code and name bounds are proved.
+- [ListNarrow](../Signatures/Runtime/Caliper/ListNarrow.lean) and
+  [ListFixedCons](../Signatures/Runtime/Caliper/ListFixedCons.lean) use paid prefix
+  copying to remove only proved-unused padding before prepending within the old
+  capacity. For stored table width `L`, fixed-capacity prepend costs at most
+  `16*L+5` steps and `52*L+53` code words. A miss must have a free slot.
+- [CacheCompilation](../Signatures/Runtime/Caliper/CacheCompilation.lean) constructs
+  a total implementation of the original `cacheProgram` expression. The
+  [layout](../Signatures/Runtime/Caliper/CacheLayout.lean) admits full-table hits
+  and requires room only on misses; `capacityPred+1` is its fixed entry capacity.
+  The same stored comparison result drives the guarded branch. Hits preserve
+  the old table, including zero values and duplicate-key order; misses prepend
+  without changing capacity. Only the source comparator's equality theorem is
+  supplied; no implementation or efficiency premise for the finished cache is used.
+  [CacheBounds](../Signatures/Runtime/Caliper/CacheBounds.lean) derives
+  `Tcache = Tlookup + 160*I + 128*v + 40*L + 176` and
+  `Ccache = Clookup + 546*I + 442*v + 130*L + 1030`, where `I=k+v+L`.
+  The code needs at most eight buffer slots. Complete memory includes stored
+  code, dense metadata, all initial capacity and every intermediate state:
+  `5*Ccache+20+r+3*b+initialCapacity+Tcache`.
+  Operational regressions cover full-table hits, cached zero, duplicate keys,
+  insertion into empty/partly filled tables, unchanged caller storage and
+  zero-word entries. Full-table misses and out-of-range component values are
+  excluded by the input invariant. Scheme-level reachability must still prove
+  that invariant; effectful `cacheGetExpr` compilation remains to be integrated.
 
 Remaining integration sequence:
 
-1. Compile cache update expressions. Encoded key/message equality, the original
+1. Compile effectful cache reads. Fixed-capacity `cacheProgram`, encoded
+   key/message equality, the original
    atomic-comparison `Lookup`, and structured `LookupExpr` now have actual
    implementations and derived budgets, with total encoded lookup compilation
-   proved for all admitted layouts. Prove successful emission for the remaining
+   proved for all admitted layouts and total cache programming on its hit-or-room
+   domain. Prove successful emission for the remaining
    scheme code, and refine the source's unbounded
    `Nat` and lists along reachable executions. List construction, case analysis,
    capacity growth and folds are

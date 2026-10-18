@@ -141,10 +141,16 @@ Pinned upstreams:
   of source results, with complete memory bounds retained.
   Encoded lookup now has a total implementation for every admitted layout:
   compilation succeeds and uses at most seven buffer slots, independently of capacity.
+  The original cache-programming expression also has a total implementation on
+  its proved hit-or-room domain, preserving fixed capacity. Full-table hits keep
+  existing entries, including cached zero. Insertions charge for copying and
+  require a proved free slot. Time/code overhead beyond lookup is linear in
+  stored widths; the complete operation uses at most eight buffer slots and has
+  a proved memory bound including code, metadata and all initial capacity.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling
-  cache update expressions, scheme-specific compilation
+  effectful cache reads, scheme-specific compilation
   and capacity invariants, and linking
   replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
