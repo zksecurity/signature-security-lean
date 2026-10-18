@@ -92,7 +92,9 @@ Pinned upstreams:
 - The source games use lazy random oracles.
 - The separate [Caliper execution layer](Signatures/Runtime/Caliper.lean) supplies
   word programs, encoded field/group routine contracts, concrete local quantitative
-  realizers, bounded layouts, charged copying, mailbox transfers and tape replay.
+  realizers, bounded layouts and local control, charged saved-state composition,
+  mailbox transfers and tape replay. Bounded local loops have proved linear time
+  and generated-code bounds.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes source capacity

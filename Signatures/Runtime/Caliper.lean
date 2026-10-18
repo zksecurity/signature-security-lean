@@ -12,10 +12,16 @@ import Signatures.Runtime.Caliper.Slice
 import Signatures.Runtime.Caliper.Wiring
 import Signatures.Runtime.Caliper.Replay
 import Signatures.Runtime.Caliper.Mailbox
+import Signatures.Runtime.Caliper.Assembly
+import Signatures.Runtime.Caliper.Construct
+import Signatures.Runtime.Caliper.Retain
+import Signatures.Runtime.Caliper.Branch
+import Signatures.Runtime.Caliper.Loop
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
-quantitative backend, bounded layouts, charged copying and recording/replay
-primitives. It does not yet instantiate the full signature security models or
-compile their complete interactive controllers.
+quantitative backend, bounded layouts, construction, saved-state composition,
+branching and bounded local loops, plus copying and recording/replay primitives.
+It does not yet instantiate the full signature security models or compile their
+complete interactive controllers.
 -/

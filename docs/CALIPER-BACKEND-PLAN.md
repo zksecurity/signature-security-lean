@@ -66,6 +66,33 @@ Implemented and checked:
   the five scratch registers are preserved. An incoming reply must already reside
   in an accounted input mailbox. External I/O and full suspension/resumption are
   still separate obligations.
+- [Assembly](../Signatures/Runtime/Caliper/Assembly.lean) and
+  [Construct](../Signatures/Runtime/Caliper/Construct.lean): construction from
+  literal words and indexed reads, with actual scratch allocation, copying and
+  release. Building `n` output words takes at most `8*n` unit-cost steps and
+  stores at most `26*n + 14` code words. Concrete realizers duplicate values and
+  build either tagged-union alternative, including its tag and padding. Read
+  bounds rule out index wraparound and reads from the replaced scratch buffer.
+- [Retain](../Signatures/Runtime/Caliper/Retain.lean): saved-state composition
+  `(a, s) ↦ (f(a), s)` for any certified local callee. The saved buffer is chosen
+  beyond the callee's mutation footprint, subject to an explicit name-width
+  bound. Saving, projection, rebuilding and releasing it are actual instructions.
+  With input/output/saved widths `a`, `b`, `s`, the wrapper adds at most
+  `8*a + 8*b + 12*s` unit-cost steps to the callee and at most
+  `26*a + 26*b + 39*s + 39` code words. The saved payload stays resident during
+  the call. Buffer 1 and the chosen saved buffer are wrapper scratch locations;
+  a surrounding interactive linker must reserve them.
+- [Branch](../Signatures/Runtime/Caliper/Branch.lean): actual stored-tag dispatch,
+  payload normalization and selected-callee execution. At unit costs, selecting
+  a payload of `n` words adds `8*n + 2` steps to that callee. This proof is for
+  canonical represented inputs; it does not implement a decoder for arbitrary
+  attacker-supplied malformed bytes.
+- [Loop](../Signatures/Runtime/Caliper/Loop.lean): a bounded local-loop compiler
+  with early return and an executed stop routine at exhaustion. Its mathematical
+  behavior equals the shared source loop specialized to local deterministic
+  computation. The compiler unrolls the bound, with proved linear time and code
+  bounds; it does not claim the source's one-copy loop footprint. This is not yet
+  a compiler for loops that suspend on external oracle calls.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
@@ -73,19 +100,26 @@ Implemented and checked:
   decoding/rejection, multiword projection with actual scratch peaks, bounded
   length access, fresh/cached replay including full-capacity behavior, mailbox
   framing, and axiom guards for the new proofs.
+- [Control checks](../SignaturesTest/CaliperControl.lean): actual construction and
+  padding costs, both branches with unequal payload widths, nested saved-state
+  calls, preserved unrelated memory, actual temporary-memory peaks, bounded-loop
+  early return/exhaustion, generated code size, rejected read/name bounds, and
+  axiom guards.
 
 Remaining integration sequence:
 
-1. Complete wiring on the bounded layouts: construction/tag dispatch, list
-   access/update and saved-state composition. Relate the source's unbounded
-   `Nat` and lists to bounded representations along reachable executions.
-   The layouts and projection/length routines above are implemented; a fixed-width
-   representation cannot honestly supply all the old closure instances unchanged.
+1. Complete list access/update and refine the source's unbounded `Nat` and lists
+   to bounded representations along reachable executions. Construction, tag
+   dispatch, projection/length and saved-state composition are implemented.
+   A fixed-width representation cannot honestly supply all the old closure
+   instances unchanged.
 2. Compile the existing quantitative reduction/control code through these layouts.
    The local category above does not yet instantiate `BackendAssembly.Backend`:
-   that interface additionally needs oracle calls, branches, saved state, loops,
-   and their complete execution laws. Derive the assembly refinement rather than
-   assuming an execution/cost equation for each finished reduction.
+   that interface requires unrestricted product/sum closure, unbounded counters,
+   external queries and exact cost equations. The new bounded local constructors
+   do not imply those contracts unchanged. Prove the representation and cost
+   refinement, including the different footprint of the unrolled loop compiler,
+   rather than assuming an execution/cost equation for each finished reduction.
 3. Link the mailbox and replay primitives into oracle suspension/resumption and
    rewinding. Prove separation of caller/controller storage and preservation of
    their invariants across external queries. Either copy all saved registers,
