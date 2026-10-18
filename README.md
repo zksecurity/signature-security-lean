@@ -133,10 +133,15 @@ Pinned upstreams:
   code, metadata, all initial capacity and dynamic growth at every intermediate
   and final state. Scheme families must still bound the primitive resources and
   layout sizes as functions of the security parameter.
+  Equality now compares the stored encodings with a linear word scan. The original
+  association-list lookup has a constructed compilation certificate and explicit
+  polynomial time/code budgets in stored-entry capacity and encoding widths.
+  Its retained-environment copies are charged, giving quadratic worst-case overhead.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling
-  lookup/update expressions, scheme-specific compilation and capacity invariants, and linking
+  structured-comparison lookup and update expressions, scheme-specific compilation
+  and capacity invariants, and linking
   replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
   yet discharge them.

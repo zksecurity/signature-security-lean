@@ -449,12 +449,46 @@ Implemented and checked:
   These deliberately conservative bounds do not assert that arbitrary primitive
   families are polynomial: scheme families must bound `N`, primitive time/code,
   layout widths, traversal capacities and initial storage in the security parameter.
+- [WordEquality](../Signatures/Runtime/Caliper/WordEquality.lean) and
+  [EncodedEquality](../Signatures/Runtime/Caliper/EncodedEquality.lean) implement
+  equality by scanning two stored encodings. Each word pair executes two loads,
+  equality, and accumulation with bitwise AND. Source equality follows from the
+  encoding's proved injectivity; decoding is never called by the program.
+  An `n`-word comparison takes exactly `6*n + 3` unit-cost steps, stores
+  `30*n + 13` code words, and uses five register slots. It writes one Boolean
+  into buffer zero, with at most one additional buffer word and no input copies.
+  Zero-word encodings are handled and still pay for their Boolean output.
+  Bounded-layout implementations preserve the original source types and prove
+  the same budgets on every admitted value.
+- [LookupLayout](../Signatures/Runtime/Caliper/LookupLayout.lean) and
+  [LookupCompilation](../Signatures/Runtime/Caliper/LookupCompilation.lean)
+  construct the certificate for the original `lookup eq` expression, including
+  all projections, found/value state, branches, frame construction and fold.
+  Capacity counts stored entries, never keys in the entire domain. The key and
+  value layouts remain arbitrary bounded source layouts. Encoded equality can
+  discharge the sole comparison leaf, and its actual budget/name proofs supply
+  all the compiler's primitive premises.
+- [LookupBounds](../Signatures/Runtime/Caliper/LookupBounds.lean) proves exact
+  formulas for the computed lookup budgets and transfers them to every accepted
+  compiler result. Let `k`/`v` be key/value word counts, `n` entry capacity,
+  `L = 1 + n*(k+v)`, and `t`/`c` comparison time/code budgets. Then:
+  `T = 188*k + 288*v + 256*L + 103 + n*(t + 768*k + 1080*v + 428*L + 500)` and
+  `C = 611*k + 936*v + 832*L + 808 + n*(c + 2678*k + 3770*v + 1521*L + 2589)`.
+  These are quadratic in entry capacity because every traversal step copies its
+  retained environment. There is no assumed efficiency of the completed lookup.
+  The existing expression memory theorem combines these budgets with primitive
+  names and all initial storage. General successful-emission proofs for scheme
+  families remain necessary; a compilation certificate still returns `Option`
+  and checks generated scratch names.
 
 Remaining integration sequence:
 
-1. Compile derived lookup/update expressions using these refinements. Implement encoded key/message
-   equality and refine the source's unbounded `Nat` and lists along reachable
-   executions. List construction, case analysis, capacity growth and folds are
+1. Extend compilation to `LookupExpr` with structured comparison expressions and
+   to updates. Encoded key/message equality and the original atomic-comparison
+   `Lookup` now have actual implementations and derived budgets. Prove successful
+   emission for the chosen scheme families, and refine the source's unbounded
+   `Nat` and lists along reachable executions. List construction, case analysis,
+   capacity growth and folds are
    implemented, as are tag dispatch, projection/length and saved-state composition.
    Folds preserve domains for entries and accumulators. Scalar operations now
    include bounded naturals, Booleans and finite counters; structural composition
