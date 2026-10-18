@@ -1,6 +1,6 @@
 # Caliper execution and abstract cryptographic routines
 
-The execution layer will use Caliper word programs, registers, buffers and tapes.
+The execution layer uses Caliper word programs, registers, buffers and tapes.
 Field/group routines operate on explicit word encodings and carry correctness,
 time, buffer-memory and code-footprint contracts. Attacker code can inspect those
 encodings. AGM explanations remain a separate restriction on group outputs.
@@ -41,26 +41,59 @@ Implemented and checked:
 - [Memory](../Signatures/Runtime/Caliper/Memory.lean): verified Caliper memcpy,
   with unit-cost time at most `7*n + 4` and extra buffer storage at most `n` words.
   This supplies a charged copy primitive, not a complete interactive snapshot.
+- [Layouts](../Signatures/Runtime/Caliper/Layouts.lean): bounded counters,
+  products, tagged unions and lists, with decoding round trips and exact stored
+  word counts. A list reserves its entire capacity, including padding. Combined
+  layouts must fit the address width; component bounds alone do not suffice.
+- [Slice](../Signatures/Runtime/Caliper/Slice.lean) and
+  [Wiring](../Signatures/Runtime/Caliper/Wiring.lean): executable slice copying,
+  pair projections and bounded list-length access. Projections build the output
+  in scratch, copy it back and release scratch. Selecting `n` words takes exactly
+  `8*n` unit-cost steps and stores `26*n + 14` code words. The unrolled code is
+  charged explicitly. These are local realizers, not universal product/list
+  closure instances for the old unbounded source types.
+- [Replay](../Signatures/Runtime/Caliper/Replay.lean): actual random-word recording,
+  replay and cursor reset. A fresh read costs 7 unit-cost steps, a cached read 6,
+  and resetting the virtual cursor 1. The cache must be allocated separately.
+  `read_refines` proves that each returned word equals the original tape at the
+  virtual cursor, preserving the recorded-prefix invariant. The physical tape
+  never rewinds. Private buffers/registers are framed; linking must reserve the
+  controller's buffer and registers and route random reads through it.
+- [Mailbox](../Signatures/Runtime/Caliper/Mailbox.lean): actual request/reply
+  buffer transfer, restoring the local-call zero-offset convention. Transferring
+  `n` words costs at most `7*n + 5` unit-cost steps and at most `n` extra buffer
+  words; its code occupies 41 words. Other buffers/capacities and registers beyond
+  the five scratch registers are preserved. An incoming reply must already reside
+  in an accounted input mailbox. External I/O and full suspension/resumption are
+  still separate obligations.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
+- [Integration checks](../SignaturesTest/CaliperIntegration.lean): bounded-layout
+  decoding/rejection, multiword projection with actual scratch peaks, bounded
+  length access, fresh/cached replay including full-capacity behavior, mailbox
+  framing, and axiom guards for the new proofs.
 
 Remaining integration sequence:
 
-1. Build bounded product/sum/list layouts and their actual Caliper wiring routines.
-   The existing generic backend uses unbounded `Nat` and lists. A fixed-width
-   representation must instead carry capacity invariants or bounded subtypes;
-   it cannot honestly supply all those old instances unchanged.
+1. Complete wiring on the bounded layouts: construction/tag dispatch, list
+   access/update and saved-state composition. Relate the source's unbounded
+   `Nat` and lists to bounded representations along reachable executions.
+   The layouts and projection/length routines above are implemented; a fixed-width
+   representation cannot honestly supply all the old closure instances unchanged.
 2. Compile the existing quantitative reduction/control code through these layouts.
    The local category above does not yet instantiate `BackendAssembly.Backend`:
    that interface additionally needs oracle calls, branches, saved state, loops,
    and their complete execution laws. Derive the assembly refinement rather than
    assuming an execution/cost equation for each finished reduction.
-3. Implement oracle suspension/resumption and full snapshots. Copy saved registers
-   and buffers with proved costs. Caliper's external random-tape cursor only moves
-   forward; rewind using recorded random words and an explicit replay cursor in
-   ordinary memory. Equality of runs from the same mathematical state is not a
-   charged snapshot/restore implementation.
+3. Link the mailbox and replay primitives into oracle suspension/resumption and
+   rewinding. Prove separation of caller/controller storage and preservation of
+   their invariants across external queries. Either copy all saved registers,
+   buffer contents and capacities, or prove restart-from-initial-state replay with
+   charged reinitialization. Caliper has no capacity-read instruction, so arbitrary
+   dynamic capacities require explicit saved allocator metadata; copying filled
+   contents alone does not restore them. Equality of runs from the same mathematical
+   state is not a charged snapshot/restore implementation.
 4. Supply the curve-specific routine library, or retain its named implementation
    contracts as explicit assumptions. Pairing/verification routines, if executed
    by the target program, also need implementations; they are not free consequences

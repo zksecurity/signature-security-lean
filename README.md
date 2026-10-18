@@ -92,11 +92,13 @@ Pinned upstreams:
 - The source games use lazy random oracles.
 - The separate [Caliper execution layer](Signatures/Runtime/Caliper.lean) supplies
   word programs, encoded field/group routine contracts, concrete local quantitative
-  realizers, resource composition, and charged buffer copying. Cryptographic routines
-  require Caliper code and proofs; encoded values remain inspectable by bit operations.
-  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes bounded container
-  layouts and the signature oracle/replay controllers. The signature security models
-  still use their explicit backend contracts; this layer does not yet discharge them.
+  realizers, bounded layouts, charged copying, mailbox transfers and tape replay.
+  Cryptographic routines require Caliper code and proofs; encoded values remain
+  inspectable by bit operations.
+  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes source capacity
+  refinements and linking the signature oracle/replay controllers. The signature
+  security models still use their explicit backend contracts; this layer does not
+  yet discharge them.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.
 - The original pairing-based AGM reductions sample private finite tables. BLS additionally has
   lazy reductions with sparse extraction, finite-list cache refinement, and the same probability
