@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.LookupBounds
+import Signatures.Runtime.Caliper.LookupAcceptance
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend
@@ -26,8 +26,14 @@ private def certificate := SourceLookup.certificate primitives (val := .nat) Op.
 private def budget := SourceLookup.encodedBudget primitives (val := .nat) Op.equal layout (fun _ _ => rfl)
 private def bounds := SourceLookup.localBounds primitives (val := .nat) Op.equal layout comparison budget
 
-private theorem accepted : (certificate.compile (by decide)).isSome := by decide +kernel
+private theorem emitted : certificate.Emits 7 :=
+  SourceLookup.emits (base := base) (key := .nat) (val := .nat) primitives layout Op.equal comparison
+    (SourceLookup.encodedNames primitives (val := .nat) Op.equal layout (fun _ _ => rfl)).buffers
+private theorem accepted : (certificate.compile (by decide)).isSome := emitted.isSome
 private def program := (certificate.compile (by decide)).get accepted
+
+example : program.program.code.memBound ≤ 7 :=
+  emitted.buffers program (Option.eq_some_of_isSome accepted)
 
 private theorem bounded : program.BoundedBy 10853 39885 :=
   SourceLookup.bounded primitives (val := .nat) Op.equal layout comparison budget program (Option.eq_some_of_isSome accepted)
@@ -78,7 +84,7 @@ run_cmd do
       ``SourceLookup.certificate, ``SourceLookup.localBounds, ``SourceLookup.primitiveNames,
       ``SourceLookup.encodedComparison, ``SourceLookup.encodedBudget, ``SourceLookup.encodedNames,
       ``SourceLookup.source_value, ``SourceLookup.budget_time_eq, ``SourceLookup.budget_words_eq,
-      ``SourceLookup.bounded, ``accepted, ``bounded, ``primitiveNames] do
+      ``SourceLookup.bounded, ``SourceLookup.emits, ``emitted, ``accepted, ``bounded, ``primitiveNames] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

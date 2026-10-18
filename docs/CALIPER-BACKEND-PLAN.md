@@ -477,9 +477,9 @@ Implemented and checked:
   These are quadratic in entry capacity because every traversal step copies its
   retained environment. There is no assumed efficiency of the completed lookup.
   The existing expression memory theorem combines these budgets with primitive
-  names and all initial storage. General successful-emission proofs for scheme
-  families remain necessary; a compilation certificate still returns `Option`
-  and checks generated scratch names.
+  names and all initial storage. The compiler checks generated scratch names;
+  successful emission for encoded lookup is now proved below. The remaining
+  scheme code still requires its corresponding acceptance proofs.
 - [LookupExpression](../Signatures/Runtime/Caliper/LookupExpression.lean)
   compiles the original `lookupExpr` with a structured-key equality expression
   by proved normalization to encoded equality. Its only source premise is that
@@ -497,13 +497,34 @@ Implemented and checked:
   and check universal budgets `14813` steps and `53660` code words for capacity
   two, two-word keys and one-word values. Scheme-wide compilation and successful
   family emission remain separate obligations.
+- [BufferBounds](../Signatures/Runtime/Caliper/BufferBounds.lean) derives scratch
+  bounds for actual copied slices, assembly, retained calls, pairing, dispatch
+  and fixed-layout folds, independently of copied widths and traversal capacities.
+  [CompositionAcceptance](../Signatures/Runtime/Caliper/CompositionAcceptance.lean),
+  [ExpressionEmission](../Signatures/Runtime/Caliper/ExpressionEmission.lean) and
+  [FoldEmission](../Signatures/Runtime/Caliper/FoldEmission.lean) use these bounds
+  to construct successful results of the existing checked compiler. Rules cover
+  variables, Booleans, projections, primitive application, pairing, branching
+  and complete fixed-layout folds, including their retained argument frames.
+  The proof pays for all existing copying through the unchanged resource budgets.
+- [LookupAcceptance](../Signatures/Runtime/Caliper/LookupAcceptance.lean) proves
+  that the original lookup certificate compiles for every `LookupLayout` when
+  the comparator uses at most five buffer slots. Encoded equality supplies that
+  bound. The whole lookup needs at most seven buffer slots, independent of key
+  width, entry capacity and key-domain size. The existing layout conditions
+  suffice; no generated-code-length bound or separate acceptance premise is added.
+  `EncodedLookup.implementation` is therefore total on every admitted layout,
+  including capacity zero, and inherits the original source-result proof and
+  time/code/memory bounds. Both lookup regression files now obtain acceptance
+  from the general theorem; actual code still runs for all their operational tests.
 
 Remaining integration sequence:
 
 1. Compile cache update expressions. Encoded key/message equality, the original
    atomic-comparison `Lookup`, and structured `LookupExpr` now have actual
-   implementations and derived budgets. Prove successful
-   emission for the chosen scheme families, and refine the source's unbounded
+   implementations and derived budgets, with total encoded lookup compilation
+   proved for all admitted layouts. Prove successful emission for the remaining
+   scheme code, and refine the source's unbounded
    `Nat` and lists along reachable executions. List construction, case analysis,
    capacity growth and folds are
    implemented, as are tag dispatch, projection/length and saved-state composition.

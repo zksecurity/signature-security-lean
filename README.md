@@ -139,6 +139,8 @@ Pinned upstreams:
   Its retained-environment copies are charged, giving quadratic worst-case overhead.
   Structured-key lookup is compiled to the same code through a proved equality
   of source results, with complete memory bounds retained.
+  Encoded lookup now has a total implementation for every admitted layout:
+  compilation succeeds and uses at most seven buffer slots, independently of capacity.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling

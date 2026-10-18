@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.LookupExpression
+import Signatures.Runtime.Caliper.LookupAcceptance
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend
@@ -34,9 +34,19 @@ private def layout : LookupLayout 8 (Nat × Nat) Nat where
   storageFits := by decide
 
 private def compiled := EncodedLookup.compile (base := base) (key := key) (val := .nat) layout primitives comparison comparison_correct
-private theorem accepted : compiled.isSome := by decide +kernel
-private def program := compiled.get accepted
-private theorem compiled_eq : compiled = some program := Option.eq_some_of_isSome accepted
+private theorem accepted : compiled.isSome :=
+  EncodedLookup.accepted (base := base) (key := key) (val := .nat) layout primitives comparison comparison_correct
+private def program := EncodedLookup.implementation (base := base) (key := key) (val := .nat) layout primitives comparison comparison_correct
+private theorem compiled_eq : compiled = some program :=
+  EncodedLookup.compiled (base := base) (key := key) (val := .nat) layout primitives comparison comparison_correct
+
+example : program.program.code.memBound ≤ 7 := by
+  have same : program = EncodedLookup.implementation (base := base) (key := key) (val := .nat)
+      layout primitives comparison comparison_correct := rfl
+  have sameNames := congrArg (fun p => p.program.code.memBound) same
+  have bound := EncodedLookup.implementation_buffers (base := base) (key := key) (val := .nat)
+    layout primitives comparison comparison_correct
+  exact sameNames.le.trans bound
 
 private theorem time_eq : EncodedLookup.timeBudget (base := base) (key := key) (val := .nat) layout = 14813 := by decide +kernel
 private theorem code_eq : EncodedLookup.codeBudget (base := base) (key := key) (val := .nat) layout = 53660 := by decide +kernel
@@ -88,13 +98,26 @@ example (value : Env base [key, .nat, .list (.pair key .nat)]) :
   simpa only [Expr.run_value] using
     lookupExpr_value primitives comparison comparison_correct value.1 value.2.1 value.2.2.1
 
+-- Capacity zero still has a total compiled implementation and a charged default result.
+private def zeroLayout : LookupLayout 8 (Nat × Nat) Nat :=
+  { layout with capacity := 0, countFits := by decide, storageFits := by decide }
+private def zeroProgram := EncodedLookup.implementation (base := base) (key := key) (val := .nat)
+  zeroLayout primitives comparison comparison_correct
+private def zeroInput : zeroLayout.input.Value := ⟨((2, 5), 9, [], ()), by
+  change (2 < 256 ∧ 5 < 256) ∧ 9 < 256 ∧ (0 ≤ 0 ∧ _) ∧ True
+  simp⟩
+example : (Caliper.run .unit RandomTape.zero 4000 zeroProgram.program.code
+    (zeroLayout.input.representation.initial zeroInput)).map (fun result => result.1.bufs 0) = some #[0, 9] := by decide +kernel
+
 open Lean in
 run_cmd do
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``EncodedLookup.certificate, ``EncodedLookup.bounds, ``EncodedLookup.budget_time,
       ``EncodedLookup.budget_words, ``EncodedLookup.primitiveNames, ``EncodedLookup.source_eq,
       ``EncodedLookup.compile, ``EncodedLookup.compile_isSome, ``EncodedLookup.bounded, ``EncodedLookup.names,
-      ``EncodedLookup.staticMemory, ``EncodedLookup.memoryBound, ``comparison_correct, ``accepted, ``bounded] do
+      ``EncodedLookup.staticMemory, ``EncodedLookup.memoryBound, ``EncodedLookup.emits, ``EncodedLookup.accepted,
+      ``EncodedLookup.implementation, ``EncodedLookup.compiled, ``EncodedLookup.implementation_bounded,
+      ``EncodedLookup.implementation_buffers, ``comparison_correct, ``accepted, ``bounded] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
