@@ -37,6 +37,9 @@ import Signatures.Runtime.Caliper.CacheReadMemory
 import Signatures.Runtime.Caliper.CacheReadOracle
 import Signatures.Runtime.Caliper.SourcePrefix
 import Signatures.Runtime.Caliper.PairSamplingMemory
+import Signatures.Runtime.Caliper.UniformQuery
+import Signatures.Runtime.Caliper.TagBounds
+import Signatures.Runtime.Caliper.InteractiveMemory
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local

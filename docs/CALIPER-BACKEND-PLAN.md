@@ -722,9 +722,40 @@ Implemented and checked:
   using copies of the stored configuration, cache and logs. Both repeated hits
   and fresh signing misses are checked for both reductions. These small clients
   are regressions; the prefix invariant quantifies over arbitrary source clients.
-  Random-query forwarding, whole-caller storage separation, final-forgery handling
-  and extraction are not implemented by this hash/sign dispatcher. Their capacity
-  accounting must also include the extraction's additional private-cache calls.
+  This hash/sign dispatcher is included in the full query service below.
+- [UniformQuery](../Signatures/Runtime/Caliper/UniformQuery.lean) forwards a range
+  chosen at runtime to the original uniform oracle. A request occupies one word;
+  the dependent reply occupies two (range and sampled index), with `index <= range`
+  checked by the representation decoder. No table of all ranges is constructed.
+  The raw exchange costs 10 steps and 41 code words. Forwarding with a saved
+  `S`-word store executes copying, costs at most `34+12*S` steps and `160+39*S`
+  code words, and uses at most three named registers/buffers. This establishes
+  the ideal uniform-port law, not a fair-bit implementation of arbitrary sampling.
+- [BLSOracle](../Signatures/Runtime/Caliper/BLSOracle.lean) joins random forwarding
+  and hash/sign dispatch on this common port. Request and reply tags, payload
+  normalization and padding are executed instructions. Random queries return the
+  unchanged stored configuration/cache/logs. [Source equality](../Signatures/Runtime/Caliper/BLSOracleSource.lean)
+  identifies the original `LazyAGM.listOracle` answer and private state jointly
+  for all three query kinds. [Readiness](../Signatures/Runtime/Caliper/BLSOracleReady.lean)
+  derives a represented request with the exact original query/state at every
+  adaptive source prefix from its initial reservation, total query allowance,
+  represented messages and random-range bound. This is a representation theorem;
+  it does not claim that a caller constructs packets for free.
+  [Resource bounds](../Signatures/Runtime/Caliper/BLSOracleBounds.lean) use
+  `W = BLSReply.width + 3`: time is at most `max(34+12*W,dispatchTime)+16*W+2`,
+  and code at most `dispatchCode+143*W+232`. All stored branches are counted.
+  [Complete memory](../Signatures/Runtime/Caliper/BLSOracleMemory.lean) includes
+  code, names, initial capacity and every intermediate state of the same execution
+  that returns the represented source result, using the reusable
+  [interactive resource theorem](../Signatures/Runtime/Caliper/InteractiveMemory.lean).
+  [Both services](../Signatures/Runtime/Caliper/BLSOracleSchemes.lean) construct
+  their responses from scalar sampling and scale/add routines. Regressions use
+  an actual constant-range query/projection sampler on the shared port, then run
+  hash -> adversary randomness -> sign/hash with machine copies of the private
+  store between all calls. Out-of-range requests and dependent replies are rejected.
+  Whole-caller storage separation, setup, final-forgery handling and extraction
+  remain to be linked. Capacity accounting must also include the extraction's
+  additional private-cache calls and charged chronological transcript reversal.
 
 Remaining integration sequence:
 

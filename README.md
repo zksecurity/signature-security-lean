@@ -179,8 +179,12 @@ Pinned upstreams:
   Supported dispatcher returns carry the updated store and remaining reservation.
   Two-call word-execution tests choose the next request from the first reply's
   encoded bits, preserving cache/log storage through executed copies.
-  Whole-reduction controllers, final-forgery handling and extraction remain to
-  be connected.
+  The full BLS AGM query service also forwards runtime-selected random queries
+  through a common word port. Its source equality and derived resource bounds
+  cover random/hash/sign branches jointly, including their stored tags and
+  padding. Tests interleave private scalar draws and adversary randomness in
+  one program. Whole-caller linkage, final-forgery handling and extraction remain
+  to be connected.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
