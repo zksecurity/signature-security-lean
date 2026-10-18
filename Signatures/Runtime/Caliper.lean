@@ -30,6 +30,7 @@ import Signatures.Runtime.Caliper.StagedFoldBounds
 import Signatures.Runtime.Caliper.StructuralBudgets
 import Signatures.Runtime.Caliper.ExpressionBounds
 import Signatures.Runtime.Caliper.ExpressionMemory
+import Signatures.Runtime.Caliper.ImplementationMemory
 import Signatures.Runtime.Caliper.LookupAcceptance
 import Signatures.Runtime.Caliper.CacheBounds
 import Signatures.Runtime.Caliper.CacheReadMemory

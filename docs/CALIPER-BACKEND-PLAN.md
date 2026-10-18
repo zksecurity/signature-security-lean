@@ -622,6 +622,29 @@ Implemented and checked:
   skip both draws. One-word components with four-step/20-word scalar draws have
   pair budgets of 44 steps, 215 code words and four name slots.
 
+- [BLSResponse](../Signatures/Runtime/Caliper/BLSResponse.lean) constructs both
+  AGM branches' response arithmetic from named scalar-multiplication and group-
+  addition implementations. Argument selection, shared-input retention and all
+  copies execute Caliper code. The good branch returns `rho*g` for hashing or
+  `rho*X` for signing. The bad branch forms `alpha*X+beta*g` and multiplies by
+  `kappa` for signing. [BLSResponseBounds](../Signatures/Runtime/Caliper/BLSResponseBounds.lean)
+  derives affine budgets in the scalar/point widths and the two primitive budgets:
+  with widths `a,g`, primitive times `ts,ta` and code budgets `cs,ca`, good replies
+  use `T=ts+96*a+144*g`, `C=cs+312*a+468*g+168`. Bad hash replies use
+  `T=2*ts+ta+604*a+476*g`, `C=2*cs+ca+1963*a+1547*g+521`; bad signing replies use
+  `T=3*ts+ta+812*a+612*g`, `C=3*cs+ca+2639*a+1989*g+675`.
+  [BLSResponseMemory](../Signatures/Runtime/Caliper/BLSResponseMemory.lean)
+  connects the actual output to the existing `LazyAGM.goodResponse`/`badResponse`
+  source definitions and bounds every state in that same run by
+  `5*C+4*primitiveSlots+initialRegisterSlots+3*initialBufferSlots+initialCapacity+T`.
+  Generated descriptions fit the word width; the layout and scratch-name
+  reservations are explicit. Regression executions cover all four response
+  variants, distinct and zero masks, and preservation of unrelated caller storage.
+  [ImplementationMemory](../Signatures/Runtime/Caliper/ImplementationMemory.lean)
+  exposes the reusable local memory theorem independently of signature games.
+  Transcript recording, the outer saved-state/cache composition, and the complete
+  private reply oracle still need their own construction and source refinement.
+
 Remaining integration sequence:
 
 1. Compile the remaining scheme code and establish reachable-state invariants.

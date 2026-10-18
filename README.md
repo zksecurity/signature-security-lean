@@ -159,6 +159,12 @@ Pinned upstreams:
   BLS's pair-valued cache now derives its sampler from two scalar draws, with
   proved independence, executed retention/permutation and complete memory bounds.
   It requires only the scalar sampler's implementation and sampling law.
+  The BLS AGM response arithmetic also has constructed Caliper code, derived
+  time/code budgets and complete memory bounds linked to the original source.
+  Only scalar multiplication and group addition supply primitive implementations;
+  the surrounding selection and saved-input copying are generated and charged.
+  Recording the returned point in the transcript and joining this code to the
+  private cache remain part of complete reply compilation.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
