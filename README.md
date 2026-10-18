@@ -106,10 +106,13 @@ Pinned upstreams:
   initial data, and buffer capacity at every intermediate instruction boundary.
   Checked emission verifies generated names; all buffer lengths and capacities
   stay within the word width throughout accepted execution.
+  Bounded list construction, empty/head-tail case analysis, and capacity growth
+  have actual implementations with linear time and code bounds; copies, padding,
+  and stored length updates are charged. Their source types remain ordinary lists.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
-  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes dynamic list
-  operations, scheme-specific compilation and capacity invariants, and linking
+  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes list traversal,
+  lookup/update, scheme-specific compilation and capacity invariants, and linking
   replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
   yet discharge them.

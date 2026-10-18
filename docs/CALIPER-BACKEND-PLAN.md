@@ -204,6 +204,30 @@ Implemented and checked:
   body time `B` and maximum count `n`, unit time is at most
   `8*s + n*(B + 16*s + 19)` and stored code at most
   `26*s + 15 + n*(bodyWords + 78*s + 126)`. Every saved counter and copy is charged.
+- [CellArithmetic](../Signatures/Runtime/Caliper/CellArithmetic.lean): indexed
+  load/arithmetic/store with exact execution time, preserved capacities, and a
+  proof that all other encoded words are unchanged. List headers use these
+  instructions for increment/decrement.
+- [ListConstruct](../Signatures/Runtime/Caliper/ListConstruct.lean): empty lists
+  initialize all reserved words; prepend copies the entry and old list and
+  increments the stored count. For entry width `s` and old capacity `c`, prepend
+  returns capacity `c+1`, takes at most `8*(1+(c+1)*s)+5` unit steps and stores at
+  most `26*(1+(c+1)*s)+38` code words. These bounds include padding and scratch.
+- [ListDestruct](../Signatures/Runtime/Caliper/ListDestruct.lean) and
+  [ListCases](../Signatures/Runtime/Caliper/ListCases.lean): list case analysis
+  tests the stored count, constructs the empty tag or copies the head/tail, and
+  decrements the tail count. Input capacity `c+1` yields tail capacity `c`.
+  For output width `N=2+(c+1)*s`, time is at most `8*N+7` and code at most `52*N+59`.
+  These bounds also cover zero-word element encodings and empty lists.
+- [ListCapacity](../Signatures/Runtime/Caliper/ListCapacity.lean): increasing a
+  list's capacity executes copying and adds canonical zero padding. For target
+  capacity `c`, time is at most `8*(1+c*s)` and code at most `26*(1+c*s)+14`.
+  Capacity changes are not free relabelings of stored bytes.
+- [SourceLists](../Signatures/Runtime/Caliper/SourceLists.lean): the new routines
+  implement operations on the original mathematical list types, with proved
+  preservation of their bounded domains. The constructor can grow a capacity;
+  case analysis shrinks the tail's capacity. Looping source programs still need
+  explicit layout reconciliation and invariant proofs.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
@@ -233,12 +257,18 @@ Implemented and checked:
   results, uniform resources, code size, and rejection of an oversized count.
   Address tests reject an exhausted caller-buffer namespace and oversized static
   allocation/register operands, while accepting boundary-valid code.
+- [List checks](../SignaturesTest/CaliperLists.lean): actual empty, partial and
+  full list execution; multiword and zero-word entries; increment/decrement;
+  charged capacity growth; scratch release and exact time/net/peak profiles;
+  rejection of oversized decoded counts; uniform symbolic resource bounds,
+  original-source capacity preservation, and theorem axiom guards.
 
 Remaining integration sequence:
 
-1. Complete list access/update and refine the source's unbounded `Nat` and lists
-   to bounded representations along reachable executions. Construction, tag
-   dispatch, projection/length and saved-state composition are implemented.
+1. Complete list traversal and derived lookup/update, and refine the source's
+   unbounded `Nat` and lists to bounded representations along reachable executions.
+   List construction, case analysis and capacity growth are implemented, as are
+   tag dispatch, projection/length and saved-state composition.
    The bounded-source layout and loop refinement are implemented; the particular
    signature programs still need their reachable-state invariants and primitive
    refinements. A fixed-width representation cannot honestly supply all the old
