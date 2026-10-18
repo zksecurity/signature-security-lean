@@ -642,8 +642,7 @@ Implemented and checked:
   variants, distinct and zero masks, and preservation of unrelated caller storage.
   [ImplementationMemory](../Signatures/Runtime/Caliper/ImplementationMemory.lean)
   exposes the reusable local memory theorem independently of signature games.
-  The outer saved-state/cache composition and complete private reply oracle
-  still need their own construction and source refinement.
+  These response implementations are used by the complete reply handlers below.
 - [BLSRecord](../Signatures/Runtime/Caliper/BLSRecord.lean) constructs the update
   of the selected reverse-order reply log and returns the delivered point. Its
   specification is the original `LazyAGM.record`. Both logs retain fixed capacity;
@@ -666,6 +665,42 @@ Implemented and checked:
   updates with a full unselected log, repeated and first replies, domain checks
   excluding a full selected log or an unrepresentable message, and both branches of an actual
   adaptive source prefix. Caller contents, spare capacity and tape position survive.
+
+- [BLSReplySchemes](../Signatures/Runtime/Caliper/BLSReplySchemes.lean) assembles
+  both complete AGM reply handlers from scalar sampling, scalar multiplication
+  and addition. The good handler uses the scalar cache; the bad handler uses
+  the actual pair sampler and pair-valued cache. Challenge points `g,X` and the
+  bad signing scalar `kappa` are stored input data. The generated preparation
+  saves the original message/configuration/state across the cache call, computes
+  the response once, records that point and returns the updated store. Every
+  projection, constant encoding, retained frame and output copy executes code.
+  [BLSReply](../Signatures/Runtime/Caliper/BLSReply.lean) proves equality with
+  the original `LazyAGM.listReply`, jointly preserving reply, configuration,
+  cache and both logs. The source and target synchronize their sampling calls;
+  an outer cache hit draws nothing but still records the delivered reply.
+  [BLSReplyBounds](../Signatures/Runtime/Caliper/BLSReplyBounds.lean) derives
+  `T=cacheTime+responseTime+2272*W+5` and
+  `C=cacheWords+responseWords+7384*W+2196`, where
+  `W=cacheInputWords+configWords+pointWords+2*logWords` and
+  `logWords=1+logCapacity*(messageWords+pointWords)`. Cache and response terms
+  are themselves derived from named primitive budgets. No finished-reply
+  implementation or efficiency assumption is supplied.
+  [BLSReplyMemory](../Signatures/Runtime/Caliper/BLSReplyMemory.lean) bounds
+  every visited state of the same actual execution that returns a represented,
+  supported source answer. Its bound is
+  `5*C+4*max(5,drawSlots,responseSlots)+initialRegisterSlots+3*initialBufferSlots+initialCapacity+T`.
+  Stored descriptions fit with one additional scratch-name reservation above
+  the sampler; [CacheReadBuffers](../Signatures/Runtime/Caliper/CacheReadBuffers.lean)
+  derives the cache extent `max(8,drawBuffers+1)` independently of code size.
+  Word-execution regressions cover both branches' hash/sign replies, distinct
+  scalar masks, one/two miss draws, hits skipping draws, duplicate delivered
+  replies, a full unselected log, invalid message/log domains, and preservation
+  of unrelated caller contents, spare capacity, registers and tape position.
+  The tests use word arithmetic to check wiring; curve implementations retain
+  their named primitive obligations. Scalar uniformity is still an explicit
+  primitive law. The complete handler requires its cache hit-or-room and
+  selected-log-room invariants; connecting the existing prefix capacity proofs
+  through whole-reduction controllers remains integration work.
 
 Remaining integration sequence:
 

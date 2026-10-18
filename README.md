@@ -166,8 +166,13 @@ Pinned upstreams:
   Recording the returned point in either transcript also has constructed code,
   derived copying budgets and complete memory bounds. The original adaptive
   source's query allowance proves that a slot remains before each delivered
-  reply, including repeated queries. Joining the cache, response arithmetic and
-  recorder into the complete reply handler remains to be done.
+  reply, including repeated queries. Both complete BLS AGM reply handlers now
+  join the lazy cache, response arithmetic and recorder in executed word code.
+  The refinement preserves the reply, stored challenge configuration, cache and
+  both logs jointly. Derived time, code and complete intermediate-memory bounds
+  charge every saved-frame copy. The bad branch constructs its pair sampler
+  from two scalar draws. Whole-reduction controllers and their reachable-state
+  composition remain to be connected.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
