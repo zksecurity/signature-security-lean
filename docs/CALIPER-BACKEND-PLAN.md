@@ -331,17 +331,54 @@ Implemented and checked:
   capacity after truncation, actual scalar/copy/branch composition, uniform
   time/code bounds and axiom guards.
 
+- [SourceListData](../Signatures/Runtime/Caliper/SourceListData.lean) implements
+  empty lists, cons and charged capacity growth when entries have their own
+  restricted source layouts. The correspondence to the underlying bounded list
+  is proved by erasing subtype witnesses; the target executes the existing
+  construction/copying routines with unchanged resource profiles.
+- [ExpressionCertificate](../Signatures/Runtime/Caliper/ExpressionCertificate.lean)
+  and [ExpressionCompilation](../Signatures/Runtime/Caliper/ExpressionCompilation.lean)
+  compile the original `Expr`, covering every constructor: variables, unit,
+  Boolean/natural literals, pairs, projections, empty/cons lists, branches,
+  local bindings, fixed instructions and folds. A certificate selects bounded
+  layouts and proves their capacity conditions. Only instruction leaves accept
+  primitive implementations; there is no finished-expression implementation
+  premise. Successful compilation returns actual Caliper code with source-result
+  correctness, domain preservation and exact execution profiles.
+  [ExpressionVariables](../Signatures/Runtime/Caliper/ExpressionVariables.lean)
+  walks represented environments through charged projections.
+  [CheckedComposition](../Signatures/Runtime/Caliper/CheckedComposition.lean)
+  tests generated saved-buffer names; an exhausted namespace returns `none`.
+  A byte-preserving domain view executes `skip`; list capacity growth instead
+  executes the proved copying routine. The compiler does not supply an encoding
+  for all unbounded source values.
+  The current fold constructor requires each body call to preserve a fixed
+  accumulator domain. Growing accumulators need iteration-dependent bounds and
+  a corresponding fold refinement; this is still integration work. Uniform
+  resource bounds for complete expressions also remain to be assembled from the
+  existing primitive, copy, branch and fold bounds.
+- [Expression checks](../SignaturesTest/CaliperExpressions.lean): original source
+  expressions compile and execute with variable access, primitive arithmetic,
+  both branches, pair projections, local bindings, domain views, lists, capacity
+  growth and empty/partial/full folds. Nested computation has an actual peak of
+  eight temporary words. The subtraction branch retains its two-word capacity;
+  the literal branch releases one word. A valid primitive using the last buffer
+  name compiles alone and is rejected when a parent pair needs another name.
+  All new proofs and implementation fixtures have axiom guards.
+
 Remaining integration sequence:
 
-1. Assemble the bounded scalar and structural implementations into compilation
-   certificates for the original expression syntax, then compile derived
-   lookup/update expressions using the fold. Implement encoded key/message
+1. Derive uniform bounds for the checked expression compiler and support growing
+   fold accumulators with iteration-dependent domains. Compile derived
+   lookup/update expressions using these refinements. Implement encoded key/message
    equality and refine the source's unbounded `Nat` and lists along reachable
    executions. List construction, case analysis, capacity growth and folds are
    implemented, as are tag dispatch, projection/length and saved-state composition.
    Folds preserve domains for entries and accumulators. Scalar operations now
    include bounded naturals, Booleans and finite counters; structural composition
-   includes paired computations and source projections/branches.
+   includes paired computations and source projections/branches. The checked
+   compiler now covers all original expression constructors, subject to the
+   admitted domains and the current fixed-domain fold condition.
    The bounded-source layout and loop refinement are implemented; the particular
    signature programs still need their reachable-state invariants and primitive
    refinements. A fixed-width representation cannot honestly supply all the old

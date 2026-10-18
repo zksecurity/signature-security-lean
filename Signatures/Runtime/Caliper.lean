@@ -25,6 +25,7 @@ import Signatures.Runtime.Caliper.SourceLists
 import Signatures.Runtime.Caliper.SourceFold
 import Signatures.Runtime.Caliper.ScalarBounds
 import Signatures.Runtime.Caliper.SourceStructure
+import Signatures.Runtime.Caliper.ExpressionCompilation
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -44,6 +45,9 @@ their polynomial time and code bounds include every copy and stored branch.
 Bounded natural arithmetic, comparisons, Boolean selection and finite-index
 conversions execute actual instructions with source-correct results. Shared-input
 pairing includes copies and retained state in its time and stored-code bounds.
+Checked compilation covers the original expression constructors on certified
+bounded layouts, rejecting generated scratch names outside the word domain.
+Folds currently require an accumulator domain preserved by each body call.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/
