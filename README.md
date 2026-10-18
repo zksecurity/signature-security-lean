@@ -122,6 +122,10 @@ Pinned upstreams:
   storage widths may grow at successive fold iterations; early returns execute
   the conversion to the final layout. Its result implements the original source
   expression; generated scratch names are checked before accepting a composition.
+  Complete staged folds have uniform polynomial time and stored-code bounds
+  derived from their layout widths and individual body/conversion budgets.
+  These budgets also bound actual running time and additional buffer usage;
+  initial storage and machine metadata retain their separate accounting.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling

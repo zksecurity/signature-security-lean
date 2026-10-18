@@ -376,18 +376,38 @@ Implemented and checked:
   `W = 1 + (remainingCapacity + 1) * entryWords + stateWords + nextWords + 2 * envWords`:
   time is at most `bodyTime + followingTime + stopTime + 44 * W + 7`, and stored
   code at most `bodyCode + followingCode + stopCode + 169 * W + 116` words.
-  These include actual copies, stored branches and final conversions. Uniform
-  bounds for the entire stage family remain to be composed.
+  These include actual copies, stored branches and final conversions.
+  [StagedFoldBounds](../Signatures/Runtime/Caliper/StagedFoldBounds.lean) composes
+  the bounds for the entire accepted stage family. For capacity `n`, with entry,
+  environment and accumulator widths at most `L`, put `U = 1 + (n + 5) * L`.
+  Its time bound is `8 * L + stopTime + n * (bodyTime + stopTime + 44 * U + 7)`;
+  its stored-code bound is
+  `26 * L + 15 + stopWords + n * (bodyWords + stopWords + 169 * U + 116)`.
+  Only the individual bodies and final conversions need supplied budgets;
+  the completed fold's budget is proved by induction on successful compilation.
+  [ImplementationBounds](../Signatures/Runtime/Caliper/ImplementationBounds.lean)
+  provides uniform time/code bounds, composition, and the resulting actual
+  execution-time and additional-buffer bounds. These do not replace the separate
+  initial-storage/register/descriptor account. Polynomial bounds on dense
+  register and buffer-name extents are still needed when instantiating families;
+  a bound on the number of code words alone does not bound operand magnitudes.
+  [StructuralBudgets](../Signatures/Runtime/Caliper/StructuralBudgets.lean) derives
+  source-level bounds for projections, accepted shared-input pairing and cons,
+  supporting structural proofs of the body budgets themselves.
   [Growing-list checks](../SignaturesTest/CaliperStagedFold.lean) compile an
   original source reversal fold whose accumulator grows from one to four words.
   Empty, both partial, and full inputs return correctly padded reversed lists.
   The full example takes 3447 unit-cost steps with 33 additional words at peak;
   unrelated storage survives and generated temporary buffers are released.
+  Its compiled fold, after construction of the initial argument frame, now has
+  all-input bounds of 6412 steps and 24333 stored code words. These follow from
+  proved body budgets of 625 steps/2221 words and final-conversion budgets of
+  32 steps/118 words; no finished-fold efficiency assumption is supplied.
 
 Remaining integration sequence:
 
-1. Derive uniform bounds for complete stage families and the checked expression
-   compiler. Compile derived
+1. Derive uniform bounds for the complete checked expression compiler, using
+   the proved complete-stage-family and structural budgets. Compile derived
    lookup/update expressions using these refinements. Implement encoded key/message
    equality and refine the source's unbounded `Nat` and lists along reachable
    executions. List construction, case analysis, capacity growth and folds are

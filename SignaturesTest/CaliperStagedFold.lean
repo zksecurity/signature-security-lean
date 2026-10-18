@@ -1,4 +1,6 @@
 import Signatures.Runtime.Caliper.ExpressionCompilation
+import Signatures.Runtime.Caliper.StagedFoldBounds
+import Signatures.Runtime.Caliper.StructuralBudgets
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend
@@ -55,6 +57,87 @@ private def bodyCode (i : Fin 3) : Cert body
 
 private def stops (i : Fin 4) : Implementation .unit (states i) list id :=
   ListData.widen .unit (by decide) entry i.val 3 (by omega) (by decide) (by decide) (by decide)
+
+private theorem bodyAccepted (i : Fin 3) : ((bodyCode i).compile (by decide)).isSome := by
+  fin_cases i <;> decide +kernel
+private def bodyPrograms (i : Fin 3) := ((bodyCode i).compile (by decide)).get (bodyAccepted i)
+private theorem bodyCompiledBound (i : Fin 3)
+    (implementation : Implementation .unit (FoldImplementation.bodyInput entry (states i.castSucc) input (argFits i))
+      (states i.succ) (body.denote primitives))
+    (compiled : (bodyCode i).compile (by decide) = some implementation) : implementation.BoundedBy 625 2221 := by
+  dsimp only [bodyCode, Compilation.compile] at compiled
+  erw [Option.bind_eq_some_iff] at compiled
+  obtain ⟨head, headEq, compiled⟩ := compiled
+  erw [Option.bind_eq_some_iff] at compiled
+  obtain ⟨tail, tailEq, compiled⟩ := compiled
+  erw [Option.bind_eq_some_iff] at compiled
+  obtain ⟨frame, frameEq, resultEq⟩ := compiled
+  cases Option.some.inj headEq
+  cases Option.some.inj tailEq
+  have tailFits : (states i.castSucc).representation.encoding.words + input.representation.encoding.words < 2 ^ 8 := by
+    change (1 + i.val * 1) + 4 < 256
+    omega
+  have argumentFits : entry.representation.encoding.words + ((states i.castSucc).prod input tailFits).representation.encoding.words < 2 ^ 8 := by
+    change 1 + ((1 + i.val * 1) + 4) < 256
+    omega
+  have headBound := Implementation.first_boundedBy entry ((states i.castSucc).prod input tailFits) (by decide) argumentFits
+  have tailBound := ((Implementation.second_boundedBy entry ((states i.castSucc).prod input tailFits) (by decide) argumentFits).then
+    (Implementation.first_boundedBy (states i.castSucc) input (by decide) tailFits)).mono
+      (show 8 * ((states i.castSucc).prod input tailFits).representation.encoding.words + 8 * (states i.castSucc).representation.encoding.words ≤ 80 by
+        change 8 * ((1 + i.val * 1) + 4) + 8 * (1 + i.val * 1) ≤ 80
+        omega)
+      (show _ ≤ 289 by
+        change (26 * ((1 + i.val * 1) + 4) + 14) + (26 * (1 + i.val * 1) + 14) + 1 ≤ 289
+        omega)
+  have pairBound := Implementation.checkedPair_boundedBy _ _ (by decide) _ _ _ 8 40 80 289
+    headBound tailBound frame frameEq
+  have pairBudget := pairBound.mono (show _ ≤ 588 by
+    change 8 + 80 + 52 * (1 + ((1 + i.val * 1) + 4)) + 36 * 1 + 16 * (1 + i.val * 1) ≤ 588
+    omega) (show _ ≤ 2078 by
+    change 40 + 289 + 169 * (1 + ((1 + i.val * 1) + 4)) + 117 * 1 + 52 * (1 + i.val * 1) + 124 ≤ 2078
+    omega)
+  have consBudget := (ListData.cons_boundedBy entry i.val (by decide)
+    (by change i.val + 1 < 256; omega) (by change 1 + (i.val + 1) * 1 < 256; omega)).mono
+      (show _ ≤ 37 by change 8 * (1 + (i.val + 1) * 1) + 5 ≤ 37; omega)
+      (show _ ≤ 142 by change 26 * (1 + (i.val + 1) * 1) + 38 ≤ 142; omega)
+  erw [← Option.some.inj resultEq]
+  exact pairBudget.then consBudget
+private theorem bodiesBounded (i : Fin 3) : (bodyPrograms i).BoundedBy 625 2221 :=
+  bodyCompiledBound i (bodyPrograms i) (Option.eq_some_of_isSome (bodyAccepted i))
+private theorem stopsBounded (i : Fin 4) : (stops i).BoundedBy 32 118 := by
+  fin_cases i
+  · constructor
+    · intro value; change 29 ≤ 32; decide
+    · decide
+  · constructor
+    · intro value; change 30 ≤ 32; decide
+    · decide
+  · constructor
+    · intro value; change 31 ≤ 32; decide
+    · decide
+  · constructor
+    · intro value; change 32 ≤ 32; decide
+    · decide
+
+private def folded := StagedFold.compile (by decide) entry list input (by decide) (body.denote primitives)
+  3 states (by decide) argFits frameFits (fun i => (bodyCode i).compile (by decide)) stops
+private theorem foldedAccepted : folded.isSome := by decide +kernel
+private def foldedProgram := folded.get foldedAccepted
+
+-- These bounds cover every represented fold input, not just the concrete
+-- examples below. The generated fold budget follows from the per-stage budgets.
+private theorem foldedBounded : foldedProgram.BoundedBy 6412 24333 := by
+  apply StagedFold.compile_boundedBy entry list input (by decide) (body.denote primitives)
+    3 states (by decide) argFits frameFits (fun i => (bodyCode i).compile (by decide)) stops
+    4 625 2221 32 118 (by decide) (by decide) ?_ ?_ stopsBounded foldedProgram
+      (Option.eq_some_of_isSome foldedAccepted)
+  · intro i
+    change 1 + i.val * 1 ≤ 4
+    omega
+  · intro i implementation compiled
+    have equal : bodyPrograms i = implementation := Option.get_of_eq_some (bodyAccepted i) compiled
+    exact equal ▸ bodiesBounded i
+
 private def expression : Expr Op [.list .nat] (.list .nat) :=
   .fold (.var .here) .nil body
 private def certificate : Cert expression input list := by
@@ -95,7 +178,12 @@ run_cmd do
   for name in [``FoldStep.exec, ``FoldStep.realizer, ``FoldStep.descriptionFits,
       ``FoldStep.time_unit_le, ``FoldStep.code_descriptionWords_le,
       ``StagedFold.step, ``StagedFold.finish, ``StagedFold.compile,
-      ``Compilation.compile, ``Compilation.exec, ``bodyCode, ``stops, ``certificate] do
+      ``Implementation.BoundedBy.then, ``Implementation.BoundedBy.exec,
+      ``Implementation.first_boundedBy, ``Implementation.second_boundedBy,
+      ``Implementation.checkedPair_boundedBy, ``ListData.cons_boundedBy,
+      ``StagedFold.finish_boundedBy, ``StagedFold.step_boundedBy, ``StagedFold.compile_boundedBy,
+      ``Compilation.compile, ``Compilation.exec, ``bodyCode, ``stops, ``certificate,
+      ``bodiesBounded, ``stopsBounded, ``foldedBounded] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
