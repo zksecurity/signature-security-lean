@@ -47,7 +47,8 @@ conversions execute actual instructions with source-correct results. Shared-inpu
 pairing includes copies and retained state in its time and stored-code bounds.
 Checked compilation covers the original expression constructors on certified
 bounded layouts, rejecting generated scratch names outside the word domain.
-Folds currently require an accumulator domain preserved by each body call.
+Folds support iteration-dependent accumulator domains and storage widths;
+early returns execute and charge their conversion to the final layout.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/

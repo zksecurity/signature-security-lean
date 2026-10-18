@@ -63,6 +63,19 @@ def Compilation.compile (allocation : 1 ≤ cost.allocPerWord) {Γ : List (Ty At
       if nameFits : body.program.savedBuffer < 2 ^ w then
         pure (frame.then (FoldImplementation.compile entry state input argFits body allocation hw nameFits capacity countFits frameFits))
       else none
+  | .foldStages input entry output capacity states countFits argFits frameFits valueCode initialCode bodyCode stops => do
+      let values ← valueCode.compile allocation
+      let initial ← initialCode.compile allocation
+      let fold ← StagedFold.compile allocation entry output input hw _ capacity states countFits argFits frameFits
+        (fun i => (bodyCode i).compile allocation) stops
+      have firstFits : 1 + capacity * entry.representation.encoding.words + (states 0).representation.encoding.words +
+          2 * input.representation.encoding.words < 2 ^ w := by simpa using frameFits 0
+      let accumulator ← initial.checkedPair (Implementation.identity input (width_pos hw)) allocation hw
+        (by omega) (by omega) (by omega)
+      let frame ← values.checkedPair accumulator allocation hw (by omega)
+        (by change (1 + capacity * entry.representation.encoding.words) + input.representation.encoding.words < 2 ^ w; omega)
+        (by change (1 + capacity * entry.representation.encoding.words) + ((states 0).representation.encoding.words + input.representation.encoding.words) < 2 ^ w; omega)
+      pure (frame.then fold)
   | .view code preserves sameBytes => do
       let body ← code.compile allocation
       pure (body.then (Implementation.view (width_pos hw) preserves sameBytes))

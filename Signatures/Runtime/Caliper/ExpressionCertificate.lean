@@ -1,6 +1,7 @@
 import Signatures.Runtime.Caliper.ExpressionVariables
 import Signatures.Runtime.Caliper.SourceListData
 import Signatures.Runtime.Caliper.Natural
+import Signatures.Runtime.Caliper.StagedFold
 
 /-! Bounded compilation certificates indexed by the original expression syntax.
 Only fixed instruction leaves require primitive implementations. Layouts and
@@ -78,6 +79,24 @@ inductive Compilation : {Γ : List (Ty Atom)} → {a : Ty Atom} → Expr Op Γ a
       (initialCode : Compilation initial input state)
       (bodyCode : Compilation body (FoldImplementation.bodyInput entry state input argFits) state) :
       Compilation (.fold values initial body) input state
+  | foldStages {Γ : List (Ty Atom)} {a b : Ty Atom} {values : Expr Op Γ (.list a)} {initial : Expr Op Γ b} {body : Expr Op (a :: b :: Γ) b}
+      (input : Layout w (Env base Γ)) (entry : Layout w (a.Value base)) (output : Layout w (b.Value base))
+      (capacity : Nat) (states : Fin (capacity + 1) → Layout w (b.Value base))
+      (countFits : capacity < 2 ^ w)
+      (argFits : ∀ i : Fin capacity,
+        entry.representation.encoding.words + (states i.castSucc).representation.encoding.words + input.representation.encoding.words < 2 ^ w)
+      (frameFits : ∀ i : Fin (capacity + 1),
+        1 + (capacity - i.val) * entry.representation.encoding.words + (states i).representation.encoding.words +
+          2 * input.representation.encoding.words < 2 ^ w)
+      (valueCode : Compilation values input (entry.boundedList capacity countFits (by
+        have bound := frameFits 0
+        simp only [Fin.val_zero, Nat.sub_zero] at bound
+        omega)))
+      (initialCode : Compilation initial input (states 0))
+      (bodyCode : ∀ i : Fin capacity, Compilation body
+        (FoldImplementation.bodyInput entry (states i.castSucc) input (argFits i)) (states i.succ))
+      (stops : ∀ i : Fin (capacity + 1), Implementation cost (states i) output id) :
+      Compilation (.fold values initial body) input output
   | view {Γ : List (Ty Atom)} {a : Ty Atom} {expression : Expr Op Γ a}
       {input : Layout w (Env base Γ)} {source target : Layout w (a.Value base)}
       (code : Compilation expression input source)

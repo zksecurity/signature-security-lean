@@ -118,9 +118,10 @@ Pinned upstreams:
   preserves their shared input through charged copying, with linear overhead
   bounds in the stored input and output widths.
   Checked expression compilation now covers variables, constructors, arithmetic
-  instructions, branches, local bindings and folds with preserved accumulator
-  domains. Its result implements the original source expression; generated
-  scratch names are checked before accepting a composition.
+  instructions, branches, local bindings and folds. Accumulator domains and
+  storage widths may grow at successive fold iterations; early returns execute
+  the conversion to the final layout. Its result implements the original source
+  expression; generated scratch names are checked before accepting a composition.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling

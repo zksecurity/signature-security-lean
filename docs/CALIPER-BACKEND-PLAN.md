@@ -352,10 +352,8 @@ Implemented and checked:
   A byte-preserving domain view executes `skip`; list capacity growth instead
   executes the proved copying routine. The compiler does not supply an encoding
   for all unbounded source values.
-  The current fold constructor requires each body call to preserve a fixed
-  accumulator domain. Growing accumulators need iteration-dependent bounds and
-  a corresponding fold refinement; this is still integration work. Uniform
-  resource bounds for complete expressions also remain to be assembled from the
+  Folds support fixed domains or iteration-dependent accumulator layouts.
+  Uniform resource bounds for complete expressions remain to be assembled from the
   existing primitive, copy, branch and fold bounds.
 - [Expression checks](../SignaturesTest/CaliperExpressions.lean): original source
   expressions compile and execute with variable access, primitive arithmetic,
@@ -365,11 +363,31 @@ Implemented and checked:
   the literal branch releases one word. A valid primitive using the last buffer
   name compiles alone and is rejected when a parent pair needs another name.
   All new proofs and implementation fixtures have axiom guards.
+- [StagedFold](../Signatures/Runtime/Caliper/StagedFold.lean) compiles a finite
+  sequence of accumulator layouts for the same original source `List.foldl`.
+  Each body implements the original source function from the current layout to
+  the next. Empty input executes a value-preserving conversion to the final
+  layout; nonempty input retains the tail/environment, executes the body, and
+  rebuilds the frame using the next accumulator width. The source-expression
+  certificate's `foldStages` constructor compiles the same body expression at
+  each stage; it does not take an implementation of a completed fold.
+  [FoldStepBounds](../Signatures/Runtime/Caliper/FoldStepBounds.lean) proves
+  single-stage bounds, using
+  `W = 1 + (remainingCapacity + 1) * entryWords + stateWords + nextWords + 2 * envWords`:
+  time is at most `bodyTime + followingTime + stopTime + 44 * W + 7`, and stored
+  code at most `bodyCode + followingCode + stopCode + 169 * W + 116` words.
+  These include actual copies, stored branches and final conversions. Uniform
+  bounds for the entire stage family remain to be composed.
+  [Growing-list checks](../SignaturesTest/CaliperStagedFold.lean) compile an
+  original source reversal fold whose accumulator grows from one to four words.
+  Empty, both partial, and full inputs return correctly padded reversed lists.
+  The full example takes 3447 unit-cost steps with 33 additional words at peak;
+  unrelated storage survives and generated temporary buffers are released.
 
 Remaining integration sequence:
 
-1. Derive uniform bounds for the checked expression compiler and support growing
-   fold accumulators with iteration-dependent domains. Compile derived
+1. Derive uniform bounds for complete stage families and the checked expression
+   compiler. Compile derived
    lookup/update expressions using these refinements. Implement encoded key/message
    equality and refine the source's unbounded `Nat` and lists along reachable
    executions. List construction, case analysis, capacity growth and folds are
@@ -378,7 +396,7 @@ Remaining integration sequence:
    include bounded naturals, Booleans and finite counters; structural composition
    includes paired computations and source projections/branches. The checked
    compiler now covers all original expression constructors, subject to the
-   admitted domains and the current fixed-domain fold condition.
+   admitted domains, including iteration-dependent domains for growing folds.
    The bounded-source layout and loop refinement are implemented; the particular
    signature programs still need their reachable-state invariants and primitive
    refinements. A fixed-width representation cannot honestly supply all the old
