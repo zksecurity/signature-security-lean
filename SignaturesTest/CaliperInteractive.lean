@@ -1,4 +1,5 @@
-import Signatures.Runtime.Caliper.SourceMemory
+import Signatures.Runtime.Caliper.SourceAcceptance
+import Signatures.Runtime.Caliper.CapacityBounds
 import Signatures.Runtime.Caliper.InteractiveDescription
 import Signatures.Runtime.Caliper.Words
 import Lean
@@ -88,6 +89,48 @@ private def requestBounds : requestAnswerCode.LocalBounds := ((), ⟨8, fun _ =>
 private def stepBounds : stepCode.LocalBounds := (requestBounds, ⟨15, fun _ => le_rfl⟩)
 private def loopBounds (fuel : Nat) : (loopCode fuel).LocalBounds := (stepBounds, ⟨0, fun _ => le_rfl⟩)
 
+private def countedLayout := SourceCompilation.iterationInput counter 2 (by decide) (by decide) (by decide)
+private def countedSource : BackendProgram.Code syntaxQ sampleSpec sourceIface
+    (A := Nat × Nat) (B := Nat)
+    (StepClass.HasProd.prod (A := Nat) (B := Nat) PUnit.unit PUnit.unit) PUnit.unit :=
+  .iterate (PUnit.unit : syntaxClass.Str Nat) requestAnswer
+private def countedCode : SourceCompilation.Compilation targetIface WordIO.Costs.unit (by decide)
+    countedSource countedLayout counter :=
+  .iterate (Q := syntaxQ) (sourceIface := sourceIface) (s := PUnit.unit)
+    (PUnit.unit : syntaxClass.Str Nat) requestAnswerCode 2 (by decide) (by decide)
+private def countedInput (count : Fin 3) : State 8 := countedLayout.representation.initial
+  ⟨(count.val, 7), count.isLt, (by change 7 < 16; decide)⟩
+
+-- The actual stored count controls early termination; the maximum is only the
+-- compilation bound. Each body query can change the next request's payload.
+example : (WordIO.run .unit RandomTape.zero 500 (countedCode.compile.lower targetIface.port) (countedInput 0) []).map
+    (fun result => (result.state.bufs 0, result.time)) = some (#[7], 11) := by decide
+example : (WordIO.run .unit RandomTape.zero 500 (countedCode.compile.lower targetIface.port) (countedInput 1) [7, 3]).map
+    (fun result => (result.state.bufs 0, result.time)) = some (#[3], 64) := by decide
+example : (WordIO.run .unit RandomTape.zero 500 (countedCode.compile.lower targetIface.port) (countedInput 2) [7, 3, 3, 2]).map
+    (fun result => (result.state.bufs 0, result.time)) = some (#[2], 114) := by decide
+example : countedLayout.representation.encoding.decode [7, 3] = none := by decide
+example : countedCode.timeBudget requestBounds = 114 := by decide
+example : countedCode.checkNames = true := by decide
+example : (countedCode.compile.lower targetIface.port).DescriptionFits := countedCode.descriptionFits (by decide)
+example : (countedCode.compile.lower targetIface.port).descriptionWords ≤ 615 := by
+  have bound := Interactive.Counted.descriptionWords_le targetIface.port requestAnswerCode.compile 2 1 2
+  have body : (requestAnswerCode.compile.lower targetIface.port).descriptionWords = 83 := by decide
+  rw [body] at bound
+  exact bound
+
+example (tape : RandomTape 8) (value : countedLayout.Value) :
+    (fun result => Subtype.val <$> Interactive.observe counter.representation result) <$>
+      countedCode.compile.execute targetIface.port .unit tape (countedLayout.representation.initial value) =
+    some <$> countedSource.denote value.val :=
+  countedCode.observe (by decide) tape value _ (countedLayout.representation.initial_holds value)
+
+example (tape : RandomTape 8) (value : countedLayout.Value) (before : State 8)
+    (holds : countedLayout.representation.Holds value before) (finished : WordIO.Result 8)
+    (reached : some finished ∈ support (countedCode.compile.execute targetIface.port .unit tape before)) :
+    finished.time ≤ 114 ∧ finished.peak ≤ 114 :=
+  countedCode.resources requestBounds (by decide) tape value before holds finished reached
+
 example : (loopCode 2).timeBudget (loopBounds 2) = 86 := by decide
 
 -- A uniform result, over every represented initial state, tape and adaptive
@@ -123,6 +166,47 @@ private def retainedCode := SourceCompilation.Compilation.first
   (PUnit.unit : syntaxClass.Str (Word 8)) saved requestAnswerCode (by decide) (by decide)
 private def retainedInput := (counter.prod saved (by decide)).representation.initial
   ⟨(7, 99), (by change 7 < 16; decide), trivial⟩
+
+example : (loopCode 2).checkNames = true := by decide
+example : retainedCode.checkNames = true := by decide
+example : (retainedCode.compile.lower targetIface.port).DescriptionFits := retainedCode.descriptionFits (by decide)
+example : Subtype.val <$> retainedCode.emit = some (retainedCode.compile.lower targetIface.port) := by
+  rw [SourceCompilation.Compilation.emit_eq]
+  rfl
+
+-- A valid callee may use the final representable buffer name. Retaining caller
+-- state then needs one more name, so emission must reject the enclosing program.
+private def releaseLast : Realizer .unit counter.representation counter.representation id where
+  code := .memFree 255
+  positive_width := by decide
+  description_fits := by simp [DescriptionFits, description]
+  random_free := trivial
+  time _ := 0
+  net _ := 0
+  workspace _ := 0
+  correct tape value before represented := by
+    have execution : Caliper.Exec .unit tape (.memFree 255) before (before.allocBuf 255 0)
+        0 (-(before.caps 255 : Int)) 0 := .memFree
+    refine ⟨before.allocBuf 255 0, _, _, execution, ?_, by omega, le_rfl⟩
+    exact ⟨represented.1, by simpa using represented.2.1,
+      execution.wellFormed_preserved represented.2.2.1,
+      (CapacitiesFit.allocBuf represented.2.2.2 255 0 (by decide))⟩
+private def releaseImplementation : BoundedSource.Implementation .unit counter counter id where
+  preserves _ valid := valid
+  program := releaseLast
+private def releaseCode : SourceCompilation.Compilation targetIface WordIO.Costs.unit (by decide) stop counter counter :=
+  .atomic (Q := syntaxQ) (sourceIface := sourceIface) (a := PUnit.unit) (b := PUnit.unit)
+    (f := id (α := Nat)) () releaseImplementation
+private def rejectedRetain := SourceCompilation.Compilation.first (S := Word 8)
+  (PUnit.unit : syntaxClass.Str (Word 8)) saved releaseCode (by decide) (by decide)
+
+example : releaseCode.checkNames = true := by decide
+example : Interactive.savedBuffer targetIface.port releaseCode.compile = 256 := by decide
+example : rejectedRetain.checkNames = false := by decide
+example : rejectedRetain.emit = none := by rfl
+example : (WordIO.Code.compute (Stmt.memAllocI (w := 8) 0 255)).checkDescription = true := by decide
+example : (WordIO.Code.compute (Stmt.memAllocI (w := 8) 0 256)).checkDescription = false := by decide
+example : (WordIO.Code.read (w := 8) 256).checkDescription = false := by decide
 
 example : retainedCode.timeBudget requestBounds = 46 := by decide
 
@@ -203,7 +287,12 @@ run_cmd do
       ``Interactive.retain_time_unit_le, ``SourceCompilation.Compilation.timeBound,
       ``SourceCompilation.Compilation.resources, ``WordIO.Exec.liveMem_eq,
       ``WordIO.Exec.Visits.liveMem_le_peak, ``WordIO.Exec.Visits.total_memory_bound,
-      ``SourceCompilation.Compilation.memoryBound] do
+      ``SourceCompilation.Compilation.memoryBound, ``SourceCompilation.Compilation.descriptionFits,
+      ``SourceCompilation.Compilation.emit_eq, ``WordIO.Code.checkDescription_eq_true,
+      ``WordIO.Exec.Visits.descriptorsFit, ``SourceCompilation.Compilation.descriptorsFit,
+      ``Counter.load_exec, ``Counter.decrement_exec, ``Interactive.Counted.refines,
+      ``Interactive.Counted.timeBound, ``Interactive.Counted.descriptionFits,
+      ``Interactive.Counted.descriptionWords_le, ``Interactive.Counted.budget_unit_le] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

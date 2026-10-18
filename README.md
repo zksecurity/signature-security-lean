@@ -97,18 +97,20 @@ Pinned upstreams:
   and generated-code bounds. Bounded-source layouts retain the original source
   types with explicit capacity invariants. A charged word I/O adapter implements
   typed oracle calls with a proved equality to the source query. Interactive
-  compilation covers local operations, queries, sequencing, branches, saved state
-  and bounded loops in the existing reduction language. Decoding the compiled
+  compilation covers every constructor of the existing reduction language,
+  including loops controlled by a stored input counter. Decoding the compiled
   execution recovers the original source computation, including adaptive queries.
   Uniform time and additional-buffer bounds follow from bounds on actual local
   implementations, with copying and oracle-interface work included.
   The machine-memory account includes stored code, register and descriptor slots,
   initial data, and buffer capacity at every intermediate instruction boundary.
+  Checked emission verifies generated names; all buffer lengths and capacities
+  stay within the word width throughout accepted execution.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
-  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes input-counted
-  iteration, generated address acceptance, the signature programs' capacity
-  invariants and linking their replay controllers. The signature
+  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes dynamic list
+  operations, scheme-specific compilation and capacity invariants, and linking
+  replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
   yet discharge them.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.

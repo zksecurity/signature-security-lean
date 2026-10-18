@@ -13,6 +13,19 @@ universe v u
 
 variable {w : Nat} {I : Type} {spec : OracleSpec I}
 
+theorem repeat_map {S T : Type} (view : T → S) (body : S → OracleComp spec S)
+    (boundedBody : T → OracleComp spec T)
+    (body_eq : ∀ value, view <$> boundedBody value = body (view value)) (count : Nat) (value : T) :
+    view <$> repeatDenote boundedBody count value = repeatDenote body count (view value) := by
+  induction count generalizing value with
+  | zero => simp [repeatDenote]
+  | succ count ih =>
+    simp only [repeatDenote, ← bind_pure_comp, bind_assoc]
+    rw [← body_eq value, bind_map_left]
+    congr 1
+    funext next
+    simpa only [bind_pure_comp] using ih next
+
 theorem loop_map {S T B D : Type} (stateView : T → S) (resultView : D → B)
     (body : S → OracleComp spec (B ⊕ S)) (stop : S → OracleComp spec B)
     (boundedBody : T → OracleComp spec (D ⊕ T)) (boundedStop : T → OracleComp spec D)
@@ -82,6 +95,8 @@ theorem Compilation.erase {A B : Type} {a : C.Str A} {b : C.Str B}
           step.boundedDenote value := (PFunctor.FreeM.comp_map _ _ _).symm
       _ = Subtype.val <$> step.boundedDenote value := congrArg (fun f => f <$> step.boundedDenote value) composed
       _ = _ := ihBody value
+  | iterate counter code fuel counterFits storageFits ih =>
+    exact repeat_map Subtype.val _ code.boundedDenote ih value.val.1 ⟨value.val.2, value.property.2⟩
 
 /-- The final observation is the original reduction-language computation, with
 all capacity witnesses erased. The machine program and execution profile are

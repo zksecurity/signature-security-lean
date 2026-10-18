@@ -19,7 +19,7 @@ import Signatures.Runtime.Caliper.Branch
 import Signatures.Runtime.Caliper.Loop
 import Signatures.Runtime.Caliper.BoundedSource
 import Signatures.Runtime.Caliper.OracleCall
-import Signatures.Runtime.Caliper.SourceMemory
+import Signatures.Runtime.Caliper.SourceAcceptance
 import Signatures.Runtime.Caliper.InteractiveDescription
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
@@ -27,11 +27,12 @@ This module is independent of the signature games. It supplies a concrete local
 quantitative backend, bounded layouts, construction, saved-state composition,
 branching and bounded local loops, bounded-source refinement, a proved word I/O
 adapter for typed oracle calls, plus copying and recording/replay primitives.
-Interactive compilation refines the existing source language's local/query/
-sequence/branch/first/bounded-loop constructors, retaining actual execution
+Interactive compilation refines all constructors of the existing source
+language, including bounded loops and input-counted iteration, retaining execution
 profiles and deriving uniform time/additional-buffer bounds from primitive
 implementation budgets. The memory account includes initial storage, code,
-registers, descriptors and every intermediate buffer state. Input-counted
-iteration, generated address acceptance and full signature model instantiation
-remain separate obligations.
+registers, descriptors and every intermediate buffer state. Checked emission
+validates generated names and proves word-sized capacities throughout execution.
+Scheme-specific primitive implementations, reachable-state invariants, replay
+linking and signature model instantiation remain separate obligations.
 -/

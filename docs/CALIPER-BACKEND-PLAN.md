@@ -136,15 +136,16 @@ Implemented and checked:
   [InteractiveRetain](../Signatures/Runtime/Caliper/InteractiveRetain.lean):
   sequences, stored-tag branches, loops that suspend on queries, and caller state
   saved in an actual buffer beyond the callee's mutation footprint. Prefix and
-  restoration instructions execute and their profiles compose. The generated
-  buffer name still needs a width check when accepting the complete program.
+  restoration instructions execute and their profiles compose. Checked emission
+  below validates the generated buffer name against the word width.
 - [SourceCompilation](../Signatures/Runtime/Caliper/SourceCompilation.lean) and
   [SourceErasure](../Signatures/Runtime/Caliper/SourceErasure.lean): compilation
   certificates indexed by the existing `BackendProgram.Code`, with implementation
   and capacity obligations at primitive leaves. Correctness and erasure recover
   that original program's oracle computation. Covered constructors are local
-  operations, queries, sequencing, branching, saved state and bounded loops.
-  Input-counted iteration is not yet covered. A completed reduction's execution
+  operations, queries, sequencing, branching, saved state, bounded loops and
+  input-counted iteration: every constructor of the existing language is covered.
+  A completed reduction's execution
   equation is not assumed as a primitive contract.
 - [InteractiveDescription](../Signatures/Runtime/Caliper/InteractiveDescription.lean):
   generated code counts include the I/O envelope and every unrolled body copy.
@@ -156,7 +157,7 @@ Implemented and checked:
   [InteractiveControlBounds](../Signatures/Runtime/Caliper/InteractiveControlBounds.lean)
   and [SourceBounds](../Signatures/Runtime/Caliper/SourceBounds.lean): uniform
   runtime bounds for every represented input, tape and oracle reply path of the
-  compiled subset. Only primitive leaves supply budgets, checked against their
+  compiled program. Only primitive leaves supply budgets, checked against their
   actual Caliper implementations. Query exchange costs, sequence addition,
   branch maxima, executed copies and every loop iteration are derived. At unit
   costs, dispatch adds `2 + 8*payloadWidth` steps along the selected path;
@@ -177,8 +178,32 @@ Implemented and checked:
   compiled execution has a bound on all intermediate machine states equal to
   static storage plus initial allocated capacity plus the uniform runtime budget.
   No initial data or saved caller storage disappears from the account. This is
-  the stated machine-level storage convention; generated address acceptance and
-  flat-memory/CPU refinement are separate obligations.
+  the stated machine-level storage convention; flat-memory/CPU refinement is separate.
+- [WordAcceptance](../Signatures/Runtime/Caliper/WordAcceptance.lean),
+  [InteractiveAcceptance](../Signatures/Runtime/Caliper/InteractiveAcceptance.lean)
+  and [SourceAcceptance](../Signatures/Runtime/Caliper/SourceAcceptance.lean):
+  checked emission validates newly reserved caller-buffer names. Primitive proofs
+  and layout bounds discharge the remaining stored-word conditions, including the
+  I/O adapter. `emit` returns the exact refined program with a `DescriptionFits`
+  proof, or rejects it. A valid callee using the last representable buffer ID can
+  therefore be rejected when a surrounding caller needs an additional saved buffer.
+  The structural check conservatively checks even an unused zero-bound loop body.
+- [CapacityBounds](../Signatures/Runtime/Caliper/CapacityBounds.lean): static
+  allocation capacities follow from accepted descriptions; dynamic allocations
+  use word-valued registers. Every visited state preserves word-sized capacities
+  and lengths, including inside local loops. Bounds on total storage remain
+  separately charged; fitting each operand alone is not a memory budget.
+- [Counter](../Signatures/Runtime/Caliper/Counter.lean),
+  [Counted](../Signatures/Runtime/Caliper/Counted.lean) and
+  [CountedBounds](../Signatures/Runtime/Caliper/CountedBounds.lean): actual stored
+  counter loading, testing and decrementing, with saved-state composition across
+  adaptive body queries. The original `(Nat, state)` input has an explicit layout
+  storing payload then counter; producers must implement that encoding. The
+  maximum count bounds generated code; the stored input count controls execution.
+  Correctness recovers the original source `iterate`. For payload width `s`,
+  body time `B` and maximum count `n`, unit time is at most
+  `8*s + n*(B + 16*s + 19)` and stored code at most
+  `26*s + 15 + n*(bodyWords + 78*s + 126)`. Every saved counter and copy is charged.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
@@ -204,6 +229,10 @@ Implemented and checked:
   caller's complete uniform memory account is 275 words: 215 code, 3 registers,
   9 descriptor words, 2 initial data words and up to 46 additional capacity words.
   The bound covers every visited state and asserts finite support and well-formedness.
+  Counted iteration checks zero, partial and maximum counts, adaptive oracle
+  results, uniform resources, code size, and rejection of an oversized count.
+  Address tests reject an exhausted caller-buffer namespace and oversized static
+  allocation/register operands, while accepting boundary-valid code.
 
 Remaining integration sequence:
 
@@ -214,15 +243,15 @@ Remaining integration sequence:
    signature programs still need their reachable-state invariants and primitive
    refinements. A fixed-width representation cannot honestly supply all the old
    closure instances unchanged.
-2. Finish compiling the existing quantitative reduction/control code through these layouts.
+2. Instantiate compilation certificates for the signature programs through these layouts.
    The local category above does not yet instantiate `BackendAssembly.Backend`:
    that interface requires unrestricted product/sum closure, unbounded counters,
    external queries and exact cost equations. The new bounded local constructors
    do not imply those contracts unchanged. The interactive compiler now proves
-   source refinement for local/query/sequence/branch/first/bounded-loop code.
+   source refinement for every control constructor, including counted iteration.
    Uniform runtime/additional-buffer bounds now follow from actual primitive
-   budgets. Remaining work includes input-counted iteration and complete
-   generated-code/address acceptance. Complete machine-memory bounds include
+   budgets. Checked emission proves generated-word acceptance and intermediate
+   descriptor bounds. Complete machine-memory bounds include
    static storage and every intermediate buffer state. These finite-program
    bounds still need parameter-indexed polynomial bounds for each scheme.
 3. Link the proved word oracle adapter and replay primitives into complete signature

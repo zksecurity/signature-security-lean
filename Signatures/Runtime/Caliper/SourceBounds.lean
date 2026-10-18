@@ -1,5 +1,6 @@
 import Signatures.Runtime.Caliper.SourceErasure
 import Signatures.Runtime.Caliper.InteractiveControlBounds
+import Signatures.Runtime.Caliper.CountedBounds
 
 /-! Uniform runtime of the compiled source language, derived structurally from
 actual Caliper primitive bounds. This does not import the old abstract cost table
@@ -29,6 +30,7 @@ def Compilation.LocalBounds {A B : Type} {a : C.Str A} {b : C.Str B}
   | .branch initial following _ => initial.LocalBounds × following.LocalBounds
   | .first _ _ body _ _ => body.LocalBounds
   | .loop _ body stop _ => body.LocalBounds × stop.LocalBounds
+  | .iterate _ body _ _ _ => body.LocalBounds
 
 def Compilation.timeBudget {A B : Type} {a : C.Str A} {b : C.Str B}
     {source : BackendProgram.Code Q spec sourceIface a b} {input : Layout w A} {output : Layout w B}
@@ -48,6 +50,9 @@ def Compilation.timeBudget {A B : Type} {a : C.Str A} {b : C.Str B}
   | .loop (state := state) (result := result) _ body stop fuel => fun bounds =>
       stop.timeBudget bounds.2 + fuel * (body.timeBudget bounds.1 +
         Interactive.loopOverhead (w := w) cost result.representation.encoding.words state.representation.encoding.words)
+  | .iterate (state := state) _ body fuel _ _ => fun bounds =>
+      Interactive.Counted.budget (w := w) cost (Interactive.savedBuffer targetIface.port body.compile)
+        state.representation.encoding.words (body.timeBudget bounds) fuel
 
 theorem Compilation.timeBound {A B : Type} {a : C.Str A} {b : C.Str B}
     {source : BackendProgram.Code Q spec sourceIface a b} {input : Layout w A} {output : Layout w B}
@@ -69,6 +74,10 @@ theorem Compilation.timeBound {A B : Type} {a : C.Str A} {b : C.Str B}
       (sumView result state) (fun _ => rfl)
     exact Interactive.TimeBound.loop state.representation result.representation (width_pos hw) fits viewed
       (ihBody bounds.1) (ihStop bounds.2) fuel
+  | @iterate S s counter body state code fuel counterFits storageFits ih =>
+    exact (Interactive.Counted.timeBound state.representation (code.correct allocation) (ih bounds) allocation hw
+      storageFits fuel counterFits).viewInput
+        (iterationInput state fuel hw counterFits storageFits).representation (iterationView state fuel) (fun _ => rfl)
 
 /-- Every reachable compiled result has uniformly bounded actual running time
 and additional buffer capacity. Source refinement separately rules out failures.

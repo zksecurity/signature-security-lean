@@ -1,12 +1,14 @@
 import Signatures.Runtime.Caliper.InteractiveRetain
+import Signatures.Runtime.Caliper.Counted
 
 /-! A bounded compilation certificate indexed by the existing reduction language.
 Local leaves require actual Caliper implementations and capacity preservation.
 Control is compiled structurally; no implementation of a completed reduction is
 assumed. Mathematical source types and source games remain unchanged.
 
-Input-counted `iterate` is not yet covered: it needs executed bounded-counter
-control. The constructors here cover atomic/query/sequence/branch/first/loop.
+The constructors cover the whole source syntax, including input-counted
+iteration. Its chosen input layout stores the payload followed by the counter;
+primitive producers must implement that encoding like every other layout.
 -/
 
 namespace Signatures.Runtime.CaliperBackend.SourceCompilation
@@ -38,6 +40,21 @@ def Interface.port (iface : Interface w spec) : Interactive.Port w spec where
   source := Subtype.val
   request := iface.request.representation
   reply := iface.reply
+
+def iterationView {A : Type} (state : Layout w A) (fuel : Nat) :
+    {value : Nat × A // value.1 < fuel + 1 ∧ state.valid value.2} ≃ (state.Value × Fin (fuel + 1)) where
+  toFun value := (⟨value.val.2, value.property.2⟩, ⟨value.val.1, value.property.1⟩)
+  invFun value := ⟨(value.2.val, value.1.val), value.2.isLt, value.1.property⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- A representation choice for the original `(Nat, state)` source input. This
+does not convert an existing product's bytes without executing a conversion. -/
+def iterationInput {A : Type} (state : Layout w A) (fuel : Nat) (hw : 16 < 2 ^ w)
+    (counterFits : fuel + 1 ≤ 2 ^ w) (storageFits : state.representation.encoding.words + 1 < 2 ^ w) :
+    Layout w (Nat × A) where
+  valid value := value.1 < fuel + 1 ∧ state.valid value.2
+  representation := (Interactive.Counted.frame state.representation fuel hw counterFits storageFits).transport (iterationView state fuel)
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
     {Q : QuantitativeStepClass.{0, v, u} C} {sourceIface : BackendProgram.Interface (C := C) spec}
@@ -75,6 +92,11 @@ inductive Compilation : {A B : Type} → {a : C.Str A} → {b : C.Str B} →
       (step : Compilation body state (result.sum state (width_pos hw) fits))
       (finish : Compilation stop state result) (fuel : Nat) :
       Compilation (.loop body stop fuel) state result
+  | iterate {S : Type} {s : C.Str S} (counter : C.Str Nat)
+      {body : BackendProgram.Code Q spec sourceIface s s} {state : Layout w S}
+      (code : Compilation body state state) (fuel : Nat)
+      (counterFits : fuel + 1 ≤ 2 ^ w) (storageFits : state.representation.encoding.words + 1 < 2 ^ w) :
+      Compilation (.iterate counter body) (iterationInput state fuel hw counterFits storageFits) state
 
 variable {targetIface cost hw}
 
@@ -91,6 +113,8 @@ def Compilation.compile {A B : Type} {a : C.Str A} {b : C.Str B}
         input.representation.encoding.words output.representation.encoding.words saved.representation.encoding.words
   | .loop (state := state) (result := result) _ body stop fuel =>
       Interactive.loop body.compile stop.compile result.representation.encoding.words state.representation.encoding.words fuel
+  | .iterate (state := state) _ body fuel _ _ =>
+      Interactive.Counted.code body.compile (Interactive.savedBuffer targetIface.port body.compile) state.representation.encoding.words fuel
 
 /-- This bounded denotation carries capacity witnesses only in the mathematical
 specification. The compiler erases witnesses; no such data or callbacks execute. -/
@@ -108,6 +132,7 @@ def Compilation.boundedDenote {A B : Type} {a : C.Str A} {b : C.Str B}
   | .loop (state := state) (result := result) _ body stop fuel, value =>
       BackendProgram.loopDenote (fun state => sumView result _ <$> body.boundedDenote state)
         stop.boundedDenote fuel value
+  | .iterate _ body _ _ _, value => repeatDenote body.boundedDenote value.val.1 ⟨value.val.2, value.property.2⟩
 
 theorem Compilation.correct {A B : Type} {a : C.Str A} {b : C.Str B}
     {source : BackendProgram.Code Q spec sourceIface a b} {input : Layout w A} {output : Layout w B}
@@ -141,5 +166,8 @@ theorem Compilation.correct {A B : Type} {a : C.Str A} {b : C.Str B}
     have viewed := ihBody.viewOutput (result.representation.sum state.representation (width_pos hw) fits)
       (sumView result state) (fun _ => rfl)
     exact Interactive.Refines.loop state.representation result.representation (width_pos hw) fits viewed ihStop fuel
+  | @iterate S s counter body state code fuel counterFits storageFits ih =>
+    exact (Interactive.Counted.refines state.representation ih allocation hw storageFits fuel counterFits).viewInput
+      (iterationInput state fuel hw counterFits storageFits).representation (iterationView state fuel) (fun _ => rfl)
 
 end Signatures.Runtime.CaliperBackend.SourceCompilation
