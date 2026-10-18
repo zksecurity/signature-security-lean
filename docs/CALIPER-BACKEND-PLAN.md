@@ -287,13 +287,61 @@ Implemented and checked:
   runtime/net/peak profiles, symbolic time/code bounds, bounded-entry decoder
   rejection and theorem axiom guards.
 
+- [Scalar operations](../Signatures/Runtime/Caliper/ScalarBounds.lean):
+  [WordBinary](../Signatures/Runtime/Caliper/WordBinary.lean) loads two actual
+  words, executes the selected instruction, stores the result and truncates the
+  filled length. Its reserved capacity remains charged. [Natural](../Signatures/Runtime/Caliper/Natural.lean)
+  retains source `Nat` semantics on bounded inputs: addition proves no overflow,
+  [subtraction](../Signatures/Runtime/Caliper/Saturating.lean) compares and branches
+  to produce zero on underflow, and equality/order compare the stored words.
+  [Boolean](../Signatures/Runtime/Caliper/Boolean.lean) uses only the canonical
+  words 0 and 1; its decoder rejects other values. Selection executes a zero
+  test to convert the Boolean to the tagged-union convention while preserving
+  its payload. [Finite](../Signatures/Runtime/Caliper/Finite.lean) implements
+  constants, `Fin.val` and `Nat` modulo conversion. A modulus equal to the entire
+  word domain uses the already-correct bounded input bytes, avoiding a wrapped
+  zero divisor. [SourceData](../Signatures/Runtime/Caliper/SourceData.lean) supplies
+  unit and Boolean operations with the original source types and validity predicates.
+  General-cost execution proofs and uniform unit-cost resource theorems are checked.
+
+  | Operation | Unit-cost steps | Stored code words |
+  | --- | ---: | ---: |
+  | Bounded addition, equality, unsigned order | 6 | 27 |
+  | Saturating natural subtraction | 8 | 38 |
+  | Boolean selection | 5 | 23 |
+  | One-word literal construction | 7 | 35 |
+  | Finite conversion, modulus smaller than word domain | 21 | 89 |
+  | `Fin.val`, or conversion with full-domain modulus | 0 | 1 |
+
+  The zero-cost cases execute `skip`: their input and output have proved identical
+  stored words. These costs use Caliper's unit model; they do not assert constant
+  bit complexity for division on arbitrarily wide words.
+- [Pairing](../Signatures/Runtime/Caliper/Pairing.lean) composes two implementations
+  sharing one input. It duplicates that input, saves it across the first call,
+  executes the second call and assembles the pair through actual permutations.
+  With input/first-output/second-output widths `a`, `b`, `d`, overhead is at most
+  `52*a + 36*b + 16*d` unit-cost steps and `169*a + 117*b + 52*d + 124` code words,
+  in addition to the callees. Combined capacities and saved-buffer names must
+  fit the word width. [SourceStructure](../Signatures/Runtime/Caliper/SourceStructure.lean)
+  supplies source product formation, projections and sum elimination with domain
+  preservation. These are compositional building blocks for expression compilation.
+- [Scalar and composition checks](../SignaturesTest/CaliperScalars.lean): boundary
+  addition, subtraction underflow/equality, both comparisons, invalid Boolean
+  and finite encodings, non-power-of-two/singleton/full-domain modulo, retained
+  capacity after truncation, actual scalar/copy/branch composition, uniform
+  time/code bounds and axiom guards.
+
 Remaining integration sequence:
 
-1. Compile derived lookup/update expressions using the fold, complete bounded
-   counter/Boolean operations, and refine the source's unbounded `Nat` and lists
-   along reachable executions. List construction, case analysis, capacity growth
-   and folds are implemented, as are tag dispatch, projection/length and saved-state
-   composition. Folds now preserve domains for entries and accumulators.
+1. Assemble the bounded scalar and structural implementations into compilation
+   certificates for the original expression syntax, then compile derived
+   lookup/update expressions using the fold. Implement encoded key/message
+   equality and refine the source's unbounded `Nat` and lists along reachable
+   executions. List construction, case analysis, capacity growth and folds are
+   implemented, as are tag dispatch, projection/length and saved-state composition.
+   Folds preserve domains for entries and accumulators. Scalar operations now
+   include bounded naturals, Booleans and finite counters; structural composition
+   includes paired computations and source projections/branches.
    The bounded-source layout and loop refinement are implemented; the particular
    signature programs still need their reachable-state invariants and primitive
    refinements. A fixed-width representation cannot honestly supply all the old

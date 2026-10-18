@@ -112,6 +112,11 @@ Pinned upstreams:
   List folds now execute compiled bodies with retained tails and environments.
   Their proved polynomial bounds include every copy and stored branch; source
   refinement also supports entries and accumulators with bounded domains.
+  Bounded natural arithmetic, comparisons, Boolean selection and finite-index
+  conversions now have executed implementations. Addition requires a proved
+  no-overflow bound; subtraction saturates at zero. Pairing two computations
+  preserves their shared input through charged copying, with linear overhead
+  bounds in the stored input and output widths.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling
