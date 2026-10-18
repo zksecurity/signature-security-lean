@@ -19,7 +19,7 @@ import Signatures.Runtime.Caliper.Branch
 import Signatures.Runtime.Caliper.Loop
 import Signatures.Runtime.Caliper.BoundedSource
 import Signatures.Runtime.Caliper.OracleCall
-import Signatures.Runtime.Caliper.SourceBounds
+import Signatures.Runtime.Caliper.SourceMemory
 import Signatures.Runtime.Caliper.InteractiveDescription
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
@@ -30,6 +30,8 @@ adapter for typed oracle calls, plus copying and recording/replay primitives.
 Interactive compilation refines the existing source language's local/query/
 sequence/branch/first/bounded-loop constructors, retaining actual execution
 profiles and deriving uniform time/additional-buffer bounds from primitive
-implementation budgets. Input-counted iteration, complete static resource
-acceptance and full signature model instantiation remain separate obligations.
+implementation budgets. The memory account includes initial storage, code,
+registers, descriptors and every intermediate buffer state. Input-counted
+iteration, generated address acceptance and full signature model instantiation
+remain separate obligations.
 -/

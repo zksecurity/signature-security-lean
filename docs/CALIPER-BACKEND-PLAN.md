@@ -163,9 +163,22 @@ Implemented and checked:
   retaining state adds at most `8*a + 8*b + 12*s`. Loops take at most
   `stopBudget + fuel*(bodyBudget + 2 + 8*max(resultWidth, stateWidth))` steps.
   Additional buffer capacity is bounded by that time when allocation costs at
-  least one per word. Initial storage, registers, descriptors and code still
-  need the complete interactive static account; this is not a total-memory or
-  polynomial-family theorem.
+  least one per word. These dynamic bounds feed the complete machine-memory
+  account below; parameter-indexed polynomial-family theorems remain separate.
+- [WordResources](../Signatures/Runtime/Caliper/WordResources.lean) and
+  [WordFrames](../Signatures/Runtime/Caliper/WordFrames.lean): the I/O execution's
+  net profile equals its change in allocated buffer capacity. The peak bounds
+  every intermediate state, including inside embedded Caliper blocks. Visited
+  states are indexed by the same actual execution, so unrelated external reply
+  paths cannot be mixed. All visited states preserve well-formedness and finite
+  register/buffer support. Static storage includes the complete program, dense
+  register slots and three words per buffer descriptor, including gaps in names.
+- [SourceMemory](../Signatures/Runtime/Caliper/SourceMemory.lean): every reachable
+  compiled execution has a bound on all intermediate machine states equal to
+  static storage plus initial allocated capacity plus the uniform runtime budget.
+  No initial data or saved caller storage disappears from the account. This is
+  the stated machine-level storage convention; generated address acceptance and
+  flat-memory/CPU refinement are separate obligations.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
@@ -187,7 +200,10 @@ Implemented and checked:
   adaptive source loop over `Nat` query positions, where the first reply changes
   the second request; a caller retaining a payload across an exchange; actual
   time, memory, trace and code counts; original-source observation equality,
-  uniform runtime/additional-buffer theorems, and proof axiom guards.
+  uniform runtime/additional-buffer theorems, and proof axiom guards. The retained
+  caller's complete uniform memory account is 275 words: 215 code, 3 registers,
+  9 descriptor words, 2 initial data words and up to 46 additional capacity words.
+  The bound covers every visited state and asserts finite support and well-formedness.
 
 Remaining integration sequence:
 
@@ -206,7 +222,8 @@ Remaining integration sequence:
    source refinement for local/query/sequence/branch/first/bounded-loop code.
    Uniform runtime/additional-buffer bounds now follow from actual primitive
    budgets. Remaining work includes input-counted iteration and complete
-   generated-code/address and static memory acceptance. These finite-program
+   generated-code/address acceptance. Complete machine-memory bounds include
+   static storage and every intermediate buffer state. These finite-program
    bounds still need parameter-indexed polynomial bounds for each scheme.
 3. Link the proved word oracle adapter and replay primitives into complete signature
    callers and rewinding. Ordinary saved-state query composition is proved.

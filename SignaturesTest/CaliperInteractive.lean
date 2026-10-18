@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SourceBounds
+import Signatures.Runtime.Caliper.SourceMemory
 import Signatures.Runtime.Caliper.InteractiveDescription
 import Signatures.Runtime.Caliper.Words
 import Lean
@@ -149,13 +149,44 @@ example : ((loopCode 2).compile.lower targetIface.port).descriptionWords = 484 :
     decide
   have stop : (stopCode.compile.lower targetIface.port).descriptionWords = 2 := by decide
   rw [body, stop]
-example : (retainedCode.compile.lower targetIface.port).descriptionWords = 215 := by
+private theorem retained_words : (retainedCode.compile.lower targetIface.port).descriptionWords = 215 := by
   change ((Interactive.retain requestAnswerCode.compile 2 1 1 1).lower targetIface.port).descriptionWords = 215
   simp only [Interactive.retain, Interactive.Code.lower, WordIO.Code.descriptionWords_seq,
     WordIO.Code.descriptionWords_compute]
   have body : (requestAnswerCode.compile.lower targetIface.port).descriptionWords = 83 := by decide
   rw [body]
   decide
+
+private theorem retained_registers : (retainedCode.compile.lower targetIface.port).registerSlots = 3 := by decide
+private theorem retained_buffers : (retainedCode.compile.lower targetIface.port).memBound = 3 := by decide
+private theorem retained_static : (retainedCode.compile.lower targetIface.port).staticWords 0 1 = 227 := by
+  simp only [WordIO.Code.staticWords, retained_words, retained_registers, retained_buffers]
+  decide
+private theorem retained_memoryBudget : retainedCode.memoryBudget requestBounds retainedInput 0 1 = 275 := by
+  simp only [SourceCompilation.Compilation.memoryBudget, retained_static, retained_buffers]
+  change 227 + 2 + 46 = 275
+  decide
+
+-- The bound includes the entire 215-word program, 3 register slots, 9 descriptor
+-- words, the 2-word initial input, and conservative dynamic growth. It covers
+-- every intermediate state, including those inside the local copy routines.
+example (tape : RandomTape 8) (finished : WordIO.Result 8)
+    (reached : some finished ∈ support (retainedCode.compile.execute targetIface.port .unit tape retainedInput)) :
+    ∃ execution : WordIO.Exec .unit tape (retainedCode.compile.lower targetIface.port) retainedInput finished.state
+        finished.trace finished.time finished.net finished.peak,
+      ∀ between, execution.Visits between →
+        RegisterBound between 3 ∧ between.SupportBound 3 ∧ between.WellFormed ∧
+        227 + (between.liveMem 3 : Int) ≤ 275 := by
+  have represented := (counter.prod saved (by decide)).representation.initial_holds
+    (⟨(7, 99), (by change 7 < 16; decide), trivial⟩ : (counter.prod saved (by decide)).Value)
+  have initialRegisters : RegisterBound retainedInput 0 := fun _ _ => rfl
+  have initialBuffers : retainedInput.SupportBound 1 := by
+    intro buffer outside
+    simp [retainedInput, Representation.initial, show buffer ≠ 0 by omega]
+  simpa only [retained_memoryBudget, retained_static, retained_registers, retained_buffers,
+    Nat.zero_max, Nat.cast_ofNat, show max 1 3 = 3 from rfl] using
+    retainedCode.memoryBound requestBounds (by decide) tape _ retainedInput represented
+      0 1 initialRegisters initialBuffers finished reached
 
 
 open Lean in
@@ -170,7 +201,9 @@ run_cmd do
       ``Interactive.TimeBound.seq, ``Interactive.TimeBound.dispatch, ``Interactive.TimeBound.retain,
       ``Interactive.TimeBound.loop, ``Interactive.TimeBound.bufferPeak,
       ``Interactive.retain_time_unit_le, ``SourceCompilation.Compilation.timeBound,
-      ``SourceCompilation.Compilation.resources] do
+      ``SourceCompilation.Compilation.resources, ``WordIO.Exec.liveMem_eq,
+      ``WordIO.Exec.Visits.liveMem_le_peak, ``WordIO.Exec.Visits.total_memory_bound,
+      ``SourceCompilation.Compilation.memoryBound] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

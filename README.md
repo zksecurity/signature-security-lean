@@ -102,10 +102,12 @@ Pinned upstreams:
   execution recovers the original source computation, including adaptive queries.
   Uniform time and additional-buffer bounds follow from bounds on actual local
   implementations, with copying and oracle-interface work included.
+  The machine-memory account includes stored code, register and descriptor slots,
+  initial data, and buffer capacity at every intermediate instruction boundary.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes input-counted
-  iteration, complete static resource acceptance, the signature programs' capacity
+  iteration, generated address acceptance, the signature programs' capacity
   invariants and linking their replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
   yet discharge them.
