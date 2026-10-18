@@ -126,6 +126,46 @@ Implemented and checked:
   Decoding here specifies the external oracle interface, not a free decoder
   available to local programs. This is a query primitive refinement; complete
   signature controller compilation and replay linking still remain.
+- [Synchronizes](../Signatures/Runtime/Caliper/Synchronizes.lean) and
+  [Interactive](../Signatures/Runtime/Caliper/Interactive.lean): structural
+  source/target correspondence through identical adaptive queries. Local blocks
+  execute literal Caliper statements; queries execute the word adapter. Refinement
+  retains actual execution, time, memory and trace evidence at every returned
+  leaf. Ports can represent bounded subsets of unbounded source query domains.
+- [InteractiveControl](../Signatures/Runtime/Caliper/InteractiveControl.lean) and
+  [InteractiveRetain](../Signatures/Runtime/Caliper/InteractiveRetain.lean):
+  sequences, stored-tag branches, loops that suspend on queries, and caller state
+  saved in an actual buffer beyond the callee's mutation footprint. Prefix and
+  restoration instructions execute and their profiles compose. The generated
+  buffer name still needs a width check when accepting the complete program.
+- [SourceCompilation](../Signatures/Runtime/Caliper/SourceCompilation.lean) and
+  [SourceErasure](../Signatures/Runtime/Caliper/SourceErasure.lean): compilation
+  certificates indexed by the existing `BackendProgram.Code`, with implementation
+  and capacity obligations at primitive leaves. Correctness and erasure recover
+  that original program's oracle computation. Covered constructors are local
+  operations, queries, sequencing, branching, saved state and bounded loops.
+  Input-counted iteration is not yet covered. A completed reduction's execution
+  equation is not assumed as a primitive contract.
+- [InteractiveDescription](../Signatures/Runtime/Caliper/InteractiveDescription.lean):
+  generated code counts include the I/O envelope and every unrolled body copy.
+  Dispatch adds `26*a + 26*b + 40` words to its two bodies. Retaining state adds
+  at most `26*a + 26*b + 39*s + 41` words. A loop stores the stop code plus
+  `fuel * (bodyWords + 26*resultWidth + 26*stateWidth + 43)` words. These are
+  description bounds, separate from the dynamic bounds below.
+- [InteractiveBounds](../Signatures/Runtime/Caliper/InteractiveBounds.lean),
+  [InteractiveControlBounds](../Signatures/Runtime/Caliper/InteractiveControlBounds.lean)
+  and [SourceBounds](../Signatures/Runtime/Caliper/SourceBounds.lean): uniform
+  runtime bounds for every represented input, tape and oracle reply path of the
+  compiled subset. Only primitive leaves supply budgets, checked against their
+  actual Caliper implementations. Query exchange costs, sequence addition,
+  branch maxima, executed copies and every loop iteration are derived. At unit
+  costs, dispatch adds `2 + 8*payloadWidth` steps along the selected path;
+  retaining state adds at most `8*a + 8*b + 12*s`. Loops take at most
+  `stopBudget + fuel*(bodyBudget + 2 + 8*max(resultWidth, stateWidth))` steps.
+  Additional buffer capacity is bounded by that time when allocation costs at
+  least one per word. Initial storage, registers, descriptors and code still
+  need the complete interactive static account; this is not a total-memory or
+  polynomial-family theorem.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
@@ -143,6 +183,11 @@ Implemented and checked:
   unread input, zero-width invocation, missing/truncated packet rejection, full
   buffer rejection, source-`Nat` loop refinement, a linked typed oracle, and
   theorem axiom guards.
+- [Interactive checks](../SignaturesTest/CaliperInteractive.lean): a compiled
+  adaptive source loop over `Nat` query positions, where the first reply changes
+  the second request; a caller retaining a payload across an exchange; actual
+  time, memory, trace and code counts; original-source observation equality,
+  uniform runtime/additional-buffer theorems, and proof axiom guards.
 
 Remaining integration sequence:
 
@@ -153,15 +198,19 @@ Remaining integration sequence:
    signature programs still need their reachable-state invariants and primitive
    refinements. A fixed-width representation cannot honestly supply all the old
    closure instances unchanged.
-2. Compile the existing quantitative reduction/control code through these layouts.
+2. Finish compiling the existing quantitative reduction/control code through these layouts.
    The local category above does not yet instantiate `BackendAssembly.Backend`:
    that interface requires unrestricted product/sum closure, unbounded counters,
    external queries and exact cost equations. The new bounded local constructors
-   do not imply those contracts unchanged. Prove the representation and cost
-   refinement, including the different footprint of the unrolled loop compiler,
-   rather than assuming an execution/cost equation for each finished reduction.
-3. Link the proved word oracle adapter and replay primitives into complete caller
-   suspension/resumption and rewinding. Prove separation of caller/controller storage and preservation of
+   do not imply those contracts unchanged. The interactive compiler now proves
+   source refinement for local/query/sequence/branch/first/bounded-loop code.
+   Uniform runtime/additional-buffer bounds now follow from actual primitive
+   budgets. Remaining work includes input-counted iteration and complete
+   generated-code/address and static memory acceptance. These finite-program
+   bounds still need parameter-indexed polynomial bounds for each scheme.
+3. Link the proved word oracle adapter and replay primitives into complete signature
+   callers and rewinding. Ordinary saved-state query composition is proved.
+   Prove separation of caller/controller storage and preservation of
    their invariants across external queries. Either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
    charged reinitialization. Caliper has no capacity-read instruction, so arbitrary
