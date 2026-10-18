@@ -93,6 +93,39 @@ Implemented and checked:
   computation. The compiler unrolls the bound, with proved linear time and code
   bounds; it does not claim the source's one-copy loop footprint. This is not yet
   a compiler for loops that suspend on external oracle calls.
+- [BoundedSource](../Signatures/Runtime/Caliper/BoundedSource.lean): layouts for
+  the original `Nat`, list, product and sum source types, restricted by explicit
+  capacity predicates. A local implementation proves preservation and contains
+  actual Caliper code on the represented subtype. Composition and bounded loops
+  preserve the original source result. Reinterpreting bytes requires a proved
+  equality of encodings and leaves code and resource profiles unchanged.
+- [WordIO](../Signatures/Runtime/Caliper/WordIO.lean) and
+  [WordPort](../Signatures/Runtime/Caliper/WordPort.lean): a synchronous external
+  I/O boundary with three explicitly priced effects: send one register word,
+  receive one word into a register, and invoke the oracle. All local work remains
+  ordinary Caliper code. Request words are loaded before sending; replies are
+  allocated and pushed word by word. An exchange of `r` request words and `s`
+  reply words takes exactly `3*r + 3*s + 1` unit-cost steps and stores
+  `13*r + 8*s + 12` code words. Net buffer growth is `s - oldCapacity`, and peak
+  growth is its maximum with zero. Other buffers, register zero and the private
+  tape cursor are preserved. A zero-width packet still invokes the oracle once.
+  This is an explicit I/O extension, not a claim that upstream Caliper has a
+  built-in oracle instruction. External oracle processing is outside local time.
+- [WordRun](../Signatures/Runtime/Caliper/WordRun.lean) and
+  [WordFuel](../Signatures/Runtime/Caliper/WordFuel.lean): executable interpretation
+  of the I/O syntax using the actual Caliper evaluator for every local block.
+  Soundness and completeness connect returned states, traces and profiles to
+  operational execution. The packet adapter needs local evaluator depth two,
+  uniformly over valid request/reply packets. Evaluator fuel is separate from
+  the exact instruction/I/O time charged above.
+- [OracleCall](../Signatures/Runtime/Caliper/OracleCall.lean): the ideal oracle
+  decodes only words actually sent by the machine, then supplies encoded reply
+  words as external input. The local continuation executes allocation and stores.
+  `oracleCall_value` proves equality with the original dependent oracle query,
+  as an oracle computation that can be composed with adaptive continuations.
+  Decoding here specifies the external oracle interface, not a free decoder
+  available to local programs. This is a query primitive refinement; complete
+  signature controller compilation and replay linking still remain.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
@@ -105,14 +138,21 @@ Implemented and checked:
   calls, preserved unrelated memory, actual temporary-memory peaks, bounded-loop
   early return/exhaustion, generated code size, rejected read/name bounds, and
   axiom guards.
+- [Word I/O checks](../SignaturesTest/CaliperWordIO.lean): executed exchanges,
+  exact time/code/net/peak charges, preserved caller buffers and private tape,
+  unread input, zero-width invocation, missing/truncated packet rejection, full
+  buffer rejection, source-`Nat` loop refinement, a linked typed oracle, and
+  theorem axiom guards.
 
 Remaining integration sequence:
 
 1. Complete list access/update and refine the source's unbounded `Nat` and lists
    to bounded representations along reachable executions. Construction, tag
    dispatch, projection/length and saved-state composition are implemented.
-   A fixed-width representation cannot honestly supply all the old closure
-   instances unchanged.
+   The bounded-source layout and loop refinement are implemented; the particular
+   signature programs still need their reachable-state invariants and primitive
+   refinements. A fixed-width representation cannot honestly supply all the old
+   closure instances unchanged.
 2. Compile the existing quantitative reduction/control code through these layouts.
    The local category above does not yet instantiate `BackendAssembly.Backend`:
    that interface requires unrestricted product/sum closure, unbounded counters,
@@ -120,8 +160,8 @@ Remaining integration sequence:
    do not imply those contracts unchanged. Prove the representation and cost
    refinement, including the different footprint of the unrolled loop compiler,
    rather than assuming an execution/cost equation for each finished reduction.
-3. Link the mailbox and replay primitives into oracle suspension/resumption and
-   rewinding. Prove separation of caller/controller storage and preservation of
+3. Link the proved word oracle adapter and replay primitives into complete caller
+   suspension/resumption and rewinding. Prove separation of caller/controller storage and preservation of
    their invariants across external queries. Either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
    charged reinitialization. Caliper has no capacity-read instruction, so arbitrary

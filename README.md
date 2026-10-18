@@ -94,11 +94,13 @@ Pinned upstreams:
   word programs, encoded field/group routine contracts, concrete local quantitative
   realizers, bounded layouts and local control, charged saved-state composition,
   mailbox transfers and tape replay. Bounded local loops have proved linear time
-  and generated-code bounds.
+  and generated-code bounds. Bounded-source layouts retain the original source
+  types with explicit capacity invariants. A charged word I/O adapter implements
+  typed oracle calls with a proved equality to the source query.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
-  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes source capacity
-  refinements and linking the signature oracle/replay controllers. The signature
+  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes proving the
+  signature programs' capacity invariants and linking their oracle/replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
   yet discharge them.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.

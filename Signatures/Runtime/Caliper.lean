@@ -17,11 +17,14 @@ import Signatures.Runtime.Caliper.Construct
 import Signatures.Runtime.Caliper.Retain
 import Signatures.Runtime.Caliper.Branch
 import Signatures.Runtime.Caliper.Loop
+import Signatures.Runtime.Caliper.BoundedSource
+import Signatures.Runtime.Caliper.OracleCall
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
 quantitative backend, bounded layouts, construction, saved-state composition,
-branching and bounded local loops, plus copying and recording/replay primitives.
+branching and bounded local loops, bounded-source refinement, a proved word I/O
+adapter for typed oracle calls, plus copying and recording/replay primitives.
 It does not yet instantiate the full signature security models or compile their
 complete interactive controllers.
 -/
