@@ -34,23 +34,28 @@ variable {degree : Nat}
 theorem reductions_within :
     dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
       P.generator P.keyGenerator P.inputWidth P.solverCode P.goodTime
-      (Model.LazyAGM.WeightedReduction.goodReductionList (OOPS.LazyAGM.terms degree) A.source) ∧
+      (Model.LazyAGM.WeightedReduction.goodReductionList (OOPS.LazyAGM.terms degree) A.proofView) ∧
     dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
       P.generator P.keyGenerator P.inputWidth P.solverCode P.badTime
-      (Model.LazyAGM.WeightedReduction.badReductionList (OOPS.LazyAGM.terms degree) A.source) := by
-  have h := General.reductions_within P A
+      (Model.LazyAGM.WeightedReduction.badReductionList (OOPS.LazyAGM.terms degree) A.proofView) := by
+  have h := General.reductions_within P A.native
   have ht : Index.sourceTerms (F := F) (G₁ := G₁) (G₂ := G₂) (K := K) (M := M) P.cost (.oops degree) = OOPS.LazyAGM.terms degree :=
     funext (Index.oops_sourceTerms P.cost degree)
-  simpa only [ht] using h
+  simpa only [ht, AlgebraicAdversary.native] using h
 
 variable [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ]
 
 theorem security :
-    𝒟[OOPS.LazyAGM.game (Gₜ := Gₜ) P.generator P.keyGenerator degree A.source] {true} ≤ P.securityBound := by
+    𝒟[Model.DirectAGM.game (Gₜ := Gₜ) (OOPS.LazyAGM.terms degree) (OOPS.LazyAGM.admissible degree)
+      P.generator P.keyGenerator A.source] {true} ≤ P.securityBound := by
   obtain ⟨goodFits, badFits⟩ := reductions_within P A
   have goodBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ goodFits
   have badBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ badFits
-  exact (OOPS.LazyAGM.Proofs.security_arbitrary_topics P.generator P.keyGenerator degree A.source P.generates P.pairingInjective).trans
+  apply (Model.DirectAGM.game_le (OOPS.LazyAGM.terms degree) (OOPS.LazyAGM.admissible degree)
+    P.generator P.keyGenerator A.source).trans
+  simpa only [OOPS.LazyAGM.game_eq_of_decidableEq, AlgebraicAdversary.proofView,
+    General.Parameters.securityBound, General.Parameters.dlogBound] using
+    (OOPS.LazyAGM.Proofs.security_arbitrary_topics P.generator P.keyGenerator degree A.proofView P.generates P.pairingInjective).trans
     (add_le_add (add_le_add goodBound badBound) le_rfl)
 
 theorem security_of_hardness (goodEpsilon badEpsilon : ENNReal)
@@ -60,10 +65,15 @@ theorem security_of_hardness (goodEpsilon badEpsilon : ENNReal)
     (badHardness : Model.HardWithin (Model.dlog11Advantage (F := F) P.generator P.keyGenerator)
       (dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
         P.generator P.keyGenerator P.inputWidth P.solverCode) P.badTime badEpsilon) :
-    𝒟[OOPS.LazyAGM.game (Gₜ := Gₜ) P.generator P.keyGenerator degree A.source] {true} ≤
+    𝒟[Model.DirectAGM.game (Gₜ := Gₜ) (OOPS.LazyAGM.terms degree) (OOPS.LazyAGM.admissible degree)
+      P.generator P.keyGenerator A.source] {true} ≤
       goodEpsilon + badEpsilon + 1 / (Fintype.card F : ENNReal) := by
   obtain ⟨goodFits, badFits⟩ := reductions_within P A
-  exact (OOPS.LazyAGM.Proofs.security_arbitrary_topics P.generator P.keyGenerator degree A.source P.generates P.pairingInjective).trans
+  apply (Model.DirectAGM.game_le (OOPS.LazyAGM.terms degree) (OOPS.LazyAGM.admissible degree)
+    P.generator P.keyGenerator A.source).trans
+  simpa only [OOPS.LazyAGM.game_eq_of_decidableEq, AlgebraicAdversary.proofView,
+    General.Parameters.securityBound, General.Parameters.dlogBound] using
+    (OOPS.LazyAGM.Proofs.security_arbitrary_topics P.generator P.keyGenerator degree A.proofView P.generates P.pairingInjective).trans
     (add_le_add (add_le_add (goodHardness _ goodFits) (badHardness _ badFits)) le_rfl)
 
 end OOPS.GeneralAGM

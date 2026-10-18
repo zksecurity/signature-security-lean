@@ -46,6 +46,27 @@ remain reviewed. The original public assumption/axiom guards and the new
 modules have no runtime or execution-contract imports, including transitive local
 imports. No theorem assumptions, probability losses or cost contracts changed.
 
+## Direct shared AGM follow-up, 2026-10-17
+
+BLS, OOPS and Proximity now accept `AlgebraicGroupModel.Interaction.Adversary`
+directly in their public games and general concrete/family statements. The native
+runner receives actual group outputs with chronological algebraic explanations.
+Every shared attacker has a total internal grouped coefficient view; execution and
+query-bound preservation are proved in `Model/Proofs/DirectAGM.lean`. Native success
+is bounded by the old proof-side game's success because malformed protocol messages
+are rejected. Proximity's collision event is exactly preserved.
+
+Backend realization contracts implement the derived coefficient encoding and charge
+its production, including regrouping, within the caller budget. This keeps the
+conventional-machine adequacy question separate and avoids assuming a free conversion.
+The DLog bounds, OOPS degree condition, Proximity collision qualification, and the
+ordinary ROM/Schnorr routes are unchanged. Full serial verification passed all
+1,077 targets (945 library modules and 132 regression modules), using exact
+source/dependency fingerprints to reuse previously checked modules. All changed
+proof/test logs are empty; existing warning logs were reviewed. Native attacker
+execution, malformed protocol cases, public source types, family assumptions and
+axiom guards all passed. The shared `agm-lean` dependency pin is unchanged.
+
 ## Existing results and limits
 
 | Route | Existing result | Work needed for this plan |

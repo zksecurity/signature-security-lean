@@ -98,7 +98,10 @@ Pinned upstreams:
   challenge, retaining the first record on cache hits.
 - OOPS and Proximity use oracle-derived bases, not standard-model public setup parameters.
 - ArkLib's representation API is compatibility-tested, not proved equivalent to the local model.
-- The indexed AGM interface lives in `agm-lean`; token/output adapters, hash/signing access,
-  and security proofs remain here.
+- BLS, OOPS, and Proximity accept the shared `agm-lean` interactive adversary directly.
+  It supplies actual group outputs and chronological explanations; the games run it directly.
+  [Internal regrouping](Signatures/Model/Proofs/DirectAGM.lean) transfers the existing
+  extraction proofs and query bounds. Backend caller budgets include producing the derived
+  coefficient encoding. Hash/signing access and security proofs remain here.
 - `Spec/` and `Model/` contain definitions; `Statement.lean` exposes the bounds; `Proofs/`
   contains extraction and coupling arguments; `SignaturesTest/` checks assumptions and regressions.

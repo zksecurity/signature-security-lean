@@ -69,7 +69,8 @@ run_meta do
         unless (type.find? (fun e => e.isConstOf ``BLS.GeneralAGM.Parameters.configuration)).isSome do
           throwError "{name}: backend configuration is not fixed across parameters"
     unless conclusion.isAppOf ``negligible &&
-        (conclusion.find? (fun e => e.isConstOf ``BLS.LazyAGM.game)).isSome do
+        (conclusion.find? (fun e => e.isConstOf ``Model.DirectAGM.game)).isSome &&
+        (conclusion.find? (fun e => e.isConstOf ``BLS.LazyAGM.terms)).isSome do
       throwError "{name}: must conclude negligible success in the actual BLS game"
   unless (← findModuleOf? name) == some `Signatures.BLS.GeneralAGMFamilyStatement do
     throwError "family statement moved out of its statement file"

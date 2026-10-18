@@ -120,15 +120,16 @@ open OracleComp in
 example (curve : Model.PairingCurve) [BLS.AGMSecurityModel curve]
     (securityParameter : Nat) (queries : BLS.QueryAllowance)
     (adversary : BLS.AlgebraicAdversary curve securityParameter queries) :
-    ∀ pk, IsQueryBoundP (adversary.source.main pk)
-      (fun i => BLS.GeneralAGM.queryKind i = 1) queries.hash :=
+    ∀ pk, IsQueryBoundP (adversary.source.main
+      (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
+      (fun i => BLS.GeneralAGM.queryKind i.value.data = 1) queries.hash :=
   (BLS.AlgebraicAdversary.query_allowances curve securityParameter queries adversary).2.1
 
 example (curve : Model.PairingCurve) [BLS.AGMSecurityModel curve]
     (securityParameter : Nat) (queries : BLS.QueryAllowance)
     (adversary : BLS.AlgebraicAdversary curve securityParameter queries) :
     BLS.agmEufCmaGame curve securityParameter adversary =
-      BLS.LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
+      Model.DirectAGM.game (Gₜ := curve.TargetGroup securityParameter) BLS.LazyAGM.terms (fun _ _ => True)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source :=
   BLS.agmEufCmaGame_eq curve securityParameter adversary
 

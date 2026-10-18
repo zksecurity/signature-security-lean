@@ -40,7 +40,7 @@ theorem security_asymptotic
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth))
     (fieldGrowth : negligible (fun n => 1 / (Fintype.card (F n) : ENNReal))) :
-    negligible (fun n => 𝒟[BLS.LazyAGM.game (Gₜ := Gₜ n)
+    negligible (fun n => 𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) BLS.LazyAGM.terms (fun _ _ => True)
       (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true}) :=
   Proofs.security parameters config fixed resources adversary hardness fieldGrowth
 

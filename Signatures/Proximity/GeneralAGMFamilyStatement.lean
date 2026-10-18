@@ -43,15 +43,15 @@ include fixed resources hardness fieldGrowth
 /-- The original collision probability plus a negligible error bounds forgery. -/
 theorem security_up_to_collision :
     ∃ error : Nat → ENNReal, negligible error ∧ ∀ n,
-      𝒟[Proximity.LazyAGM.game (Gₜ := Gₜ n)
+      𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) Proximity.LazyAGM.terms (fun _ _ => True)
       (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true} ≤
-        error n + 𝒟[Proximity.LazyAGM.collisionGame (parameters n).keyGenerator (adversary n).source] {true} :=
+        error n + 𝒟[Proximity.DirectAGM.collisionGame (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true} :=
   Proofs.security_up_to_collision parameters config fixed resources adversary hardness fieldGrowth
 
 /-- Negligible forgery from fixed-backend hardness and the stated loss hypotheses. -/
 theorem security_asymptotic
-    (collisionSmall : negligible (fun n => 𝒟[Proximity.LazyAGM.collisionGame (parameters n).keyGenerator (adversary n).source] {true})) :
-    negligible (fun n => 𝒟[Proximity.LazyAGM.game (Gₜ := Gₜ n)
+    (collisionSmall : negligible (fun n => 𝒟[Proximity.DirectAGM.collisionGame (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true})) :
+    negligible (fun n => 𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) Proximity.LazyAGM.terms (fun _ _ => True)
       (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true}) :=
   Proofs.security parameters config fixed resources adversary hardness fieldGrowth collisionSmall
 

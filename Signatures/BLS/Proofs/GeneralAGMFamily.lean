@@ -34,15 +34,17 @@ theorem security
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth))
     (fieldGrowth : negligible (fun n => 1 / (Fintype.card (F n) : ENNReal))) :
-    negligible (fun n => 𝒟[BLS.LazyAGM.game (Gₜ := Gₜ n)
+    negligible (fun n => 𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) BLS.LazyAGM.terms (fun _ _ => True)
       (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true}) := by
   obtain ⟨goodFits, badFits⟩ := reductions_nonuniform parameters config fixed resources adversary
   have goodSmall := hardness _ goodFits
   have badSmall := hardness _ badFits
   apply negligible_of_le _ (negligible_add (negligible_add goodSmall badSmall) fieldGrowth)
   intro n
+  apply (Model.DirectAGM.game_le BLS.LazyAGM.terms (fun _ _ => True)
+    (parameters n).generator (parameters n).keyGenerator (adversary n).source).trans
   exact BLS.LazyAGM.Reduction.security_arbitrary_messages_list
-    (parameters n).generator (parameters n).keyGenerator (adversary n).source
+    (parameters n).generator (parameters n).keyGenerator (adversary n).proofView
     (parameters n).generates (parameters n).pairingInjective
 
 end BLS.GeneralAGM.Family.Proofs

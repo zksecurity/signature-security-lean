@@ -127,7 +127,7 @@ run_meta do
         unless names.contains `collisionSmall do throwError "Proximity silently discarded collision probability"
       if name == ``Proximity.GeneralAGM.Family.security_up_to_collision then
         if names.contains `collisionSmall then throwError "collision-relative theorem assumes negligible collisions"
-        unless (conclusion.find? (fun e => e.isConstOf ``Proximity.LazyAGM.collisionGame)).isSome do
+        unless (conclusion.find? (fun e => e.isConstOf ``Proximity.DirectAGM.collisionGame)).isSome do
           throwError "collision-relative conclusion lost the original source collision game"
       else
         unless conclusion.isAppOf ``negligible do throwError "{name}: expected negligible forgery success"

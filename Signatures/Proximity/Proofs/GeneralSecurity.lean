@@ -18,23 +18,28 @@ variable (curve : Model.PairingCurve) [model : AGMSecurityModel.{v, w, x} curve]
 
 theorem AlgebraicAdversary.query_allowances (securityParameter dimension : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
-    (∀ pk, IsQueryBoundP (adversary.source.main pk) (fun i => General.queryKind i = 0) queries.random) ∧
-    (∀ pk, IsQueryBoundP (adversary.source.main pk) (fun i => General.queryKind i = 1) queries.hash) ∧
-    (∀ pk, IsQueryBoundP (adversary.source.main pk) (fun i => General.queryKind i = 2) queries.sign) := by
-  simpa only [AGMSecurityModel.queries_eq] using
+    (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
+      (fun i => General.queryKind i.value.data = 0) queries.random) ∧
+    (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
+      (fun i => General.queryKind i.value.data = 1) queries.hash) ∧
+    (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
+      (fun i => General.queryKind i.value.data = 2) queries.sign) := by
+  simpa only [AGMSecurityModel.queries_eq, AGMSecurityModel.generator_eq] using
     And.intro adversary.randomQueries (And.intro adversary.hashQueries adversary.signingQueries)
 
 theorem agmEufCmaGame_eq (securityParameter dimension : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
     agmEufCmaGame curve securityParameter dimension adversary =
-      LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
+      Model.DirectAGM.game (Gₜ := curve.TargetGroup securityParameter)
+        LazyAGM.terms (fun _ _ => True)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
   exact Game.agm_eq_source curve securityParameter dimension adversary.source
 
 theorem freshCollisionGame_eq (securityParameter dimension : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
     freshCollisionGame curve securityParameter dimension adversary =
-      LazyAGM.collisionGame (curve.keyGenerator securityParameter) adversary.source := by
+      LazyAGM.collisionGame (curve.keyGenerator securityParameter)
+        (Model.DirectAGM.ProofView.adversary (curve.generator securityParameter) adversary.source) := by
   exact Game.collision_eq_source curve securityParameter dimension adversary.source
 
 theorem Proofs.agm_security
@@ -49,19 +54,21 @@ theorem Proofs.agm_security
       𝒟[freshCollisionGame curve securityParameter dimension adversary] {true} := by
   let resources := model.parameters securityParameter dimension queries
   have probabilityBound := LazyAGM.Proofs.security_arbitrary_slots
-    resources.generator resources.keyGenerator adversary.source resources.generates resources.pairingInjective
+    resources.generator resources.keyGenerator adversary.proofView resources.generates resources.pairingInjective
   obtain ⟨goodFits, badFits⟩ := GeneralAGM.reductions_within resources adversary
   have goodBound : Model.dlog11Advantage resources.generator resources.keyGenerator
-      (Model.LazyAGM.WeightedReduction.goodReductionList (LazyAGM.terms) adversary.source) ≤
+      (Model.LazyAGM.WeightedReduction.goodReductionList (LazyAGM.terms) adversary.proofView) ≤
       dlogSuccessBound curve securityParameter dimension queries resources.goodTime :=
     le_iSup_of_le _ (le_iSup_of_le goodFits le_rfl)
   have badBound : Model.dlog11Advantage resources.generator resources.keyGenerator
-      (Model.LazyAGM.WeightedReduction.badReductionList (LazyAGM.terms) adversary.source) ≤
+      (Model.LazyAGM.WeightedReduction.badReductionList (LazyAGM.terms) adversary.proofView) ≤
       dlogSuccessBound curve securityParameter dimension queries resources.badTime :=
     le_iSup_of_le _ (le_iSup_of_le badFits le_rfl)
-  simpa only [resources, agmEufCmaGame_eq, freshCollisionGame_eq, AGMSecurityModel.generator_eq, AGMSecurityModel.keyGenerator_eq,
+  have sourceBound := Model.DirectAGM.game_le (Gₜ := curve.TargetGroup securityParameter) LazyAGM.terms (fun _ _ => True)
+    resources.generator resources.keyGenerator adversary.source
+  simpa only [GeneralAGM.AlgebraicAdversary.proofView, resources, agmEufCmaGame_eq, freshCollisionGame_eq, AGMSecurityModel.generator_eq, AGMSecurityModel.keyGenerator_eq,
     Model.PairingCurve.order] using
-    probabilityBound.trans (add_le_add (add_le_add (add_le_add goodBound badBound) le_rfl) le_rfl)
+    sourceBound.trans (probabilityBound.trans (add_le_add (add_le_add (add_le_add goodBound badBound) le_rfl) le_rfl))
 
 theorem dlogSuccessBound_mono (securityParameter dimension : Nat) (queries : QueryAllowance) :
     Monotone (dlogSuccessBound curve securityParameter dimension queries) := by

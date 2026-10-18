@@ -1,6 +1,7 @@
 import Signatures.Runtime.BackendLazyAGMSecurity
 import Signatures.Model.AdvantageBound
 import Signatures.BLS.QueryAllowance
+import Signatures.Model.DirectAGM
 
 /-! Supporting records for the concrete general-attacker BLS AGM statement.
 `Parameters` fixes the curve, backend, query/resource allowances, and individual
@@ -130,21 +131,29 @@ structure Parameters where
 variable (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
 
 /-- General local code with an algebraic output interface, identified with the
-named game's adversary at every key. Code/advice and all supported execution
+shared attacker's derived coefficient view at every key. The execution budget
+includes producing this encoded output, including regrouping. Code/advice and all supported execution
 paths are bounded. Per-kind allowances refer to the actual source computation. -/
 structure AlgebraicAdversary where
-  source : Model.LazyAGM.Adversary F M M G₁ G₂
+  source : Model.DirectAGM.Adversary F M M G₁ G₂
   program : G₂ → OracleComp (generalSpec M G₁ P.randomBound)
     ((AGM.outputTy message).Value (cryptoBase F G₁ G₂ M M))
   caller : GeneralCaller.Caller (Q := Q) (bd := P.bd)
   realizes : caller.machine.Implements program
-  corresponds : ∀ pk, AGM.outputView <$> simulateQ (generalSource P.randomBound) (program pk) = source.main pk
+  corresponds : ∀ pk, AGM.outputView <$> simulateQ (generalSource P.randomBound) (program pk) = (Model.DirectAGM.ProofView.adversary P.generator source).main pk
   runs : caller.RunsWithin (fun _ => P.execution)
   storedCode : P.descriptionSizes.localSize caller.initCode + 2 * P.descriptionSizes.localSize caller.headCode +
     P.descriptionSizes.localSize caller.updateCode ≤ P.callerCodeLimit
-  randomQueries : ∀ pk, IsQueryBoundP (source.main pk) (fun i => queryKind i = 0) P.queries.random
-  hashQueries : ∀ pk, IsQueryBoundP (source.main pk) (fun i => queryKind i = 1) P.queries.hash
-  signingQueries : ∀ pk, IsQueryBoundP (source.main pk) (fun i => queryKind i = 2) P.queries.sign
+  randomQueries : ∀ pk, IsQueryBoundP (source.main (Model.LazyAGM.Interactive.initialInput P.generator pk))
+    (fun i => queryKind i.value.data = 0) P.queries.random
+  hashQueries : ∀ pk, IsQueryBoundP (source.main (Model.LazyAGM.Interactive.initialInput P.generator pk))
+    (fun i => queryKind i.value.data = 1) P.queries.hash
+  signingQueries : ∀ pk, IsQueryBoundP (source.main (Model.LazyAGM.Interactive.initialInput P.generator pk))
+    (fun i => queryKind i.value.data = 2) P.queries.sign
+
+/-- The reduction derives its coefficient representation from the shared attacker. -/
+def AlgebraicAdversary.proofView (A : AlgebraicAdversary P) : Model.LazyAGM.Adversary F M M G₁ G₂ :=
+  Model.DirectAGM.ProofView.adversary P.generator A.source
 
 namespace Parameters
 

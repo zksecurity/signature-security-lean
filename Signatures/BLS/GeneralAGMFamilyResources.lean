@@ -138,11 +138,11 @@ theorem reductions_nonuniform
     dlogNonuniformWithin config (fun n => (parameters n).rep)
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth)
-      (fun n => BLS.LazyAGM.Reduction.goodReductionList (adversary n).source) ∧
+      (fun n => BLS.LazyAGM.Reduction.goodReductionList (adversary n).proofView) ∧
     dlogNonuniformWithin config (fun n => (parameters n).rep)
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth)
-      (fun n => BLS.LazyAGM.Reduction.badReductionList (adversary n).source) := by
+      (fun n => BLS.LazyAGM.Reduction.badReductionList (adversary n).proofView) := by
   have certificates := fun n => reductions_within (parameters n) (adversary n)
   have hFactor : PolynomiallyBounded (fun n => (parameters n).factor) :=
     (PolynomiallyBounded.const config.factor).of_le (fun n =>

@@ -78,7 +78,8 @@ variable (curve : Model.PairingCurve) [model : AGMSecurityModel.{v, w, x} curve]
 
 /-- Any algebraic attacker with an implementation in the fixed backend.
 Its certificate supplies its own execution and stored-code bounds, the three query
-allowances, and exact agreement with `source` at every public key. Algebraicity means
+allowances, and exact agreement with the internally derived coefficient view of
+`source` at every public key. Producing that encoding is included in its budget. Algebraicity means
 its group outputs come with representations in the group elements it received.
 Its local computation is general backend code, not restricted to our arithmetic language. -/
 abbrev AlgebraicAdversary (securityParameter : Nat) (queries : QueryAllowance) :=

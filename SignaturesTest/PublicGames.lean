@@ -4,9 +4,8 @@ import Signatures.Proximity.Statement
 import Signatures.Schnorr.Statement
 import Lean.Util.CollectAxioms
 
-/-! The mathematical games are independent of machine contracts. The existing
-public security statements use those exact games, preserving source-game proofs
-and their axiom guards. This is an API separation, not a change of experiment. -/
+/-! The mathematical games are independent of machine contracts. The public
+security statements use those exact games and retain their axiom guards. -/
 
 open Lean Meta
 

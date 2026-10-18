@@ -1,4 +1,5 @@
 import Signatures.Proximity.GeneralAGMParameters
+import Signatures.Proximity.Proofs.DirectAGM
 import Signatures.Runtime.GeneralWeightedCertificates
 import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
 
@@ -34,26 +35,30 @@ variable {dimension : Nat}
 theorem reductions_within :
     dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
       P.generator P.keyGenerator P.inputWidth P.solverCode P.goodTime
-      (Model.LazyAGM.WeightedReduction.goodReductionList (Proximity.LazyAGM.terms) A.source) ∧
+      (Model.LazyAGM.WeightedReduction.goodReductionList (Proximity.LazyAGM.terms) A.proofView) ∧
     dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
       P.generator P.keyGenerator P.inputWidth P.solverCode P.badTime
-      (Model.LazyAGM.WeightedReduction.badReductionList (Proximity.LazyAGM.terms) A.source) := by
+      (Model.LazyAGM.WeightedReduction.badReductionList (Proximity.LazyAGM.terms) A.proofView) := by
   have h := General.reductions_within P (A.native P)
   constructor
-  · rw [← goodReduction_encoded (M := M) P.cost A.source]
+  · rw [← goodReduction_encoded (M := M) P.cost A.proofView]
     exact h.1
-  · rw [← badReduction_encoded (M := M) P.cost A.source]
+  · rw [← badReduction_encoded (M := M) P.cost A.proofView]
     exact h.2
 
 variable [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ]
 
 theorem security :
-    𝒟[Proximity.LazyAGM.game (Gₜ := Gₜ) P.generator P.keyGenerator A.source] {true} ≤ P.securityBound +
-      𝒟[Proximity.LazyAGM.collisionGame P.keyGenerator A.source] {true} := by
+    𝒟[Model.DirectAGM.game (Gₜ := Gₜ) Proximity.LazyAGM.terms (fun _ _ => True)
+      P.generator P.keyGenerator A.source] {true} ≤ P.securityBound +
+      𝒟[Proximity.DirectAGM.collisionGame P.generator P.keyGenerator A.source] {true} := by
   obtain ⟨goodFits, badFits⟩ := reductions_within P A
   have goodBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ goodFits
   have badBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ badFits
-  exact (Proximity.LazyAGM.Proofs.security_arbitrary_slots P.generator P.keyGenerator A.source P.generates P.pairingInjective).trans
+  rw [Proximity.DirectAGM.collisionGame_eq]
+  apply (Model.DirectAGM.game_le Proximity.LazyAGM.terms (fun _ _ => True)
+    P.generator P.keyGenerator A.source).trans
+  exact (Proximity.LazyAGM.Proofs.security_arbitrary_slots P.generator P.keyGenerator A.proofView P.generates P.pairingInjective).trans
     (add_le_add (add_le_add (add_le_add goodBound badBound) le_rfl) le_rfl)
 
 theorem security_of_hardness (goodEpsilon badEpsilon : ENNReal)
@@ -63,11 +68,15 @@ theorem security_of_hardness (goodEpsilon badEpsilon : ENNReal)
     (badHardness : Model.HardWithin (Model.dlog11Advantage (F := F) P.generator P.keyGenerator)
       (dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
         P.generator P.keyGenerator P.inputWidth P.solverCode) P.badTime badEpsilon) :
-    𝒟[Proximity.LazyAGM.game (Gₜ := Gₜ) P.generator P.keyGenerator A.source] {true} ≤
+    𝒟[Model.DirectAGM.game (Gₜ := Gₜ) Proximity.LazyAGM.terms (fun _ _ => True)
+      P.generator P.keyGenerator A.source] {true} ≤
       goodEpsilon + badEpsilon + 1 / (Fintype.card F : ENNReal) +
-      𝒟[Proximity.LazyAGM.collisionGame P.keyGenerator A.source] {true} := by
+      𝒟[Proximity.DirectAGM.collisionGame P.generator P.keyGenerator A.source] {true} := by
   obtain ⟨goodFits, badFits⟩ := reductions_within P A
-  exact (Proximity.LazyAGM.Proofs.security_arbitrary_slots P.generator P.keyGenerator A.source P.generates P.pairingInjective).trans
+  rw [Proximity.DirectAGM.collisionGame_eq]
+  apply (Model.DirectAGM.game_le Proximity.LazyAGM.terms (fun _ _ => True)
+    P.generator P.keyGenerator A.source).trans
+  exact (Proximity.LazyAGM.Proofs.security_arbitrary_slots P.generator P.keyGenerator A.proofView P.generates P.pairingInjective).trans
     (add_le_add (add_le_add (add_le_add (goodHardness _ goodFits) (badHardness _ badFits)) le_rfl) le_rfl)
 
 end Proximity.GeneralAGM

@@ -84,7 +84,7 @@ run_meta do
 run_meta do
   for name in #[``General.Parameters.mk, ``General.AlgebraicAdversary.mk,
       ``ExecutionModel.mk, ``OOPS.AGMSecurityModel.mk, ``Proximity.AGMSecurityModel.mk,
-      ``Proximity.GeneralAGM.AlgebraicAdversary.mk,
+      ``OOPS.GeneralAGM.AlgebraicAdversary.mk, ``Proximity.GeneralAGM.AlgebraicAdversary.mk,
       ``General.reductions_within, ``OOPS.GeneralAGM.reductions_within, ``Proximity.GeneralAGM.reductions_within,
       ``OOPS.GeneralAGM.security, ``Proximity.GeneralAGM.security,
       ``OOPS.agm_security, ``Proximity.agm_security] do
@@ -122,9 +122,9 @@ run_meta do
     let args := conclusion.getAppArgs
     let lhs := args[args.size - 2]!
     let rhs := args[args.size - 1]!
-    if (lhs.find? (fun e => e.isConstOf ``Proximity.LazyAGM.collisionGame)).isSome then
+    if (lhs.find? (fun e => e.isConstOf ``Proximity.DirectAGM.collisionGame)).isSome then
       throwError "Proximity security conditioned away collisions"
-    unless (rhs.find? (fun e => e.isConstOf ``Proximity.LazyAGM.collisionGame)).isSome do
+    unless (rhs.find? (fun e => e.isConstOf ``Proximity.DirectAGM.collisionGame)).isSome do
       throwError "Proximity security lost its actual source collision term"
 
 end SignaturesTest.WeightedGeneralSecurity

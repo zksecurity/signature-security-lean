@@ -1,4 +1,5 @@
 import Signatures.BLS.GeneralAGMParameters
+import Signatures.Model.Proofs.DirectAGM
 
 /-! BLS AGM security for general realized attackers at explicit resource/query
 allowances. The supporting parameters fix the curve, backend, primitive prices,
@@ -32,10 +33,10 @@ theorem reductions_within
     (A : AlgebraicAdversary P) :
     dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
       P.generator P.keyGenerator P.inputWidth P.solverCode P.goodTime
-      (BLS.LazyAGM.Reduction.goodReductionList A.source) ∧
+      (BLS.LazyAGM.Reduction.goodReductionList A.proofView) ∧
     dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
       P.generator P.keyGenerator P.inputWidth P.solverCode P.badTime
-      (BLS.LazyAGM.Reduction.badReductionList A.source) := by
+      (BLS.LazyAGM.Reduction.badReductionList A.proofView) := by
   have hchallenge : ∀ x : F,
       Q.size (P.rep.env inputTypes) (P.generator, x • P.generator, P.keyGenerator, x • P.keyGenerator, ()) ≤
         P.inputWidth := by
@@ -62,7 +63,7 @@ theorem reductions_within
     P.comparisonTime P.scalarTime P.opTime P.handlerAdapterTime P.solverAdapterTime P.dynamicTime
     P.callerTickTime P.extractionTickTime P.headerWidth le_rfl P.values P.ops P.handlerCaps P.solverCaps
     P.dynamicSamples P.storeCapacity (by have h := P.handlerComparison; omega) P.extractionComparison P.requestWidth P.stateWidth P.headWidth
-    P.sampleTime P.callerTick P.extractionTick P.queryCapacity A.program A.realizes A.source A.corresponds
+    P.sampleTime P.callerTick P.extractionTick P.queryCapacity A.program A.realizes A.proofView A.corresponds
     P.instructionSize P.handlerPortSize P.solverPortSize P.instructionDescriptions P.handlerDescriptions P.solverDescriptions
   have badCertificate := badProgram_within P.rep P.bd P.ports P.sampler P.boundary P.data P.cost P.primitive P.sampling
     P.control P.queryCost P.sizes P.lists P.lengths P.laws P.dataLaws P.primitiveBound P.mono P.routing P.dispatch
@@ -72,7 +73,7 @@ theorem reductions_within
     P.comparisonTime P.scalarTime P.opTime P.handlerAdapterTime P.solverAdapterTime P.dynamicTime
     P.callerTickTime P.extractionTickTime P.headerWidth le_rfl P.values P.ops P.handlerCaps P.solverCaps
     P.dynamicSamples P.storeCapacity P.handlerComparison P.extractionComparison P.requestWidth P.stateWidth P.headWidth
-    P.sampleTime P.callerTick P.extractionTick P.queryCapacity A.program A.realizes A.source A.corresponds
+    P.sampleTime P.callerTick P.extractionTick P.queryCapacity A.program A.realizes A.proofView A.corresponds
     P.instructionSize P.handlerPortSize P.solverPortSize P.instructionDescriptions P.handlerDescriptions P.solverDescriptions
   exact ⟨⟨hchallenge, Within.mono P.backend P.descriptionSizes P.factor P.description
     goodCertificate hcode le_rfl⟩, ⟨hchallenge,
@@ -82,12 +83,15 @@ theorem reductions_within
 algebraic adversary has success bounded by the two DLog terms and `1 / |F|`. -/
 theorem security (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
     (A : AlgebraicAdversary P) :
-    𝒟[BLS.LazyAGM.game (Gₜ := Gₜ) P.generator P.keyGenerator A.source] {true} ≤ P.securityBound := by
+    𝒟[Model.DirectAGM.game (Gₜ := Gₜ) BLS.LazyAGM.terms (fun _ _ => True)
+      P.generator P.keyGenerator A.source] {true} ≤ P.securityBound := by
   obtain ⟨goodFits, badFits⟩ := reductions_within P A
   have goodBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ goodFits
   have badBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ badFits
+  apply (Model.DirectAGM.game_le BLS.LazyAGM.terms (fun _ _ => True)
+    P.generator P.keyGenerator A.source).trans
   exact (BLS.LazyAGM.Reduction.security_arbitrary_messages_list
-    P.generator P.keyGenerator A.source P.generates P.pairingInjective).trans
+    P.generator P.keyGenerator A.proofView P.generates P.pairingInjective).trans
       (add_le_add (add_le_add goodBound badBound) le_rfl)
 
 end BLS.GeneralAGM
@@ -114,7 +118,7 @@ statement imposes no asymptotic claim on arbitrary parameter families. -/
 theorem security
     (parameters : ∀ n, Parameters (Q := Q) (F := F n) (G₁ := G₁ n) (G₂ := G₂ n) (Gₜ := Gₜ n) (M := M n))
     (securityParameter : Nat) (A : AlgebraicAdversary (parameters securityParameter)) :
-    𝒟[BLS.LazyAGM.game (Gₜ := Gₜ securityParameter)
+    𝒟[Model.DirectAGM.game (Gₜ := Gₜ securityParameter) BLS.LazyAGM.terms (fun _ _ => True)
       (parameters securityParameter).generator (parameters securityParameter).keyGenerator A.source] {true} ≤
       (parameters securityParameter).securityBound :=
   BLS.GeneralAGM.security (parameters securityParameter) A

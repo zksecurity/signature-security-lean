@@ -42,8 +42,9 @@ include fixed resources hardness fieldGrowth
 
 /-- Negligible forgery from fixed-backend hardness and the stated loss hypotheses. -/
 theorem security_asymptotic :
-    negligible (fun n => 𝒟[OOPS.LazyAGM.game (Gₜ := Gₜ n)
-      (parameters n).generator (parameters n).keyGenerator (degree n) (adversary n).source] {true}) :=
+    negligible (fun n => 𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) (OOPS.LazyAGM.terms (degree n))
+      (OOPS.LazyAGM.admissible (degree n))
+      (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true}) :=
   Proofs.security parameters config fixed resources adversary hardness fieldGrowth
 
 end OOPS.GeneralAGM.Family

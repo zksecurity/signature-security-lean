@@ -95,25 +95,27 @@ below is a review template, not a claim that a paper audit has been completed.
 
 ## Game and oracle definitions
 
-The BLS, OOPS, and Proximity AGM games share a readable oracle interface:
+The BLS, OOPS, and Proximity AGM games accept the shared library's
+`Interaction.Adversary` directly:
 
-1. [Named requests and state](../Signatures/Model/AlgebraicOracle.lean): `Request.random`,
-   `Request.hash`, and `Request.sign` dispatch the three operations. The `State` record has
-   `hashReplies` and `signingReplies` fields. Only replies actually delivered to the attacker
-   enter these lists, including repeated requests.
-2. [Attacker execution](../Signatures/Model/AlgebraicOracle.lean): `run` evaluates the attacker's
-   algebraic explanation over its received points. Its `Result` names the candidate `message`,
-   `signature`, `signedMessages`, and `signingCoefficients`. `hashMessage` and `sign` implement
-   the scheme's finite weighted base sum and secret-key multiplication.
-3. [Shared random oracle](../Signatures/Model/RandomOracle.lean): `RandomOracle.run` supplies
-   one initially empty lazy oracle for the complete experiment. The public `Game.lean` files
-   show key generation, attacker execution, final hashing, the verification equation, and
-   freshness. OOPS also shows its distinct-message condition; Proximity exposes its collision
-   event separately.
-4. [Exact correspondence](../Signatures/Model/Proofs/AlgebraicOracle.lean): the record state
-   preserves the original grouped transcript and the complete source game. The existing
-   [certified interaction bridge](../Signatures/Model/SignatureInteraction.lean) connects that
-   transcript to the generic AGM execution. These are proved equalities for adaptive attackers.
+1. [Native execution and state](../Signatures/Model/DirectAGM.lean): `run` calls the
+   shared certified attacker with the generator and public key in separate tracked
+   group lists. Hash/signing replies extend the received basis in chronological order.
+   The named `Result` exposes `message`, `signature`, `signedMessages`,
+   `signingCoefficients`, and `wellFormed`. Protocol checks reject unexpected group
+   arguments and malformed final output shapes.
+2. [Shared random oracle](../Signatures/Model/RandomOracle.lean): one initially empty
+   lazy cache serves the complete experiment. The public `Game.lean` files show key
+   generation, attacker execution, final hashing, verification and freshness. OOPS
+   also shows its distinct-message condition; Proximity exposes collisions separately.
+3. [Internal extraction view](../Signatures/Model/Proofs/DirectAGM.lean): every certified
+   attacker has a derived grouped coefficient view. `run_eq` preserves the candidate
+   and signing history; `adversary_query_bound` preserves query allowances. `game_le`
+   transfers the old extraction bound because malformed attempts cannot win the native
+   game. Proximity's collision term is preserved exactly.
+4. Execution contracts implement the derived output encoding, with regrouping included
+   in the caller's charged budget. The existing solver composition proofs then give
+   concrete and family bounds. No conventional-machine instantiation is added.
 
 The scheme-specific hash inputs and signing rules are:
 
@@ -371,12 +373,12 @@ machine steps; relating them to bit-level runtime would require a separate proof
 
 1. Read the selected statement above and its source game before reading proof tactics.
 2. Distinguish [generic indexed interaction](https://github.com/zksecurity/agm-lean/blob/c207f29d1bba8b36fd6c09a0a3a6b4e82148b402/AlgebraicGroupModel/Interaction.lean)
-   from [the signature-specific interface](../Signatures/Model/SignatureInterface.lean). The generic
+   from [the signature protocol](../Signatures/Model/DirectAGM.lean). The generic
    layer accepts arbitrary oracles; only the signature layer mandates base/signing channels.
-   Check adaptive continuations, the shared cache, exact reply transcripts, and materialization
-   before final verification lookups. The [interactive adapter](../Signatures/Model/SignatureInteraction.lean)
-   certifies every outgoing message; `Adversary.toInteractive_run` and `experiment_eq` relate actual
-   execution to the grouped-transcript proof view. `materialize_eq_weightedReplies` checks its algebra.
+   Check adaptive continuations, the shared cache, and exact reply transcripts.
+   [Direct execution preservation](../Signatures/Model/Proofs/DirectAGM.lean) derives the
+   grouped coefficient view from every shared attacker. `run_eq` preserves the actual
+   candidate and signing history; `game_le` accounts for protocol-shape rejection.
 3. Check [the lazy-to-private-table bridge](../Signatures/LinearFunctional/Proofs/LazyAGM.lean).
    Distribution equality and transcript correspondence are proved, not assumptions.
 4. Follow [both adaptive DLog branches](../Signatures/LinearFunctional/Proofs/Adaptive.lean).
@@ -437,16 +439,16 @@ premises, and test applications using only their explicit arguments.
   one adaptive stream with separate group bases, cross-sort dependencies, and rejection
   of explanations from the wrong sort. The signature games use the same indexed interface
   with separate `signature` and `verification` sorts. Their public keys are tracked inputs;
-  their source adversaries still output only signature-group representations. The security
-  statements gain no new assumptions.
+  the signature protocol accepts one signature-group output and rejects unexpected
+  verification-group outputs. Algebraic explanations use each sort’s own received basis.
 - [Whole-library axiom guard](https://github.com/zksecurity/agm-lean/blob/c207f29d1bba8b36fd6c09a0a3a6b4e82148b402/AGMTest/Axioms.lean)
   for all declarations in the generic AGM namespace.
-- [Signature execution bridge](../Signatures/Model/SignatureInteraction.lean): `compile_algebraic`
-  certifies all paths and `Adversary.toInteractive_run` proves exact equality with the proof-side
-  runner. The [original source experiment](../Signatures/Model/LazyAGM.lean) calls `interactiveRun`;
-  `experiment_eq` preserves its complete winning computation. The readable record-state games
-  are connected to that experiment by
-  [`AlgebraicOracle.game_eq`](../Signatures/Model/Proofs/AlgebraicOracle.lean).
+- [Direct shared attackers](../SignaturesTest/DirectSharedAGM.lean): an attacker built in
+  the shared library, interleaved and repeated replies, distinct group bases, malformed
+  requests/outputs, and public game aliases. The [general proof](../Signatures/Model/Proofs/DirectAGM.lean)
+  covers every certified attacker; [Proximity](../Signatures/Proximity/Proofs/DirectAGM.lean)
+  proves exact collision preservation. The old signature execution bridge remains an
+  internal supporting theorem for the grouped view.
 - [Reply-dependent queries and stopping](../SignaturesTest/AdaptiveQueries.lean).
 - [Freshness, topic counting, and collision probabilities](../SignaturesTest/GameBoundaries.lean).
 - [Coron signing budgets](../SignaturesTest/CoronBudget.lean).

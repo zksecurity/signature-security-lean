@@ -23,17 +23,21 @@ variable (curve : Model.PairingCurve) [model : AGMSecurityModel.{v, w, x} curve]
 actual source adversary, at every verification key. -/
 theorem AlgebraicAdversary.query_allowances (securityParameter : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter queries) :
-    (∀ pk, IsQueryBoundP (adversary.source.main pk) (fun i => GeneralAGM.queryKind i = 0) queries.random) ∧
-    (∀ pk, IsQueryBoundP (adversary.source.main pk) (fun i => GeneralAGM.queryKind i = 1) queries.hash) ∧
-    (∀ pk, IsQueryBoundP (adversary.source.main pk) (fun i => GeneralAGM.queryKind i = 2) queries.sign) := by
-  simpa only [AGMSecurityModel.queries_eq] using
+    (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
+      (fun i => GeneralAGM.queryKind i.value.data = 0) queries.random) ∧
+    (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
+      (fun i => GeneralAGM.queryKind i.value.data = 1) queries.hash) ∧
+    (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
+      (fun i => GeneralAGM.queryKind i.value.data = 2) queries.sign) := by
+  simpa only [AGMSecurityModel.queries_eq, AGMSecurityModel.generator_eq] using
     And.intro adversary.randomQueries (And.intro adversary.hashQueries adversary.signingQueries)
 
-/-- Expanding the public game preserves the exact original game, not just its probability. -/
+/-- Expanding the public game gives the same native shared-attacker experiment. -/
 theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter queries) :
     agmEufCmaGame curve securityParameter adversary =
-      LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
+      Model.DirectAGM.game (Gₜ := curve.TargetGroup securityParameter)
+        LazyAGM.terms (fun _ _ => True)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
   exact Game.agm_eq_source curve securityParameter adversary.source
 
@@ -55,21 +59,23 @@ theorem Proofs.agm_security
   -- Probability: the two explicit lazy reductions account for every successful forgery,
   -- apart from the original inverse-field-size loss. This step has no efficiency premise.
   have probabilityBound := LazyAGM.Reduction.security_arbitrary_messages_list
-    resources.generator resources.keyGenerator adversary.source resources.generates resources.pairingInjective
+    resources.generator resources.keyGenerator adversary.proofView resources.generates resources.pairingInjective
   -- Efficiency: construct both native executable witnesses and prove their full budgets.
   obtain ⟨goodFits, badFits⟩ := GeneralAGM.reductions_within resources adversary
   -- Each constructed solver is therefore a member of the supremum above.
   have goodBound : Model.dlog11Advantage resources.generator resources.keyGenerator
-      (LazyAGM.Reduction.goodReductionList adversary.source) ≤
+      (LazyAGM.Reduction.goodReductionList adversary.proofView) ≤
       dlogSuccessBound curve securityParameter queries resources.goodTime :=
     le_iSup_of_le _ (le_iSup_of_le goodFits le_rfl)
   have badBound : Model.dlog11Advantage resources.generator resources.keyGenerator
-      (LazyAGM.Reduction.badReductionList adversary.source) ≤
+      (LazyAGM.Reduction.badReductionList adversary.proofView) ≤
       dlogSuccessBound curve securityParameter queries resources.badTime :=
     le_iSup_of_le _ (le_iSup_of_le badFits le_rfl)
+  have sourceBound := Model.DirectAGM.game_le (Gₜ := curve.TargetGroup securityParameter) LazyAGM.terms (fun _ _ => True)
+    resources.generator resources.keyGenerator adversary.source
   simpa only [resources, agmEufCmaGame_eq, AGMSecurityModel.generator_eq, AGMSecurityModel.keyGenerator_eq,
     Model.PairingCurve.order] using
-    probabilityBound.trans (add_le_add (add_le_add goodBound badBound) le_rfl)
+    sourceBound.trans (probabilityBound.trans (add_le_add (add_le_add goodBound badBound) le_rfl))
 
 /-- Increasing only the time allowance enlarges the same fixed-backend solver
 class. Its input and stored-code bounds are unchanged. -/

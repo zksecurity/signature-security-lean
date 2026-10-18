@@ -38,11 +38,11 @@ theorem reductions_nonuniform :
     dlogNonuniformWithin config (fun n => (parameters n).rep)
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth)
-      (fun n => Model.LazyAGM.WeightedReduction.goodReductionList (OOPS.LazyAGM.terms (degree n)) (adversary n).source) ∧
+      (fun n => Model.LazyAGM.WeightedReduction.goodReductionList (OOPS.LazyAGM.terms (degree n)) (adversary n).proofView) ∧
     dlogNonuniformWithin config (fun n => (parameters n).rep)
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth)
-      (fun n => Model.LazyAGM.WeightedReduction.badReductionList (OOPS.LazyAGM.terms (degree n)) (adversary n).source) := by
+      (fun n => Model.LazyAGM.WeightedReduction.badReductionList (OOPS.LazyAGM.terms (degree n)) (adversary n).proofView) := by
   have certificates := fun n => GeneralAGM.reductions_within (parameters n) (adversary n)
   exact ⟨General.Family.solver_nonuniform parameters config fixed resources _ _ resources.goodTime
     (fun n => (certificates n).1),
@@ -59,15 +59,20 @@ variable [∀ n, Fintype (F n)] [∀ n, SampleableType (G₁ n)] [∀ n, Fintype
 include fixed resources hardness fieldGrowth
 
 theorem Proofs.security :
-    negligible (fun n => 𝒟[OOPS.LazyAGM.game (Gₜ := Gₜ n)
-      (parameters n).generator (parameters n).keyGenerator (degree n) (adversary n).source] {true}) := by
+    negligible (fun n => 𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) (OOPS.LazyAGM.terms (degree n))
+      (OOPS.LazyAGM.admissible (degree n))
+      (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true}) := by
   obtain ⟨goodFits, badFits⟩ := reductions_nonuniform parameters config fixed resources adversary
   have goodSmall := hardness _ goodFits
   have badSmall := hardness _ badFits
   apply negligible_of_le _ (negligible_add (negligible_add goodSmall badSmall) fieldGrowth)
   intro n
-  exact OOPS.LazyAGM.Proofs.security_arbitrary_topics
-    (parameters n).generator (parameters n).keyGenerator (degree n) (adversary n).source
+  apply (Model.DirectAGM.game_le (OOPS.LazyAGM.terms (degree n)) (OOPS.LazyAGM.admissible (degree n))
+    (parameters n).generator (parameters n).keyGenerator (adversary n).source).trans
+  simpa only [OOPS.LazyAGM.game_eq_of_decidableEq, AlgebraicAdversary.proofView,
+    Pi.add_apply] using
+    OOPS.LazyAGM.Proofs.security_arbitrary_topics
+    (parameters n).generator (parameters n).keyGenerator (degree n) (adversary n).proofView
     (parameters n).generates (parameters n).pairingInjective
 
 end OOPS.GeneralAGM.Family

@@ -6,8 +6,8 @@ Each bound names explicit reduction algorithms. Their axiom footprints are exact
 
 Start with the [short game and bound presentation](review-guide.md).
 The mathematical games are in each scheme's `Game.lean`, independent of machine
-contracts. The public statements use those games through exact adapters; the
-execution model and resource formulas stay in the supporting layer.
+contracts. The public statements call those games directly; the execution model
+and resource formulas stay in the supporting layer.
 
 The [paper-facing OOPS corollary](review-guide.md#paper-facing-statements) uses a
 fixed-degree signing-call limit. BLS intentionally retains the type-3 co-CDH formulation
@@ -103,30 +103,36 @@ unlisted group inputs in ordinary data or advice. The generic layer establishes 
 efficiency nor pairing-product representations in a target group. It prescribes no hash,
 signing, pairing, or sampling interface.
 
-The BLS, OOPS, and Proximity AGM games execute through this runner with separate `signature`
-and `verification` sorts. [SignatureInteraction.lean](../Signatures/Model/SignatureInteraction.lean)
-puts the signature-group generator and verification-group public key in their respective
-input lists; the initial ordinary payload is `Unit`. The compiler reads the key from its
-tracked list and rejects malformed initial lists. Requests have no group arguments;
-hash/signing replies each add one signature-group input, and private randomness adds none.
-Final vectors follow chronological reply order, even when hash and signing queries interleave.
-The compiler rejects replies with the wrong number of signature-group inputs. It tracks,
-but does not use, any verification-group inputs supplied on hypothetical reply paths.
+The BLS, OOPS, and Proximity AGM games accept this shared `Interaction.Adversary`
+directly. [DirectAGM.lean](../Signatures/Model/DirectAGM.lean) supplies the signature
+protocol and calls `adversary.run`; callers do not construct a specialized coefficient
+attacker and then convert it. The initial ordinary payload is `Unit`, with the
+signature-group generator and verification-group public key in separate tracked lists.
+Hash/signing replies each add one signature-group input; private randomness adds none.
+Repeated replies occupy separate chronological positions.
 
-Messages, query labels, and sampled numbers remain ordinary data. The winning experiment
-reads the candidate signature from `groups .signature`, never from an unchecked group value
-in `data`. The source adversaries still output only signature-group representations; tracking
-the key does not claim security against a broader interface with verification-group outputs.
-Games instantiating arbitrary message or query types must still ensure those ordinary
-payloads do not introduce hidden group inputs.
+Requests carry ordinary hash indices or signing messages and must have no group
+arguments. A final forgery must contain exactly one signature-group point and no
+verification-group points. The game checks these protocol shapes and reads the actual
+candidate from `groups .signature`. The shared algebraicity certificate already proves
+that every outgoing point has an exact-length explanation over its own group's received
+inputs, on every reply path. Ordinary message/index types must not conceal additional
+group inputs.
 
-The signature-side `Output.explain` adapter supplies exact-length vectors.
-`Adversary.toInteractive_run` proves equality with the grouped-transcript runner;
-`experiment_eq` transfers it to the complete winning experiment. Those equivalence proofs
-remain here; optional generic `erase`/`run_erase` helpers were removed from the library.
-The separate runtime-erasure proofs used by the concrete cost certificates are unchanged.
-Security statements, named reductions, and machine certificates are unchanged; no cost theorem
-for the generic interpreter is claimed. The non-AGM BLS co-CDH game is unaffected.
+The [internal proof view](../Signatures/Model/Proofs/DirectAGM.lean) derives the grouped
+`β`, `γ`, and `ξ` coefficients from every shared attacker. `run_eq` preserves its
+message, actual signature, signing history and signing coefficients, and
+`adversary_query_bound` preserves the query allowances. `game_le` transfers the existing
+security bounds: the native game additionally rejects malformed protocol messages.
+Proximity's [collision event](../Signatures/Proximity/Spec/DirectAGM.lean) is preserved
+[exactly](../Signatures/Proximity/Proofs/DirectAGM.lean), including malformed attempts.
+
+The concrete and family statements also use this shared source attacker. Their backend
+realization contract implements the derived coefficient encoding, and its caller budget
+includes producing that encoding and regrouping the explanation. This does not assume
+that arbitrary code has a free conversion, nor establish a conventional-machine
+instantiation. The existing solver composition proofs charge the remainder. Schnorr and
+the non-AGM BLS co-CDH game are unchanged.
 
 The minimal generic interface and its tests live in the pinned, public
 `agm-lean` dependency. Token/output utilities and signature adapters live here.
@@ -139,10 +145,11 @@ materialization. These signature-adapter utilities import no oracle computations
 not part of the generic AGM library. The enclosing game chooses the available inputs;
 the utilities do not implement a group-operation machine or certify coefficient costs.
 
-[SignatureInterface.lean](../Signatures/Model/SignatureInterface.lean) defines the signature adversary;
-[Model/LazyAGM.lean](../Signatures/Model/LazyAGM.lean) defines the source experiment and named reductions.
-The adversary receives only the verification key and makes adaptive
-private-randomness, base, and signing queries.
+[SignatureInterface.lean](../Signatures/Model/SignatureInterface.lean) defines the internal
+grouped coefficient view; [Model/LazyAGM.lean](../Signatures/Model/LazyAGM.lean) contains
+its proof-side experiment and named reductions. The public attacker is the shared
+interactive adversary described above, with adaptive private-randomness, base, and
+signing queries.
 
 `Output.toAlgebraic` and `Transcript.inputs` retain the signature interface's token-indexed output interpretation.
 The generator and the two reply channels have disjoint positional tokens. `materialize` uses
@@ -155,7 +162,7 @@ verification. Repeated queries reuse answers, including bases first initialized 
 Queries are continuations, not a predetermined list; replies may change later queries,
 stopping, the target, and representation coefficients.
 
-The output has coefficient lists over actual base/signature replies, indexed by query order.
+The internal output view has coefficient lists over actual base/signature replies, indexed by query order.
 Internal lookups create no visible tokens. Materialization happens before final verification
 lookups. Extra coefficients are ignored; missing coefficients are zero. Freshness uses the
 complete actual signing transcript.

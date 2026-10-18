@@ -1,5 +1,21 @@
 # Security API migration
 
+The BLS, OOPS and Proximity AGM games now take the shared
+`AlgebraicGroupModel.Interaction.Adversary` directly, specialized by
+[`Model.DirectAGM.Adversary`](../Signatures/Model/DirectAGM.lean). The same type is
+the `source` field of their general concrete and family attacker records.
+Supply actual outgoing group points with exact chronological explanation vectors;
+the shared certificate covers every input and reply path. Hash/signing requests
+have no group arguments, and a final forgery has one signature-group point and no
+verification-group points. The game rejects malformed protocol shapes.
+
+Callers no longer supply the old `β/γ/ξ` attacker or call `toInteractive`. The
+proof derives that coefficient view internally for every shared attacker. Backend
+realizations implement its encoded program and charge producing the encoding,
+including regrouping, in the caller budget. Query allowances refer to the native
+source requests' `value.data`. See the [direct attacker regression](../SignaturesTest/DirectSharedAGM.lean)
+and [preservation proofs](../Signatures/Model/Proofs/DirectAGM.lean).
+
 The public security statements now use general implemented attackers and lazy
 reductions with proved runtime and stored-code bounds. The three eager-table AGM
 security wrappers and BLS's `ArithmeticAttackerCertificate` alias are retired.

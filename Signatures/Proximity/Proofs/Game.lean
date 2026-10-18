@@ -1,5 +1,5 @@
 import Signatures.Proximity.Game
-import Signatures.Model.Proofs.AlgebraicOracle
+import Signatures.Proximity.Proofs.DirectAGM
 
 open OracleComp OracleSpec
 
@@ -9,22 +9,21 @@ theorem agm_eq_source (curve : Model.PairingCurve) (securityParameter dimension 
     {Slot : Type} [DecidableEq Slot]
     (adversary : AlgebraicAdversary curve securityParameter dimension (Slot := Slot)) :
     agm curve securityParameter dimension adversary =
-      LazyAGM.game (Gₜ := curve.TargetGroup securityParameter)
+      Model.DirectAGM.game (Gₜ := curve.TargetGroup securityParameter)
+        LazyAGM.terms (fun _ _ => True)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary := by
   classical
-  simpa only [agm, LazyAGM.game, true_and] using
-    Model.AlgebraicOracle.game_eq (Gₜ := curve.TargetGroup securityParameter)
-      LazyAGM.terms (fun _ _ => True)
-      (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary
+  simp only [agm, Model.DirectAGM.game, true_and]
 
 theorem collision_eq_source (curve : Model.PairingCurve) (securityParameter dimension : Nat)
     {Slot : Type} [DecidableEq Slot]
     (adversary : AlgebraicAdversary curve securityParameter dimension (Slot := Slot)) :
     collision curve securityParameter dimension adversary =
-      LazyAGM.collisionGame (curve.keyGenerator securityParameter) adversary := by
+      LazyAGM.collisionGame (curve.keyGenerator securityParameter)
+        (Model.DirectAGM.ProofView.adversary (curve.generator securityParameter) adversary) := by
   classical
-  simp only [collision, Model.AlgebraicOracle.run_eq, bind_map_left,
-    Model.RandomOracle.run, LazyAGM.collisionGame, LazyAGM.collisionExperiment, LazyAGM.Collision]
+  rw [← DirectAGM.collisionGame_eq]
+  simp only [collision, DirectAGM.collisionGame, DirectAGM.Collision]
   congr! 8
   exact decide_eq_decide.mpr Iff.rfl
 

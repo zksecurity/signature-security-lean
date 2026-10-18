@@ -38,11 +38,11 @@ theorem reductions_nonuniform :
     dlogNonuniformWithin config (fun n => (parameters n).rep)
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth)
-      (fun n => Model.LazyAGM.WeightedReduction.goodReductionList Proximity.LazyAGM.terms (adversary n).source) ∧
+      (fun n => Model.LazyAGM.WeightedReduction.goodReductionList Proximity.LazyAGM.terms (adversary n).proofView) ∧
     dlogNonuniformWithin config (fun n => (parameters n).rep)
       (fun n => (parameters n).generator) (fun n => (parameters n).keyGenerator)
       (fun n => (parameters n).inputWidth)
-      (fun n => Model.LazyAGM.WeightedReduction.badReductionList Proximity.LazyAGM.terms (adversary n).source) := by
+      (fun n => Model.LazyAGM.WeightedReduction.badReductionList Proximity.LazyAGM.terms (adversary n).proofView) := by
   have certificates := fun n => GeneralAGM.reductions_within (parameters n) (adversary n)
   exact ⟨General.Family.solver_nonuniform parameters config fixed resources _ _ resources.goodTime
     (fun n => (certificates n).1),
@@ -62,23 +62,26 @@ include fixed resources hardness fieldGrowth
 negligible error. Collision probability is not assumed negligible here. -/
 theorem Proofs.security_up_to_collision :
     ∃ error : Nat → ENNReal, negligible error ∧ ∀ n,
-      𝒟[Proximity.LazyAGM.game (Gₜ := Gₜ n)
+      𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) Proximity.LazyAGM.terms (fun _ _ => True)
       (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true} ≤
-        error n + 𝒟[Proximity.LazyAGM.collisionGame (parameters n).keyGenerator (adversary n).source] {true} := by
+        error n + 𝒟[Proximity.DirectAGM.collisionGame (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true} := by
   obtain ⟨goodFits, badFits⟩ := reductions_nonuniform parameters config fixed resources adversary
   have goodSmall := hardness _ goodFits
   have badSmall := hardness _ badFits
   refine ⟨_, negligible_add (negligible_add goodSmall badSmall) fieldGrowth, ?_⟩
   intro n
+  rw [Proximity.DirectAGM.collisionGame_eq]
+  apply (Model.DirectAGM.game_le Proximity.LazyAGM.terms (fun _ _ => True)
+    (parameters n).generator (parameters n).keyGenerator (adversary n).source).trans
   exact Proximity.LazyAGM.Proofs.security_arbitrary_slots
-    (parameters n).generator (parameters n).keyGenerator (adversary n).source
+    (parameters n).generator (parameters n).keyGenerator (adversary n).proofView
     (parameters n).generates (parameters n).pairingInjective
 
 /-- Negligible forgery follows only with an explicit negligible-collision
 hypothesis for this same source-adversary family. -/
 theorem Proofs.security
-    (collisionSmall : negligible (fun n => 𝒟[Proximity.LazyAGM.collisionGame (parameters n).keyGenerator (adversary n).source] {true})) :
-    negligible (fun n => 𝒟[Proximity.LazyAGM.game (Gₜ := Gₜ n)
+    (collisionSmall : negligible (fun n => 𝒟[Proximity.DirectAGM.collisionGame (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true})) :
+    negligible (fun n => 𝒟[Model.DirectAGM.game (Gₜ := Gₜ n) Proximity.LazyAGM.terms (fun _ _ => True)
       (parameters n).generator (parameters n).keyGenerator (adversary n).source] {true}) := by
   obtain ⟨error, errorSmall, bound⟩ := Proofs.security_up_to_collision
     parameters config fixed resources adversary hardness fieldGrowth

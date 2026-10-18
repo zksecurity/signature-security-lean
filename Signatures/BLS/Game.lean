@@ -1,7 +1,7 @@
 import Signatures.Model.PairingCurve
 import Signatures.BLS.Spec.LazyAGM
 import Signatures.BLS.Spec.ROM
-import Signatures.Model.AlgebraicOracle
+import Signatures.Model.DirectAGM
 
 /-! BLS security games, independent of any execution model or resource certificate.
 Read the experiment below as: sample a key, run the attacker with adaptive
@@ -25,7 +25,7 @@ local notation "g₁" => curve.generator securityParameter
 local notation "g₂" => curve.keyGenerator securityParameter
 
 /-- Arbitrary internal computation with algebraic group outputs. -/
-abbrev AlgebraicAdversary := Model.LazyAGM.Adversary (curve.Scalar securityParameter)
+abbrev AlgebraicAdversary := Model.DirectAGM.Adversary (curve.Scalar securityParameter)
   Message Message (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter)
 
 /-- Arbitrary message/signature output, without algebraic explanations. -/
@@ -38,9 +38,9 @@ noncomputable def agm
   classical
   exact RandomOracle.run do
     let secret ← RandomOracle.sample 𝔽
-    let forgery ← AlgebraicOracle.run LazyAGM.terms secret adversary g₁ (secret • g₂)
+    let forgery ← DirectAGM.run LazyAGM.terms secret adversary g₁ (secret • g₂)
     let hash ← RandomOracle.hash forgery.message
-    return decide (
+    return decide (forgery.wellFormed ∧
       BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forgery.signature g₂ =
         BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂) ∧
       forgery.message ∉ forgery.signedMessages)

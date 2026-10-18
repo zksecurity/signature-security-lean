@@ -150,12 +150,16 @@ import Signatures.PaperStatements
 
 The pinned `agm-lean` library takes a game-chosen oracle interface and finite input
 transcript. Hashing, signing, pairing verification, and freshness belong to the signature
-adapter, not to the generic representation interface.
+protocol, not to the generic representation interface.
 `Interaction` additionally supports explained group arguments in adaptive oracle calls and
 multiple final group outputs, with exact plain-computation erasure and received-basis tracking.
-The three AGM signature games execute through its certified runner via `SignatureInteraction`.
-Their requests have no group arguments; replies extend the basis and the final forgery is explained.
-Exact computation equality preserves the existing security statements and named reductions.
+The three pairing-based AGM signature games accept that shared adversary directly and
+execute its certified runner in `Model.DirectAGM`. Their requests have no group arguments;
+replies extend the basis and the final forgery is explained. An internally derived
+coefficient view preserves execution and query counts. Rejecting malformed protocol
+messages gives a win-probability inequality to the existing extraction proofs;
+Proximity's collision event is preserved exactly. Caller budgets include producing the
+derived coefficient encoding.
 
 Seven general-attacker routes cover BLS co-CDH, BLS/OOPS/Proximity AGM, Schnorr
 AGM and both Schnorr ROM nonce conventions. Their concrete and nonuniform family
