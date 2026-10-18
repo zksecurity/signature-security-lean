@@ -28,6 +28,7 @@ import Signatures.Runtime.Caliper.SourceStructure
 import Signatures.Runtime.Caliper.ExpressionCompilation
 import Signatures.Runtime.Caliper.StagedFoldBounds
 import Signatures.Runtime.Caliper.StructuralBudgets
+import Signatures.Runtime.Caliper.ExpressionBounds
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -54,6 +55,10 @@ early returns execute and charge their conversion to the final layout.
 Complete staged folds have uniform polynomial time/code budgets derived from
 the individual body/conversion budgets and layout widths. Source implementations
 also have compositional bounds for projections, pairing and list construction.
+The complete original-expression compiler derives uniform time/code budgets
+structurally from primitive and final-conversion budgets, including fold input
+construction. Its budget-certified result erases to the original compiler result.
+Actual execution time and additional buffer usage satisfy the derived bounds.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/

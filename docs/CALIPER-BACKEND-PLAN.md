@@ -353,8 +353,9 @@ Implemented and checked:
   executes the proved copying routine. The compiler does not supply an encoding
   for all unbounded source values.
   Folds support fixed domains or iteration-dependent accumulator layouts.
-  Uniform resource bounds for complete expressions remain to be assembled from the
-  existing primitive, copy, branch and fold bounds.
+  Uniform time and stored-code budgets now cover complete expressions, including
+  construction of their fold argument frames; the certificate's primitive and
+  final-conversion budgets are the only supplied local efficiency premises.
 - [Expression checks](../SignaturesTest/CaliperExpressions.lean): original source
   expressions compile and execute with variable access, primitive arithmetic,
   both branches, pair projections, local bindings, domain views, lists, capacity
@@ -403,11 +404,33 @@ Implemented and checked:
   all-input bounds of 6412 steps and 24333 stored code words. These follow from
   proved body budgets of 625 steps/2221 words and final-conversion budgets of
   32 steps/118 words; no finished-fold efficiency assumption is supplied.
+- [ExpressionBudget](../Signatures/Runtime/Caliper/ExpressionBudget.lean) derives
+  a uniform time/stored-code budget recursively from every original-expression
+  compilation constructor. Local budget certificates occur only at primitive
+  instruction leaves and the executed final conversions of staged folds.
+  Variables traverse their represented environments; literals, lists, projections,
+  pairing, branches, bindings, views, fixed folds and staged folds all have
+  derived budgets. The staged case takes maxima over the explicit finite set of
+  traversal stages, not over a message domain. [DataBudgets](../Signatures/Runtime/Caliper/DataBudgets.lean),
+  [BranchBudgets](../Signatures/Runtime/Caliper/BranchBudgets.lean) and
+  [FixedFoldBudgets](../Signatures/Runtime/Caliper/FixedFoldBudgets.lean) supply
+  the corresponding source-level composition lemmas.
+- [ExpressionBounds](../Signatures/Runtime/Caliper/ExpressionBounds.lean) proves
+  that every successful compilation meets its computed budget on all represented
+  inputs. `compileBudget` attaches this proof; `compileBudget_forget` proves that
+  forgetting it recovers the original compiler result, including rejection.
+  `exec_bounded` supplies actual execution, the original source result, and the
+  uniform time/additional-buffer bounds. The complete growing-list expression
+  now has bounds of 7192 steps and 27146 stored words, including argument-frame
+  construction. Expression regressions check every constructor, primitive
+  budgets, fixed and growing folds, unchanged namespace rejection, and exact
+  budget calculations (subtraction 188 steps/791 words; conditional 576/2456).
+  Dense register/buffer-name extents and scheme-family polynomial bounds remain
+  separate obligations; these time/code theorems do not discharge them.
 
 Remaining integration sequence:
 
-1. Derive uniform bounds for the complete checked expression compiler, using
-   the proved complete-stage-family and structural budgets. Compile derived
+1. Derive polynomial bounds on dense register/buffer-name extents. Compile derived
    lookup/update expressions using these refinements. Implement encoded key/message
    equality and refine the source's unbounded `Nat` and lists along reachable
    executions. List construction, case analysis, capacity growth and folds are

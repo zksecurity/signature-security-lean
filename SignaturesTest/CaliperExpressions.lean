@@ -142,6 +142,37 @@ private def rejected : Cert (.pair (.op .release x) y) input (counter.prod count
 example : (releaseCode.compile (by decide)).isSome = true := by decide
 example : rejected.compile (by decide) = none := rfl
 
+-- Budgets are supplied only for the primitive leaves. The compiler derives
+-- every constructor's copying, control and stored-program overhead.
+private def differenceBounds : differenceCode.LocalBounds :=
+  (((), ()), ⟨⟨8, 38⟩,
+    ⟨fun value => (Natural.subtract_time_unit 256 256 (by decide) (by decide) (by decide) value).le, by decide⟩⟩)
+private def equalBounds : equalCode.LocalBounds :=
+  (((), ()), ⟨⟨6, 27⟩,
+    ⟨fun value => (Natural.equal_time_unit 256 256 (by decide) (by decide) (by decide) value).le, by decide⟩⟩)
+private def choiceBounds : choiceCode.LocalBounds := (equalBounds, (), differenceBounds)
+private def releaseBounds : releaseCode.LocalBounds := ((), ⟨⟨0, 2⟩, ⟨fun _ => le_rfl, le_rfl⟩⟩)
+private def rejectedBounds : rejected.LocalBounds := (releaseBounds, ())
+
+example : (differenceCode.budget differenceBounds).time = 188 ∧
+    (differenceCode.budget differenceBounds).words = 791 := by decide
+example : (choiceCode.budget choiceBounds).time = 576 ∧
+    (choiceCode.budget choiceBounds).words = 2456 := by decide
+
+private def accepted {Γ : List (Ty Unit)} {a : Ty Unit} {expression : Expr Op Γ a}
+    {input : Layout 8 (Env base Γ)} {output : Layout 8 (a.Value base)}
+    (certificate : Cert expression input output) (bounds : certificate.LocalBounds) : Bool :=
+  (certificate.compileBudget bounds).isSome
+
+example : [accepted differenceCode differenceBounds, accepted choiceCode choiceBounds,
+    accepted firstCode ((), ()), accepted secondCode ((), ()), accepted bindingCode ((), ()),
+    accepted wideBindingCode ((), ()), accepted boolCode (), accepted unitCode (),
+    accepted consCode ((), ()), accepted widenedCode ((), ()), accepted foldCode ((), (), ()),
+    accepted releaseCode releaseBounds] = List.replicate 12 true := by decide +kernel
+example : rejected.compileBudget rejectedBounds = none := rfl
+example : Subtype.val <$> choiceCode.compileBudget choiceBounds = choiceCode.compile (by decide) :=
+  choiceCode.compileBudget_forget choiceBounds
+
 open Lean in
 run_cmd do
   let allowed := [`propext, `Quot.sound, `Classical.choice]
@@ -149,7 +180,10 @@ run_cmd do
       ``Implementation.castFunction, ``Implementation.checkedPair, ``Implementation.checkedBranch,
       ``Variable.compile, ``Compilation.compile, ``Compilation.exec, ``differenceCode,
       ``choiceCode, ``firstCode, ``secondCode, ``bindingCode, ``wideBindingCode,
-      ``boolCode, ``unitCode, ``consCode, ``widenedCode, ``foldCode, ``releaseLast, ``releaseCode, ``rejected] do
+      ``boolCode, ``unitCode, ``consCode, ``widenedCode, ``foldCode, ``releaseLast, ``releaseCode, ``rejected,
+      ``differenceBounds, ``equalBounds, ``choiceBounds, ``releaseBounds, ``rejectedBounds,
+      ``Compilation.budget, ``Compilation.bounded, ``Compilation.exec_bounded,
+      ``Compilation.compileBudget, ``Compilation.compileBudget_forget] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

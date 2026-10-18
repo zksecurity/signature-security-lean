@@ -124,6 +124,10 @@ Pinned upstreams:
   expression; generated scratch names are checked before accepting a composition.
   Complete staged folds have uniform polynomial time and stored-code bounds
   derived from their layout widths and individual body/conversion budgets.
+  Uniform budgets now cover the complete original-expression compiler, including
+  fold input construction. Only primitive instructions and final-layout
+  conversions supply budgets; all constructor overhead is derived structurally.
+  Attaching the budget proof preserves the original accepted code and rejections.
   These budgets also bound actual running time and additional buffer usage;
   initial storage and machine metadata retain their separate accounting.
   Cryptographic routines require Caliper code and proofs; encoded values remain

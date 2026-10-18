@@ -1,6 +1,7 @@
 import Signatures.Runtime.Caliper.ExpressionCompilation
 import Signatures.Runtime.Caliper.StagedFoldBounds
 import Signatures.Runtime.Caliper.StructuralBudgets
+import Signatures.Runtime.Caliper.ExpressionBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend
@@ -148,6 +149,21 @@ private def certificate : Cert expression input list := by
     (Compilation.nil (w := 8) (P := primitives) (cost := .unit) (hw := by decide)
       (Γ := [.list .nat]) (a := .nat) input entry 0 ?_ ?_) bodyCode stops <;> decide
 
+private def expressionBounds : certificate.LocalBounds :=
+  ((), (), (fun _ => ((), ())), (fun i => ⟨⟨32, 118⟩, stopsBounded i⟩))
+
+example : (certificate.budget expressionBounds).time = 7192 ∧
+    (certificate.budget expressionBounds).words = 27146 := by decide
+
+private theorem expressionAccepted : (certificate.compile (by decide)).isSome := by decide +kernel
+private def expressionProgram := (certificate.compile (by decide)).get expressionAccepted
+private theorem expressionBounded : expressionProgram.BoundedBy 7192 27146 :=
+  certificate.bounded expressionBounds expressionProgram (Option.eq_some_of_isSome expressionAccepted)
+
+example : (certificate.compileBudget expressionBounds).isSome = true := by decide +kernel
+example : Subtype.val <$> certificate.compileBudget expressionBounds = certificate.compile (by decide) :=
+  certificate.compileBudget_forget expressionBounds
+
 private def observe (value : input.Value) := do
   let implementation ← certificate.compile (by decide)
   let initial := input.representation.initial value
@@ -183,7 +199,9 @@ run_cmd do
       ``Implementation.checkedPair_boundedBy, ``ListData.cons_boundedBy,
       ``StagedFold.finish_boundedBy, ``StagedFold.step_boundedBy, ``StagedFold.compile_boundedBy,
       ``Compilation.compile, ``Compilation.exec, ``bodyCode, ``stops, ``certificate,
-      ``bodiesBounded, ``stopsBounded, ``foldedBounded] do
+      ``bodiesBounded, ``stopsBounded, ``foldedBounded, ``expressionBounds, ``expressionBounded,
+      ``Variable.bounded, ``Compilation.bounded, ``Compilation.exec_bounded,
+      ``Compilation.compileBudget, ``Compilation.compileBudget_forget] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
