@@ -5,3 +5,6 @@
 /.env.*
 /RESUME.md
 .DS_Store
+
+# Vendored Lake packages keep their build products local.
+/vendor/**/.lake/

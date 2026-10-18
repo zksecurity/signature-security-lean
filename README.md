@@ -84,10 +84,19 @@ Pinned upstreams:
 - [ArkLib](https://github.com/Verified-zkEVM/ArkLib): `7653a901ed466c88a2e61a3075011b73d7bb2316`
 - [VCVio](https://github.com/Verified-zkEVM/VCVio): `f5119c64ebb055d69c143704e12eba6df7dc386c`
 - [AGM Lean](https://github.com/zksecurity/agm-lean): `c207f29d1bba8b36fd6c09a0a3a6b4e82148b402`
+- [Caliper](https://github.com/zksecurity/caliper): `b62f7c8be35df0aa728e5a6aac7bae85eef67449`,
+  [vendored with the minimal Lean 4.34 port](vendor/caliper/UPSTREAM.md).
 
 ## Scope
 
 - The source games use lazy random oracles.
+- The separate [Caliper execution layer](Signatures/Runtime/Caliper.lean) supplies
+  word programs, encoded field/group routine contracts, concrete local quantitative
+  realizers, resource composition, and charged buffer copying. Cryptographic routines
+  require Caliper code and proofs; encoded values remain inspectable by bit operations.
+  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes bounded container
+  layouts and the signature oracle/replay controllers. The signature security models
+  still use their explicit backend contracts; this layer does not yet discharge them.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.
 - The original pairing-based AGM reductions sample private finite tables. BLS additionally has
   lazy reductions with sparse extraction, finite-list cache refinement, and the same probability

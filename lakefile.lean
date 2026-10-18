@@ -20,6 +20,9 @@ require VCVio from git
   "https://github.com/Verified-zkEVM/VCVio" @
   "f5119c64ebb055d69c143704e12eba6df7dc386c"
 
+-- Pinned upstream source with the existing minimal Lean 4.34 compatibility port.
+require caliper from "vendor/caliper"
+
 @[default_target]
 lean_lib «Signatures» where
 

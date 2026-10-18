@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
 import AlgebraicGroupModel
+import Signatures.Runtime.Caliper
 import Signatures.Model.CoCDH
 import Signatures.Model.LazyAGM
 import Signatures.BLS.Statement
