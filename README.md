@@ -152,6 +152,10 @@ Pinned upstreams:
   frame across the primitive draw and insert its returned value. The proved
   overhead charges all copying and I/O, with explicit primitive draw resources.
   The sampling law remains a separate obligation of that primitive.
+  This same cache code now refines the BLS AGM private list oracle. Both BLS
+  reductions have a proved cache-capacity invariant at every adaptive source
+  request, using their existing `2*q+1` query bound and represented-message
+  assumptions. Complete reduction compilation remains to be connected.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling

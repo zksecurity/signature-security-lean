@@ -574,6 +574,28 @@ Implemented and checked:
   dense name bounds for lowered compute/sequence/tag-dispatch/saved-call wrappers.
   It supplies the cache memory proof; the remaining scheme controllers still
   need their own assembly and family bounds.
+- [CacheReadOracle](../Signatures/Runtime/Caliper/CacheReadOracle.lean) connects
+  the same executed cache code to the shared `QueryImpl.ListCache.handler`,
+  preserving the value and updated table jointly.
+  [BLSCache](../Signatures/Runtime/Caliper/BLSCache.lean) specializes this to the
+  existing BLS AGM `privateListOracle`, with scalar or scalar-pair values. It
+  requires the primitive draw's exact uniform-sampling law; it does not replace
+  that law with word-packet transport. The existing time/code/memory proofs
+  apply to this identical code.
+- [SourcePrefix](../Signatures/Runtime/Caliper/SourcePrefix.lean) tracks adaptive
+  source prefixes using supported replies and states from the same stateful
+  oracle. Every supported completed simulation has such a path. Query allowances
+  decrease along these paths, and list growth is bounded by requests used.
+  [BLSCacheReachability](../Signatures/Runtime/Caliper/BLSCacheReachability.lean)
+  proves the cache's input invariant immediately before every reachable request.
+  `good_ready` and `bad_ready` use the original reductions' query theorems to
+  reserve `2*q+1` entries from an empty table, including extraction and the final
+  target. Scalar values must fit, and actual queried messages must satisfy the
+  key layout; no finite-message-domain instance is required. A regression uses
+  unbounded natural-number keys with only encountered keys represented, proving
+  both adaptive hit/miss branches and executing their Caliper continuations.
+  These results discharge the private-cache capacity obligation, not the complete
+  scheme controller, caller-storage or replay certificates.
 
 Remaining integration sequence:
 
@@ -595,7 +617,8 @@ Remaining integration sequence:
    admitted domains, including iteration-dependent domains for growing folds.
    The bounded-source layout and loop refinement are implemented; the particular
    signature programs still need their reachable-state invariants and primitive
-   refinements. A fixed-width representation cannot honestly supply all the old
+   refinements beyond the BLS private-cache invariant above. A fixed-width
+   representation cannot honestly supply all the old
    closure instances unchanged.
 2. Instantiate compilation certificates for the signature programs through these layouts.
    The local category above does not yet instantiate `BackendAssembly.Backend`:

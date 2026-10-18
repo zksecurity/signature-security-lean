@@ -33,6 +33,8 @@ import Signatures.Runtime.Caliper.ExpressionMemory
 import Signatures.Runtime.Caliper.LookupAcceptance
 import Signatures.Runtime.Caliper.CacheBounds
 import Signatures.Runtime.Caliper.CacheReadMemory
+import Signatures.Runtime.Caliper.CacheReadOracle
+import Signatures.Runtime.Caliper.SourcePrefix
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -83,6 +85,8 @@ no draw call; misses retain their frame across an actual primitive draw, then
 insert the returned value. Time/code and complete memory bounds include this
 saved-state copying and the primitive's own resources. Draw semantics and its
 implementation remain explicit primitive contracts, including sampling laws.
+The same code implements the shared association-list oracle. Adaptive source
+prefixes retain query allowances and state-growth bounds along supported paths.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/
