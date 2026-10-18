@@ -163,8 +163,11 @@ Pinned upstreams:
   time/code budgets and complete memory bounds linked to the original source.
   Only scalar multiplication and group addition supply primitive implementations;
   the surrounding selection and saved-input copying are generated and charged.
-  Recording the returned point in the transcript and joining this code to the
-  private cache remain part of complete reply compilation.
+  Recording the returned point in either transcript also has constructed code,
+  derived copying budgets and complete memory bounds. The original adaptive
+  source's query allowance proves that a slot remains before each delivered
+  reply, including repeated queries. Joining the cache, response arithmetic and
+  recorder into the complete reply handler remains to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

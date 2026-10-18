@@ -642,8 +642,30 @@ Implemented and checked:
   variants, distinct and zero masks, and preservation of unrelated caller storage.
   [ImplementationMemory](../Signatures/Runtime/Caliper/ImplementationMemory.lean)
   exposes the reusable local memory theorem independently of signature games.
-  Transcript recording, the outer saved-state/cache composition, and the complete
-  private reply oracle still need their own construction and source refinement.
+  The outer saved-state/cache composition and complete private reply oracle
+  still need their own construction and source refinement.
+- [BLSRecord](../Signatures/Runtime/Caliper/BLSRecord.lean) constructs the update
+  of the selected reverse-order reply log and returns the delivered point. Its
+  specification is the original `LazyAGM.record`. Both logs retain fixed capacity;
+  inserting a reply, preserving the unselected log, and returning the point all
+  execute charged copies. Full unselected logs are supported. Repeated delivered
+  replies each receive an entry, even when the private lookup was a cache hit.
+  [BLSRecordBounds](../Signatures/Runtime/Caliper/BLSRecordBounds.lean) derives
+  `T=208*e+44*g+476*l+5` and `C=676*e+143*g+1547*l+527`, where `e` is the encoded
+  message/point entry width, `g` the point width and `l=1+capacity*e` the padded
+  width of one log. The complete returned-point/log operation uses at most five
+  buffer slots. Every intermediate state's total memory is bounded by
+  `5*C+initialRegisterSlots+3*initialBufferSlots+initialCapacity+T`, with no supplied
+  primitive budgets. [BLSRecordReachability](../Signatures/Runtime/Caliper/BLSRecordReachability.lean)
+  establishes the input domain before each hash/sign query in a supported prefix
+  of the original `LazyAGM.listOracle`: initially stored replies plus the query
+  allowance must fit the log capacity, queried messages must be representable,
+  and the response functions must preserve the point domain. Private randomness
+  leaves the logs unchanged. The theorem applies to arbitrary adaptive source
+  programs and does not enumerate the message space. Regressions execute both
+  updates with a full unselected log, repeated and first replies, domain checks
+  excluding a full selected log or an unrepresentable message, and both branches of an actual
+  adaptive source prefix. Caller contents, spare capacity and tape position survive.
 
 Remaining integration sequence:
 

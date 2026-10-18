@@ -16,6 +16,8 @@ import Signatures.Runtime.Caliper.BLSCache
 import Signatures.Runtime.Caliper.BLSCacheReachability
 import Signatures.Runtime.Caliper.BLSCachePairs
 import Signatures.Runtime.Caliper.BLSResponseMemory
+import Signatures.Runtime.Caliper.BLSRecordBounds
+import Signatures.Runtime.Caliper.BLSRecordReachability
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics
