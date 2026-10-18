@@ -137,10 +137,12 @@ Pinned upstreams:
   association-list lookup has a constructed compilation certificate and explicit
   polynomial time/code budgets in stored-entry capacity and encoding widths.
   Its retained-environment copies are charged, giving quadratic worst-case overhead.
+  Structured-key lookup is compiled to the same code through a proved equality
+  of source results, with complete memory bounds retained.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling
-  structured-comparison lookup and update expressions, scheme-specific compilation
+  cache update expressions, scheme-specific compilation
   and capacity invariants, and linking
   replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not

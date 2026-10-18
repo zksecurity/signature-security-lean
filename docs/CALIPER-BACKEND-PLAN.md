@@ -480,12 +480,29 @@ Implemented and checked:
   names and all initial storage. General successful-emission proofs for scheme
   families remain necessary; a compilation certificate still returns `Option`
   and checks generated scratch names.
+- [LookupExpression](../Signatures/Runtime/Caliper/LookupExpression.lean)
+  compiles the original `lookupExpr` with a structured-key equality expression
+  by proved normalization to encoded equality. Its only source premise is that
+  the comparator tests equality, as already proved for the scheme comparators.
+  No implementation or efficiency assumption is supplied for the completed
+  lookup or source comparison expression. The generated program scans the
+  complete stored key encodings. Its result agrees with the original source
+  expression on every admitted input; the optimization does not claim to
+  preserve the source interpreter's step count.
+  The existing constructed certificate supplies the same time/code budgets,
+  name extent `5+C`, and static memory bound `5*C+20+r+3*b`. Complete execution
+  memory adds all initial buffer capacity and `T`, including intermediate states.
+  Normalization preserves compiler acceptance/rejection. Product-key regressions
+  distinguish either component, preserve cached zero and unrelated caller storage,
+  and check universal budgets `14813` steps and `53660` code words for capacity
+  two, two-word keys and one-word values. Scheme-wide compilation and successful
+  family emission remain separate obligations.
 
 Remaining integration sequence:
 
-1. Extend compilation to `LookupExpr` with structured comparison expressions and
-   to updates. Encoded key/message equality and the original atomic-comparison
-   `Lookup` now have actual implementations and derived budgets. Prove successful
+1. Compile cache update expressions. Encoded key/message equality, the original
+   atomic-comparison `Lookup`, and structured `LookupExpr` now have actual
+   implementations and derived budgets. Prove successful
    emission for the chosen scheme families, and refine the source's unbounded
    `Nat` and lists along reachable executions. List construction, case analysis,
    capacity growth and folds are

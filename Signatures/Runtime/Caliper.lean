@@ -30,7 +30,7 @@ import Signatures.Runtime.Caliper.StagedFoldBounds
 import Signatures.Runtime.Caliper.StructuralBudgets
 import Signatures.Runtime.Caliper.ExpressionBounds
 import Signatures.Runtime.Caliper.ExpressionMemory
-import Signatures.Runtime.Caliper.LookupBounds
+import Signatures.Runtime.Caliper.LookupExpression
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -67,6 +67,8 @@ initial capacity and every intermediate and final state of actual execution.
 Encoded equality executes a linear word scan, including zero-word layouts.
 The original association-list lookup has a constructed compilation certificate
 and concrete polynomial time/code budgets in stored-entry capacity and widths.
+Structured-key lookup is normalized to this code using a proved source equality
+test, retaining its result and complete resource bounds.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/
