@@ -596,6 +596,31 @@ Implemented and checked:
   both adaptive hit/miss branches and executing their Caliper continuations.
   These results discharge the private-cache capacity obligation, not the complete
   scheme controller, caller-storage or replay certificates.
+- [PairSampling](../Signatures/Runtime/Caliper/PairSampling.lean) constructs an
+  independent pair sampler from two certified component samplers. The first
+  result is saved beyond the second sampler's lowered buffer footprint, restored
+  after that draw, then permuted into output order by executed instructions.
+  The product uniform-sampling law follows from the two component laws.
+  [PairSamplingBounds](../Signatures/Runtime/Caliper/PairSamplingBounds.lean)
+  proves `T=t1+t2+20*a+16*b`, `C=c1+c2+65*a+52*b+58`, and dense name bound
+  `S=max(3,max(s1,s2+1))`, for component word widths `a,b`, time budgets `t1,t2`,
+  code budgets `c1,c2`, and name reservations `s1,s2`.
+  [PairSamplingMemory](../Signatures/Runtime/Caliper/PairSamplingMemory.lean)
+  bounds complete memory at every visited state by
+  `C+4*S+initialRegisterSlots+3*initialBufferSlots+initialCapacity+T`.
+  Generated-word acceptance is derived from the component descriptions and the
+  second component's name reservation fitting the word width.
+  [BLSCachePairs](../Signatures/Runtime/Caliper/BLSCachePairs.lean) uses two copies
+  of the scalar sampler in the existing pair-valued private cache. It derives
+  the cache's source equality, time/code bounds and description acceptance; no
+  separate pair sampler or pair-sampling law is assumed. The wider table and
+  its additional saved buffer have explicit width obligations. Scalar sampling
+  from a fair-bit tape remains separate from this composition theorem.
+  Regression executions check different first/second replies, output order,
+  two input consumptions, unrelated caller storage, a callee using buffer 2,
+  and full-cache hits that
+  skip both draws. One-word components with four-step/20-word scalar draws have
+  pair budgets of 44 steps, 215 code words and four name slots.
 
 Remaining integration sequence:
 

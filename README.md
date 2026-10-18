@@ -156,11 +156,13 @@ Pinned upstreams:
   reductions have a proved cache-capacity invariant at every adaptive source
   request, using their existing `2*q+1` query bound and represented-message
   assumptions. Complete reduction compilation remains to be connected.
+  BLS's pair-valued cache now derives its sampler from two scalar draws, with
+  proved independence, executed retention/permutation and complete memory bounds.
+  It requires only the scalar sampler's implementation and sampling law.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
-  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling
-  scheme-specific compilation
-  and capacity invariants, and linking
+  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
+  scheme compilation and capacity invariants, and linking
   replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
   yet discharge them.

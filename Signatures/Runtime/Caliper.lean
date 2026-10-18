@@ -35,6 +35,7 @@ import Signatures.Runtime.Caliper.CacheBounds
 import Signatures.Runtime.Caliper.CacheReadMemory
 import Signatures.Runtime.Caliper.CacheReadOracle
 import Signatures.Runtime.Caliper.SourcePrefix
+import Signatures.Runtime.Caliper.PairSamplingMemory
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -87,6 +88,9 @@ saved-state copying and the primitive's own resources. Draw semantics and its
 implementation remain explicit primitive contracts, including sampling laws.
 The same code implements the shared association-list oracle. Adaptive source
 prefixes retain query allowances and state-growth bounds along supported paths.
+Independent pair sampling is derived from two certified component samplers.
+Saved-state copying and output permutation execute, with linear overhead and
+complete memory bounds; the product sampling law follows from component laws.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/
