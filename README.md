@@ -109,10 +109,13 @@ Pinned upstreams:
   Bounded list construction, empty/head-tail case analysis, and capacity growth
   have actual implementations with linear time and code bounds; copies, padding,
   and stored length updates are charged. Their source types remain ordinary lists.
+  List folds now execute compiled bodies with retained tails and environments.
+  Their proved polynomial bounds include every copy and stored branch; source
+  refinement also supports entries and accumulators with bounded domains.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
-  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes list traversal,
-  lookup/update, scheme-specific compilation and capacity invariants, and linking
+  [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes compiling
+  lookup/update expressions, scheme-specific compilation and capacity invariants, and linking
   replay controllers. The signature
   security models still use their explicit backend contracts; this layer does not
   yet discharge them.

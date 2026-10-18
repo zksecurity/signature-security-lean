@@ -22,6 +22,7 @@ import Signatures.Runtime.Caliper.OracleCall
 import Signatures.Runtime.Caliper.SourceAcceptance
 import Signatures.Runtime.Caliper.InteractiveDescription
 import Signatures.Runtime.Caliper.SourceLists
+import Signatures.Runtime.Caliper.SourceFold
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -36,6 +37,8 @@ registers, descriptors and every intermediate buffer state. Checked emission
 validates generated names and proves word-sized capacities throughout execution.
 Bounded list construction, case analysis and capacity growth use actual copying,
 stored-header arithmetic and branch instructions, with linear time/code bounds.
+List folds execute their compiled bodies with retained tails and environments;
+their polynomial time and code bounds include every copy and stored branch.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/

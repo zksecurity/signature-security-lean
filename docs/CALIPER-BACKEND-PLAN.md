@@ -228,6 +228,25 @@ Implemented and checked:
   preservation of their bounded domains. The constructor can grow a capacity;
   case analysis shrinks the tail's capacity. Looping source programs still need
   explicit layout reconciliation and invariant proofs.
+- [ListFoldSetup](../Signatures/Runtime/Caliper/ListFoldSetup.lean) and
+  [Reorder](../Signatures/Runtime/Caliper/Reorder.lean): executed copying prepares
+  body arguments and a retained tail/environment, decrements the copied tail
+  count, and rebuilds the next list/accumulator/environment frame after the call.
+- [ListFold](../Signatures/Runtime/Caliper/ListFold.lean) and
+  [ListFoldBounds](../Signatures/Runtime/Caliper/ListFoldBounds.lean): complete
+  Caliper execution of a fold with a compiled body. The stored length controls
+  calls; a maximum capacity bounds the generated code. For entry, accumulator
+  and environment widths `s,b,e`, capacity `n`, and `W=1+(n+1)*s+b+2*e`, time is
+  at most `8*b+n*(bodyTime+44*W+7)` and code at most
+  `26*b+14+n*(bodyWords+169*W+115)`. The possible quadratic capacity cost comes
+  from charged tail copying. Empty lists skip the body, and capacity zero runs
+  the final accumulator projection.
+- [ListLayout](../Signatures/Runtime/Caliper/ListLayout.lean) represents lists
+  whose elements have bounded domains, including nested structured values.
+  [SourceFold](../Signatures/Runtime/Caliper/SourceFold.lean) compiles the original
+  mathematical `List.foldl` from its body implementation. It derives accumulator
+  validity and source-result equality; no implementation or bound for the
+  finished fold is a premise. Domain witnesses remain mathematical specifications.
 - [Regression checks](../SignaturesTest/CaliperBackend.lean): actual execution,
   cost composition, invalid addresses, overflowing static operands, code size,
   charged copying, and theorem axiom guards.
@@ -262,13 +281,19 @@ Implemented and checked:
   charged capacity growth; scratch release and exact time/net/peak profiles;
   rejection of oversized decoded counts; uniform symbolic resource bounds,
   original-source capacity preservation, and theorem axiom guards.
+- [Fold checks](../SignaturesTest/CaliperFold.lean): empty, partial and maximum
+  traversal; dependence on the entry, accumulator and environment; capacity-zero
+  termination; retained-state cleanup, unrelated memory preservation, exact
+  runtime/net/peak profiles, symbolic time/code bounds, bounded-entry decoder
+  rejection and theorem axiom guards.
 
 Remaining integration sequence:
 
-1. Complete list traversal and derived lookup/update, and refine the source's
-   unbounded `Nat` and lists to bounded representations along reachable executions.
-   List construction, case analysis and capacity growth are implemented, as are
-   tag dispatch, projection/length and saved-state composition.
+1. Compile derived lookup/update expressions using the fold, complete bounded
+   counter/Boolean operations, and refine the source's unbounded `Nat` and lists
+   along reachable executions. List construction, case analysis, capacity growth
+   and folds are implemented, as are tag dispatch, projection/length and saved-state
+   composition. Folds now preserve domains for entries and accumulators.
    The bounded-source layout and loop refinement are implemented; the particular
    signature programs still need their reachable-state invariants and primitive
    refinements. A fixed-width representation cannot honestly supply all the old
@@ -286,6 +311,8 @@ Remaining integration sequence:
    bounds still need parameter-indexed polynomial bounds for each scheme.
 3. Link the proved word oracle adapter and replay primitives into complete signature
    callers and rewinding. Ordinary saved-state query composition is proved.
+   Prove private finite-domain sampling agrees with the chosen randomness
+   interface; oracle packet transport alone does not supply this distribution proof.
    Prove separation of caller/controller storage and preservation of
    their invariants across external queries. Either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
