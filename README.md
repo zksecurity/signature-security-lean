@@ -237,9 +237,14 @@ Pinned upstreams:
   routing and the handoff after hash evaluation now also execute charged word
   copies, with exact encoding, time/code and all-visited-memory proofs. Their
   bounded inputs include both explanations and both logs, even when the bad
-  branch discards hash data. Composing the hash phase and these routes into full
-  extractors, connecting setup and caller to extraction, and proving coverage
-  of the intended Caliper attacker class remain to be done.
+  branch discards hash data. Both complete BLS AGM extractors now compose these
+  routes, transcript evaluation and final extraction. The good branch retains
+  the signature transcript across its hash pass, and every supported hash result
+  preserves the remaining cache reservation. Their erased results equal the
+  original `goodFinish`/`badFinish` programs, including final cache and query
+  order, with full time, code, intermediate-memory and operand-acceptance proofs.
+  Connecting setup and caller to extraction and proving coverage of the intended
+  Caliper attacker class remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

@@ -948,7 +948,8 @@ Implemented and checked:
   length/entry bounds, duplicate-message transcript occurrences, separate log
   padding, released scratch and untouched caller storage. Source/resource
   endpoints and axiom guards are instantiated. Coefficient association is
-  implemented below, as is private row evaluation; complete extractor assembly remains.
+  implemented below, as is private row evaluation; both now participate in the
+  complete BLS extractors described below.
 
 - [ListIndex](../Signatures/Runtime/Caliper/ListIndex.lean) implements positional
   lookup from a runtime index, default and bounded stored list. Its constructed
@@ -998,8 +999,8 @@ Implemented and checked:
   early padding and all scratch release. They reject invalid counters and input
   bounds, check that surplus coefficients increase charged work, and audit the
   complete source bridge and resource proofs. The row evaluator below consumes
-  these rows; the final lookup and arithmetic below still need to be connected
-  to row preparation and evaluation in a complete extractor.
+  these rows; the complete BLS extractors below join row preparation, evaluation,
+  final lookup and arithmetic.
 
 - [BLSAccumulate](../Signatures/Runtime/Caliper/BLSAccumulate.lean) constructs
   scalar `acc + coeff * answer` and both coordinates of pair accumulation from
@@ -1093,8 +1094,8 @@ Implemented and checked:
   storage and released scratch space. The word-arithmetic fixtures test wiring;
   the general theorems require the selected field routines' actual contracts.
   The incoming good frame already contains `beta + hashes`; the executed
-  constructor below now supplies that addition. Joining transcript evaluations
-  through their retained forgery frames remains part of full extractor assembly.
+  constructor below now supplies that addition. The complete BLS extractors
+  below join the transcript evaluations through physically retained frames.
 
 - [TokenEvaluation](../Signatures/Runtime/Caliper/TokenEvaluation.lean) composes
   chronological token/coefficients preparation, literal initial-accumulator
@@ -1120,9 +1121,9 @@ Implemented and checked:
   assignment, missing/surplus coefficients, repeated-message occurrences,
   zero-weight lookups, empty/full-cache and zero-token-capacity cases, incomplete
   sampling replies, cache reservation, instruction acceptance and caller storage.
-  The signature phase now retains its final forgery context in the composed
-  tail below. Retaining the other transcript across the good hash phase and
-  constructing the initial forgery frames remain part of full composition.
+  The signature phase retains its final forgery context in the composed tail
+  below; the complete extractor also retains the signature transcript across
+  the hash pass and executes the initial forgery routing.
 
 - [CacheTargetFrame](../Signatures/Runtime/Caliper/CacheTargetFrame.lean) packs
   the returned transcript sum/cache and saved target/scalar into the final
@@ -1143,8 +1144,8 @@ Implemented and checked:
   hits, misses, duplicates, empty caches, zero division, incomplete pair replies,
   preserved caller storage and released scratch. The word fixture also checks
   that addition executes; it is not a field implementation.
-  These constructors are now used by the composed signature tail below;
-  the good hash phase and initial forgery frames remain to be connected.
+  These constructors are used by the composed signature tail and the complete
+  BLS extractors below, including the good branch's hash pass.
 
 - [BLSSignatureTail](../Signatures/Runtime/Caliper/BLSSignatureTail.lean) joins
   signature-transcript evaluation, actual save/restore of the target and
@@ -1174,9 +1175,9 @@ Implemented and checked:
   chronological coefficients, missing and surplus coefficients, repeated-message
   reuse, zero-weight queries, target reuse, empty logs, partial replies, zero
   division, caller preservation and released scratch in the composed program.
-  The initial routing programs below now supply the surrounding frames.
-  Their composition with the good hash phase, complete BLS solver assembly
-  and public model instantiation remain separate unfinished steps.
+  The complete BLS extractor below now supplies the initial routing and good
+  hash pass. Complete BLS solver assembly and public model instantiation remain
+  separate unfinished steps.
 
 - [BLSExtractorLayout](../Signatures/Runtime/Caliper/BLSExtractorLayout.lean)
   represents the original `(mstar, beta, gamma, xi)` output alongside the cache
@@ -1201,7 +1202,36 @@ Implemented and checked:
   check distinct gamma/xi and log lengths, surplus coefficients, empty logs,
   discarded hash data, scalar/pair caches, updated cache retention, exact output
   bytes, actual runtime, caller storage preservation and released scratch.
-  This establishes the routers, not yet the complete extractor composition.
+  These routers are used by the complete extractor composition below.
+
+- [BLSExtractor](../Signatures/Runtime/Caliper/BLSExtractor.lean) constructs both
+  complete BLS AGM private extractors from the original bounded forgery,
+  reverse-stored hash/signature logs, and private cache. The good branch executes
+  initial routing, a [retained hash pass](../Signatures/Runtime/Caliper/BLSExtractorHash.lean),
+  the handoff, and the signature tail. The bad branch routes directly to its
+  signature tail. Every supported hash result preserves enough capacity for the
+  actual remaining signature tokens plus the final target; no extra ready-state
+  or implementation contract is supplied for the composed phases.
+  [Source equality](../Signatures/Runtime/Caliper/BLSExtractorSource.lean)
+  identifies their erased results with the original `LazyAGM.goodFinish` and
+  `badFinish` under the private list oracle, retaining the full final cache and
+  exact query order. The scalar sampler's ideal-uniform law remains an explicit
+  primitive contract. [Time](../Signatures/Runtime/Caliper/BLSExtractorBounds.lean)
+  and [stored-code](../Signatures/Runtime/Caliper/BLSExtractorWords.lean) bounds
+  include both transcript passes, all routing, saved-state copies and composition
+  words. [Memory](../Signatures/Runtime/Caliper/BLSExtractorMemory.lean) covers
+  every visited state of the same source-supported execution. [Acceptance](../Signatures/Runtime/Caliper/BLSExtractorAcceptance.lean)
+  derives the hash context's saved-buffer fit from the actual evaluator footprint.
+  [Whole-extractor regressions](../SignaturesTest/CaliperBLSExtractor.lean)
+  cover disjoint and shared hash/signature messages, chronological coefficients,
+  missing/surplus coefficients, repeated tokens, zero-weight lookups, target
+  reuse, initial cache hits, empty logs, division by zero, partial responses,
+  exact final cache/trace, measured runtime, caller preservation and scratch release.
+  The word fixture tests composition; the general field theorems establish
+  source equality. [Invariant views](../Signatures/Runtime/Caliper/InteractiveInvariantViews.lean)
+  only change mathematical product views after proving identical encoded bytes.
+  Complete solver setup/caller/termination composition and public security-model
+  instantiation remain unfinished.
 
 Remaining integration sequence:
 
@@ -1215,8 +1245,9 @@ From an empty store, cache capacity `2*q + 1` leaves room for one private read
 per transcript token plus the final message. Transcript capacity stays at `q`;
 no extraction reservation is imposed on the logs. The asymmetric-capacity
 regression uses five cache entries and two transcript slots and rejects a
-five-slot joint reservation. This is the capacity precondition for the remaining
-extractor implementation, not a claim that extraction has been compiled.
+five-slot joint reservation. This is the capacity precondition for the
+complete extractor implementation above. Connecting the caller's returned
+configuration/output frame to that extractor remains part of solver assembly.
 
 1. Compile the remaining scheme code and establish reachable-state invariants.
    Fixed-capacity `cacheProgram` and `cacheGetExpr`, encoded
