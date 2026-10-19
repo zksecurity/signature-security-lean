@@ -19,6 +19,7 @@ import Signatures.Runtime.Caliper.BLSResponseMemory
 import Signatures.Runtime.Caliper.BLSRecordBounds
 import Signatures.Runtime.Caliper.BLSRecordReachability
 import Signatures.Runtime.Caliper.BLSOracleSchemes
+import Signatures.Runtime.Caliper.BLSCallerPacketBounds
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics

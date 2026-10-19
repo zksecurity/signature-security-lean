@@ -830,6 +830,27 @@ Implemented and checked:
   time and every-intermediate-state memory bounds. These fixtures test the generic
   theorem and do not establish coverage of all efficient Caliper attackers or
   instantiate BLS's dependent packets and source correspondences.
+- [SumContextMerge](../Signatures/Runtime/Caliper/SumContextMerge.lean) executes
+  the inverse union/context conversion, with time at most `44*W + 2`, stored
+  code at most `286*W + 143` and accounted names, where `W` is the full packet
+  width. The private store is retained while the chosen union tag and padding
+  are written, then copied into its final position.
+  [BLSCallerPackets](../Signatures/Runtime/Caliper/BLSCallerPackets.lean) uses
+  executed nested distribution and this merge to convert the generic caller's
+  separate request/reply and private-store pairs to the existing BLS service.
+  Mathematical proof packaging changes no bytes: `request_bytes` proves that
+  the constructed request has exactly the service's encoding on its ready domain.
+  [Bounds](../Signatures/Runtime/Caliper/BLSCallerPacketBounds.lean) charge at most
+  `64*W + 6` time and `420*W + 270` stored code for request preparation, and
+  `44*W + 2` time and `286*W + 143` stored code for reply conversion, with
+  `W = 3 + messageWords + pointWords + storeWords`.
+  [Regressions](../SignaturesTest/CaliperBLSPackets.lean) execute random/hash/sign
+  preparation and random/group replies with a nonempty cache and transcript.
+  They check padding movement in both directions, unrelated machine storage,
+  untouched replies/tape position, and non-readiness of a full signing log even
+  on a cache hit. The source message type is infinite; only represented messages
+  are used. The composed BLS handler and its original-machine bridge still need
+  to be connected to the controller and its decreasing reservation invariant.
 
 Remaining integration sequence:
 
@@ -872,7 +893,8 @@ Remaining integration sequence:
    caller steps and decreasing-domain loop composition are proved.
    Prove private finite-domain sampling agrees with the chosen randomness
    interface; oracle packet transport alone does not supply this distribution proof.
-   Instantiate the proved original-machine bridge for the BLS packet layouts,
+   Compose the proved BLS packet conversions with the service and instantiate the
+   proved original-machine bridge,
    carrying the existing reservations through generated caller steps. Caller state and private
    store are already framed across their respective callees in those steps.
    For rewinding, either copy all saved registers,

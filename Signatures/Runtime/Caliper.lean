@@ -42,6 +42,7 @@ import Signatures.Runtime.Caliper.TagBounds
 import Signatures.Runtime.Caliper.InteractiveMemory
 import Signatures.Runtime.Caliper.InteractiveInvariantBounds
 import Signatures.Runtime.Caliper.SumContextBounds
+import Signatures.Runtime.Caliper.SumContextMerge
 import Signatures.Runtime.Caliper.CallerStepBounds
 import Signatures.Runtime.Caliper.CallerExecution
 
