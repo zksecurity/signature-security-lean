@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.BLSFullSecurity
+import Signatures.Runtime.Caliper.BLSCallerPresentation
 import Signatures.BLS.QueryAllowance
 
 /-! Caliper parameters for the public BLS AGM theorem. Layouts, implemented

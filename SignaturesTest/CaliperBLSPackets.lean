@@ -286,16 +286,16 @@ private theorem caller_implements : machine.ImplementsWithin sourceProgram 2 := 
   rcases q with (n | message) | message <;>
     simp [machine, sourceProgram, PFunctor.DynSystem.DynComputation.run,
       PFunctor.DynSystem.DynComputation.unroll, machineStep, sourceNext, bind_pure_comp] <;> rfl
-private def stateView (q : BLSCallerPackets.Request layout 3) : machine.State :=
-  .inr (BLSCallerHandler.query layout 3 q)
+private def stateView (value : BLSCallerPackets.Request layout 3 × BLSCallerPackets.Request layout 3) : machine.State :=
+  .inr (BLSCallerHandler.query layout 3 value.2)
 private theorem advance_matches (remaining : Nat) (q c) (valid : localDomain (remaining + 1) (q, c))
     (next : SourceSpec.Range (BLSCallerHandler.query layout 3 q) → machine.State)
-    (view : machine.view (stateView c) = .inr ⟨BLSCallerHandler.query layout 3 q, next⟩)
+    (view : machine.view (stateView (q, c)) = .inr ⟨BLSCallerHandler.query layout 3 q, next⟩)
     (represented original) (related : BLSCallerHandler.replyMatches layout 3 q represented original) :
     CallerMachine.Matches machine (BLSCallerHandler.query layout 3) stateView (advance (c, represented)) (next original) := by
   change q = c at valid
   subst c
-  rw [machine.next_eq_of_view_query view (show machine.view (stateView q) =
+  rw [machine.next_eq_of_view_query view (show machine.view (stateView (q, q)) =
     .inr ⟨BLSCallerHandler.query layout 3 q, sourceNext (BLSCallerHandler.query layout 3 q)⟩ from rfl)]
   rcases q with n | (message | message)
   · cases represented with

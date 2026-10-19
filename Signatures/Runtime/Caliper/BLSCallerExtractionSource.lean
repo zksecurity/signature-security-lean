@@ -70,11 +70,11 @@ theorem finish_source (value : layout.Packet)
 
 variable {V : Type}
     (machine : OracleMachine (Model.LazyAGM.advSpec (key.Value base) (key.Value base) G) V layout.forgery.Value)
-    (stateView : A → machine.State) (inputView : U → V)
+    (stateView : layout.Request × A → machine.State) (inputView : U → V)
     (advanceMatches : ∀ remaining q c, domain (remaining + 1) (q, c) →
       ∀ next : (Model.LazyAGM.advSpec (key.Value base) (key.Value base) G).Range
           (BLSCallerHandler.query layout.service layout.randomBound q) → machine.State,
-        machine.view (stateView c) = .inr ⟨BLSCallerHandler.query layout.service layout.randomBound q, next⟩ →
+        machine.view (stateView (q, c)) = .inr ⟨BLSCallerHandler.query layout.service layout.randomBound q, next⟩ →
         ∀ represented original, BLSCallerHandler.replyMatches layout.service layout.randomBound q represented original →
           CallerMachine.Matches machine (BLSCallerHandler.query layout.service layout.randomBound) stateView
             (advance (c, represented)) (next original))

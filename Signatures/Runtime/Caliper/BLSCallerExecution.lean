@@ -71,11 +71,11 @@ theorem execution_postcondition
 
 variable {V : Type}
     (machine : OracleMachine (Model.LazyAGM.advSpec (key.Value base) (key.Value base) G) V B)
-    (stateView : A → machine.State) (inputView : U → V)
+    (stateView : Request service randomBound × A → machine.State) (inputView : U → V)
     (advanceMatches : ∀ remaining q c, domain (remaining + 1) (q, c) →
       ∀ next : (Model.LazyAGM.advSpec (key.Value base) (key.Value base) G).Range
           (BLSCallerHandler.query service randomBound q) → machine.State,
-        machine.view (stateView c) = .inr ⟨BLSCallerHandler.query service randomBound q, next⟩ →
+        machine.view (stateView (q, c)) = .inr ⟨BLSCallerHandler.query service randomBound q, next⟩ →
         ∀ represented original, BLSCallerHandler.replyMatches service randomBound q represented original →
           CallerMachine.Matches machine (BLSCallerHandler.query service randomBound) stateView
             (advance (c, represented)) (next original))

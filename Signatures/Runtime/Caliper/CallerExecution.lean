@@ -70,7 +70,7 @@ namespace CallerMachine
 open CallerControl
 
 variable {w : Nat} {C Q R B S A U T I J : Type} {source : OracleSpec I} {target : OracleSpec J}
-    (machine : OracleMachine source A B) (query : Q → I) (state : C → machine.State)
+    (machine : OracleMachine source A B) (query : Q → I) (state : Q × C → machine.State)
     (stored : S → T) (replyMatches : (q : Q) → R → source.Range (query q) → Prop)
     (advance : C × R → B ⊕ (Q × C)) (H : Q × S → OracleComp target (R × S))
     (original : QueryImpl source (StateT T (OracleComp target))) (invariant : Nat → Frame C Q S → Prop)
@@ -79,7 +79,7 @@ variable {w : Nat} {C Q R B S A U T I J : Type} {source : OracleSpec I} {target 
         (H (value.1.1, value.2)) ((original (query value.1.1)).run (stored value.2)))
     (advanceMatches : ∀ remaining q c saved, invariant (remaining + 1) ((q, c), saved) →
       ∀ next : source.Range (query q) → machine.State,
-        machine.view (state c) = .inr ⟨query q, next⟩ →
+        machine.view (state (q, c)) = .inr ⟨query q, next⟩ →
         ∀ reply originalReply, replyMatches q reply originalReply →
           Matches machine query state (advance (c, reply)) (next originalReply))
     (preserves : ∀ remaining value, invariant (remaining + 1) value →

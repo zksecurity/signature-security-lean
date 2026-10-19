@@ -271,7 +271,12 @@ Pinned upstreams:
   including the shared AGM source game. The public `BLS.agm_security` wrapper now
   uses these Caliper certificates and a model fixed before attacker choice.
   Its polynomial-family corollary now uses the same Caliper model, with complete
-  derived resource bounds. Broader caller coverage remains to be proved.
+  derived resource bounds. The caller's oracle-machine presentation can now be
+  constructed from its local transitions and branchwise query termination; its
+  private state need not duplicate the separately stored pending query. For BLS,
+  the convenient constructor requires complete key and point representations.
+  Local code certificates and correspondence with the algebraic source remain
+  explicit; broader caller coverage remains to be proved.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

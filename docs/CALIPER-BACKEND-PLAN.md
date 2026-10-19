@@ -1387,6 +1387,23 @@ Implemented and checked:
   No uniform program generator, conventional-machine coverage, fair-bit sampler
   or CPU/flat-memory refinement follows from this theorem.
 
+- [Caller presentation](../Signatures/Runtime/Caliper/CallerPresentation.lean)
+  constructs an oracle machine directly from the caller's initialization and
+  continuation functions. Its state is the existing returned/pending packet;
+  the correspondence observes both the pending request and private state, so
+  different requests may share the same private state. Local reply conversion
+  proves the head correspondence. Branchwise query termination derives a finite
+  source tree and its bounded implementation theorem, without a separately
+  supplied machine or machine implementation certificate. The source tree is
+  mathematical semantics; it is not enumerated by the emitted program.
+  [BLS caller presentation](../Signatures/Runtime/Caliper/BLSCallerPresentation.lean)
+  derives both reduction correspondences through this construction when the
+  key and point layouts represent every value. The existing interface still
+  permits restricted layouts. Actual local Caliper code, resource bounds,
+  reachable-state invariants and equality with the algebraic source remain
+  explicit. This removes a presentation restriction; it does not prove general
+  Caliper program coverage or conventional-machine adequacy.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

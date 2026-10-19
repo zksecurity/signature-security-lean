@@ -89,7 +89,7 @@ private theorem implements : machine.ImplementsWithin sourceProgram 1 := by
 
 private def original : QueryImpl unifSpec (StateT (Word 10) ProbComp) :=
   fun position saved => (fun answer => (answer, saved)) <$> unifSpec.query position
-private def stateView (value : Word 10) : machine.State := .inr value
+private def stateView (value : Fin 4 × Word 10) : machine.State := .inr value.2
 private def inputView (value : Word 10 ⊕ (Fin 4 × Word 10)) : Word 10 ⊕ Word 10 := value.map id Prod.snd
 private def replyMatches (q : Fin 4) (reply : UniformQuery.Reply 3) (answer : Fin (q.val + 1)) := reply = ⟨q, answer⟩
 
@@ -102,10 +102,10 @@ private theorem handler_matches (remaining : Nat) (value : CallerControl.Frame (
 
 private theorem advance_matches (remaining : Nat) (q : Fin 4) (c saved : Word 10)
     (valid : invariant (remaining + 1) ((q, c), saved))
-    (next : Fin (q.val + 1) → machine.State) (view : machine.view (stateView c) = .inr ⟨q.val, next⟩)
+    (next : Fin (q.val + 1) → machine.State) (view : machine.view (stateView (q, c)) = .inr ⟨q.val, next⟩)
     (reply : UniformQuery.Reply 3) (originalReply : Fin (q.val + 1)) (_ : replyMatches q reply originalReply) :
     CallerMachine.Matches machine Fin.val stateView (advance (c, reply)) (next originalReply) := by
-  have canonical : machine.view (stateView c) = .inr ⟨q.val, fun _ => .inl c⟩ := by
+  have canonical : machine.view (stateView (q, c)) = .inr ⟨q.val, fun _ => .inl c⟩ := by
     change c.toNat = q.val at valid
     simp only [machine, stateView, view_ofStep, machineStep, Sum.inr.injEq]
     rw [valid]

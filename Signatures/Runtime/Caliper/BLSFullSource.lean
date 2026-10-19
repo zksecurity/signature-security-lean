@@ -13,18 +13,18 @@ variable {w : Nat} {M F G K A : Type}
 assume that either completed reduction implements its source program. -/
 structure Caller.Correspondence where
   machine : OracleMachine (Model.LazyAGM.advSpec M M G) K layout.Forgery
-  stateView : A → machine.State
+  stateView : layout.Request × A → machine.State
   source : K → OracleComp (Model.LazyAGM.advSpec M M G) layout.Forgery
   implements : machine.ImplementsWithin source fuel
   goodAdvance : ∀ remaining q c, invariant.domain (remaining + 1) (q, c) →
     ∀ next : (Model.LazyAGM.advSpec M M G).Range (BLSCallerHandler.query layout.good.service layout.randomBound q) → machine.State,
-      machine.view (stateView c) = .inr ⟨BLSCallerHandler.query layout.good.service layout.randomBound q, next⟩ →
+      machine.view (stateView (q, c)) = .inr ⟨BLSCallerHandler.query layout.good.service layout.randomBound q, next⟩ →
       ∀ represented original, BLSCallerHandler.replyMatches layout.good.service layout.randomBound q represented original →
         CallerMachine.Matches machine (BLSCallerHandler.query layout.good.service layout.randomBound) stateView
           (caller.advance (c, represented)) (next original)
   badAdvance : ∀ remaining q c, invariant.domain (remaining + 1) (q, c) →
     ∀ next : (Model.LazyAGM.advSpec M M G).Range (BLSCallerHandler.query layout.bad.service layout.randomBound q) → machine.State,
-      machine.view (stateView c) = .inr ⟨BLSCallerHandler.query layout.bad.service layout.randomBound q, next⟩ →
+      machine.view (stateView (q, c)) = .inr ⟨BLSCallerHandler.query layout.bad.service layout.randomBound q, next⟩ →
       ∀ represented original, BLSCallerHandler.replyMatches layout.bad.service layout.randomBound q represented original →
         CallerMachine.Matches machine (BLSCallerHandler.query layout.bad.service layout.randomBound) stateView
           (caller.advance (c, represented)) (next original)
