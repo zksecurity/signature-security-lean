@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.BLSCallerInvariant
+import Signatures.Runtime.Caliper.BLSCallerResources
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -165,6 +165,236 @@ private theorem handler_preserves (value) {remaining : Nat} (reserved : BLSReply
   BLSCallerHandler.reserved_after (base := base) (key := .nat) (val := .atom ()) layout default 3
     primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) drawSource draw_law value reserved reply supported
 
+-- Actual adaptive caller: a random answer selects the next hash message.
+-- The local pending request is represented twice, as query and caller state.
+private def requestRep := BLSCallerPackets.request layout 3 (by decide)
+private def replyRep := BLSCallerPackets.reply layout 3 (by decide)
+private def callerLayout := BLSCaller.layout layout 3 (by decide) requestRep layout.point.representation (by decide)
+private def initial (q : BLSCallerPackets.Request layout 3) :
+    layout.point.Value ⊕ (BLSCallerPackets.Request layout 3 × BLSCallerPackets.Request layout 3) := .inr (q, q)
+private def initialCode : Realizer .unit requestRep (CallerStep.next callerLayout) initial :=
+  ((duplicateRealizer .unit (by decide) requestRep (by decide) (by decide)).then
+    (inrRealizer .unit (by decide) layout.point.representation (CallerStep.pending callerLayout)
+      (by decide) (by decide))).viewOutput (CallerStep.next callerLayout) initial (fun _ => rfl)
+private def randomMessage (value : UniformQuery.Reply 3) : cache.key.Value :=
+  ⟨value.2.val, by change value.2.val < 1024; have := value.1.isLt; have := value.2.isLt; omega⟩
+private def messageCode : Realizer .unit port.reply cache.key.representation randomMessage :=
+  selectSliceRealizer .unit (by decide) _ _ _ 1 (by decide) (by decide) (fun _ => rfl)
+private def hashCode := (messageCode.then
+  (inlRealizer .unit (by decide) cache.key.representation cache.key.representation (by decide) (by decide))).then
+    (inrRealizer .unit (by decide) port.request
+      (cache.key.representation.sum cache.key.representation (by decide) (by decide)) (by decide) (by decide))
+private def advance (value : BLSCallerPackets.Request layout 3 × BLSCallerPackets.Reply layout 3) :=
+  match value.2 with
+  | .inl random => initial (.inr (.inl (randomMessage random)))
+  | .inr point => .inl point
+private def continuation : Realizer .unit (CallerStep.resume callerLayout) (CallerStep.next callerLayout) advance :=
+  ((secondRealizer .unit (by decide) requestRep replyRep (by decide) (by decide)).then
+    (branchRealizer .unit (by decide) port.reply layout.point.representation (CallerStep.next callerLayout)
+      (hashCode.then initialCode)
+      (inlRealizer .unit (by decide) layout.point.representation (CallerStep.pending callerLayout) (by decide) (by decide))
+      (by decide) (by decide))).viewOutput (CallerStep.next callerLayout) advance (by
+        rintro ⟨pending, random | point⟩ <;> rfl)
+private def localDomain (_ : Nat) (value : BLSCallerPackets.Request layout 3 × BLSCallerPackets.Request layout 3) := value.1 = value.2
+private theorem advance_valid (remaining : Nat) (q c) (_ : localDomain (remaining + 1) (q, c))
+    (represented) (original) (_ : BLSCallerHandler.replyMatches layout 3 q represented original) :
+    BLSCaller.HeadValid layout 3 localDomain remaining (advance (c, represented)) := by
+  cases represented with
+  | inl random => rfl
+  | inr point => trivial
+private def empty : layout.store.Value := ⟨((), [], [], []), by
+  dsimp only [BLSReply.Layouts.store, BLSReply.Layouts.cacheLogs, BLSReply.Layouts.records,
+    BLSRecord.Layouts.transcript, BLSRecord.Layouts.log, BLSRecord.Layouts.entry,
+    Layout.prod, Layout.boundedList, Layout.counter, Layout.all,
+    CacheLayout.lookup, LookupLayout.table, LookupLayout.entry, layout, cache]
+  decide⟩
+private def callerInput := requestRep.prod layout.store.representation (by decide)
+private def admitted (value : BLSCallerPackets.Request layout 3 × layout.store.Value) :=
+  BLSReply.Reserved layout 2 value.2.val
+private theorem initial_valid (value) (_ : admitted value) :
+    BLSCaller.HeadValid layout 3 localDomain 2 (initial value.1) := rfl
+private def caller (fuel : Nat) := BLSCaller.program (base := base) (key := .nat) (val := .atom ()) layout default 3 (by decide)
+  primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw advance
+  requestRep layout.point.representation (by decide) continuation (by decide) requestRep initial initialCode (by decide) (by decide) fuel
+private theorem caller_refines : Interactive.RefinesOn admitted port .unit callerInput (CallerStep.output callerLayout)
+    (fun value => CallerControl.start advance handlerSource 2 (initial value.1, value.2)) (caller 2) :=
+  BLSCaller.refines (base := base) (key := .nat) (val := .atom ()) layout default 3 (by decide)
+    primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw drawSource
+    draw_correct draw_law localDomain advance advance_valid requestRep layout.point.representation (by decide)
+    continuation (by decide) requestRep initial initialCode (by decide) (by decide) 2 admitted initial_valid (fun _ valid => valid)
+
+private abbrev SourceSpec := Model.LazyAGM.advSpec Nat Nat (Word 10)
+private def sourceNext : (q : SourceSpec.Domain) → SourceSpec.Range q → layout.point.Value ⊕ SourceSpec.Domain
+  | .inl (.inl _), random => .inr (.inl (.inr random.val))
+  | .inl (.inr _), point | .inr _, point => .inl ⟨point, trivial⟩
+private def machineStep (value : layout.point.Value ⊕ SourceSpec.Domain) :
+    layout.point.Value ⊕ SourceSpec.toPFunctor.Obj (layout.point.Value ⊕ SourceSpec.Domain) :=
+  match value with
+  | .inl point => .inl point
+  | .inr q => .inr ⟨q, sourceNext q⟩
+private def machine : OracleMachine SourceSpec SourceSpec.Domain layout.point.Value :=
+  PFunctor.DynSystem.DynComputation.ofStep machineStep Sum.inr
+private def sourceProgram : SourceSpec.Domain → OracleComp SourceSpec layout.point.Value
+  | .inl (.inl n) => do
+      let random ← SourceSpec.query (.inl (.inl n))
+      let point ← SourceSpec.query (.inl (.inr random.val))
+      pure ⟨point, trivial⟩
+  | .inl (.inr message) => do
+      let point ← SourceSpec.query (.inl (.inr message))
+      pure ⟨point, trivial⟩
+  | .inr message => do
+      let point ← SourceSpec.query (.inr message)
+      pure ⟨point, trivial⟩
+private theorem caller_implements : machine.ImplementsWithin sourceProgram 2 := by
+  intro q
+  rcases q with (n | message) | message <;>
+    simp [machine, sourceProgram, PFunctor.DynSystem.DynComputation.run,
+      PFunctor.DynSystem.DynComputation.unroll, machineStep, sourceNext, bind_pure_comp] <;> rfl
+private def stateView (q : BLSCallerPackets.Request layout 3) : machine.State :=
+  .inr (BLSCallerHandler.query layout 3 q)
+private theorem advance_matches (remaining : Nat) (q c) (valid : localDomain (remaining + 1) (q, c))
+    (next : SourceSpec.Range (BLSCallerHandler.query layout 3 q) → machine.State)
+    (view : machine.view (stateView c) = .inr ⟨BLSCallerHandler.query layout 3 q, next⟩)
+    (represented original) (related : BLSCallerHandler.replyMatches layout 3 q represented original) :
+    CallerMachine.Matches machine (BLSCallerHandler.query layout 3) stateView (advance (c, represented)) (next original) := by
+  change q = c at valid
+  subst c
+  rw [machine.next_eq_of_view_query view (show machine.view (stateView q) =
+    .inr ⟨BLSCallerHandler.query layout 3 q, sourceNext (BLSCallerHandler.query layout 3 q)⟩ from rfl)]
+  rcases q with n | (message | message)
+  · cases represented with
+    | inl random =>
+      have equal : random.2.val = original.val := (Prod.mk.inj (Sum.inl.inj related)).2
+      change CallerMachine.Matches machine (BLSCallerHandler.query layout 3) stateView (initial (.inr (.inl (randomMessage random))))
+        (.inr (.inl (.inr original.val)))
+      rw [← equal]
+      exact .pending _ _ (sourceNext (.inl (.inr random.2.val))) rfl
+    | inr point => cases related
+  · cases represented with
+    | inl random => cases related
+    | inr point =>
+      have equal : point.val = original := Sum.inr.inj related
+      apply CallerMachine.Matches.returned
+      change Sum.inl (⟨original, trivial⟩ : layout.point.Value) = Sum.inl point
+      congr 1
+      exact Subtype.ext equal.symm
+  · cases represented with
+    | inl random => cases related
+    | inr point =>
+      have equal : point.val = original := Sum.inr.inj related
+      apply CallerMachine.Matches.returned
+      change Sum.inl (⟨original, trivial⟩ : layout.point.Value) = Sum.inl point
+      congr 1
+      exact Subtype.ext equal.symm
+private theorem initial_matches (value) (_ : admitted value) :
+    CallerMachine.Matches machine (BLSCallerHandler.query layout 3) stateView (initial value.1)
+      (machine.init (BLSCallerHandler.query layout 3 value.1)) :=
+  .pending _ _ (sourceNext (BLSCallerHandler.query layout 3 value.1)) rfl
+private theorem caller_source (tape : RandomTape 10) (value) (valid : admitted value)
+    (before : State 10) (holds : callerInput.Holds value before) :
+    (fun finished => CallerMachine.observe Subtype.val <$> Interactive.observe (CallerStep.output callerLayout) finished) <$>
+      (caller 2).execute port .unit tape before =
+      (fun finished => some (some finished.1, finished.2)) <$>
+        (simulateQ (BLSCallerHandler.original (base := base) (key := .nat) (val := .atom ())
+          (fun _ value => BitVec.ofNat 10 value.1.val)) (sourceProgram (BLSCallerHandler.query layout 3 value.1))).run value.2.val :=
+  BLSCaller.observe_source (base := base) (key := .nat) (val := .atom ()) layout default 3 (by decide)
+    primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw drawSource
+    draw_correct draw_law localDomain advance advance_valid requestRep layout.point.representation (by decide)
+    continuation (by decide) requestRep initial initialCode (by decide) (by decide) 2 admitted initial_valid (fun _ valid => valid)
+    machine stateView (BLSCallerHandler.query layout 3) advance_matches initial_matches sourceProgram caller_implements tape value valid before holds
+
+private theorem empty_admitted (q) : admitted (q, empty) := by
+  constructor
+  · trivial
+  · intro entry member
+    cases member
+  · constructor <;> intro entry member <;> cases member
+  · change 2 ≤ 2
+    decide
+  · change 2 ≤ 2
+    decide
+private theorem continuation_time (value) : continuation.time value ≤ 1000 := by
+  rcases value with ⟨pending, random | point⟩
+  · change continuation.time (.inl 0, .inl ⟨(0 : Fin 4), (0 : Fin 1)⟩) ≤ 1000
+    decide
+  · change continuation.time (.inl 0, .inr ⟨0, trivial⟩) ≤ 1000
+    decide
+private theorem initial_time (value) : initialCode.time value ≤ 1000 := by
+  change initialCode.time (.inl 0) ≤ 1000
+  decide
+-- Expose the small instruction trees before evaluating their numerical profiles;
+-- this keeps representation proof terms out of arithmetic normalization.
+private def initialRaw : Stmt 10 :=
+  Assembly.code (Assembly.reads 0 0 3 ++ Assembly.reads 0 0 3) ;;
+    Assembly.code (Construction.taggedOperands 1 6 0)
+private def continuationRaw : Stmt 10 :=
+  selectSlice 3 3 ;; Dispatch.code
+    (((selectSlice 1 1 ;; Assembly.code (Construction.taggedOperands 0 1 0)) ;;
+      Assembly.code (Construction.taggedOperands 1 2 0)) ;; initialRaw)
+    (Assembly.code (Construction.taggedOperands 0 1 5)) 2 1
+private theorem initial_code : initialCode.code = initialRaw := rfl
+private theorem continuation_code : continuation.code = continuationRaw := rfl
+private theorem initial_words : descriptionWords initialCode.code ≤ 5000 := by
+  have copied := Assembly.code_descriptionWords_le (Assembly.reads (w := 10) 0 0 3 ++ Assembly.reads 0 0 3)
+  have tagged := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 10) 1 6 0)
+  simp only [List.length_append, Assembly.reads_length, Construction.prefix_length] at copied tagged
+  rw [initial_code, initialRaw, descriptionWords_seq]
+  omega
+private theorem continuation_words : descriptionWords continuation.code ≤ 5000 := by
+  have copied := Assembly.code_descriptionWords_le (Assembly.reads (w := 10) 0 0 3 ++ Assembly.reads 0 0 3)
+  have tagged := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 10) 1 6 0)
+  have first := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 10) 0 1 0)
+  have second := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 10) 1 2 0)
+  have last := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 10) 0 1 5)
+  simp only [List.length_append, Assembly.reads_length, Construction.prefix_length] at copied tagged first second last
+  simp only [continuation_code, continuationRaw, initialRaw, descriptionWords_seq,
+    Dispatch.code_descriptionWords, selectSlice_descriptionWords]
+  omega
+private theorem initial_names : NamesAccounted initialCode.code 5 := by
+  rw [initial_code]
+  exact (Assembly.code_namesAccounted _ 5 ((Assembly.sourcesBound_append _ _ _).mpr
+    ⟨Assembly.sourcesBound_reads _ _ _ _ (by decide), Assembly.sourcesBound_reads _ _ _ _ (by decide)⟩)).seq
+      (Assembly.code_namesAccounted _ 5 (Construction.prefix_sources _ _ _))
+private theorem continuation_names : NamesAccounted continuation.code 5 := by
+  rw [continuation_code]
+  have initial : NamesAccounted initialRaw 5 := by simpa only [initial_code] using initial_names
+  exact (selectSlice_names 3 3 5).seq (Dispatch.names
+    ((((selectSlice_names 1 1 5).seq (Assembly.code_namesAccounted _ 5 (Construction.prefix_sources _ _ _))).seq
+      (Assembly.code_namesAccounted _ 5 (Construction.prefix_sources _ _ _))).seq initial)
+    (Assembly.code_namesAccounted _ 5 (Construction.prefix_sources _ _ _)) 2 1)
+private def callerTime := BLSCaller.timeBudget (base := base) (key := .nat) (val := .atom ()) layout
+  requestRep.encoding.words (CallerStep.width callerLayout) 26 (fun _ => 8) 1000 1000 2
+private def callerWords := BLSCaller.codeBudget (base := base) (key := .nat) (val := .atom ()) layout
+  requestRep.encoding.words (CallerStep.width callerLayout) 200 (fun _ => 100) 5000 5000 2
+private theorem caller_time : Interactive.TimeBoundOn admitted port .unit callerInput (caller 2) callerTime :=
+  BLSCaller.time (base := base) (key := .nat) (val := .atom ()) layout default 3 (by decide)
+    primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw drawSource
+    draw_correct draw_law localDomain advance advance_valid requestRep layout.point.representation (by decide)
+    continuation (by decide) requestRep initial initialCode (by decide) (by decide)
+    draw_time (fun _ => response_bound) continuation_time initial_time 2 admitted initial_valid (fun _ valid => valid)
+private theorem caller_words : ((caller 2).lower port).descriptionWords ≤ callerWords :=
+  BLSCaller.words (base := base) (key := .nat) (val := .atom ()) layout default 3 (by decide)
+    primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw advance
+    requestRep layout.point.representation (by decide) continuation (by decide) requestRep initial initialCode (by decide) (by decide)
+    draw_words (fun _ => response_bound) continuation_words initial_words 2
+private theorem caller_memory (tape : RandomTape 10) (value) (valid : admitted value)
+    (before : State 10) (holds : callerInput.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 10) (reached : some finished ∈ support ((caller 2).execute port .unit tape before)) :
+    ∃ execution : WordIO.Exec .unit tape ((caller 2).lower port) before finished.state finished.trace finished.time finished.net finished.peak,
+      ∀ between, execution.Visits between →
+        (((caller 2).lower port).staticWords registers buffers : Int) + between.liveMem (max buffers ((caller 2).lower port).memBound) ≤
+          callerWords + 4 * (5 + callerWords) + registers + 3 * buffers + before.liveMem buffers + callerTime := by
+  have certified := BLSCaller.resources (base := base) (key := .nat) (val := .atom ())
+    (drawSlots := 3) (responseSlots := 3) (callerSlots := 5) layout default 3 (by decide)
+    primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw drawSource
+    draw_correct draw_law localDomain advance advance_valid requestRep layout.point.representation (by decide)
+    continuation (by decide) requestRep initial initialCode (by decide) (by decide)
+    draw_time draw_words (fun _ => response_bound) continuation_time initial_time continuation_words initial_words
+    2 admitted initial_valid (fun _ valid => valid) (by decide) draw_names (fun _ => response_names)
+    (by decide) (by decide) continuation_names initial_names tape value valid before holds registers buffers initialRegisters initialBuffers finished reached
+  obtain ⟨_, _, _, _, execution, bounded⟩ := certified
+  exact ⟨execution, fun between visited => (bounded between visited).2.2.2⟩
 private def execute {A B : Type} {source : Representation 10 A} {target : Representation 10 B} {f : A → B}
     (program : Realizer .unit source target f) (value : A) :=
   let initial := source.initial value
@@ -183,6 +413,16 @@ private def executeHandler (value : BLSCallerPackets.Packet layout 3) (replies :
                                regs := fun r => if r = 200 then 99 else initial.regs r
                                tapePos := 9 }
   (WordIO.run .unit RandomTape.zero 100000 (handler.lower port) before replies).map
+    (fun finished => (finished.state.bufs 0, finished.trace, finished.remaining,
+      finished.state.bufs 200, finished.state.caps 200, finished.state.regs 200, finished.state.tapePos))
+
+private def executeCaller (fuel : Nat) (value : BLSCallerPackets.Request layout 3 × layout.store.Value) (replies : List (Word 10)) :=
+  let initial := callerInput.initial value
+  let before := { initial with bufs := fun b => if b = 200 then #[91] else initial.bufs b
+                               caps := fun b => if b = 200 then 4 else initial.caps b
+                               regs := fun r => if r = 200 then 99 else initial.regs r
+                               tapePos := 9 }
+  (WordIO.run .unit RandomTape.zero 200000 ((caller fuel).lower port) before replies).map
     (fun finished => (finished.state.bufs 0, finished.trace, finished.remaining,
       finished.state.bufs 200, finished.state.caps 200, finished.state.regs 200, finished.state.tapePos))
 
@@ -208,6 +448,18 @@ run_cmd do
   unless executeHandler signRequest [3, 3, 55] == some (#[1, 3, 0, 2, 6, 3, 5, 2, 1, 5, 123, 0, 0, 2, 6, 3, 6, 456],
       [.output 3, .invoke, .input 3, .input 3], [55], #[91], 4, 99, 9) do
     throwError "composed signing miss failed sampling, insertion or recording"
+  let emptyStore : Array (Word 10) := #[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  unless executeCaller 0 (.inl 3, empty) [3, 2, 3, 1, 55] ==
+      some (#[1, 0, 3, 0, 0, 3, 0] ++ emptyStore, [], [3, 2, 3, 1, 55], #[91], 4, 99, 9) do
+    throwError "zero-fuel BLS caller failed to retain the pending request and private store"
+  unless executeCaller 1 (.inl 3, empty) [3, 2, 3, 1, 55] ==
+      some (#[1, 1, 0, 2, 1, 0, 2] ++ emptyStore,
+        [.output 3, .invoke, .input 3, .input 2], [3, 1, 55], #[91], 4, 99, 9) do
+    throwError "BLS caller cutoff failed to retain the adaptively selected hash request"
+  unless executeCaller 2 (.inl 3, empty) [3, 2, 3, 1, 55] ==
+      some (#[0, 1, 0, 0, 0, 0, 0, 1, 2, 1, 0, 0, 1, 2, 1, 0, 0, 0, 0, 0, 0, 0],
+        [.output 3, .invoke, .input 3, .input 2, .output 3, .invoke, .input 3, .input 1], [55], #[91], 4, 99, 9) do
+    throwError "adaptive BLS caller failed random selection, lazy hashing or final state preservation"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``SumContext.merge, ``SumContext.merge_time, ``SumContext.merge_words, ``SumContext.merge_names,
       ``BLSCallerPackets.prepare, ``BLSCallerPackets.finish, ``BLSCallerPackets.request_bytes,
@@ -216,7 +468,11 @@ run_cmd do
       ``Synchronizes.of_map_eq, ``Synchronizes.iff_map_eq, ``BLSCallerHandler.refines, ``BLSCallerHandler.time,
       ``BLSCallerHandler.words, ``BLSCallerHandler.names, ``BLSCallerHandler.descriptionFits,
       ``BLSCallerHandler.denote_source, ``BLSCallerHandler.synchronizes, ``BLSCallerHandler.ready_of_reserved,
-      ``BLSCallerHandler.reserved_after, ``draw_correct, ``draw_law, ``handler_refines, ``handler_source, ``handler_preserves] do
+      ``BLSCallerHandler.reserved_after, ``draw_correct, ``draw_law, ``handler_refines, ``handler_source, ``handler_preserves,
+      ``Synchronizes.symm, ``Synchronizes.left_support, ``BLSCaller.preserves, ``BLSCaller.initial_invariant,
+      ``BLSCaller.refines, ``BLSCaller.observe_source, ``BLSCaller.time, ``BLSCaller.words, ``BLSCaller.names,
+      ``BLSCaller.descriptionFits, ``BLSCaller.resources, ``caller_implements, ``advance_matches, ``initial_matches,
+      ``empty_admitted, ``caller_refines, ``caller_source, ``caller_time, ``caller_words, ``caller_memory] do
     let axioms ← collectAxioms name
     for dependency in axioms do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"

@@ -850,8 +850,7 @@ Implemented and checked:
   untouched replies/tape position, and non-readiness of a full signing log even
   on a cache hit. The source message type is infinite; only represented messages
   are used. The composed BLS handler below supplies its source and reservation
-  laws; its original-machine bridge still needs to be instantiated for the whole
-  controller.
+  laws; the whole-controller bridge is instantiated below.
 - [BLSCallerHandler](../Signatures/Runtime/Caliper/BLSCallerHandler.lean) composes
   actual request preparation, the complete random/hash/sign service, and actual
   reply reconstruction. It proves `RefinesOn ready`, time at most the existing
@@ -874,8 +873,36 @@ Implemented and checked:
   an actual uniform-draw routine and a small word response routine, execute all
   three handler branches (including a cache hit and a signing miss), and audit
   the endpoint axioms. This fixture is not a curve implementation or a theorem
-  covering all attackers. Complete caller assembly and reduction finalization
-  remain below.
+  covering all attackers. The caller assembly below connects these components;
+  reduction finalization remains open.
+
+- [BLSCaller](../Signatures/Runtime/Caliper/BLSCaller.lean) constructs the complete
+  caller from actual local initialization/continuation code and the generated BLS
+  handler. Its invariant combines a local pending-state domain with the private
+  store's decreasing reservation. Local preservation is required only on replies
+  matching the pending source query; readiness, typed reply compatibility and
+  reservation preservation follow from the existing handler proofs.
+  [BLSCallerExecution](../Signatures/Runtime/Caliper/BLSCallerExecution.lean) proves
+  equality with the original source computation, retaining the whole final store.
+  The original machine's `ImplementsWithin` certificate excludes cutoff. These
+  are local caller implementation obligations, not assumptions of completed
+  controller or reduction correctness.
+  [BLSCallerResources](../Signatures/Runtime/Caliper/BLSCallerResources.lean)
+  substitutes actual sampler/response and local caller budgets into time, code,
+  generated-name and whole-execution memory bounds. With caller frame width `W`,
+  input width `A`, allowance `q`, initialization time `I`, continuation time `L`
+  and constructed-handler time `H`, elapsed time is at most
+  `I + 8*A + 88*W + 4 + q*(H + L + 172*W + 6)`.
+  Stored code counts every unrolled body. The memory theorem uses this same
+  supported execution and includes all initial capacity and every visited state.
+  Primitive implementations and finite layout/name bounds remain explicit.
+  The packet regression now supplies an actual adaptive caller: a random reply
+  selects a hash message, a cache miss draws a scalar, and the caller returns the
+  resulting point. It instantiates the original-machine/source and resource
+  endpoints and checks zero-fuel cutoff, cutoff after the first reply, final
+  cache/transcript contents, and unrelated storage/replies/tape preservation.
+  Its response routine is a small word operation, not curve code; this does not
+  establish coverage of every Caliper attacker or finalize the full reduction.
 
 Remaining integration sequence:
 
@@ -918,9 +945,11 @@ Remaining integration sequence:
    caller steps and decreasing-domain loop composition are proved.
    Prove private finite-domain sampling agrees with the chosen randomness
    interface; oracle packet transport alone does not supply this distribution proof.
-   Instantiate the proved original-machine bridge with the constructed BLS handler,
-   carrying the existing reservations through generated caller steps. Caller state and private
-   store are already framed across their respective callees in those steps.
+   The original-machine bridge is now instantiated with the constructed BLS handler,
+   carrying reservations through the generated controller. Complete the reduction's
+   setup, final-forgery and extraction phases, including `2*q + 1` cache headroom
+   and charged transcript reversal. Caller state and private store are already
+   framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
    charged reinitialization. Caliper has no capacity-read instruction, so arbitrary

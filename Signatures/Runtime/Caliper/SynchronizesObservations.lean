@@ -9,6 +9,19 @@ open OracleComp OracleSpec
 
 variable {I A B D : Type} {spec : OracleSpec I}
 
+theorem Synchronizes.symm {relation : A → B → Prop}
+    {left : OracleComp spec A} {right : OracleComp spec B}
+    (related : Synchronizes relation left right) :
+    Synchronizes (fun b a => relation a b) right left := by
+  induction related with
+  | pure equal => exact .pure equal
+  | query position _ ih => exact .query position ih
+
+theorem Synchronizes.left_support {relation : A → B → Prop}
+    {left : OracleComp spec A} {right : OracleComp spec B}
+    (related : Synchronizes relation left right) {value : A} (reached : value ∈ support left) :
+    ∃ answer, answer ∈ support right ∧ relation value answer := related.symm.right_support reached
+
 /-- Recover joint leaf synchronization from an equality of observed query
 trees. Neither observation has to be injective. -/
 theorem Synchronizes.of_map_eq (f : A → D) (g : B → D)

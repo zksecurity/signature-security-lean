@@ -196,8 +196,11 @@ Pinned upstreams:
   padding and private-store copies with linear overhead bounds. The composed BLS
   handler has proved original-oracle correspondence, including dependent random
   reply ranges, and preserves the remaining cache/transcript reservations.
-  Connecting it to the complete BLS caller, final-forgery handling and extraction
-  remains to be done.
+  The constructed BLS caller now connects this handler to actual local initialization
+  and continuation code. Its executed word program agrees with the original source
+  computation, and its time, stored code and every intermediate memory state are
+  bounded from primitive and local caller resources. Setup, final-forgery handling,
+  extraction and coverage of the intended Caliper attacker class remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
