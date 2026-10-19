@@ -950,6 +950,30 @@ Implemented and checked:
   endpoints and axiom guards are instantiated. Coefficient association and
   private row evaluation still need their Caliper implementations.
 
+- [ListIndex](../Signatures/Runtime/Caliper/ListIndex.lean) implements positional
+  lookup from a runtime index, default and bounded stored list. Its constructed
+  body executes counter comparison, saturating subtraction and found-value
+  retention; preparation and result projection also execute charged copies.
+  The source result is exactly `list[index]?.getD default`, matching the original
+  arithmetic-language indexing theorem. The index bound and list capacity are
+  independent, and no enumeration of the value domain occurs. Missing
+  coefficients can therefore use zero without discarding extra stored entries
+  for free: the complete suffix is still traversed after a hit.
+  [ListIndexBounds](../Signatures/Runtime/Caliper/ListIndexBounds.lean) derives
+  uniform time, complete stored-code, name and all-visited-memory bounds, with
+  at most six buffer names. For capacity `n`, entry width `s`, and
+  `W = 3 + (n + 1)*s`, the budgets are
+  `T = 384*W + 88 + n*(1088*W + 407)` and
+  `C = 1248*W + 927 + n*(3638*W + 2615)`.
+  Layouts require `8*W < 2^w`, a fitting list count and a positive fitting index
+  bound. Zero-capacity lists and zero-word entries are supported.
+  [Regressions](../SignaturesTest/CaliperListIndex.lean) execute first/middle/last
+  and missing lookups, maximum-word indices, runtime defaults, independent
+  capacities, multiword and zero-word entries, and check invalid encodings,
+  charged suffix traversal, released scratch, preserved caller storage and
+  theorem axioms. This supplies lookup for coefficient association; it does not
+  yet assemble the coefficient rows or the complete BLS extractor.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

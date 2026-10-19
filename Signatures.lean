@@ -23,6 +23,7 @@ import Signatures.Runtime.Caliper.BLSCallerPacketBounds
 import Signatures.Runtime.Caliper.BLSCallerResources
 import Signatures.Runtime.Caliper.BLSSetupResources
 import Signatures.Runtime.Caliper.BLSChronological
+import Signatures.Runtime.Caliper.ListIndexBounds
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics

@@ -208,7 +208,10 @@ Pinned upstreams:
   the sampled branch also executes scalar sampling and public-key multiplication.
   Their source correspondence and resource bounds are proved. BLS transcript
   reversal now executes charged list folds, with proved chronological ordering,
-  time, stored-code and intermediate-memory bounds. Connecting setup,
+  time, stored-code and intermediate-memory bounds. Bounded coefficient lookup
+  now also has executed Caliper code and derived resource bounds, including
+  scanning the suffix after a match and returning the runtime default on a miss.
+  Coefficient-row assembly and evaluation still need integration. Connecting setup,
   caller, final-forgery handling and extraction into complete reductions, and
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
