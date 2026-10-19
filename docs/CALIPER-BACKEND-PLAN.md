@@ -849,8 +849,33 @@ Implemented and checked:
   They check padding movement in both directions, unrelated machine storage,
   untouched replies/tape position, and non-readiness of a full signing log even
   on a cache hit. The source message type is infinite; only represented messages
-  are used. The composed BLS handler and its original-machine bridge still need
-  to be connected to the controller and its decreasing reservation invariant.
+  are used. The composed BLS handler below supplies its source and reservation
+  laws; its original-machine bridge still needs to be instantiated for the whole
+  controller.
+- [BLSCallerHandler](../Signatures/Runtime/Caliper/BLSCallerHandler.lean) composes
+  actual request preparation, the complete random/hash/sign service, and actual
+  reply reconstruction. It proves `RefinesOn ready`, time at most the existing
+  service budget plus `108*W + 8`, and stored code at most the existing service
+  budget plus `710*W + 420`. Name bounds and accepted instruction descriptions
+  follow from the constructed converters and primitive implementations.
+  Its total mathematical source has an inert extension outside the ready domain;
+  no correctness or resource claim applies there, and reservations exclude it.
+  [BLSCallerSource](../Signatures/Runtime/Caliper/BLSCallerSource.lean) proves exact
+  original-oracle query-tree equality jointly with the reply and entire private
+  store. Random packets preserve both the requested range and the sampled index.
+  [Synchronization](../Signatures/Runtime/Caliper/SynchronizesObservations.lean)
+  derives joint leaf correspondence from literal equality of observed free
+  computations, rather than equality only after probabilistic interpretation.
+  [BLSCallerInvariant](../Signatures/Runtime/Caliper/BLSCallerInvariant.lean) derives
+  query admission from represented messages, readiness from `Reserved (n+1)`, and
+  `Reserved n` for every supported handler output using the original oracle's
+  proved growth bound. No finished-handler equivalence or efficiency contract is
+  an input. The packet regressions additionally instantiate these theorems with
+  an actual uniform-draw routine and a small word response routine, execute all
+  three handler branches (including a cache hit and a signing miss), and audit
+  the endpoint axioms. This fixture is not a curve implementation or a theorem
+  covering all attackers. Complete caller assembly and reduction finalization
+  remain below.
 
 Remaining integration sequence:
 
@@ -893,8 +918,7 @@ Remaining integration sequence:
    caller steps and decreasing-domain loop composition are proved.
    Prove private finite-domain sampling agrees with the chosen randomness
    interface; oracle packet transport alone does not supply this distribution proof.
-   Compose the proved BLS packet conversions with the service and instantiate the
-   proved original-machine bridge,
+   Instantiate the proved original-machine bridge with the constructed BLS handler,
    carrying the existing reservations through generated caller steps. Caller state and private
    store are already framed across their respective callees in those steps.
    For rewinding, either copy all saved registers,

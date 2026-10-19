@@ -193,9 +193,11 @@ Pinned upstreams:
   A bridge to the original attacker machine preserves its final private store;
   the original implementation certificate identifies the source program and
   excludes cutoff. BLS request/reply packet conversions now execute their tag,
-  padding and private-store copies with linear overhead bounds. Their composition
-  into the BLS caller, source-correspondence proofs, final-forgery handling and
-  extraction remain to be connected.
+  padding and private-store copies with linear overhead bounds. The composed BLS
+  handler has proved original-oracle correspondence, including dependent random
+  reply ranges, and preserves the remaining cache/transcript reservations.
+  Connecting it to the complete BLS caller, final-forgery handling and extraction
+  remains to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

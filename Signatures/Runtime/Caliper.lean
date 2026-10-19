@@ -45,6 +45,7 @@ import Signatures.Runtime.Caliper.SumContextBounds
 import Signatures.Runtime.Caliper.SumContextMerge
 import Signatures.Runtime.Caliper.CallerStepBounds
 import Signatures.Runtime.Caliper.CallerExecution
+import Signatures.Runtime.Caliper.SynchronizesObservations
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
