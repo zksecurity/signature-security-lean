@@ -756,6 +756,43 @@ Implemented and checked:
   Whole-caller storage separation, setup, final-forgery handling and extraction
   remain to be linked. Capacity accounting must also include the extraction's
   additional private-cache calls and charged chronological transcript reversal.
+- [InteractiveInvariant](../Signatures/Runtime/Caliper/InteractiveInvariant.lean)
+  composes refinement on reachable domains. Structural synchronization retains
+  source support at each returned leaf; sequencing and loops use it to carry a
+  decreasing capacity reservation. Dispatch and saved-state composition execute
+  their existing code. [Bounds](../Signatures/Runtime/Caliper/InteractiveInvariantBounds.lean)
+  derive `stopTime + fuel*(bodyTime + loopOverhead)` and complete memory accounting
+  for the same supported run, including stored instructions, metadata and all
+  initial capacity. Restricting a proof domain neither tests it at runtime nor
+  provides free state changes.
+- [SumContext](../Signatures/Runtime/Caliper/SumContext.lean) constructs the
+  distribution `(A+B)*S -> (A*S)+(B*S)` with actual instructions. With unequal
+  payload widths, padding moves from before the saved context to after it;
+  mathematical reassociation alone would give the wrong bytes.
+  [Bounds](../Signatures/Runtime/Caliper/SumContextBounds.lean) charge at most
+  `24*W+2` steps and `156*W+95` code words, where
+  `W = 1 + max(A.words,B.words) + S.words`. Both stored branches are counted.
+- [CallerStep](../Signatures/Runtime/Caliper/CallerStep.lean) constructs request
+  routing, preservation of pending caller state across the handler, reply
+  routing, and preservation of the new private store across the caller's local
+  continuation. The continuation returns either a result or a next request and
+  caller state. Its actual code is supplied by the caller; the handler's actual
+  code is supplied by its independent construction proof. The complete step is
+  generated here, with structural source refinement on the handler's readiness
+  domain. [Bounds](../Signatures/Runtime/Caliper/CallerStepBounds.lean) add at most
+  `80*W` time and `260*W+128` code words to those two implementations, with
+  `W = 1 + state.words + request.words + reply.words + result.words + store.words`.
+  Description acceptance and dense name bounds are derived compositionally.
+  [Regressions](../SignaturesTest/CaliperCaller.lean) instantiate the step with
+  the shared uniform port and a real caller continuation that selects its next
+  request from the previous reply. Two-call executions preserve both caller and
+  private states, unrelated buffer contents and spare capacity, a register and
+  the tape cursor. They exercise zero-range follow-ups, zero-fuel stopping and
+  both unequal-width routing branches. A decreasing-domain loop refinement and
+  time bound are checked for every represented input and supported reply.
+  This is a generated step and loop framework, not yet the whole BLS caller:
+  initialization, original `OracleMachine` linkage, dependent BLS packet routing,
+  finalization and extraction still need their composition proofs.
 
 Remaining integration sequence:
 
@@ -794,11 +831,14 @@ Remaining integration sequence:
    static storage and every intermediate buffer state. These finite-program
    bounds still need parameter-indexed polynomial bounds for each scheme.
 3. Link the proved word oracle adapter and replay primitives into complete signature
-   callers and rewinding. Ordinary saved-state query composition is proved.
+   callers and rewinding. Ordinary saved-state query composition, generated
+   caller steps and decreasing-domain loop composition are proved.
    Prove private finite-domain sampling agrees with the chosen randomness
    interface; oracle packet transport alone does not supply this distribution proof.
-   Prove separation of caller/controller storage and preservation of
-   their invariants across external queries. Either copy all saved registers,
+   Complete original-machine linkage and the BLS packet layouts, carrying the
+   existing reservations through generated caller steps. Caller state and private
+   store are already framed across their respective callees in those steps.
+   For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
    charged reinitialization. Caliper has no capacity-read instruction, so arbitrary
    dynamic capacities require explicit saved allocator metadata; copying filled

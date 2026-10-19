@@ -183,8 +183,13 @@ Pinned upstreams:
   through a common word port. Its source equality and derived resource bounds
   cover random/hash/sign branches jointly, including their stored tags and
   padding. Tests interleave private scalar draws and adversary randomness in
-  one program. Whole-caller linkage, final-forgery handling and extraction remain
-  to be connected.
+  one program. Generated caller steps now preserve caller state across a handler
+  call and the private store across a local continuation, with linear time/code
+  overhead from executed copies. Interactive loops can carry decreasing capacity
+  reservations, and retain time and complete memory bounds on their reachable
+  domains. Regressions execute adaptive next-request selection across two calls.
+  Whole-caller source-machine linkage, initialization, final-forgery handling and
+  extraction remain to be connected.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

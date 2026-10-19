@@ -40,6 +40,9 @@ import Signatures.Runtime.Caliper.PairSamplingMemory
 import Signatures.Runtime.Caliper.UniformQuery
 import Signatures.Runtime.Caliper.TagBounds
 import Signatures.Runtime.Caliper.InteractiveMemory
+import Signatures.Runtime.Caliper.InteractiveInvariantBounds
+import Signatures.Runtime.Caliper.SumContextBounds
+import Signatures.Runtime.Caliper.CallerStepBounds
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -95,6 +98,11 @@ prefixes retain query allowances and state-growth bounds along supported paths.
 Independent pair sampling is derived from two certified component samplers.
 Saved-state copying and output permutation execute, with linear overhead and
 complete memory bounds; the product sampling law follows from component laws.
+Interactive loops now carry decreasing reachable-domain invariants through
+supported source answers, with time and complete memory bounds for the same run.
+Generated caller steps preserve caller state across handlers and private stores
+across local continuations. Their copying, padding and routing have linear
+overhead bounds; whole-caller source-machine linkage remains to be completed.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/
