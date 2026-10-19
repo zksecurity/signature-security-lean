@@ -254,8 +254,12 @@ Pinned upstreams:
   using actual scalar/group primitives and local caller code. Their erased
   executions equal the original lazy reductions, including the bad-case setup
   scalar, and their bounds charge setup, stored code and initial challenge data.
-  Coverage of the intended Caliper attacker class, parameter families and public
-  security-model instantiation remain to be done.
+  Both original reductions now have certificates in a fixed Caliper DLog class
+  that bounds stored code, online time and total memory. A concrete BLS AGM
+  security theorem derives the usual probability bound from those certificates,
+  including the shared AGM source game. Coverage of the intended Caliper attacker
+  class, parameter families and switching the public statement wrappers to this
+  execution model remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

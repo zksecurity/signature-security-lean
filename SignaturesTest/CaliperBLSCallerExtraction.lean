@@ -5,6 +5,7 @@ import Signatures.Runtime.Caliper.BLSExtractorSource
 import Signatures.Runtime.Caliper.BLSInitialization
 import Signatures.Runtime.Caliper.BLSFullResources
 import Signatures.Runtime.Caliper.BLSFullEquivalence
+import Signatures.Runtime.Caliper.BLSFullSecurity
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -685,6 +686,26 @@ private theorem full_good_fits (fuel : Nat) : ((fullGood fuel).lower port).Descr
 private theorem full_bad_fits (fuel : Nat) : ((fullBad fuel).lower port).DescriptionFits :=
   BLSFull.bad_fits (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds primitives comparison comparison_correct
     fullCaller draw fuel draw_names draw_words draw_fits full_addresses
+private theorem full_good_within : Interactive.Within fullLayout.port fullLayout.setup.challenge fullLayout.scheme.cache.value
+    (BLSFull.goodWords (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 200 2)
+    (BLSFull.goodMemory (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 26 200 3 2)
+    (fullGoodBudget 2)
+    (fun value => Subtype.val <$> BLSFull.goodSource (base := base) (key := .nat) (val := .atom ())
+      fullLayout fullRoutines primitives comparison comparison_correct fullCaller 2 drawSource value) :=
+  BLSFull.good_within (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds
+    primitives comparison comparison_correct draw 2 drawSource draw_correct draw_time draw_words draw_names draw_fits full_addresses
+    draw_law (fullInvariant 2) (by decide) (by decide)
+private theorem full_bad_within : Interactive.Within fullLayout.port fullLayout.setup.challenge fullLayout.scheme.cache.value
+    (BLSFull.badWords (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 200 2)
+    (BLSFull.badMemory (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 26 200 3 2)
+    (fullBadBudget 2)
+    (fun value => Subtype.val <$> BLSFull.badSource (base := base) (key := .nat) (val := .atom ())
+      fullLayout fullRoutines primitives comparison comparison_correct fullCaller 2 drawSource value) :=
+  BLSFull.bad_within (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds
+    primitives comparison comparison_correct draw 2 drawSource draw_correct draw_time draw_words draw_names draw_fits full_addresses
+    draw_law (fullInvariant 2) (by decide) (by decide)
+private theorem all_challenges_fit (scalar : Word 32) : fullLayout.setup.challenge.valid ((7, scalar • (7 : Word 32)), (3, scalar • (3 : Word 32))) :=
+  BLSFull.challenge_valid fullLayout fullRoutines drawSource draw_law ⟨7, trivial⟩ ⟨3, trivial⟩ scalar
 private def challenge : fullLayout.setup.challenge.Value := ⟨((7, 11), (3, 3)), by exact ⟨⟨trivial, trivial⟩, trivial, trivial⟩⟩
 private def runFullGood (fuel : Nat) := run fullLayout.setup.challenge.representation (fullGood fuel) (fullGoodBudget fuel) challenge
 private def runFullBad (fuel : Nat) := run fullLayout.setup.challenge.representation (fullBad fuel) (fullBadBudget fuel) challenge
@@ -719,7 +740,10 @@ run_cmd do
       ``BLSCallerHandler.original_run, ``BLSFull.good_extract_original, ``BLSFull.bad_extract_original,
       ``BLSFull.good_tail_original, ``BLSFull.bad_tail_original, ``BLSFull.good_original_finish, ``BLSFull.bad_original_finish,
       ``BLSFull.good_source, ``BLSFull.bad_source, ``BLSFull.good_observe_original, ``BLSFull.bad_observe_original,
-      ``fullGoodCertificate, ``fullBadCertificate, ``full_good_fits, ``full_bad_fits] do
+      ``fullGoodCertificate, ``fullBadCertificate, ``full_good_fits, ``full_bad_fits,
+      ``full_good_within, ``full_bad_within, ``all_challenges_fit, ``BLSFull.good_within, ``BLSFull.bad_within,
+      ``BLSFull.scalar_valid, ``BLSFull.challenge_valid, ``BLSFull.good_dlogWithin, ``BLSFull.bad_dlogWithin,
+      ``dlogWithin.mono, ``dlogSuccessBound_mono, ``BLSFull.security, ``BLSFull.direct_security] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

@@ -1325,6 +1325,35 @@ Implemented and checked:
   arithmetic, not a field or curve implementation. Other schemes, replay,
   parameter families and public security-model integration remain outstanding.
 
+- [Within](../Signatures/Runtime/Caliper/Within.lean) defines a solver class over
+  actual interactive Caliper code with a fixed oracle port and bounded input/output
+  layouts. One program must implement the source at every represented input;
+  correctness and resources hold for every local tape. Private sampling is through
+  the port, so an arbitrary tape cannot supply uncharged advice. The class requires
+  accepted operands, a stored-code limit, a time limit, and a total-memory limit at
+  every visited state, including dense register/buffer descriptors and initial data.
+  The resource witness is constructed from proved refinements and component bounds.
+  Exact source semantics prevents a failing implementation from satisfying the
+  resource premise vacuously. [Regressions](../SignaturesTest/CaliperWithin.lean)
+  certify a zero-time identity with six charged words and prove that zero memory
+  is impossible for its one-word input.
+  [DLog](../Signatures/Runtime/Caliper/DLog.lean) fixes this class before taking the
+  supremum over solvers, and requires every sampled challenge to be represented.
+  [Challenge coverage](../Signatures/Runtime/Caliper/BLSFullChallenges.lean) derives
+  that condition for BLS: the scalar sampler's full support covers every scalar,
+  and implemented group/key scaling preserves the generator representations.
+  [BLS certificates](../Signatures/Runtime/Caliper/BLSFullDLog.lean) construct both
+  original reductions' witnesses from the assembled programs and exact source
+  equality. [Concrete security](../Signatures/Runtime/Caliper/BLSFullSecurity.lean)
+  then proves the two-reduction bound with a common derived code/memory/time budget,
+  for both the lazy coefficient-view game and the shared direct AGM game.
+  No finished-reduction efficiency or challenge-coverage contract is supplied.
+  The old backend's unbounded encoding/category contracts are not used by this
+  resource class. Public statement wrappers still use the old backend pending
+  migration of their parameter records; caller coverage, parameter families,
+  other schemes and replay remain unfinished. The ideal uniform port and separate
+  flat-memory/CPU adequacy boundary are unchanged.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

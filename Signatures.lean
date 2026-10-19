@@ -41,6 +41,7 @@ import Signatures.Runtime.Caliper.BLSCallerExtractionResources
 import Signatures.Runtime.Caliper.BLSCallerExtractionSource
 import Signatures.Runtime.Caliper.BLSFullResources
 import Signatures.Runtime.Caliper.BLSFullEquivalence
+import Signatures.Runtime.Caliper.BLSFullSecurity
 import Signatures.Runtime.Caliper.RowFoldPostcondition
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
