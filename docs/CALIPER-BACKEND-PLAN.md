@@ -1424,8 +1424,25 @@ Implemented and checked:
   `max 4 scalarSlots`. Its complete memory certificate and product-uniform law
   are derived from the scalar component. Tests execute zero, intermediate and
   full-word ranges, plus the composed pair with both query traces and preserved
-  private state. Persistent caching, Coron reply arithmetic and the complete
-  co-CDH caller/reduction remain to be integrated.
+  private state.
+- [Coron's paired cache](../Signatures/Runtime/Caliper/CoronCache.lean) combines
+  the scalar/coin sampler with the existing executed cache. It derives exact
+  private-oracle semantics and time, code, name, description and total-memory
+  bounds from the scalar sampler. The initial encoded table, retained miss
+  frames and insertion copies are charged; full tables remain valid for hits.
+  Its storage bound includes one extra coin word per entry. Execution tests
+  cover empty and partial misses, full-table hits without sampling, shadowed
+  entries, missing coin input, query order and preserved private state.
+  [The paired source bridge](../Signatures/Runtime/CoronPairedCache.lean) proves
+  exact oracle-computation equality with the existing two-cache Coron oracle
+  and reduction. It preserves both projected caches and the signing set for
+  every adaptive caller, including the final verification hash and extraction.
+  Cache and reply-log lengths grow by at most the query count. The source view
+  does not enumerate the message domain or execute its function-valued caches.
+  Reusing the existing reply machinery will retain both explicit reply logs;
+  those logs must remain charged in the complete controller budgets.
+  Coron reply arithmetic, executed final handling, the complete controller,
+  public Caliper security theorem and its polynomial family remain unfinished.
 
 Remaining integration sequence:
 
