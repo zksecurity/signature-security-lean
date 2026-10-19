@@ -1652,6 +1652,29 @@ Implemented and checked:
   The full Schnorr handler/extractor refinement, caller integration, cyclic
   DLog resource class and public concrete/family migration remain unfinished.
 
+- [Stateful cache reads](../Signatures/Runtime/Caliper/StatefulCacheRead.lean)
+  now have actual Caliper code and joint entry/table/state source refinement.
+  Hits preserve the first cached entry and the auxiliary state and bypass the
+  fresh routine. Misses save the cache frame beyond the fresh routine's buffer
+  footprint, pass it the current represented state, insert its returned entry,
+  and return its updated state. Every permutation and save/restore is executed.
+  [Derived bounds](../Signatures/Runtime/Caliper/StatefulCacheBounds.lean) count
+  lookup, both stored branches, selected-path execution and all copying.
+  [Memory accounting](../Signatures/Runtime/Caliper/StatefulCacheMemory.lean)
+  covers stored code, dense names, initial caller capacity and intermediate
+  states of the same run; generated descriptions are proved to fit word bounds.
+  [Schnorr's instance](../Signatures/Runtime/Caliper/SchnorrAGMCacheLayout.lean)
+  carries the pre-challenge affine explanation and bad flag and defines the
+  typed fresh-entry source with its uniform-sampling law. Constructing that
+  source's Caliper fresh arithmetic, and the full Schnorr read wrapper, remain
+  unfinished. The generic reader requires only that local fresh routine's
+  refinement and budgets, not a completed cache or solver certificate.
+  [Executable regressions](../SignaturesTest/CaliperStatefulCache.lean) check
+  full-table and duplicate-key hits, no sampling on hits, dynamic input and
+  returned states, fresh zero entries, missing-reply failure, released scratch
+  and preservation of external buffers/registers/tape. The fixture's stateful
+  oracle is a wiring test, not a cryptographic sampler implementation.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

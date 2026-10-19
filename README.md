@@ -332,6 +332,11 @@ Pinned upstreams:
   empty stores, with code/time bounds and complete memory accounting. The
   invariants reserve one final cache entry and permit infinite source message
   types. Its complete Caliper handler, extractor and public theorem are still pending.
+  The [stateful cache reader](Signatures/Runtime/Caliper/StatefulCacheRead.lean)
+  now executes lookup, hit/miss selection, saved-state handling and insertion
+  with derived time, code and complete memory bounds. Schnorr's affine/bad-flag
+  layouts instantiate it; the fresh-entry arithmetic routine and full Schnorr
+  read wrapper remain to be assembled.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
