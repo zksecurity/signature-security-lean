@@ -296,8 +296,12 @@ Pinned upstreams:
   now also have actual code and complete resource bounds. A source equality
   fuses the final verification hash and extraction into this paired read and
   `signature - scalar • challenge`, preserving both draws on a miss.
-  Connecting setup, the caller/controller, terminal input preparation and the
-  public co-CDH theorem remains unfinished.
+  [Caller termination](Signatures/Runtime/Caliper/CoronCallerFinishBounds.lean)
+  now routes the ordinary forgery and full store into that extractor using
+  executed copies and return/cutoff dispatch, with complete resource bounds.
+  Starting with an empty cache, capacity `q + 1` suffices after at most `q`
+  caller queries for this final read; no spare transcript slot is required. Connecting setup, the
+  caller/controller and the public co-CDH theorem remains unfinished.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

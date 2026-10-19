@@ -1484,9 +1484,9 @@ Implemented and checked:
   logs, incomplete randomness and private-frame preservation. They instantiate
   the complete resource certificate and audit its axioms. These tests use small
   word arithmetic, not a curve implementation.
-  Complete co-CDH setup, caller/controller and terminal input preparation,
-  followed by its public concrete and polynomial-family statements, remain
-  to be joined to the terminal implementation below.
+  Complete co-CDH setup and the caller/controller, followed by its public
+  concrete and polynomial-family statements, remain to be joined to the
+  terminal implementation below.
 - [Coron's terminal implementation](../Signatures/Runtime/Caliper/CoronTerminal.lean)
   executes the final paired cache read and computes `signature - scalar • X`
   using implemented group scaling/subtraction. The signature and challenge point
@@ -1509,9 +1509,31 @@ Implemented and checked:
   Tests execute fresh targets with both coin branches, full-cache hits and
   shadowed zero-scalar entries, preserving private state and checking real time.
   Missing coin input fails, and a full-cache miss is outside the admitted domain.
-  The prepared terminal input currently contains the cache request, signature
-  and challenge point. Constructing that input from the complete caller result
-  and composing setup/controller/terminal remain explicit integration work.
+- [Terminal input routing](../Signatures/Runtime/Caliper/CoronTerminalFrame.lean)
+  constructs the cache request, signature and challenge point from the ordinary
+  forgery and complete service store. Actual indexed reads copy the message,
+  cache, signature and `X`; literal instructions emit the default paired entry.
+  The unused challenge points and logs are discarded after their incoming
+  storage is charged. [Routed execution](../Signatures/Runtime/Caliper/CoronTerminalRouted.lean)
+  proves exact source correspondence and complete resource bounds for this
+  composition. A caller postcondition proves room for the final message from
+  cache capacity `q + 1` after at most `q` queries from an empty cache. Hits also
+  work at full capacity, and neither case requires a spare transcript slot.
+  [Caller termination](../Signatures/Runtime/Caliper/CoronCallerFinish.lean)
+  executes the return/cutoff tag test. It moves union padding across the stored
+  context, runs extraction on returns, and emits a represented fallback on
+  cutoff without a cache lookup or random draw. Its
+  [bounds](../Signatures/Runtime/Caliper/CoronCallerFinishBounds.lean) include
+  both stored branches and every intermediate copy. If `U` is the full tagged
+  input width, `P` the point width, and `T`, `C` the routed terminal budgets,
+  termination uses at most `T + 8*P + 32*U + 4` steps and
+  `C + 26*P + 208*U + 152` code words. Total memory includes the initial `U`
+  words, stored code, descriptors and peak working storage.
+  Tests use a pending payload wider than the forgery to exercise actual padding
+  relocation, distinct challenge points, both fresh coin branches, full cache
+  and logs, incomplete randomness, and cutoff with leftover replies. Private
+  state and actual elapsed time are checked; resource/source proofs are audited
+  for axioms. Setup and full caller/controller composition remain unfinished.
 
 Remaining integration sequence:
 

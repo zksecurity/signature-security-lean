@@ -1,6 +1,6 @@
 import Signatures.Runtime.Caliper.CoronServiceBounds
 import Signatures.Runtime.Caliper.CoronServiceSource
-import Signatures.Runtime.Caliper.CoronTerminalBounds
+import Signatures.Runtime.Caliper.CoronCallerFinishBounds
 import Lean
 
 /-! Whole-service execution with real sampling and word arithmetic. These are
@@ -191,6 +191,61 @@ private def finish (value : (CoronTerminal.input layout).Value) (replies : List 
     result.state.bufs 200, result.state.caps 200, result.state.regs 200, result.state.tapePos,
     decide (result.time ≤ CoronTerminal.timeBudget layout sampler terminalArithmetic))
 
+private def forgery : (CoronTerminalFrame.forgery layout).Value := ⟨(5, 100), by
+  change 5 < 256 ∧ True
+  decide⟩
+private def fullStore : layout.service.store.Value :=
+  ⟨((7, 11, 17), [(5, (3, 1)), (6, (2, 0))], [(5, 38), (6, 31)], [(5, 33), (6, 22)]), by
+    dsimp only [BLSReply.Layouts.store, BLSReply.Layouts.cacheLogs, BLSReply.Layouts.records,
+      BLSRecord.Layouts.transcript, BLSRecord.Layouts.log, BLSRecord.Layouts.entry,
+      Layout.prod, Layout.boundedList, Layout.counter, Layout.all,
+      CacheLayout.lookup, LookupLayout.table, LookupLayout.entry,
+      CoronService.Layouts.service, CoronService.Layouts.response, CoronResponse.Layouts.config,
+      CoronResponse.Layouts.points, CacheLayout.coinValues, CoronSampling.output, UniformSampling.output,
+      Finite.layout, layout]
+    decide⟩
+private def frameHit : (CoronTerminalFrame.input layout default).Value :=
+  ⟨(forgery, fullStore), by change CoronTerminalFrame.ready layout default (forgery, fullStore); decide +kernel⟩
+example : ¬CoronTerminalFrame.ready layout default
+    (⟨(7, 100), by change 7 < 256 ∧ True; decide⟩, fullStore) := by decide +kernel
+example {after : layout.service.store.Value} (post : BLSCaller.Postcondition layout.service 1 empty after)
+    (result : (CoronTerminalFrame.forgery layout).Value) : CoronTerminalFrame.ready layout default (result, after) :=
+  CoronTerminalFrame.ready_of_postcondition layout default post (by decide +kernel) result
+
+/-- Wider than the forgery: success must move past padding before reading the store. -/
+private def pending : Representation 16 (Word 16 × (Word 16 × Word 16)) :=
+  (wordRepresentation 16 (by decide)).prod
+    ((wordRepresentation 16 (by decide)).prod (wordRepresentation 16 (by decide)) (by decide)) (by decide)
+private theorem finishFits : 1 + max (CoronTerminalFrame.forgery layout).representation.encoding.words pending.encoding.words +
+    layout.service.store.representation.encoding.words < 2 ^ 16 := by decide +kernel
+private def stopped : layout.point.Value := ⟨999, trivial⟩
+private theorem caller_finish_within : Interactive.Within layout.port
+    (CoronCallerFinish.admitted layout pending finishFits default) layout.point
+    (CoronCallerFinish.codeBudget layout pending finishFits sampler terminalArithmetic)
+    (CoronCallerFinish.memoryBudget layout pending finishFits sampler terminalArithmetic)
+    (CoronCallerFinish.timeBudget layout pending finishFits sampler terminalArithmetic)
+    (fun value => Subtype.val <$> CoronCallerFinish.denote layout default sampler terminalArithmetic stopped value.val) :=
+  CoronCallerFinish.within layout pending finishFits default sampler terminalArithmetic stopped
+
+private def finishCaller (value : CoronCallerFinish.Packet (P := Word 16 × (Word 16 × Word 16)) layout)
+    (replies : List (Word 16)) := do
+  let initial := (CoronCallerFinish.input layout pending finishFits).initial value
+  let before := { initial with
+    regs := fun register => if register = 200 then 99 else initial.regs register
+    bufs := fun buffer => if buffer = 200 then #[77] else initial.bufs buffer
+    caps := fun buffer => if buffer = 200 then 3 else initial.caps buffer
+    tapePos := 7 }
+  let result ← WordIO.run .unit RandomTape.zero 100000
+    ((CoronCallerFinish.code layout pending finishFits default sampler terminalArithmetic stopped).lower layout.port) before replies
+  pure (result.state.bufs 0, result.trace, result.remaining,
+    result.state.bufs 200, result.state.caps 200, result.state.regs 200, result.state.tapePos,
+    decide (result.time ≤ CoronCallerFinish.timeBudget layout pending finishFits sampler terminalArithmetic))
+private def routedBytes := do
+  let result ← WordIO.run .unit RandomTape.zero 100000
+    (.compute (CoronTerminalFrame.route layout default).code)
+    ((CoronTerminalFrame.input layout default).representation.initial frameHit) []
+  pure (result.state.bufs 0).toList
+
 open Lean in
 run_cmd do
   let draws : List (WordIO.Event 16) :=
@@ -225,6 +280,23 @@ run_cmd do
     throwError "terminal lookup ignored the first binding or mishandled zero scalar"
   unless (finish finalFresh [3, 3]).isNone do
     throwError "terminal sampling omitted the source computation's coin draw"
+  unless routedBytes == some ((CoronTerminal.input layout).representation.encoding.encode
+      (CoronTerminalFrame.prepared layout default frameHit)) do
+    throwError "caller routing selected the wrong message, default, cache, signature or challenge bytes"
+  unless finishCaller (.inl forgery, empty) [3, 3, 1, 0, 42] ==
+      some (#[67], draws, [42], #[77], 3, 99, 7, true) do
+    throwError "padded caller return failed to route the full store through fresh terminal extraction"
+  unless finishCaller (.inl forgery, empty) [3, 3, 1, 1, 42] ==
+      some (#[67], ordinaryDraws, [42], #[77], 3, 99, 7, true) do
+    throwError "caller finish changed extraction on the other coin branch"
+  unless finishCaller (.inl forgery, fullStore) [42] ==
+      some (#[67], [], [42], #[77], 3, 99, 7, true) do
+    throwError "terminal finish required a spare log slot or resampled a full-cache hit"
+  unless finishCaller (.inr (3, 4, 5), fullStore) [42] ==
+      some (#[999], [], [42], #[77], 3, 99, 7, true) do
+    throwError "caller cutoff sampled, modified the private frame, or failed to emit the fallback"
+  unless (finishCaller (.inl forgery, empty) [3, 3]).isNone do
+    throwError "caller finish completed without the required terminal coin reply"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``CoronService.refines, ``CoronService.time_bound, ``CoronService.code_words,
       ``CoronService.names, ``CoronService.descriptionFits, ``CoronService.within,
@@ -233,7 +305,15 @@ run_cmd do
       ``CoronTerminal.extract, ``CoronTerminal.extract_bounded, ``CoronTerminal.extract_names,
       ``CoronTerminal.refines, ``CoronTerminal.source_eq, ``CoronTerminal.time_bound,
       ``CoronTerminal.code_words, ``CoronTerminal.names, ``CoronTerminal.descriptionFits,
-      ``CoronTerminal.within, ``CoronTerminal.within_finish, ``terminal_within] do
+      ``CoronTerminal.within, ``CoronTerminal.within_finish, ``terminal_within,
+      ``CoronTerminalFrame.route, ``CoronTerminalFrame.route_time, ``CoronTerminalFrame.route_words,
+      ``CoronTerminalFrame.route_names, ``CoronTerminalFrame.ready_of_postcondition,
+      ``CoronTerminalRouted.refines, ``CoronTerminalRouted.source_eq, ``CoronTerminalRouted.time_bound,
+      ``CoronTerminalRouted.code_words, ``CoronTerminalRouted.names, ``CoronTerminalRouted.descriptionFits,
+      ``CoronTerminalRouted.within, ``CoronCallerFinish.refines, ``CoronCallerFinish.ready_of_postcondition,
+      ``CoronCallerFinish.time_bound, ``CoronCallerFinish.code_words, ``CoronCallerFinish.names,
+      ``CoronCallerFinish.descriptionFits, ``CoronCallerFinish.within, ``CoronCallerFinish.source_return,
+      ``CoronCallerFinish.source_cutoff, ``caller_finish_within] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 
