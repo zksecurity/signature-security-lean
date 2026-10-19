@@ -230,9 +230,12 @@ Pinned upstreams:
   intermediate-memory bounds. Both branches preserve total division semantics
   and the updated cache. Final-request packing now also executes its copies,
   default construction and the good branch's `beta + hashes` addition, with
-  derived resource bounds. Connecting the transcript evaluations through the
-  retained forgery frames to this final phase, and connecting setup,
-  caller, final-forgery handling and extraction into complete reductions, and
+  derived resource bounds. Signature-transcript evaluation, physically saved
+  forgery context and final extraction now compose in both branches, with exact
+  original-oracle semantics, a proved remaining-slot invariant, accepted word
+  operands, and time, code and all-visited-memory bounds. Connecting the good
+  branch's hash evaluation and the original forgery/transcript input to this
+  phase, and connecting setup, caller and extraction into complete reductions,
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.

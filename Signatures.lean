@@ -30,6 +30,8 @@ import Signatures.Runtime.Caliper.BLSRowsOracle
 import Signatures.Runtime.Caliper.BLSFinalTargetOracle
 import Signatures.Runtime.Caliper.BLSTokensSource
 import Signatures.Runtime.Caliper.BLSFinalFrameNames
+import Signatures.Runtime.Caliper.BLSSignatureTailSource
+import Signatures.Runtime.Caliper.BLSSignatureTailAcceptance
 import Signatures.Runtime.Caliper.RowFoldPostcondition
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement

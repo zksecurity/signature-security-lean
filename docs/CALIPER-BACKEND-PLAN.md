@@ -1120,8 +1120,9 @@ Implemented and checked:
   assignment, missing/surplus coefficients, repeated-message occurrences,
   zero-weight lookups, empty/full-cache and zero-token-capacity cases, incomplete
   sampling replies, cache reservation, instruction acceptance and caller storage.
-  These phases still need executed outer frames retaining the forgery data,
-  the other transcript and intermediate sums before full extractor composition.
+  The signature phase now retains its final forgery context in the composed
+  tail below. Retaining the other transcript across the good hash phase and
+  constructing the initial forgery frames remain part of full composition.
 
 - [CacheTargetFrame](../Signatures/Runtime/Caliper/CacheTargetFrame.lean) packs
   the returned transcript sum/cache and saved target/scalar into the final
@@ -1142,8 +1143,39 @@ Implemented and checked:
   hits, misses, duplicates, empty caches, zero division, incomplete pair replies,
   preserved caller storage and released scratch. The word fixture also checks
   that addition executes; it is not a field implementation.
-  Outer frames must still retain forgery data across the transcript evaluations
-  before these phases can constitute a complete extractor.
+  These constructors are now used by the composed signature tail below;
+  the good hash phase and initial forgery frames remain to be connected.
+
+- [BLSSignatureTail](../Signatures/Runtime/Caliper/BLSSignatureTail.lean) joins
+  signature-transcript evaluation, actual save/restore of the target and
+  intermediate scalars, final request construction and private extraction.
+  Both branches preserve the context in an allocated buffer beyond the
+  evaluator's footprint. Their input reserves actual token count plus one
+  target entry; the proved evaluator postcondition establishes final readiness.
+  The good context stores `mstar`, `beta` and the already computed hash sum;
+  the bad context stores `mstar` and `beta`.
+  [Source equality](../Signatures/Runtime/Caliper/BLSSignatureTailSource.lean)
+  recovers the original `evalTerms` followed by the original BLS private oracle,
+  including the complete final cache, missing-coefficient queries and total
+  division. Its source definitions specify the ideal random law; executed code
+  is constructed separately from actual routines and the refined sampler.
+  [Runtime](../Signatures/Runtime/Caliper/BLSSignatureTailBounds.lean) and
+  [stored code](../Signatures/Runtime/Caliper/BLSSignatureTailWords.lean) add all
+  phase budgets and the actual retain overhead. With input/output/context widths
+  `a`, `b`, `s`, retention adds at most `8*a + 8*b + 12*s` steps and
+  `26*a + 26*b + 39*s + 41` code words. [Memory bounds](../Signatures/Runtime/Caliper/BLSSignatureTailMemory.lean)
+  cover every visited state of that same source-supported execution, including
+  caller storage, context, dense names and buffer descriptors.
+  [Acceptance](../Signatures/Runtime/Caliper/BLSSignatureTailAcceptance.lean)
+  derives the saved-buffer fit from actual evaluator footprints.
+  [TokenEvaluationBuffers](../Signatures/Runtime/Caliper/TokenEvaluationBuffers.lean)
+  bounds those footprints independently of the number of unrolled rows.
+  [Execution regressions](../SignaturesTest/CaliperBLSSignatureTail.lean) check
+  chronological coefficients, missing and surplus coefficients, repeated-message
+  reuse, zero-weight queries, target reuse, empty logs, partial replies, zero
+  division, caller preservation and released scratch in the composed program.
+  Initial output/log routing, the good hash phase, complete BLS solver assembly
+  and public model instantiation remain separate unfinished steps.
 
 Remaining integration sequence:
 
