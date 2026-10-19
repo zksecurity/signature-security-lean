@@ -11,7 +11,8 @@ linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
-They also have nonuniform polynomial-family corollaries. The superseded eager-table
+The abstract-backend versions also have nonuniform polynomial-family corollaries;
+those corollaries have not yet been migrated to Caliper. The superseded eager-table
 AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
 Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
 implementation models. Schnorr also has a bit-heap theorem charging replay,
@@ -33,11 +34,18 @@ The DLog time allowance is the maximum of the two derived reduction times;
 The [model and game definitions](Signatures/BLS/GeneralSecurityModel.lean) expose
 attacker resources, primitive/encoding contracts, and explicit hardness suprema.
 The [proofs](Signatures/BLS/Proofs/GeneralSecurity.lean) combine the original
-probability reductions with derived native solver runtime/code certificates.
+probability reductions with derived solver certificates. The public AGM theorem
+now uses actual Caliper programs with stored-code, runtime and total-memory bounds.
+Its [parameters](Signatures/BLS/CaliperAGMParameters.lean) fix layouts, implemented
+primitives, sampling and caller allowances before the attacker is chosen; the
+attacker supplies its local code and correspondence proofs. Complete reduction
+efficiency follows from those components. The co-CDH theorem still uses the
+abstract backend.
 The [BLS AGM family corollary](Signatures/BLS/GeneralAGMFamilyStatement.lean)
-also gives negligible forgery success from polynomial component resources,
-nonuniform DLog hardness in one fixed backend, and negligible `1/|F|`.
-Both reduction families' time and stored-code bounds are derived.
+gives negligible forgery success from polynomial component resources,
+nonuniform DLog hardness in the earlier abstract backend, and negligible `1/|F|`.
+Both reduction families' time and stored-code bounds are derived there. A Caliper
+family corollary, including polynomial word widths and memory, remains unfinished.
 OOPS and Proximity also have general-caller concrete statements and nonuniform
 family corollaries, with derived solver time/code bounds. Their degree/dimension
 must grow polynomially; OOPS retains admissibility and Proximity retains its
@@ -155,7 +163,7 @@ Pinned upstreams:
   This same cache code now refines the BLS AGM private list oracle. Both BLS
   reductions have a proved cache-capacity invariant at every adaptive source
   request, using their existing `2*q+1` query bound and represented-message
-  assumptions. Complete reduction compilation remains to be connected.
+  assumptions. The complete reductions are now connected through `BLSFull` below.
   BLS's pair-valued cache now derives its sampler from two scalar draws, with
   proved independence, executed retention/permutation and complete memory bounds.
   It requires only the scalar sampler's implementation and sampling law.
@@ -257,16 +265,15 @@ Pinned upstreams:
   Both original reductions now have certificates in a fixed Caliper DLog class
   that bounds stored code, online time and total memory. A concrete BLS AGM
   security theorem derives the usual probability bound from those certificates,
-  including the shared AGM source game. Coverage of the intended Caliper attacker
-  class, parameter families and switching the public statement wrappers to this
-  execution model remain to be done.
+  including the shared AGM source game. The public `BLS.agm_security` wrapper now
+  uses these Caliper certificates and a model fixed before attacker choice.
+  Broader caller coverage and Caliper parameter families remain to be proved.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
-  replay controllers. The signature
-  security models still use their explicit backend contracts; this layer does not
-  yet discharge them.
+  replay controllers. BLS co-CDH, OOPS, Proximity and Schnorr still use their
+  explicit abstract-backend contracts pending migration.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.
 - The original pairing-based AGM reductions sample private finite tables. BLS additionally has
   lazy reductions with sparse extraction, finite-list cache refinement, and the same probability

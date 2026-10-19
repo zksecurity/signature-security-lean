@@ -6,8 +6,6 @@ statements are in `Statement.lean`; their definitions are in
 
 namespace BLS
 
--- Preserve the original independent backend universes in this type alias.
-set_option linter.checkUnivs false in
 /-- Compatibility name for the AGM-only model. New callers should select
 `AGMSecurityModel` or `CoCDHSecurityModel` explicitly. -/
 abbrev SecurityModel := AGMSecurityModel

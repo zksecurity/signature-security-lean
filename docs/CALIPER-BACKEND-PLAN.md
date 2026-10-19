@@ -1349,10 +1349,23 @@ Implemented and checked:
   for both the lazy coefficient-view game and the shared direct AGM game.
   No finished-reduction efficiency or challenge-coverage contract is supplied.
   The old backend's unbounded encoding/category contracts are not used by this
-  resource class. Public statement wrappers still use the old backend pending
-  migration of their parameter records; caller coverage, parameter families,
-  other schemes and replay remain unfinished. The ideal uniform port and separate
-  flat-memory/CPU adequacy boundary are unchanged.
+  resource class. The ideal uniform port and separate flat-memory/CPU adequacy
+  boundary are unchanged.
+- [Public BLS AGM parameters](../Signatures/BLS/CaliperAGMParameters.lean) and
+  [reduction certificates](../Signatures/BLS/Proofs/CaliperAGM.lean) now connect
+  this execution model to `BLS.agm_security`. Layouts, actual primitive routines,
+  sampler code/law and numeric caller allowances are fixed before the attacker.
+  Each attacker supplies its own initialization/continuation code, local bounds,
+  reachable-state invariants and source correspondence. Both original reductions'
+  complete code/time/total-memory certificates are derived, without a supplied
+  whole-reduction efficiency assumption. The public hardness supremum uses this
+  Caliper class, and widening time preserves its fixed code and memory limits.
+  The source game remains backend-independent and directly uses the shared AGM.
+  The public theorem retains its curve, security parameter, query allowances and
+  adversary arguments. Tests guard these dependencies and the theorem's axioms.
+  The earlier `GeneralAGM` abstract-backend family results remain separate: this
+  migration does not establish polynomial Caliper families or coverage of every
+  intended Caliper caller. Other schemes and replay remain unfinished.
 
 Remaining integration sequence:
 
@@ -1431,10 +1444,11 @@ the source/output conversion for both complete BLS AGM reductions.
    contracts as explicit assumptions. Pairing/verification routines, if executed
    by the target program, also need implementations; they are not free consequences
    of the field/G₁/G₂ interface.
-5. Instantiate signature security models and their parameter-indexed resource
-   bounds using admissible instruction costs, polynomial word widths and polynomial
-   routine bounds. Prove coverage for the intended Caliper adversary class. A claim about
-   every conventional efficient attacker needs a further machine-adequacy result.
+5. Migrate the remaining signature security models after the concrete BLS AGM
+   wrapper. Establish parameter-indexed resource bounds using admissible instruction
+   costs, polynomial word widths and polynomial routine bounds. Prove coverage for
+   the intended Caliper adversary class. A claim about every conventional efficient
+   attacker needs a further machine-adequacy result.
 
 The existing backend's exact execution equations and unbounded mathematical data
 types require a proved refinement. A fixed-word implementation must justify its

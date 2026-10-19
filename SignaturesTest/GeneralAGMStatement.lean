@@ -1,4 +1,5 @@
 import Signatures.BLS.Statement
+import Signatures.BLS.GeneralAGMStatement
 import Lean.Util.CollectAxioms
 
 /-! Guard the public statement and its underlying resource theorem. In
@@ -39,7 +40,7 @@ run_meta do
   for name in #[``Model.le_advantageBound, ``Model.hardWithin_advantageBound, ``Model.advantageBound_le,
       ``challenge_size, ``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.Family.security,
       ``BLS.agm_security, ``BLS.agm_security_two_budgets, ``BLS.dlogSuccessBound_mono,
-      ``BLS.agmEufCmaGame_eq, ``BLS.GeneralAGM.reductions_within,
+      ``BLS.agmEufCmaGame_eq, ``BLS.GeneralAGM.reductions_within, ``BLS.CaliperAGM.reductions_within,
       ``BLS.AlgebraicAdversary.query_allowances, ``BLS.cocdh_security, ``BLS.cocdhEufCmaGame_eq,
       ``BLS.GeneralCoCDH.reduction_within, ``BLS.UnrestrictedAdversary.query_allowances] do
     for axiomName in (← collectAxioms name) do
@@ -50,7 +51,8 @@ run_meta do
   for name in #[``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.reductions_within,
       ``BLS.GeneralAGM.Family.security, ``BLS.GeneralAGM.Parameters.mk, ``BLS.GeneralAGM.AlgebraicAdversary.mk,
       ``BLS.agm_security, ``BLS.agm_security_two_budgets,
-      ``BLS.AGMSecurityModel.mk, ``BLS.ExecutionModel.mk, ``Model.PairingCurve.mk,
+      ``BLS.AGMSecurityModel.mk, ``BLS.CaliperAGM.Parameters.mk, ``BLS.CaliperAGM.AlgebraicAdversary.mk,
+      ``BLS.CaliperAGM.reductions_within, ``BLS.ExecutionModel.mk, ``Model.PairingCurve.mk,
       ``BLS.cocdh_security, ``BLS.CoCDHSecurityModel.mk, ``BLS.GeneralCoCDH.Parameters.mk,
       ``BLS.GeneralCoCDH.Adversary.mk, ``BLS.GeneralCoCDH.reduction_within] do
     forallTelescope (← getConstInfo name).type fun params _ => do
@@ -78,6 +80,31 @@ run_meta do
   let info ← getConstInfo ``BLS.GeneralAGM.Parameters.dlogBound
   unless info.value?.isSome do
     throwError "dlogBound must expose its implementation/resource class"
+
+-- The public AGM route uses literal Caliper programs and the proved complete
+-- reduction certificates. Keep the old abstract backend confined to its own API.
+run_meta do
+  for name in #[``BLS.AGMSecurityModel.mk, ``BLS.AlgebraicAdversary,
+      ``BLS.CaliperAGM.Parameters.mk, ``BLS.CaliperAGM.AlgebraicAdversary.mk,
+      ``BLS.dlogSuccessBound, ``BLS.Proofs.agm_security] do
+    let info ← getConstInfo name
+    for expression in #[info.type, (info.value? true).getD info.type] do
+      for forbidden in #[``BLS.ExecutionModel, ``BLS.GeneralAGM.Parameters,
+          ``BLS.GeneralAGM.AlgebraicAdversary, ``BLS.GeneralAGM.reductions_within,
+          ``PFunctor.StepClass, ``PFunctor.QuantitativeStepClass,
+          ``Signatures.Runtime.LazyAGM.NativeSolver.dlogWithin] do
+        if expression.find? (fun e => e.isConstOf forbidden) |>.isSome then
+          throwError "{name}: old abstract backend in public Caliper route: {forbidden}"
+  for (name, required) in #[( ``BLS.AGMSecurityModel.mk, #[``BLS.CaliperAGM.Parameters]),
+      (``BLS.AlgebraicAdversary, #[``BLS.CaliperAGM.AlgebraicAdversary]),
+      (``BLS.dlogSuccessBound, #[``Signatures.Runtime.CaliperBackend.dlogWithin,
+        ``BLS.CaliperAGM.Parameters.solverCode, ``BLS.CaliperAGM.Parameters.solverMemory]),
+      (``BLS.Proofs.agm_security, #[``BLS.CaliperAGM.reductions_within])] do
+    let info ← getConstInfo name
+    for symbol in required do
+      unless (#[info.type, (info.value? true).getD info.type]).any
+          (fun e => (e.find? (fun sub => sub.isConstOf symbol)).isSome) do
+        throwError "{name}: missing Caliper dependency {symbol}"
 
 -- Both public routes have four explicit inputs and one route-specific model.
 run_meta do
@@ -112,6 +139,7 @@ run_meta do
       ``BLS.GeneralCoCDH.Adversary.mk, ``BLS.cocdh_security] do
     let type := (← getConstInfo name).type
     for forbidden in #[``BLS.GeneralAGM.Parameters, ``BLS.GeneralAGM.AlgebraicAdversary,
+        ``BLS.CaliperAGM.Parameters, ``BLS.CaliperAGM.AlgebraicAdversary,
         ``BLS.AlgebraicAdversary, ``AGM.outputTy] do
       if type.find? (fun e => e.isConstOf forbidden) |>.isSome then
         throwError "{name}: algebraic requirement in unrestricted route: {forbidden}"
@@ -122,7 +150,7 @@ example (curve : Model.PairingCurve) [BLS.AGMSecurityModel curve]
     (adversary : BLS.AlgebraicAdversary curve securityParameter queries) :
     ∀ pk, IsQueryBoundP (adversary.source.main
       (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
-      (fun i => BLS.GeneralAGM.queryKind i.value.data = 1) queries.hash :=
+      (fun i => BLS.queryKind i.value.data = 1) queries.hash :=
   (BLS.AlgebraicAdversary.query_allowances curve securityParameter queries adversary).2.1
 
 example (curve : Model.PairingCurve) [BLS.AGMSecurityModel curve]
@@ -140,8 +168,18 @@ example (curve : Model.PairingCurve) [model : BLS.AGMSecurityModel curve]
     BLS.dlogSuccessBound curve securityParameter queries time =
       (model.parameters securityParameter queries).dlogBound time := rfl
 
+-- The public record provides the two original reductions' actual code/time/
+-- total-memory certificates, including coverage of every sampled challenge.
+example (curve : Model.PairingCurve) [model : BLS.AGMSecurityModel curve]
+    (securityParameter : Nat) (queries : BLS.QueryAllowance)
+    (adversary : BLS.AlgebraicAdversary curve securityParameter queries) :
+    let resources := model.parameters securityParameter queries
+    resources.within resources.goodTime (BLS.LazyAGM.Reduction.goodReductionList adversary.proofView) ∧
+      resources.within resources.badTime (BLS.LazyAGM.Reduction.badReductionList adversary.proofView) :=
+  BLS.CaliperAGM.reductions_within (model.parameters securityParameter queries) adversary
+
 -- The common allowance is derived from both existing runtime proofs. Enlarging
--- time leaves the same backend, challenge bound and stored-code bound in force.
+-- time leaves the same Caliper layouts, stored-code and total-memory bounds in force.
 example (curve : Model.PairingCurve) [model : BLS.AGMSecurityModel curve]
     (securityParameter : Nat) (queries : BLS.QueryAllowance) :
     BLS.agmReductionTime curve securityParameter queries =

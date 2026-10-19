@@ -1,5 +1,5 @@
 import Signatures.BLS.GeneralSecurityModel
-import Signatures.BLS.GeneralAGMStatement
+import Signatures.BLS.Proofs.CaliperAGM
 import Signatures.BLS.Proofs.ROM
 import Signatures.BLS.Proofs.Game
 
@@ -17,20 +17,19 @@ universe v w x
 
 section AGM
 
-variable (curve : Model.PairingCurve) [model : AGMSecurityModel.{v, w, x} curve]
+variable (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
 
 /-- Each allowance in the public statement bounds that kind of query in the
 actual source adversary, at every verification key. -/
 theorem AlgebraicAdversary.query_allowances (securityParameter : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter queries) :
     (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
-      (fun i => GeneralAGM.queryKind i.value.data = 0) queries.random) ∧
+      (fun i => queryKind i.value.data = 0) queries.random) ∧
     (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
-      (fun i => GeneralAGM.queryKind i.value.data = 1) queries.hash) ∧
+      (fun i => queryKind i.value.data = 1) queries.hash) ∧
     (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
-      (fun i => GeneralAGM.queryKind i.value.data = 2) queries.sign) := by
-  simpa only [AGMSecurityModel.queries_eq, AGMSecurityModel.generator_eq] using
-    And.intro adversary.randomQueries (And.intro adversary.hashQueries adversary.signingQueries)
+      (fun i => queryKind i.value.data = 2) queries.sign) := by
+  exact ⟨adversary.randomQueries, adversary.hashQueries, adversary.signingQueries⟩
 
 /-- Expanding the public game gives the same native shared-attacker experiment. -/
 theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
@@ -59,37 +58,33 @@ theorem Proofs.agm_security
   -- Probability: the two explicit lazy reductions account for every successful forgery,
   -- apart from the original inverse-field-size loss. This step has no efficiency premise.
   have probabilityBound := LazyAGM.Reduction.security_arbitrary_messages_list
-    resources.generator resources.keyGenerator adversary.proofView resources.generates resources.pairingInjective
-  -- Efficiency: construct both native executable witnesses and prove their full budgets.
-  obtain ⟨goodFits, badFits⟩ := GeneralAGM.reductions_within resources adversary
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+    adversary.proofView (curve.generates securityParameter) (curve.pairingInjective securityParameter)
+  -- Efficiency: construct both Caliper programs and prove their code/time/total-memory bounds.
+  obtain ⟨goodFits, badFits⟩ := CaliperAGM.reductions_within resources adversary
   -- Each constructed solver is therefore a member of the supremum above.
-  have goodBound : Model.dlog11Advantage resources.generator resources.keyGenerator
-      (LazyAGM.Reduction.goodReductionList adversary.proofView) ≤
+  have goodBound : Model.dlog11Advantage (curve.generator securityParameter)
+      (curve.keyGenerator securityParameter) (LazyAGM.Reduction.goodReductionList adversary.proofView) ≤
       dlogSuccessBound curve securityParameter queries resources.goodTime :=
     le_iSup_of_le _ (le_iSup_of_le goodFits le_rfl)
-  have badBound : Model.dlog11Advantage resources.generator resources.keyGenerator
-      (LazyAGM.Reduction.badReductionList adversary.proofView) ≤
+  have badBound : Model.dlog11Advantage (curve.generator securityParameter)
+      (curve.keyGenerator securityParameter) (LazyAGM.Reduction.badReductionList adversary.proofView) ≤
       dlogSuccessBound curve securityParameter queries resources.badTime :=
     le_iSup_of_le _ (le_iSup_of_le badFits le_rfl)
   have sourceBound := Model.DirectAGM.game_le (Gₜ := curve.TargetGroup securityParameter) LazyAGM.terms (fun _ _ => True)
-    resources.generator resources.keyGenerator adversary.source
-  simpa only [resources, agmEufCmaGame_eq, AGMSecurityModel.generator_eq, AGMSecurityModel.keyGenerator_eq,
-    Model.PairingCurve.order] using
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source
+  simpa only [agmEufCmaGame_eq, Model.PairingCurve.order] using
     sourceBound.trans (probabilityBound.trans (add_le_add (add_le_add goodBound badBound) le_rfl))
 
-/-- Increasing only the time allowance enlarges the same fixed-backend solver
-class. Its input and stored-code bounds are unchanged. -/
+/-- Increasing only the time allowance enlarges the same Caliper solver class.
+Its layouts, stored-code and total-memory bounds stay fixed. -/
 theorem dlogSuccessBound_mono (securityParameter : Nat) (queries : QueryAllowance) :
     Monotone (dlogSuccessBound curve securityParameter queries) := by
   intro time largerTime ht
   let resources := model.parameters securityParameter queries
-  refine iSup_le fun solver => iSup_le fun fits => ?_
-  have largerFits : Signatures.Runtime.LazyAGM.NativeSolver.dlogWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.keyGenerator resources.inputWidth resources.solverCode largerTime solver :=
-    ⟨fits.1, Within.mono resources.backend resources.descriptionSizes resources.factor resources.description
-      fits.2 le_rfl ht⟩
-  exact le_iSup_of_le solver (le_iSup_of_le largerFits le_rfl)
+  exact CaliperBackend.dlogSuccessBound_mono resources.layout.port
+    resources.layout.setup.challenge resources.layout.scheme.cache.value
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter) le_rfl le_rfl ht
 
 /-- Both DLog solvers fit the maximum of their derived runtimes, yielding one
 hardness quantity with a factor of two. The separate-budget theorem is sharper. -/

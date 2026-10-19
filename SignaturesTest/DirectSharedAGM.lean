@@ -92,7 +92,7 @@ example (curve : Model.PairingCurve) (n dimension : Nat) {Slot : Type}
 
 open Lean Meta in
 run_meta do
-  for name in #[``BLS.GeneralAGM.AlgebraicAdversary.source,
+  for name in #[``BLS.CaliperAGM.AlgebraicAdversary.source,
       ``OOPS.GeneralAGM.AlgebraicAdversary.source,
       ``Proximity.GeneralAGM.AlgebraicAdversary.source] do
     let type := (← getConstInfo name).type

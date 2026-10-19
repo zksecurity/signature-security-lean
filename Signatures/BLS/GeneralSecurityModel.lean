@@ -1,19 +1,20 @@
 import Signatures.BLS.Game
 import Signatures.Model.PairingCurve
-import Signatures.BLS.GeneralAGMParameters
+import Signatures.BLS.CaliperAGMParameters
 import Signatures.BLS.GeneralCoCDHParameters
 
 /-! Inspectable definitions for the two public BLS statements.
 
 `AGMSecurityModel` and `AlgebraicAdversary` describe the AGM-to-DLog route.
 `CoCDHSecurityModel` and `UnrestrictedAdversary` describe ordinary ROM security
-to co-CDH. Both use `ExecutionModel` and the common query-allowance type; their
-component contracts, output types, native reductions and hardness classes differ.
+to co-CDH. Both use the common query-allowance type. The AGM route uses actual
+Caliper word programs; the co-CDH route still uses `ExecutionModel`. Their
+component contracts, output types, reductions and hardness classes differ.
 
 The games are in `Game.lean`; each success measure below is an explicit supremum
-over solvers in the fixed backend at the derived code/input/time bounds. This is
-a concrete resource model. Polynomial families and a conventional-machine
-instantiation need further hypotheses when making those stronger claims.
+over solvers in the fixed resource model. The AGM bounds include code, runtime
+and total memory. These are concrete resource models. Polynomial families and
+a conventional-machine instantiation need further hypotheses when making those stronger claims.
 The public statements are in `Statement.lean`; their proofs and exact game
 correspondences are in `Proofs/GeneralSecurity.lean`. -/
 
@@ -24,7 +25,7 @@ namespace BLS
 
 universe v w x
 
-/-- Local computation and message types, shared by both BLS routes.
+/-- Abstract local computation and message types for the co-CDH route.
 The message type only needs decidable equality; it need not be finite. The
 quantitative backend measures encoded sizes and costs of local computation. -/
 class ExecutionModel (curve : Model.PairingCurve) where
@@ -47,18 +48,19 @@ attribute [instance_reducible, instance] ExecutionModel.products ExecutionModel.
   ExecutionModel.quantitativeOptions ExecutionModel.distributive ExecutionModel.optionCode
   ExecutionModel.messageEquality
 
-/-- AGM execution contracts and attacker limits, fixed before choosing the attacker.
-`parameters` supplies encodings, a fixed executable backend, individual primitive
-cost/size laws, and attacker work/state/output/code limits. The detailed fields
-are in `GeneralAGMParameters.lean`. Algebraic output is required only on this route.
-No completed-reduction budget or DLog hardness is assumed. -/
-class AGMSecurityModel (curve : Model.PairingCurve) extends ExecutionModel.{v, w} curve where
-  parameters : ∀ n, QueryAllowance → GeneralAGM.Parameters.{v, w, x}
-    (Q := quantitative) (F := curve.Scalar n) (G₁ := curve.SignatureGroup n)
-    (G₂ := curve.KeyGroup n) (Gₜ := curve.TargetGroup n) (M := Message n)
-  queries_eq : ∀ n q, (parameters n q).queries = q
-  generator_eq : ∀ n q, (parameters n q).generator = curve.generator n
-  keyGenerator_eq : ∀ n q, (parameters n q).keyGenerator = curve.keyGenerator n
+/-- Caliper implementations and attacker allowances, fixed before choosing the attacker.
+`parameters` supplies bounded layouts, individual primitive implementations,
+a sampler, and numeric limits for local attacker code. The detailed fields are
+in `CaliperAGMParameters.lean`. Algebraic output is required only on this route.
+Complete reduction code, time and memory bounds are proved from those components. -/
+class AGMSecurityModel (curve : Model.PairingCurve) where
+  Message : Nat → Type
+  [messageEquality : ∀ n, DecidableEq (Message n)]
+  parameters : ∀ n q, CaliperAGM.Parameters
+    (curve.Scalar n) (curve.SignatureGroup n) (curve.KeyGroup n) (Message n)
+    q (curve.generator n) (curve.keyGenerator n)
+
+attribute [instance_reducible, instance] AGMSecurityModel.messageEquality
 
 /-- Unrestricted execution contracts and attacker limits for the co-CDH route.
 The detailed fields in `GeneralCoCDHParameters.lean` require a plain message and
@@ -74,16 +76,16 @@ class CoCDHSecurityModel (curve : Model.PairingCurve) extends ExecutionModel.{v,
 
 section AGM
 
-variable (curve : Model.PairingCurve) [model : AGMSecurityModel.{v, w, x} curve]
+variable (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
 
-/-- Any algebraic attacker with an implementation in the fixed backend.
-Its certificate supplies its own execution and stored-code bounds, the three query
-allowances, and exact agreement with the internally derived coefficient view of
-`source` at every public key. Producing that encoding is included in its budget. Algebraicity means
-its group outputs come with representations in the group elements it received.
-Its local computation is general backend code, not restricted to our arithmetic language. -/
+/-- An algebraic attacker realized by local Caliper code within the fixed allowances.
+Its certificate proves initialization and continuation bounds, the three query
+allowances, and exact agreement with the coefficient view of the shared AGM
+`source`. Producing that view is charged to its implementation. Local computation
+is general Caliper code. This class does not assert coverage of every conventional
+polynomial-time attacker; that requires a separate machine-adequacy theorem. -/
 abbrev AlgebraicAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
-  GeneralAGM.AlgebraicAdversary (model.parameters securityParameter queries)
+  CaliperAGM.AlgebraicAdversary (model.parameters securityParameter queries)
 
 /-- A common time allowance for the two constructed DLog solvers: the maximum
 of their proved complete runtimes. This is computed from the fixed primitive
@@ -103,23 +105,26 @@ noncomputable def agmEufCmaGame (securityParameter : Nat) {queries : QueryAllowa
 /-- Supremum of success probabilities for `(1,1)`-DLog: sample `x` uniformly,
 give a solver `(g₁, x • g₁, g₂, x • g₂)`, and test whether it returns `x`.
 
-`dlogWithin` requires one executable in the model's fixed backend, with exact solver
-semantics at every input, stored code/data at most `resources.solverCode`, and time
-at most `time` on every supported run within `resources.inputWidth`. All DLog
-challenges must fit that input bound. See `Runtime/BackendLazyAGMDLog.lean` and
-`Runtime/BackendWithin.lean` for those predicates. No optimal solver is assumed to exist.
+`dlogWithin` requires actual Caliper code, exact solver semantics on every
+represented input, stored code at most `resources.solverCode`, total memory at
+most `resources.solverMemory`, and time at most `time`. The memory bound covers
+code, initial data and every visited state. Every sampled DLog challenge must
+be representable. See `Runtime/Caliper/DLog.lean` and `Runtime/Caliper/Within.lean`.
+No optimal solver is assumed to exist.
 
-`solverCode`, `goodTime`, and `badTime` are computed in `GeneralAGMParameters.lean`;
-they charge setup, attacker execution, oracle simulation, extraction, and composition.
-Their resource proofs are `GeneralAGM.reductions_within`. They are not user-supplied
-finished-reduction budgets. This supremum still needs a hardness assumption to be small. -/
+The budgets are computed in `CaliperAGMParameters.lean`; their proofs are
+`CaliperAGM.reductions_within`. They charge setup, local attacker execution,
+lazy oracle simulation and extraction. A hardness assumption is needed to make
+this supremum small. -/
 noncomputable def dlogSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
     (time : Nat) : ENNReal :=
   let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Signatures.Runtime.LazyAGM.NativeSolver.dlogWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.keyGenerator resources.inputWidth resources.solverCode time solver),
-    𝒟[AlgebraicGroupModel.dlog11Exp resources.generator resources.keyGenerator solver] {true}
+  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.dlogWithin
+      resources.layout.port resources.layout.setup.challenge resources.layout.scheme.cache.value
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+      resources.solverCode resources.solverMemory time solver),
+    𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter)
+      (curve.keyGenerator securityParameter) solver] {true}
 
 end AGM
 
