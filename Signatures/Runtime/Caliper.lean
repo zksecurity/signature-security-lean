@@ -38,6 +38,7 @@ import Signatures.Runtime.Caliper.CacheReadOracle
 import Signatures.Runtime.Caliper.SourcePrefix
 import Signatures.Runtime.Caliper.PairSamplingMemory
 import Signatures.Runtime.Caliper.UniformQuery
+import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.TagBounds
 import Signatures.Runtime.Caliper.InteractiveMemory
 import Signatures.Runtime.Caliper.InteractiveInvariantBounds
@@ -45,6 +46,7 @@ import Signatures.Runtime.Caliper.SumContextBounds
 import Signatures.Runtime.Caliper.SumContextMerge
 import Signatures.Runtime.Caliper.CallerStepBounds
 import Signatures.Runtime.Caliper.CallerExecution
+import Signatures.Runtime.Caliper.CallerPresentation
 import Signatures.Runtime.Caliper.SynchronizesObservations
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
@@ -101,6 +103,9 @@ prefixes retain query allowances and state-growth bounds along supported paths.
 Independent pair sampling is derived from two certified component samplers.
 Saved-state copying and output permutation execute, with linear overhead and
 complete memory bounds; the product sampling law follows from component laws.
+Fixed-range uniform sampling is constructed through the word port, including
+request preparation and reply copying, with constant local time/code/memory
+bounds even when the range fills the word domain. The oracle remains ideal.
 Interactive loops now carry decreasing reachable-domain invariants through
 supported source answers, with time and complete memory bounds for the same run.
 Generated caller steps preserve caller state across handlers and private stores
@@ -108,7 +113,9 @@ across local continuations. Their copying, padding and routing have linear
 overhead bounds. Complete bounded controllers include charged initialization,
 early return and observable cutoff, with time, stored-code and whole-memory bounds.
 Their original OracleMachine bridge preserves the final private store and uses
-ImplementsWithin to identify the source program and exclude cutoff. Scheme-specific
+ImplementsWithin to identify the source program and exclude cutoff. A canonical
+machine and finite source can also be constructed from local transitions and
+branchwise termination, including restricted source-input domains. Scheme-specific
 packet layouts and the local source-correspondence proofs still need instantiation.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.

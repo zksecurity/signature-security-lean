@@ -1397,12 +1397,35 @@ Implemented and checked:
   supplied machine or machine implementation certificate. The source tree is
   mathematical semantics; it is not enumerated by the emitted program.
   [BLS caller presentation](../Signatures/Runtime/Caliper/BLSCallerPresentation.lean)
-  derives both reduction correspondences through this construction when the
-  key and point layouts represent every value. The existing interface still
-  permits restricted layouts. Actual local Caliper code, resource bounds,
+  derives both reduction correspondences through this construction. Key layouts
+  may represent a restricted subset of an infinite mathematical type: a
+  represented fallback extends only the source initialization outside that
+  domain, and termination is required only on represented keys. No executed
+  validity test or fallback is added. `Parameters.callerCorrespondence` uses the
+  already represented key generator and derives signature-point coverage from
+  sampler full support, implemented scaling and generator surjectivity. No
+  key-group surjectivity or new representation-completeness premise is assumed.
+  Actual local Caliper code, resource bounds,
   reachable-state invariants and equality with the algebraic source remain
   explicit. This removes a presentation restriction; it does not prove general
   Caliper program coverage or conventional-machine adequacy.
+- [Uniform sampling](../Signatures/Runtime/Caliper/UniformSampling.lean) writes
+  a fixed range request, invokes the existing uniform word port and copies the
+  returned index into a finite counter. A supported-output view proves the
+  reply range matches the request, with unchanged encoded bytes and execution.
+  [Resource bounds](../Signatures/Runtime/Caliper/UniformSamplingBounds.lean)
+  certify at most 26 local steps, 125 stored-code words, three register/buffer
+  slots and 166 total memory words. The numeric range may fill the whole word
+  domain. This remains the ideal uniform oracle, not a fair-bit sampler.
+  [Coron sampling](../Signatures/Runtime/Caliper/CoronSampling.lean) constructs
+  the independent scalar/coin draw needed on a fresh co-CDH cache entry. For
+  scalar encoding width `s`, it takes at most `scalarTime + 20*s + 42` steps and
+  stores at most `scalarWords + 65*s + 235` code words; names are bounded by
+  `max 4 scalarSlots`. Its complete memory certificate and product-uniform law
+  are derived from the scalar component. Tests execute zero, intermediate and
+  full-word ranges, plus the composed pair with both query traces and preserved
+  private state. Persistent caching, Coron reply arithmetic and the complete
+  co-CDH caller/reduction remain to be integrated.
 
 Remaining integration sequence:
 

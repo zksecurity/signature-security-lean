@@ -24,6 +24,14 @@ theorem scalar_valid (scalar : F) : layout.scheme.cache.value.valid scalar := by
   exact equal ▸ represented.property
 
 include routines drawLaw in
+theorem point_valid (generator : layout.scheme.point.Value)
+    (generates : Function.Surjective (fun scalar : F => scalar • generator.val))
+    (point : G) : layout.scheme.point.valid point := by
+  obtain ⟨scalar, rfl⟩ := generates point
+  exact routines.groupScale.preserves (scalar, generator.val)
+    ⟨scalar_valid layout drawSource drawLaw scalar, generator.property⟩
+
+include routines drawLaw in
 theorem challenge_valid (generator : layout.scheme.point.Value) (keyGenerator : layout.key.Value) (scalar : F) :
     layout.setup.challenge.valid ((generator.val, scalar • generator.val), (keyGenerator.val, scalar • keyGenerator.val)) := by
   have represented := scalar_valid layout drawSource drawLaw scalar

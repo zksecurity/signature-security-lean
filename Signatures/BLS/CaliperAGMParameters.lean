@@ -57,6 +57,27 @@ structure Parameters where
 variable {F G K M queries generator keyGenerator}
     (P : Parameters F G K M queries generator keyGenerator)
 
+omit [DecidableEq M] in
+/-- The existing sampler, scaling code and generator cover all signature points.
+No additional point-encoding completeness contract is supplied by the attacker. -/
+theorem Parameters.point_valid
+    (generates : Function.Surjective (fun scalar : F => scalar • generator))
+    (point : G) : P.layout.scheme.point.valid point :=
+  BLSFull.point_valid P.layout P.routines P.scalarSource P.scalarLaw
+    ⟨generator, P.generatorValid⟩ generates point
+
+/-- Construct the caller's source correspondence from local termination. Public
+keys outside the represented domain use an unexecuted source extension; the
+represented key generator already supplies its fallback. -/
+noncomputable def Parameters.callerCorrespondence
+    (generates : Function.Surjective (fun scalar : F => scalar • generator))
+    (caller : BLSFull.Caller P.layout)
+    (invariant : BLSFull.Caller.Invariant P.layout caller queries.total)
+    (terminates : BLSFull.Caller.Terminates P.layout (P.point_valid generates) caller queries.total) :
+    BLSFull.Caller.Correspondence P.layout caller invariant :=
+  BLSFull.Caller.Correspondence.ofCaller P.layout (P.point_valid generates) caller
+    ⟨keyGenerator, P.keyGeneratorValid⟩ invariant terminates
+
 structure AlgebraicAdversary where
   source : Model.DirectAGM.Adversary F M M G K
   caller : BLSFull.Caller P.layout

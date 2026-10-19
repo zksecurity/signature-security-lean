@@ -3,9 +3,9 @@ import Signatures.Runtime.Caliper.CallerPresentation
 
 /-! A BLS caller supplies local Caliper code, not a second hand-built oracle
 machine. This constructor derives that machine, its finite source tree and both
-source-correspondence proofs. Complete key/point representations are explicit
-premises of this convenient constructor; the general correspondence interface
-still supports restricted representations. -/
+source-correspondence proofs. Point representation is complete; public-key
+representation may be restricted. A represented fallback key totalizes only the
+mathematical source outside the execution domain. -/
 namespace Signatures.Runtime.CaliperBackend.BLSFull.Caller
 open Caliper OracleComp OracleSpec
 
@@ -45,27 +45,39 @@ private theorem bad_query_eq_good :
   rcases q with n | (message | message) <;> rfl
 
 variable (caller : Caller layout)
-    (keyValid : ∀ key, layout.key.valid key)
+    (fallback : layout.key.Value)
 
-abbrev initialOnKeys (key : K) : layout.Next := caller.initial ⟨key, keyValid key⟩
+noncomputable def initialOnKeys : K → layout.Next :=
+  CallerMachine.extendInput layout.key.valid fallback caller.initial
+
+theorem initialOnKeys_valid (key : layout.key.Value) :
+    initialOnKeys layout caller fallback key.val = caller.initial key :=
+  CallerMachine.extendInput_valid _ _ _ key
 
 /-- Local termination is the only oracle-machine obligation: every reply path
 returns within the allowance. Caliper code/time/memory remain separately charged. -/
-def Terminates (fuel : Nat) : Prop := ∀ key,
+def Terminates (fuel : Nat) : Prop := ∀ key : layout.key.Value,
   CallerMachine.Terminates (BLSCallerHandler.query layout.good.service layout.randomBound)
-    (representReply layout pointValid) caller.advance fuel (initialOnKeys layout caller keyValid key)
+    (representReply layout pointValid) caller.advance fuel (caller.initial key)
 
 variable {fuel : Nat} (invariant : Invariant layout caller fuel)
 
+theorem initialOnKeys_terminates (terminates : Terminates layout pointValid caller fuel) (key : K) :
+    CallerMachine.Terminates (BLSCallerHandler.query layout.good.service layout.randomBound)
+      (representReply layout pointValid) caller.advance fuel (initialOnKeys layout caller fallback key) :=
+  CallerMachine.extendInput_property _ _ _ _ terminates key
+
 noncomputable def Correspondence.ofCaller
-    (terminates : Terminates layout pointValid caller keyValid fuel) :
+    (terminates : Terminates layout pointValid caller fuel) :
     Correspondence layout caller invariant where
   machine := CallerMachine.ofCaller (BLSCallerHandler.query layout.good.service layout.randomBound)
-    (representReply layout pointValid) caller.advance (initialOnKeys layout caller keyValid)
+    (representReply layout pointValid) caller.advance (initialOnKeys layout caller fallback)
   stateView := Sum.inr
   source := CallerMachine.sourceOfCaller (BLSCallerHandler.query layout.good.service layout.randomBound)
-    (representReply layout pointValid) caller.advance (initialOnKeys layout caller keyValid) fuel terminates
-  implements := CallerMachine.ofCaller_implements _ _ _ _ _ terminates
+    (representReply layout pointValid) caller.advance (initialOnKeys layout caller fallback) fuel
+      (initialOnKeys_terminates layout pointValid caller fallback terminates)
+  implements := CallerMachine.ofCaller_implements _ _ _ _ _
+    (initialOnKeys_terminates layout pointValid caller fallback terminates)
   goodAdvance := fun _ q c _ next view represented original related =>
     CallerMachine.ofCaller_advance _ _ _ _ q c next view represented original
       (representReply_eq layout pointValid q represented original related)
@@ -75,27 +87,43 @@ noncomputable def Correspondence.ofCaller
     rcases q with n | (message | message)
     · exact CallerMachine.ofCaller_advance
         (BLSCallerHandler.query layout.good.service layout.randomBound)
-        (representReply layout pointValid) caller.advance (initialOnKeys layout caller keyValid)
+        (representReply layout pointValid) caller.advance (initialOnKeys layout caller fallback)
         (.inl n) c next view represented original
         (representReply_eq layout pointValid (.inl n) represented original (by
           cases represented <;> exact related))
     · exact CallerMachine.ofCaller_advance
         (BLSCallerHandler.query layout.good.service layout.randomBound)
-        (representReply layout pointValid) caller.advance (initialOnKeys layout caller keyValid)
+        (representReply layout pointValid) caller.advance (initialOnKeys layout caller fallback)
         (.inr (.inl message)) c next view represented original
         (representReply_eq layout pointValid (.inr (.inl message)) represented original (by
           cases represented <;> exact related))
     · exact CallerMachine.ofCaller_advance
         (BLSCallerHandler.query layout.good.service layout.randomBound)
-        (representReply layout pointValid) caller.advance (initialOnKeys layout caller keyValid)
+        (representReply layout pointValid) caller.advance (initialOnKeys layout caller fallback)
         (.inr (.inr message)) c next view represented original
         (representReply_eq layout pointValid (.inr (.inr message)) represented original (by
           cases represented <;> exact related))
 
-  goodInitial := fun value => CallerMachine.ofCaller_matches _ _ _ _ (caller.initial value)
+  goodInitial := by
+    intro value
+    change CallerMachine.Matches
+      (CallerMachine.ofCaller (spec := Model.LazyAGM.advSpec M M G)
+        (BLSCallerHandler.query layout.good.service layout.randomBound)
+        (representReply layout pointValid) caller.advance (initialOnKeys layout caller fallback))
+      (BLSCallerHandler.query layout.good.service layout.randomBound) Sum.inr
+      (caller.initial value) (initialOnKeys layout caller fallback value.val)
+    rw [initialOnKeys_valid]
+    exact CallerMachine.ofCaller_matches _ _ _ _ (caller.initial value)
   badInitial := by
     intro value
     rw [bad_query_eq_good layout]
+    change CallerMachine.Matches
+      (CallerMachine.ofCaller (spec := Model.LazyAGM.advSpec M M G)
+        (BLSCallerHandler.query layout.good.service layout.randomBound)
+        (representReply layout pointValid) caller.advance (initialOnKeys layout caller fallback))
+      (BLSCallerHandler.query layout.good.service layout.randomBound) Sum.inr
+      (caller.initial value) (initialOnKeys layout caller fallback value.val)
+    rw [initialOnKeys_valid]
     exact CallerMachine.ofCaller_matches _ _ _ _ (caller.initial value)
 
 end Signatures.Runtime.CaliperBackend.BLSFull.Caller

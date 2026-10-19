@@ -9,6 +9,22 @@ variable {w : Nat} {I A B D : Type} {spec : OracleSpec I} {port : Port w spec} {
     {predicate : A → Prop} {input : Representation w A} {output : Representation w B}
     {source : A → OracleComp spec B} {target : Code w}
 
+/-- A source invariant may justify a new output view on every reachable answer.
+The fallback of a total mathematical view is irrelevant only after that support
+condition is proved. The code still produces exactly the same encoded bytes. -/
+theorem Refines.viewOutputOnSupport (refined : Refines port cost input output source target)
+    (newOutput : Representation w D) (view : B → D)
+    (sameBytes : ∀ value, ∀ answer ∈ support (source value),
+      newOutput.encoding.encode (view answer) = output.encoding.encode answer) :
+    Refines port cost input newOutput (fun value => view <$> source value) target := by
+  intro tape value before represented
+  simpa only [id_map] using (refined tape value before represented).with_support.map view id (by
+    intro answer result related
+    obtain ⟨finished, rfl, holds, remaining, execution⟩ := related.1
+    exact ⟨finished, rfl,
+      ⟨holds.1, holds.2.1.trans (sameBytes value answer related.2.1).symm, holds.2.2⟩,
+      remaining, execution⟩)
+
 theorem RefinesOn.viewOutput (refined : RefinesOn predicate port cost input output source target)
     (newOutput : Representation w D) (view : B → D)
     (sameBytes : ∀ value, newOutput.encoding.encode (view value) = output.encoding.encode value) :

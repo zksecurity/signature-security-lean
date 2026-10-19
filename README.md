@@ -274,9 +274,17 @@ Pinned upstreams:
   derived resource bounds. The caller's oracle-machine presentation can now be
   constructed from its local transitions and branchwise query termination; its
   private state need not duplicate the separately stored pending query. For BLS,
-  the convenient constructor requires complete key and point representations.
+  the convenient constructor derives point coverage from the existing sampler,
+  scaling routine and generator. Public-key layouts may be restricted; source
+  initialization is extended outside their represented domain without adding
+  instructions or changing behavior on admitted keys.
   Local code certificates and correspondence with the algebraic source remain
   explicit; broader caller coverage remains to be proved.
+  Fixed-range uniform draws now have actual code with at most 26 local steps,
+  125 stored-code words and 166 total memory words. Coron's fresh scalar/coin
+  sampler composes this with the scalar sampler, including charged retention
+  and a derived independence law. Its persistent cache and full co-CDH reduction
+  still need integration.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

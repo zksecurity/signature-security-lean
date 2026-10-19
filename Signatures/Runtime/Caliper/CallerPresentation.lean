@@ -8,6 +8,26 @@ and their resource bounds are supplied separately by the execution layer. -/
 namespace Signatures.Runtime.CaliperBackend.CallerMachine
 open OracleComp OracleSpec PFunctor.DynSystem.DynComputation
 
+/-- Extend source initialization outside its represented inputs. This is a
+mathematical totalization, not an executable validity test. Executed callers
+receive represented values and never use the fallback branch. -/
+noncomputable def extendInput {X Y : Type} (valid : X → Prop)
+    (fallback : {value // valid value}) (initial : {value // valid value} → Y) (value : X) : Y := by
+  classical
+  exact initial (if admitted : valid value then ⟨value, admitted⟩ else fallback)
+
+theorem extendInput_valid {X Y : Type} (valid : X → Prop)
+    (fallback : {value // valid value}) (initial : {value // valid value} → Y)
+    (value : {value // valid value}) :
+    extendInput valid fallback initial value.val = initial value := by
+  simp only [extendInput, dite_eq_left value.property]
+
+theorem extendInput_property {X Y : Type} (valid : X → Prop)
+    (fallback : {value // valid value}) (initial : {value // valid value} → Y)
+    (property : Y → Prop) (holds : ∀ value, property (initial value)) (value : X) :
+    property (extendInput valid fallback initial value) := by
+  exact holds _
+
 variable {C Q R B A I : Type} {spec : OracleSpec I}
     (query : Q → I) (reply : (q : Q) → spec.Range (query q) → R)
     (advance : C × R → B ⊕ (Q × C)) (initial : A → B ⊕ (Q × C))
