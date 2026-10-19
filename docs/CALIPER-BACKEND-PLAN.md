@@ -1699,7 +1699,7 @@ Implemented and checked:
   bad flag, missing replies, full-table duplicate-key hits, fresh insertion,
   padding, unused replies, released scratch and preserved external state.
   The modular-word arithmetic fixture is not a cryptographic field instance.
-  Hash flattening/signing, extraction, caller and public concrete/asymptotic
+  Hash/signing handlers, extraction, caller and public concrete/asymptotic
   integration remain pending.
 
 - [Complete Schnorr reads](../Signatures/Runtime/Caliper/SchnorrAGMRead.lean)
@@ -1731,6 +1731,34 @@ Implemented and checked:
   All central construction, source and resource proofs receive kernel axiom
   audits. The full Schnorr handler, extractor, caller, cyclic DLog class and
   public concrete/family theorem integration remain pending.
+
+- [Schnorr affine flattening](../Signatures/Runtime/Caliper/SchnorrAGMFlatten.lean)
+  now has an actual Caliper implementation assembled from the positional row
+  builder, paid setup and a bounded scalar fold. Its
+  [layout](../Signatures/Runtime/Caliper/SchnorrAGMFlattenLayout.lean) gives the
+  chronological basis and supplied coefficients independent capacities. Missing
+  coefficients use a stored encoding of zero, and surplus coefficients create
+  no rows. No equality-of-length or algebraicity premise is needed for this
+  source convention. `denote_source` proves exact equality with the original
+  Schnorr affine flattening over field scalars.
+  [Each update](../Signatures/Runtime/Caliper/SchnorrAGMFlattenStep.lean) routes
+  runtime coordinates and coefficients into the existing two-coordinate scalar
+  accumulator. Only multiplication and addition implementations are supplied;
+  no whole flattening routine or its efficiency is assumed. Its step time is
+  at most `2*mulTime + 2*addTime + 2816*f`, with `f` scalar words, and step code
+  at most `2*mulWords + 2*addWords + 9152*f + 1485`.
+  [Whole-program bounds](../Signatures/Runtime/Caliper/SchnorrAGMFlattenBounds.lean)
+  additionally charge coefficient lookup, attachment, reversal, zero constants,
+  copying, fold unrolling, stored descriptions and complete intermediate memory
+  including the initial caller. Scratch-buffer identifiers are bounded by
+  `max 10 (max 3 primitiveSlots + 3)` independently of the list capacities.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMFlatten.lean)
+  cover full, short, surplus and empty coefficient lists; an empty basis;
+  changed basis order; modular arithmetic; rejected capacity predicates;
+  unchanged external buffers/registers/tape; released scratch; and time limits.
+  Central implementation, source and resource proofs receive kernel axiom
+  audits. Hash-handler packing must still compose this flattener with the
+  complete Caliper read above while retaining the original key and state.
 
 Remaining integration sequence:
 

@@ -344,7 +344,12 @@ Pinned upstreams:
   executes metadata packing and restoration, with exact original-read
   correspondence and derived time, stored-code and complete memory bounds.
   Its overhead above the cache is linear in the declared storage width.
-  The full handler, extractor, caller and public theorem integration remain pending.
+  The [affine flattener](Signatures/Runtime/Caliper/SchnorrAGMFlatten.lean)
+  also executes positional coefficient attachment and both coordinate sums,
+  with exact source equality and derived full resource bounds. Missing
+  coefficients default to zero; surplus coefficients add no basis entries.
+  Hash/signing handler composition, extraction, caller and public theorem
+  integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
