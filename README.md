@@ -351,8 +351,11 @@ Pinned upstreams:
   The [hash core](Signatures/Runtime/Caliper/SchnorrAGMHash.lean) now composes
   flattening with the complete read, physically retaining the original input.
   It has exact original-game correspondence and derived time, stored-code and
-  complete memory bounds. Request-shape dispatch, signing, extraction, caller
-  and public theorem integration remain pending.
+  complete memory bounds. The [complete hash dispatcher](Signatures/Runtime/Caliper/SchnorrAGMHashDispatch.lean)
+  now tests both stored list lengths, routes singleton requests, and rejects
+  malformed requests without sampling. Its exact original-handler law and
+  complete resource bounds cover every represented request shape. Signing,
+  extraction, caller and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

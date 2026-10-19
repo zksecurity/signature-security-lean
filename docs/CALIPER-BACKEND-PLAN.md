@@ -1788,7 +1788,40 @@ Implemented and checked:
   lists, changed basis order, an empty basis, the last reserved slot and missing
   replies. They also check metadata and external frame preservation, released
   scratch, time limits, rejected capacity predicates and theorem axiom audits.
-  This completes the well-shaped hash core; request-shape dispatch, signing,
+  This completes the well-shaped hash core; the all-shape dispatcher follows.
+
+- [Complete Schnorr hash dispatch](../Signatures/Runtime/Caliper/SchnorrAGMHashDispatch.lean)
+  accepts independently bounded point and coefficient-row lists. The
+  [input layout](../Signatures/Runtime/Caliper/SchnorrAGMHashDispatchLayout.lean)
+  allows zero capacities and reserves a cache insertion slot only for well-shaped
+  misses; malformed requests can still run with a full cache.
+  [Canonical list-byte lemmas](../Signatures/Runtime/Caliper/SourceListBytes.lean)
+  connect stored headers to actual list lengths and singleton payloads. The
+  [executed selector](../Signatures/Runtime/Caliper/SchnorrAGMHashShape.lean)
+  copies both headers, compares them with two stored ones, retains the input
+  and writes a branch tag. Its test takes at most 47 steps and 192 code words;
+  selection additionally charges the saved-input copies. The
+  [accepted branch](../Signatures/Runtime/Caliper/SchnorrAGMHashAccept.lean)
+  copies the runtime message, singleton point, coefficient row and original
+  state into the hash core. The
+  [rejection branch](../Signatures/Runtime/Caliper/SchnorrAGMHashReject.lean)
+  writes scalar zero, sets malformed, preserves the cache, histories and bad
+  flag, and contains no sampling instruction.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMHashDispatchSource.lean)
+  proves the exact original Schnorr handler reply and final-state law for every
+  represented hash request. Reachable capacity invariants imply input admission.
+  [Derived bounds](../Signatures/Runtime/Caliper/SchnorrAGMHashDispatchBounds.lean)
+  add at most `100*W + 100` time and `400*W + 600` stored code words to the
+  complete hash-core budgets, with `W` the enlarged request-frame width. Buffer
+  extent remains `max 11 (Fresh.nameBudget primitiveSlots sampleSlots + 3)`.
+  [Complete memory](../Signatures/Runtime/Caliper/SchnorrAGMHashDispatchMemory.lean)
+  includes initial caller data, all saved request words and every visited state
+  of the same source-correct execution.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMHashDispatch.lean)
+  cover singleton hits and misses, empty/multiple point or row lists, full-cache
+  rejection, maximal malformed requests without replies, preserved bad and
+  history fields, capacity rejection, framing, scratch release and time limits.
+  Central proofs and concrete resource instances are axiom-audited. Signing,
   the full handler/extractor/caller, cyclic DLog class and public concrete/family
   integration remain pending.
 
