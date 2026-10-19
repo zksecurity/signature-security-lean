@@ -948,7 +948,7 @@ Implemented and checked:
   length/entry bounds, duplicate-message transcript occurrences, separate log
   padding, released scratch and untouched caller storage. Source/resource
   endpoints and axiom guards are instantiated. Coefficient association is
-  implemented below; private row evaluation still needs its Caliper implementation.
+  implemented below, as is private row evaluation; complete extractor assembly remains.
 
 - [ListIndex](../Signatures/Runtime/Caliper/ListIndex.lean) implements positional
   lookup from a runtime index, default and bounded stored list. Its constructed
@@ -998,7 +998,8 @@ Implemented and checked:
   early padding and all scratch release. They reject invalid counters and input
   bounds, check that surplus coefficients increase charged work, and audit the
   complete source bridge and resource proofs. The row evaluator below consumes
-  these rows; final target lookup and extraction still need to be assembled.
+  these rows; the final lookup and arithmetic below still need to be connected
+  to row preparation and evaluation in a complete extractor.
 
 - [BLSAccumulate](../Signatures/Runtime/Caliper/BLSAccumulate.lean) constructs
   scalar `acc + coeff * answer` and both coordinates of pair accumulation from
@@ -1028,8 +1029,8 @@ Implemented and checked:
   exercise full-cache hits without sampling, scalar/pair misses, zero and distinct
   coordinates, duplicate-key priority, invalid full-cache misses and message
   bounds, caller storage preservation and scratch release. This is the compiled
-  per-read update used by the row loop below. Final-target arithmetic and
-  complete solver composition remain.
+  per-read update used by the row loop below. Final-target arithmetic is
+  implemented below; complete solver composition remains.
 
 - [InteractiveFold](../Signatures/Runtime/Caliper/InteractiveFold.lean) constructs
   an effectful list fold from an executed body, a runtime length branch and
@@ -1064,6 +1065,36 @@ Implemented and checked:
   zero-capacity loops, two successive misses, repeated messages with different
   points, cache hits, zero coefficients, missing replies, partially occupied
   row capacity, preserved caller storage and released scratch space.
+
+- [BLSExtractArithmetic](../Signatures/Runtime/Caliper/BLSExtractArithmetic.lean)
+  constructs the terminal scalar arithmetic from named subtraction, negation
+  and division routines. The good branch computes `numerator/(target-signatures)`;
+  the bad branch computes `-(target.2-signatures.2)/(target.1-signatures.1)`.
+  Division remains total. For scalar width `s`, good arithmetic takes at most
+  `232*s + Tsub + Tdiv` steps and `754*s + 154 + Csub + Cdiv` stored code words.
+  Bad arithmetic takes at most `1160*s + 2*Tsub + Tneg + Tdiv` steps and
+  `3770*s + 552 + 2*Csub + Cneg + Cdiv` code words. Argument copies and both
+  coordinate projections are executed and charged.
+  [CacheScalarResult](../Signatures/Runtime/Caliper/CacheScalarResult.lean)
+  retains the extraction inputs across the existing private read, executes
+  the scalar arithmetic and returns the entire updated cache. It accommodates
+  scalar and pair cache values with a scalar result. Its bounds are
+  `Tread + Tupdate + 404*W` steps and `Cread + Cupdate + 1313*W + 532` code words,
+  with the existing cache/frame width `W`. [Memory bounds](../Signatures/Runtime/Caliper/CacheScalarMemory.lean)
+  include stored instructions, dense names, descriptors, initial caller capacity
+  and all visited states of the same execution.
+  [BLSFinalTarget](../Signatures/Runtime/Caliper/BLSFinalTarget.lean) instantiates
+  both branches with the constructed arithmetic and scalar or paired sampling.
+  [Source equality](../Signatures/Runtime/Caliper/BLSFinalTargetOracle.lean)
+  uses the original private list oracle and preserves the entire cache.
+  [Regressions](../SignaturesTest/CaliperBLSFinalTarget.lean) exercise full-cache
+  hits without sampling, misses, first-hit duplicate semantics, empty caches,
+  zero denominators, missing replies, both pair coordinates, preserved caller
+  storage and released scratch space. The word-arithmetic fixtures test wiring;
+  the general theorems require the selected field routines' actual contracts.
+  The incoming good frame already contains `beta + hashes`. Constructing this
+  frame, paying for that addition, and joining row preparation/evaluation to
+  the final lookup are still part of complete extractor assembly.
 
 Remaining integration sequence:
 
@@ -1124,8 +1155,9 @@ extractor implementation, not a claim that extraction has been compiled.
    final-forgery and extraction phases, then compose the proved setup and caller
    phases into complete solvers. Use the proved `2*q + 1` cache headroom and
    charged chronological coefficient-row preparation and row evaluation with
-   its proved remaining-capacity invariant. Implement final-target field
-   arithmetic. Caller state and private store are already
+   its proved remaining-capacity invariant. The final lookup and arithmetic are
+   implemented; construct their incoming frames, including the good branch's
+   numerator addition, and connect the row phases. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with

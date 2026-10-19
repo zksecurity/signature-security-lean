@@ -221,7 +221,11 @@ Pinned upstreams:
   construction, private reads and these updates in source order, with time,
   stored-code and all-visited-memory bounds. Its cache reservation counts actual
   remaining rows, and its source equality preserves the final private cache.
-  Final-target arithmetic and connecting setup,
+  The final private lookup and scalar extraction arithmetic now also execute
+  constructed programs, with original-oracle equality and time, code and
+  intermediate-memory bounds. Both branches preserve total division semantics
+  and the updated cache. Constructing the incoming extraction frame, connecting
+  row preparation and sums, and connecting setup,
   caller, final-forgery handling and extraction into complete reductions, and
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
