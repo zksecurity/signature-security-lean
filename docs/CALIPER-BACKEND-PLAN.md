@@ -1096,6 +1096,33 @@ Implemented and checked:
   frame, paying for that addition, and joining row preparation/evaluation to
   the final lookup are still part of complete extractor assembly.
 
+- [TokenEvaluation](../Signatures/Runtime/Caliper/TokenEvaluation.lean) composes
+  chronological token/coefficients preparation, literal initial-accumulator
+  construction and the interactive private-cache fold into one executed phase.
+  Its input contains the original reversed token list, coefficient list and cache.
+  [Preparation](../Signatures/Runtime/Caliper/TokenEvaluationPrepare.lean)
+  explicitly copies the cache and constructs the row/accumulator frame; changing
+  subtype views is justified by equality of the encoded bytes.
+  For the combined layout width `W`, preparation adds `448*W` steps and
+  `1456*W + 291` code words to the existing token-row budgets. The complete phase
+  then adds the row-fold budgets and two stored composition words.
+  [Memory](../Signatures/Runtime/Caliper/TokenEvaluationMemory.lean) is bounded
+  throughout that same execution. [Source and postconditions](../Signatures/Runtime/Caliper/TokenEvaluationSource.lean)
+  preserve the original ordered cache fold and any reservation beyond the actual
+  token count. Allocated list padding creates no private lookups.
+  [BLSTokens](../Signatures/Runtime/Caliper/BLSTokens.lean) instantiates both scalar
+  and pair branches with actual encoded zeros, scalar multiplication/addition and
+  one or two scalar draws per miss. Its [source theorem](../Signatures/Runtime/Caliper/BLSTokensSource.lean)
+  identifies the entire computation, including final cache, with the original
+  `evalTerms (traceTerms coefficients chronologicalTokens)` under BLS's private
+  oracle. No whole transcript evaluator is supplied as an assumption.
+  [Execution checks](../SignaturesTest/CaliperBLSTokens.lean) cover chronological
+  assignment, missing/surplus coefficients, repeated-message occurrences,
+  zero-weight lookups, empty/full-cache and zero-token-capacity cases, incomplete
+  sampling replies, cache reservation, instruction acceptance and caller storage.
+  These phases still need executed outer frames retaining the forgery data,
+  the other transcript and intermediate sums before full extractor composition.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in
@@ -1156,8 +1183,9 @@ extractor implementation, not a claim that extraction has been compiled.
    phases into complete solvers. Use the proved `2*q + 1` cache headroom and
    charged chronological coefficient-row preparation and row evaluation with
    its proved remaining-capacity invariant. The final lookup and arithmetic are
-   implemented; construct their incoming frames, including the good branch's
-   numerator addition, and connect the row phases. Caller state and private store are already
+   implemented, and row preparation/evaluation now form complete transcript
+   phases; construct the outer frames, including the good branch's numerator
+   addition, and connect these phases to the final lookup. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
