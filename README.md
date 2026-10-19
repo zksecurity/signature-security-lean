@@ -348,8 +348,11 @@ Pinned upstreams:
   also executes positional coefficient attachment and both coordinate sums,
   with exact source equality and derived full resource bounds. Missing
   coefficients default to zero; surplus coefficients add no basis entries.
-  Hash/signing handler composition, extraction, caller and public theorem
-  integration remain pending.
+  The [hash core](Signatures/Runtime/Caliper/SchnorrAGMHash.lean) now composes
+  flattening with the complete read, physically retaining the original input.
+  It has exact original-game correspondence and derived time, stored-code and
+  complete memory bounds. Request-shape dispatch, signing, extraction, caller
+  and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

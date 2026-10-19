@@ -1757,8 +1757,40 @@ Implemented and checked:
   changed basis order; modular arithmetic; rejected capacity predicates;
   unchanged external buffers/registers/tape; released scratch; and time limits.
   Central implementation, source and resource proofs receive kernel axiom
-  audits. Hash-handler packing must still compose this flattener with the
-  complete Caliper read above while retaining the original key and state.
+  audits. The hash core below now composes this flattener with the complete
+  Caliper read while retaining the original key and state.
+
+- [Schnorr's hash core](../Signatures/Runtime/Caliper/SchnorrAGMHash.lean)
+  computes a well-shaped request's affine explanation before challenge sampling,
+  then executes the complete read. Its
+  [layouts](../Signatures/Runtime/Caliper/SchnorrAGMHashLayout.lean) retain the
+  coefficient capacity independently of the basis capacity. Admission allows
+  full-cache hits and requires a spare slot only on misses. Actual
+  [routing](../Signatures/Runtime/Caliper/SchnorrAGMHashRouting.lean) copies the
+  current basis and coefficients, saves the original input beyond the flattener's
+  scratch footprint, and restores the original key and complete state around
+  the computed explanation. `source_original` proves exact equality with the
+  original Schnorr read of the flattened explanation under uniform sampling;
+  it needs no whole-hash implementation assumption. `reserved_input` derives
+  admission from the source capacity invariant and represented request.
+  [Preparation bounds](../Signatures/Runtime/Caliper/SchnorrAGMHashPrepareBounds.lean)
+  charge every copy and retained word: overhead above flattening is at most
+  `80*W` time and `250*W + 70` code words, where `W` is the combined layout width.
+  [Whole bounds](../Signatures/Runtime/Caliper/SchnorrAGMHashBounds.lean) add the
+  complete read budgets and two code words for composition. Buffer identifiers
+  are bounded by `max 11 (Fresh.nameBudget primitiveSlots sampleSlots + 3)`.
+  [Complete memory](../Signatures/Runtime/Caliper/SchnorrAGMHashMemory.lean)
+  bounds stored code plus all live memory at every visited state of the same
+  execution that returns the source result, including initial caller memory.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMHash.lean) check
+  full-cache duplicate hits without sampling, fresh insertion of the computed
+  explanation, exceptional and existing bad flags, short and surplus coefficient
+  lists, changed basis order, an empty basis, the last reserved slot and missing
+  replies. They also check metadata and external frame preservation, released
+  scratch, time limits, rejected capacity predicates and theorem axiom audits.
+  This completes the well-shaped hash core; request-shape dispatch, signing,
+  the full handler/extractor/caller, cyclic DLog class and public concrete/family
+  integration remain pending.
 
 Remaining integration sequence:
 
