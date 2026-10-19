@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.Within
+import Signatures.Runtime.Caliper.Family
 import Signatures.Runtime.Caliper.UniformQuery
 import Lean
 
@@ -21,6 +21,15 @@ private theorem identity_within : Interactive.Within port valueLayout valueLayou
     named (WordIO.Code.DescriptionFits.compute identity.program.description_fits)
   exact bounded.congr (fun _ => by rw [map_pure]; rfl)
 
+-- The same actual program also witnesses a nonuniform family, with fixed
+-- polynomial bounds on word width, stored code, total memory and time.
+private theorem identity_family : Interactive.NonuniformWithin
+    (fun _ => port) (fun _ => valueLayout) (fun _ => valueLayout) (fun _ => algorithm) :=
+  Interactive.NonuniformWithin.of_pointwise _ _ _ _ (fun _ => 2) (fun _ => 6) (fun _ => 0)
+    (Signatures.Runtime.PolynomiallyBounded.const 8) (Signatures.Runtime.PolynomiallyBounded.const 2)
+    (Signatures.Runtime.PolynomiallyBounded.const 6) (Signatures.Runtime.PolynomiallyBounded.const 0)
+    (fun _ => identity_within)
+
 private theorem larger_budget : Interactive.Within port valueLayout valueLayout 10 20 30 algorithm :=
   identity_within.mono (by decide) (by decide) (by decide)
 
@@ -41,7 +50,7 @@ run_cmd do
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``Interactive.Within.mono, ``Interactive.Within.congr, ``Interactive.Within.input_memory_le,
       ``Interactive.within_of_refines, ``Interactive.within_of_refines_accounted,
-      ``identity_within, ``larger_budget, ``zero_memory_impossible] do
+      ``identity_within, ``identity_family, ``Interactive.NonuniformWithin.of_pointwise, ``larger_budget, ``zero_memory_impossible] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 end SignaturesTest.CaliperWithin

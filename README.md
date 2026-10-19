@@ -11,9 +11,9 @@ linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
-The abstract-backend versions also have nonuniform polynomial-family corollaries;
-those corollaries have not yet been migrated to Caliper. The superseded eager-table
-AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
+The concrete and nonuniform asymptotic BLS AGM statements now use Caliper. The
+other routes retain abstract-backend family corollaries during migration. The
+superseded eager-table AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
 Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
 implementation models. Schnorr also has a bit-heap theorem charging replay,
 input loading, arithmetic, scans and sampling, with explicit rejection error
@@ -41,11 +41,14 @@ primitives, sampling and caller allowances before the attacker is chosen; the
 attacker supplies its local code and correspondence proofs. Complete reduction
 efficiency follows from those components. The co-CDH theorem still uses the
 abstract backend.
-The [BLS AGM family corollary](Signatures/BLS/GeneralAGMFamilyStatement.lean)
+The [Caliper BLS AGM family corollary](Signatures/BLS/CaliperAGMFamilyStatement.lean)
 gives negligible forgery success from polynomial component resources,
-nonuniform DLog hardness in the earlier abstract backend, and negligible `1/|F|`.
-Both reduction families' time and stored-code bounds are derived there. A Caliper
-family corollary, including polynomial word widths and memory, remains unfinished.
+nonuniform Caliper DLog hardness, and negligible `1/|F|`. Both reduction families'
+time, stored code and total memory are derived from primitive/caller bounds,
+encoding widths and capacities. Word width must also grow polynomially; field
+cardinality and numerical sampling ranges need not. The earlier
+[abstract-backend family theorem](Signatures/BLS/GeneralAGMFamilyStatement.lean)
+remains a separate result.
 OOPS and Proximity also have general-caller concrete statements and nonuniform
 family corollaries, with derived solver time/code bounds. Their degree/dimension
 must grow polynomially; OOPS retains admissibility and Proximity retains its
@@ -267,7 +270,8 @@ Pinned upstreams:
   security theorem derives the usual probability bound from those certificates,
   including the shared AGM source game. The public `BLS.agm_security` wrapper now
   uses these Caliper certificates and a model fixed before attacker choice.
-  Broader caller coverage and Caliper parameter families remain to be proved.
+  Its polynomial-family corollary now uses the same Caliper model, with complete
+  derived resource bounds. Broader caller coverage remains to be proved.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

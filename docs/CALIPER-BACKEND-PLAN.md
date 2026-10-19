@@ -1363,9 +1363,29 @@ Implemented and checked:
   The source game remains backend-independent and directly uses the shared AGM.
   The public theorem retains its curve, security parameter, query allowances and
   adversary arguments. Tests guard these dependencies and the theorem's axioms.
-  The earlier `GeneralAGM` abstract-backend family results remain separate: this
-  migration does not establish polynomial Caliper families or coverage of every
-  intended Caliper caller. Other schemes and replay remain unfinished.
+  The earlier `GeneralAGM` abstract-backend family results remain separate.
+  Broader caller coverage, other schemes and replay remain unfinished.
+- [Caliper families](../Signatures/Runtime/Caliper/Family.lean) fix the word-width,
+  port and layout families before the solver. One polynomial per resource bounds
+  word width, stored code, total memory and time across all security parameters;
+  every pointwise witness is an actual `Interactive.Within` program. The
+  [DLog family class](../Signatures/Runtime/Caliper/DLogFamily.lean) also requires
+  every sampled challenge to be represented, and quantifies hardness over all
+  such nonuniform solver families.
+  [BLS component resources](../Signatures/BLS/CaliperAGMFamilyResources.lean) assume
+  polynomial primitive/caller budgets, base encoding widths, storage capacities
+  and name reservations. Complete good/bad time, code and memory bounds are
+  derived from the existing numerical formulas, including setup and extraction.
+  The actual original reductions then belong to the Caliper family class.
+  Field/message cardinalities and the numerical random-query range are not
+  required to be polynomial: their encodings and the actual code are charged.
+  [Public asymptotic security](../Signatures/BLS/CaliperAGMFamilyStatement.lean),
+  with a separate [proof](../Signatures/BLS/Proofs/CaliperAGMFamily.lean), concludes
+  negligible forgery from nonuniform Caliper DLog hardness and negligible inverse
+  group order. Tests audit the component premises, public proof dependencies and
+  axioms; a real Word8 identity program instantiates the general family class.
+  No uniform program generator, conventional-machine coverage, fair-bit sampler
+  or CPU/flat-memory refinement follows from this theorem.
 
 Remaining integration sequence:
 
@@ -1418,7 +1438,8 @@ the source/output conversion for both complete BLS AGM reductions.
    Checked emission proves generated-word acceptance and intermediate
    descriptor bounds. Complete machine-memory bounds include
    static storage and every intermediate buffer state. These finite-program
-   bounds still need parameter-indexed polynomial bounds for each scheme.
+   bounds have polynomial-family proofs for BLS AGM; the other schemes still
+   need their corresponding proofs.
 3. Link the proved word oracle adapter and replay primitives into complete signature
    callers and rewinding. Ordinary saved-state query composition, generated
    caller steps and decreasing-domain loop composition are proved.
@@ -1445,10 +1466,10 @@ the source/output conversion for both complete BLS AGM reductions.
    by the target program, also need implementations; they are not free consequences
    of the field/G₁/G₂ interface.
 5. Migrate the remaining signature security models after the concrete BLS AGM
-   wrapper. Establish parameter-indexed resource bounds using admissible instruction
-   costs, polynomial word widths and polynomial routine bounds. Prove coverage for
-   the intended Caliper adversary class. A claim about every conventional efficient
-   attacker needs a further machine-adequacy result.
+   wrapper and its polynomial-family theorem. Establish the other schemes'
+   parameter-indexed bounds using polynomial word widths and routine bounds.
+   Prove coverage for the intended Caliper adversary class. A claim about every
+   conventional efficient attacker needs a further machine-adequacy result.
 
 The existing backend's exact execution equations and unbounded mathematical data
 types require a proved refinement. A fixed-word implementation must justify its
