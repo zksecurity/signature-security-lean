@@ -288,7 +288,11 @@ Pinned upstreams:
   proved equal to the original co-CDH reduction for adaptive callers, including
   the final hash and extraction. Hash/sign reply arithmetic now has executed
   coin tests, branches and argument handling, with resource bounds derived from
-  implemented group scaling and addition. The complete co-CDH controller,
+  implemented group scaling and addition. These components now form the complete
+  random/hash/sign [Coron service](Signatures/Runtime/Caliper/CoronService.lean),
+  with derived time, code and total-memory bounds and exact correspondence to
+  the original oracle, including its caches and signing set. Cache/log capacity
+  preservation is proved. The complete co-CDH caller/controller, terminal
   extraction and public theorem still need integration.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.

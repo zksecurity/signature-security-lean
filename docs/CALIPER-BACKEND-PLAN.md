@@ -1439,8 +1439,8 @@ Implemented and checked:
   every adaptive caller, including the final verification hash and extraction.
   Cache and reply-log lengths grow by at most the query count. The source view
   does not enumerate the message domain or execute its function-valued caches.
-  Reusing the existing reply machinery will retain both explicit reply logs;
-  those logs must remain charged in the complete controller budgets.
+  The constructed service below retains both explicit reply logs and charges
+  them in its complete resource bounds.
   Executed final handling, the complete controller,
   public Caliper security theorem and its polynomial family remain unfinished.
 - [Coron response code](../Signatures/Runtime/Caliper/CoronResponse.lean) now
@@ -1461,8 +1461,30 @@ Implemented and checked:
   intermediate copy. Source output agrees with the paired Coron oracle. Tests
   execute both branches with distinct challenge points, zero scalars and maximal
   full-word coins, checking real elapsed time and preserved private state.
-  Joining these responses to the cache/log service, complete caller controller
-  and terminal extraction remains the next construction step.
+- [Coron's complete caller service](../Signatures/Runtime/Caliper/CoronService.lean)
+  joins the constructed scalar/coin sampler, persistent paired cache, hash/sign
+  responses and both reply logs. Random, hash and signing requests use the
+  existing caller packet interface; request preparation, reply conversion,
+  stored tags, retained frames and all copies execute actual instructions.
+  Its [layouts](../Signatures/Runtime/Caliper/CoronServiceLayout.lean) share the
+  scalar/coin representation and store all three challenge points. Supplied
+  implementations are scalar sampling and group scaling/addition; the complete
+  handler and its costs are constructed from them.
+  [Resource proofs](../Signatures/Runtime/Caliper/CoronServiceBounds.lean) derive
+  time, code, name and description bounds, plus a `Within` witness that charges
+  code, initial data, descriptors and buffers at every instruction boundary.
+  [Source correspondence](../Signatures/Runtime/Caliper/CoronServiceSource.lean)
+  preserves the dependent random reply, challenge points, both native caches
+  and signing set. This native projection is only a proof view; the executed
+  service keeps and pays for its paired cache and both logs. A reserved query
+  slot makes every represented request ready, and each reply preserves the
+  remaining reservation. Whole-service tests execute fresh hashing/signing,
+  hash-then-sign cache hits for both coin branches, random forwarding with full
+  logs, incomplete randomness and private-frame preservation. They instantiate
+  the complete resource certificate and audit its axioms. These tests use small
+  word arithmetic, not a curve implementation.
+  Complete co-CDH setup, caller/controller, final hashing and extraction, followed
+  by its public concrete and polynomial-family statements, remain to be joined.
 
 Remaining integration sequence:
 
