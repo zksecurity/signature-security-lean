@@ -245,8 +245,13 @@ Pinned upstreams:
   order, with full time, code, intermediate-memory and operand-acceptance proofs.
   Caller-exit handling now executes tag dispatch, removal of padded configuration
   data, extraction, and scalar projection, with a literal zero for cutoff.
-  Connecting the complete setup/caller pipeline to this exit and proving coverage
-  of the intended Caliper attacker class remain to be done.
+  The generated caller now composes with this terminal handler. Its growth proof
+  supplies extraction room, and local source correspondence gives equality to
+  the original caller followed by extraction. Combined time, stored-code,
+  intermediate-memory and operand-acceptance bounds are proved. Executed tests
+  instantiate both actual extractor programs, including adaptive queries and
+  cutoffs. Joining setup to this pipeline and proving coverage of the intended
+  Caliper attacker class remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

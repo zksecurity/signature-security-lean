@@ -1260,8 +1260,37 @@ Implemented and checked:
   branches' extraction reservation; this is derived rather than assumed of the
   completed caller. The service uses positive log capacity, so a zero-query
   family can choose one slot. Its configuration/address fit is explicit.
-  Composing the generated caller execution with this handler, then with setup
-  into full solvers, remains unfinished.
+  Generated caller execution now composes with this terminal handler below;
+  joining setup into full solvers remains unfinished.
+
+- [BLSCallerExtraction](../Signatures/Runtime/Caliper/BLSCallerExtraction.lean)
+  constructs the generated caller followed by terminal handling and extraction.
+  [Layouts](../Signatures/Runtime/Caliper/BLSCallerExtractionLayout.lean) derive
+  terminal width and exact input bytes from the shared caller service. The caller's
+  growth theorem proves extraction readiness at every supported exit, using
+  initial cache/log occupancy plus `2*q+1` headroom. Caller initialization,
+  continuation and response routines supply local implementation proofs; no
+  completed-caller correctness or growth assumption is introduced.
+  [Source equality](../Signatures/Runtime/Caliper/BLSCallerExtractionSource.lean)
+  connects the decoded execution to the original attacker machine under the
+  original BLS service, followed by the source extractor. It uses local machine
+  correspondence, the scalar sampling law and local extractor equality;
+  `ImplementsWithin` excludes cutoff for the source comparison. The charged
+  cutoff branch remains in the actual code.
+  [Bounds](../Signatures/Runtime/Caliper/BLSCallerExtractionBounds.lean) add
+  caller and terminal time/code costs. [Resources](../Signatures/Runtime/Caliper/BLSCallerExtractionResources.lean)
+  bound every visited memory state, including stored instructions and initial
+  data. Handler saved-buffer acceptance follows from the constructed code budget
+  and primitive name bounds, rather than a supplied whole-handler acceptance
+  assumption. [Regressions](../SignaturesTest/CaliperBLSCallerExtraction.lean)
+  instantiate both actual `BLSExtractor` programs, with derived refinement,
+  time/code/memory/name/operand bounds and a uniform sampler. Their executions
+  cover hash/sign returns, adaptive random-to-hash calls, cache reuse, cutoffs,
+  missing scalar/partial pair responses, exact traces and preserved caller data.
+  This word-arithmetic fixture tests execution composition; it does not supply a
+  curve implementation or field instance. The existing general field source
+  theorems remain separate. Setup composition, complete solver specialization
+  and public security-model instantiation are still outstanding.
 
 Remaining integration sequence:
 
@@ -1277,8 +1306,9 @@ no extraction reservation is imposed on the logs. The asymmetric-capacity
 regression uses five cache entries and two transcript slots and rejects a
 five-slot joint reservation. This is the capacity precondition for the
 complete extractor implementation above. The service bridge transfers it to
-the terminal branch. Composing the generated caller execution and terminal
-handler remains part of solver assembly.
+the terminal branch. `BLSCallerExtraction` now composes the generated caller
+execution and terminal handler; solver assembly still needs setup and the
+scheme-specific source/output conversions.
 
 1. Compile the remaining scheme code and establish reachable-state invariants.
    Fixed-capacity `cacheProgram` and `cacheGetExpr`, encoded
@@ -1320,9 +1350,10 @@ handler remains part of solver assembly.
    Prove private finite-domain sampling agrees with the chosen randomness
    interface; oracle packet transport alone does not supply this distribution proof.
    The original-machine bridge is now instantiated with the constructed BLS handler,
-   carrying reservations through the generated controller. Complete the reduction's
-   execution composition, then compose the proved setup, caller and terminal
-   phases into complete solvers. The complete
+   carrying reservations through the generated controller. The caller and terminal
+   execution now compose with derived extraction room and complete resource bounds.
+   Join the proved setup to this composition and discharge the scheme-specific
+   source/output conversions to obtain complete solvers. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and
    final lookup/arithmetic. The service bridge connects the caller's proved
