@@ -947,8 +947,8 @@ Implemented and checked:
   partial and full lists, zero-capacity and zero-word-entry layouts, invalid
   length/entry bounds, duplicate-message transcript occurrences, separate log
   padding, released scratch and untouched caller storage. Source/resource
-  endpoints and axiom guards are instantiated. Coefficient association and
-  private row evaluation still need their Caliper implementations.
+  endpoints and axiom guards are instantiated. Coefficient association is
+  implemented below; private row evaluation still needs its Caliper implementation.
 
 - [ListIndex](../Signatures/Runtime/Caliper/ListIndex.lean) implements positional
   lookup from a runtime index, default and bounded stored list. Its constructed
@@ -971,8 +971,34 @@ Implemented and checked:
   and missing lookups, maximum-word indices, runtime defaults, independent
   capacities, multiword and zero-word entries, and check invalid encodings,
   charged suffix traversal, released scratch, preserved caller storage and
-  theorem axioms. This supplies lookup for coefficient association; it does not
-  yet assemble the coefficient rows or the complete BLS extractor.
+  theorem axioms. This supplies lookup for the coefficient association below.
+
+- [AttachRows](../Signatures/Runtime/Caliper/AttachRows.lean) constructs positional
+  coefficient rows with an accepted staged fold. Each body executes the complete
+  bounded lookup, creates one row, and increments a runtime counter with a proved
+  no-wrap bound. The growing row buffer and counter have stage-specific domains;
+  early exits execute padding, and an executed final reversal restores key order.
+  [AttachRowsBounds](../Signatures/Runtime/Caliper/AttachRowsBounds.lean) derives
+  time, complete stored-code and all-visited-memory bounds from key/coefficient
+  capacities and word widths. The complete routine uses at most ten buffer names.
+  Key and coefficient capacities are independent; empty and zero-word-entry
+  layouts are supported. Only the supplied key list is traversed.
+  [TokenRows](../Signatures/Runtime/Caliper/TokenRows.lean) first reverses the
+  stored transcript, retains the complete coefficient list, writes an encoded
+  default, and executes row attachment. The default's encoding is charged in
+  code and runtime. [TokenRowsSource](../Signatures/Runtime/Caliper/TokenRowsSource.lean)
+  specializes it to zero and proves that the actual Caliper program implements
+  the original AGM `tokenRows` expression, including both message and returned
+  group-point components of every chronological token. Missing coefficients are
+  zero and extra coefficients create no rows; their stored suffix is still
+  copied and scanned. The whole-program bounds are derived, not assumed.
+  [Regressions](../SignaturesTest/CaliperTokenRows.lean) execute empty, partial,
+  full and unequal-capacity inputs, zero-word layouts, the last counter step,
+  duplicate messages with different returned points, missing/surplus coefficients,
+  early padding and all scratch release. They reject invalid counters and input
+  bounds, check that surplus coefficients increase charged work, and audit the
+  complete source bridge and resource proofs. Private evaluation of these rows,
+  final target lookup and extraction arithmetic remain to be connected.
 
 Remaining integration sequence:
 
@@ -1032,7 +1058,7 @@ extractor implementation, not a claim that extraction has been compiled.
    carrying reservations through the generated controller. Complete the reduction's
    final-forgery and extraction phases, then compose the proved setup and caller
    phases into complete solvers. Use the proved `2*q + 1` cache headroom and
-   charged chronological preparation. Implement coefficient association and
+   charged chronological coefficient-row preparation. Implement private row
    evaluation, charging each private read and field operation. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,

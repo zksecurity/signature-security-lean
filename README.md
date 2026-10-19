@@ -211,7 +211,10 @@ Pinned upstreams:
   time, stored-code and intermediate-memory bounds. Bounded coefficient lookup
   now also has executed Caliper code and derived resource bounds, including
   scanning the suffix after a match and returning the runtime default on a miss.
-  Coefficient-row assembly and evaluation still need integration. Connecting setup,
+  Chronological coefficient-row assembly now executes both reversals, bounded
+  indexing, counter increments and row allocation, with a proof that it implements
+  the original AGM row expression. Missing coefficients use zero; surplus entries
+  remain charged and create no rows. Private row evaluation remains. Connecting setup,
   caller, final-forgery handling and extraction into complete reductions, and
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
