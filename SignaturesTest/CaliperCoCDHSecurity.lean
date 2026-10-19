@@ -16,10 +16,47 @@ run_meta do
       ``BLS.CaliperCoCDH.Family.PolynomialResources.solverTime,
       ``BLS.CaliperCoCDH.Family.PolynomialResources.solverCode,
       ``BLS.CaliperCoCDH.Family.PolynomialResources.solverMemory,
-      ``BLS.CaliperCoCDH.Family.reduction_nonuniform, ``BLS.cocdh_security_asymptotic] do
+      ``BLS.CaliperCoCDH.Family.reduction_nonuniform, ``BLS.cocdh_security_asymptotic,
+      ``BLSCallerHandler.termination_advance, ``CoronCaller.Caller.Invariant.ofTerminates,
+      ``CoronCaller.Caller.Correspondence.ofCaller, ``CoronCaller.Caller.Correspondence.ofCaller_queryBound,
+      ``BLS.CaliperCoCDH.Parameters.point_valid, ``BLS.CaliperCoCDH.Parameters.callerCorrespondence,
+      ``BLS.CaliperCoCDH.CallerQueries.terminates, ``BLS.CaliperCoCDH.Adversary.ofCaller] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
+
+-- Local code/query bounds construct the source, machine and invariant. These
+-- must not reappear as assumptions of the public constructor or its records.
+run_meta do
+  for name in #[``BLS.CaliperCoCDH.Adversary.ofCaller, ``BLS.CaliperCoCDH.CallerQueries.mk,
+      ``CoronCaller.Caller.Fits.mk] do
+    let type := (← getConstInfo name).type
+    for forbidden in #[``OracleComp, ``OracleComp.OracleMachine, ``CoronCaller.Caller.Correspondence,
+        ``CoronCaller.Caller.Invariant, ``PFunctor.DynSystem.DynComputation.ImplementsWithin,
+        ``Interactive.Within, ``coCDHWithin] do
+      if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+        throwError "{name}: constructor requires a separately supplied source or completed certificate: {forbidden}"
+  let body := (← getConstInfo ``BLS.CaliperCoCDH.Adversary.ofCaller).value?.get!
+  for required in #[``BLS.CaliperCoCDH.Parameters.callerCorrespondence,
+      ``CoronCaller.Caller.Invariant.ofTerminates] do
+    unless (body.find? (fun e => e.isConstOf required)).isSome do
+      throwError "public constructor must derive its proof through {required}"
+
+-- Proof fields can be factored into auxiliary declarations by Lean. Check the
+-- resulting source allowances directly, in addition to the constructor's axiom audit.
+open OracleComp in
+example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
+    (n : Nat) (queries : BLS.QueryAllowance)
+    (caller : CoronCaller.Caller (model.parameters n queries).layout)
+    (resources : CoronCaller.Caller.Fits (model.parameters n queries).layout caller (model.parameters n queries).callerLimits)
+    (allowances : BLS.CaliperCoCDH.CallerQueries (model.parameters n queries) (curve.generates n).surjective caller)
+    (pk : curve.KeyGroup n) :
+    let A := BLS.CaliperCoCDH.Adversary.ofCaller (model.parameters n queries) (curve.generates n).surjective caller resources allowances
+    IsQueryBoundP (A.source pk) (fun i => BLS.queryKind i = 0) queries.random ∧
+      IsQueryBoundP (A.source pk) (fun i => BLS.queryKind i = 1) queries.hash ∧
+      IsQueryBoundP (A.source pk) (fun i => Sum.isRight i = true) queries.sign := by
+  let A := BLS.CaliperCoCDH.Adversary.ofCaller (model.parameters n queries) (curve.generates n).surjective caller resources allowances
+  exact ⟨A.randomQueries pk, A.hashQueries pk, A.signingQueries pk⟩
 
 -- The public route cannot fall back to the old backend or algebraic outputs.
 run_meta do
@@ -91,5 +128,18 @@ example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
     (hardness : BLS.CaliperCoCDH.Family.coCDHHardness (fun n => model.parameters n (queries n))) :
     negligible (fun n => 𝒟[BLS.Game.rom curve n (adversary n).source] {true}) :=
   BLS.cocdh_security_asymptotic curve queries adversary resources hardness
+
+-- A caller built by the new constructor is accepted by the same public theorem.
+open OracleComp in
+example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
+    (n : Nat) (queries : BLS.QueryAllowance)
+    (caller : CoronCaller.Caller (model.parameters n queries).layout)
+    (resources : CoronCaller.Caller.Fits (model.parameters n queries).layout caller (model.parameters n queries).callerLimits)
+    (allowances : BLS.CaliperCoCDH.CallerQueries (model.parameters n queries) (curve.generates n).surjective caller) :
+    let adversary := BLS.CaliperCoCDH.Adversary.ofCaller (model.parameters n queries) (curve.generates n).surjective caller resources allowances
+    𝒟[BLS.cocdhEufCmaGame curve n adversary] {true} ≤
+      Model.coronFactor queries.sign * BLS.coCDHSuccessBound curve n queries (BLS.cocdhReductionTime curve n queries) :=
+  BLS.cocdh_security curve n queries
+    (BLS.CaliperCoCDH.Adversary.ofCaller (model.parameters n queries) (curve.generates n).surjective caller resources allowances)
 
 end SignaturesTest.CaliperCoCDHSecurity

@@ -1,5 +1,5 @@
 import Signatures.Runtime.Caliper.BLSFullSource
-import Signatures.Runtime.Caliper.CallerPresentation
+import Signatures.Runtime.Caliper.BLSCallerPresentationBase
 
 /-! A BLS caller supplies local Caliper code, not a second hand-built oracle
 machine. This constructor derives that machine, its finite source tree and both
@@ -16,27 +16,14 @@ variable {w : Nat} {M F G K A : Type}
 /-- Represent an original oracle answer in the caller's reply packet. This is
 the mathematical interface conversion already performed by the proved handler. -/
 def representReply : (q : layout.Request) →
-    (Model.LazyAGM.advSpec M M G).Range (BLSCallerHandler.query layout.good.service layout.randomBound q) → layout.Reply
-  | .inl n, answer => .inl ⟨n, answer⟩
-  | .inr (.inl _), point | .inr (.inr _), point => .inr ⟨point, pointValid point⟩
+    (Model.LazyAGM.advSpec M M G).Range (BLSCallerHandler.query layout.good.service layout.randomBound q) → layout.Reply :=
+  BLSCallerHandler.representReply layout.good.service layout.randomBound pointValid
 
 theorem representReply_eq (q : layout.Request) (represented : layout.Reply)
     (original : (Model.LazyAGM.advSpec M M G).Range (BLSCallerHandler.query layout.good.service layout.randomBound q))
     (related : BLSCallerHandler.replyMatches layout.good.service layout.randomBound q represented original) :
-    represented = representReply layout pointValid q original := by
-  rcases q with n | (message | message)
-  · cases represented with
-    | inl random =>
-        have equal := Prod.mk.inj (Sum.inl.inj related)
-        congr 1
-        exact Sigma.ext (Fin.ext equal.1) (by cases Fin.ext equal.1; exact heq_of_eq (Fin.ext equal.2))
-    | inr point => cases related
-  · cases represented with
-    | inl random => cases related
-    | inr point => exact congrArg Sum.inr (Subtype.ext (Sum.inr.inj related))
-  · cases represented with
-    | inl random => cases related
-    | inr point => exact congrArg Sum.inr (Subtype.ext (Sum.inr.inj related))
+    represented = representReply layout pointValid q original :=
+  BLSCallerHandler.representReply_eq layout.good.service layout.randomBound pointValid q represented original related
 
 private theorem bad_query_eq_good :
     BLSCallerHandler.query layout.bad.service layout.randomBound =

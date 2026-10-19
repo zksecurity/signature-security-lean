@@ -317,6 +317,12 @@ Pinned upstreams:
   It does not require polynomial message-space or sampling-range cardinality.
   Both BLS public routes now use Caliper; ordinary co-CDH attackers still return
   a plain message/signature pair, without algebraic output requirements.
+  The [ordinary caller constructor](Signatures/BLS/CaliperCoCDHCaller.lean)
+  builds that attacker from local Caliper code and local resource/query bounds.
+  It derives termination, the controller invariant, source tree, machine
+  correspondence and source query allowances. The source tree is a mathematical
+  description; runtime still executes the local code and generated controller.
+  The shared reply presentation is also used by the BLS AGM caller.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

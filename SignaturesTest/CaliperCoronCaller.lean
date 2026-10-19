@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.CoronFullSource
+import Signatures.Runtime.Caliper.CoronCallerPresentation
 import Lean
 
 /-! Execute the complete Coron caller/service/extractor with actual local
@@ -172,6 +173,44 @@ private theorem full_within (fuel : Nat) (small : fuel ≤ 1) : Interactive.With
 
 private def hash (message : Fin 256) : callerLayout.Request := .inr (.inl ⟨message.val, message.isLt⟩)
 private def sign (message : Fin 256) : callerLayout.Request := .inr (.inr ⟨message.val, message.isLt⟩)
+
+-- The same actual local instructions acquire their source presentation from
+-- termination. Wrapping the admitted input changes only its mathematical type.
+private def sourceKey := Layout.all inputRep
+private def sourceLayout : CoronCaller.Layouts layout (Word 32) sourceKey.Value where
+  state := word
+  input := sourceKey.representation
+  callerFits := by decide
+  inputFits := by decide
+private def sourceCaller : CoronCaller.Caller sourceLayout where
+  advance := caller.advance
+  continuation := caller.continuation
+  localNameFits := caller.localNameFits
+  initial := fun input => caller.initial input.val
+  initialCode := caller.initialCode.viewInput sourceKey.representation Subtype.val (fun _ => rfl)
+  initialNameFits := caller.initialNameFits
+private theorem allPoints (point : Word 32) : layout.point.valid point := trivial
+private theorem sourceTerminates :
+    CoronCaller.Caller.Terminates sourceKey sourceLayout allPoints sourceCaller 1 := by
+  intro input answer
+  trivial
+private def sourceFallback : sourceKey.Value := ⟨(hash 0, 0), trivial⟩
+private noncomputable def sourceWitness :=
+  CoronCaller.Caller.Correspondence.ofCaller sourceKey sourceLayout allPoints sourceCaller sourceTerminates sourceFallback
+private theorem sourceWitness_eq (input : sourceKey.Value) : sourceWitness.source input.val =
+    (do
+      let _ ← (BLS.ROM.advSpec Nat (Word 32)).query (BLSCallerHandler.query layout.service 255 input.val.1)
+      pure (makeForgery input.val.2)) := by
+  have implemented := CoronCaller.Caller.Correspondence.ofCaller_run sourceKey sourceLayout allPoints
+    sourceCaller sourceTerminates sourceFallback input
+  change some <$> (do
+      let _ ← (BLS.ROM.advSpec Nat (Word 32)).query (BLSCallerHandler.query layout.service 255 input.val.1)
+      pure (makeForgery input.val.2) : OracleComp (BLS.ROM.advSpec Nat (Word 32)) callerLayout.Forgery) =
+    some <$> sourceWitness.source input.val at implemented
+  have observed := congrArg (fun computation : OracleComp (BLS.ROM.advSpec Nat (Word 32)) (Option callerLayout.Forgery) =>
+    (fun result => result.getD (makeForgery 0)) <$> computation) implemented
+  simpa using observed.symm
+
 example (request : callerLayout.Request) (sigma : Word 32) : callerLayout.ready 1 ((request, sigma), empty) := by
   change 0 + 1 + 1 ≤ 2 ∧ 0 + 0 + 1 ≤ 2
   decide
@@ -234,7 +273,9 @@ run_cmd do
       ``CoronCaller.source_eq, ``CoronCaller.within_source, ``within,
       ``CoronFull.start_ready, ``CoronFull.refines, ``CoronFull.code_words, ``CoronFull.names,
       ``CoronFull.descriptionFits, ``CoronFull.time_bound, ``CoronFull.within,
-      ``CoronFull.source_eq, ``CoronFull.within_source, ``CoronFull.source_original, ``CoronFull.within_original, ``full_within] do
+      ``CoronFull.source_eq, ``CoronFull.within_source, ``CoronFull.source_original, ``CoronFull.within_original, ``full_within,
+      ``CoronCaller.Caller.Invariant.ofTerminates, ``CoronCaller.Caller.Correspondence.ofCaller,
+      ``CoronCaller.Caller.Correspondence.ofCaller_run, ``sourceTerminates, ``sourceWitness_eq] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

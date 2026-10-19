@@ -1604,9 +1604,28 @@ Implemented and checked:
   [Regression guards](../SignaturesTest/CaliperCoCDHSecurity.lean) audit axioms,
   actual Caliper dependencies, ordinary outputs, challenge coverage, separated
   game/statement/proof APIs and the absence of completed-solver polynomiality
-  assumptions. Canonical co-CDH caller presentation, broader Caliper caller
-  coverage, Schnorr/OOPS/Proximity migration and full replay/reset composition
-  remain unfinished.
+  assumptions.
+- [Canonical co-CDH caller presentation](../Signatures/Runtime/Caliper/CoronCallerPresentation.lean)
+  now constructs the source machine and controller invariant from local caller
+  transitions and branchwise termination. The random/hash/sign reply conversion
+  is shared with the AGM caller. A represented fallback extends initialization
+  only in the mathematical source outside its admitted keys.
+  [Generic local query bounds](../Signatures/Runtime/Caliper/CallerQueryBounds.lean)
+  derive each source `IsQueryBoundP` allowance from the transitions. These local
+  bounds also imply termination: pending calls at zero fuel are rejected even
+  when their query kind is uncounted. Every adaptive reply branch is checked.
+  [The public constructor](../Signatures/BLS/CaliperCoCDHCaller.lean) takes only
+  implemented local steps, fixed local code/time/name bounds, and three local
+  query allowances. It constructs the existing public `Adversary`, deriving its
+  source, termination, invariant, correspondence and source query bounds. It
+  uses the existing sampler/scaling proof for point coverage and represented
+  key generator for source extension. The executable and complete reduction
+  budgets are unchanged; the mathematical source tree is not built at runtime.
+  Regression coverage includes adaptive query selection, rejected exhausted
+  counts and fuel, exact source reconstruction for the existing executable
+  Coron caller, axiom audits, and use with the public security theorem.
+  Broader arbitrary Caliper caller coverage, Schnorr/OOPS/Proximity migration
+  and full replay/reset composition remain unfinished.
 
 Remaining integration sequence:
 

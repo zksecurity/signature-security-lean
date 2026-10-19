@@ -1,4 +1,5 @@
 import Signatures.BLS.CaliperAGMParameters
+import Signatures.Runtime.Caliper.CallerQueryBounds
 import Lean.Util.CollectAxioms
 
 /-! A stateless caller may select different queries. Its source is constructed
@@ -70,6 +71,40 @@ private theorem repeat_never_terminates (fuel : Nat) (q : Bool) :
       intro terminates
       exact ih false (terminates false)
 
+-- Counted queries and total termination are separate checks. An uncounted
+-- request still requires fuel; an exhausted count cannot hide a counted call.
+example : CallerMachine.QueryBound (spec := spec) id reply advance (fun q => q = true) 1 0 (initial false) := by
+  simp [CallerMachine.QueryBound, initial, advance]
+example : ¬ CallerMachine.QueryBound (spec := spec) id reply advance (fun q => q = true) 1 0 (initial true) := by
+  simp [CallerMachine.QueryBound, initial]
+example : ¬ CallerMachine.QueryBound (spec := spec) id reply advance (fun q => q = true) 0 0 (initial false) := by
+  simp [CallerMachine.QueryBound, initial]
+
+-- The first answer selects the second query. Every branch must respect the
+-- allowance, including the branch that makes a counted query.
+private def adaptive (value : Bool × Bool) : Bool ⊕ (Bool × Bool) :=
+  if value.1 then .inl value.2 else .inr (value.2, true)
+private def adaptiveInitial (_ : Unit) : Bool ⊕ (Bool × Bool) := .inr (false, false)
+private theorem adaptive_bound (input : Unit) :
+    CallerMachine.QueryBound (spec := spec) id reply adaptive (fun q => q = true) 2 1 (adaptiveInitial input) := by
+  refine ⟨Or.inr (by decide), ?_⟩
+  intro answer
+  exact ⟨Or.inr (by decide), fun _ => trivial⟩
+private theorem adaptive_over_budget :
+    ¬ CallerMachine.QueryBound (spec := spec) id reply adaptive (fun q => q = true) 2 0 (adaptiveInitial ()) := by
+  intro bounded
+  rcases (bounded.2 true).1 with forbidden | positive
+  · exact forbidden rfl
+  · exact Nat.not_lt_zero _ positive
+private theorem adaptive_terminates (input : Unit) :
+    CallerMachine.Terminates (spec := spec) id reply adaptive 2 (adaptiveInitial input) :=
+  CallerMachine.QueryBound.terminates _ _ _ _ (adaptive_bound input)
+private noncomputable def adaptiveSource :=
+  CallerMachine.sourceOfCaller (spec := spec) id reply adaptive adaptiveInitial 2 adaptive_terminates
+private theorem adaptive_source_bound (input : Unit) :
+    IsQueryBoundP (adaptiveSource input) (fun q => q = true) 1 :=
+  CallerMachine.sourceOfCaller_queryBound _ _ _ _ _ _ adaptive_terminates 1 adaptive_bound input
+
 open Lean Meta in
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
@@ -79,7 +114,10 @@ run_meta do
       ``BLSFull.Caller.representReply_eq, ``BLSFull.Caller.Correspondence.ofCaller,
       ``BLSFull.point_valid, ``BLS.CaliperAGM.Parameters.point_valid,
       ``BLS.CaliperAGM.Parameters.callerCorrespondence,
-      ``source_eq, ``repeat_never_terminates] do
+      ``CallerMachine.QueryBound.terminates, ``CallerMachine.QueryBound.unroll,
+      ``CallerMachine.sourceOfCaller_queryBound,
+      ``source_eq, ``repeat_never_terminates, ``adaptive_bound, ``adaptive_over_budget,
+      ``adaptive_source_bound] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"

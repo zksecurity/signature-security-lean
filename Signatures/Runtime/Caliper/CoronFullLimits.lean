@@ -20,6 +20,30 @@ variable {w randomBound : Nat} {qS : Fin (randomBound + 1)} {M F G A U : Type}
 def CoronCaller.Caller.Bounds.limits (bounded : CoronCaller.Caller.Bounds layout caller) : CoronCaller.Caller.Limits :=
   ⟨bounded.stepTime, bounded.stepWords, bounded.initialTime, bounded.initialWords, bounded.slots⟩
 
+/-- Actual local code obeys limits chosen before the caller. -/
+structure CoronCaller.Caller.Fits (layout : CoronCaller.Layouts service A U)
+    (caller : CoronCaller.Caller layout) (limits : CoronCaller.Caller.Limits) : Prop where
+  stepTime : ∀ value, caller.continuation.time value ≤ limits.stepTime
+  stepWords : descriptionWords caller.continuation.code ≤ limits.stepWords
+  initialTime : ∀ value, caller.initialCode.time value ≤ limits.initialTime
+  initialWords : descriptionWords caller.initialCode.code ≤ limits.initialWords
+  stepNames : NamesAccounted caller.continuation.code limits.slots
+  initialNames : NamesAccounted caller.initialCode.code limits.slots
+
+def CoronCaller.Caller.Fits.bounds {limits : CoronCaller.Caller.Limits}
+    (fits : CoronCaller.Caller.Fits layout caller limits) : CoronCaller.Caller.Bounds layout caller where
+  stepTime := limits.stepTime
+  stepWords := limits.stepWords
+  initialTime := limits.initialTime
+  initialWords := limits.initialWords
+  slots := limits.slots
+  step_time := fits.stepTime
+  step_words := fits.stepWords
+  initial_time := fits.initialTime
+  initial_words := fits.initialWords
+  step_names := fits.stepNames
+  initial_names := fits.initialNames
+
 namespace CoronFull
 variable [DecidableEq M] [SampleableType F] [SMul F G] [Add G] [Zero G] [Sub G]
     (service : CoronService.Layouts w M F G randomBound qS) (layout : CoronCaller.Layouts service A U)
