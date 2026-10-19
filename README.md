@@ -250,8 +250,12 @@ Pinned upstreams:
   the original caller followed by extraction. Combined time, stored-code,
   intermediate-memory and operand-acceptance bounds are proved. Executed tests
   instantiate both actual extractor programs, including adaptive queries and
-  cutoffs. Joining setup to this pipeline and proving coverage of the intended
-  Caliper attacker class remain to be done.
+  cutoffs. Both complete BLS AGM programs now execute setup before this pipeline,
+  using actual scalar/group primitives and local caller code. Their erased
+  executions equal the original lazy reductions, including the bad-case setup
+  scalar, and their bounds charge setup, stored code and initial challenge data.
+  Coverage of the intended Caliper attacker class, parameter families and public
+  security-model instantiation remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

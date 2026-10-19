@@ -3,6 +3,8 @@ import Signatures.Runtime.Caliper.BLSCallerExtractionSource
 import Signatures.Runtime.Caliper.BLSExtractorAcceptance
 import Signatures.Runtime.Caliper.BLSExtractorSource
 import Signatures.Runtime.Caliper.BLSInitialization
+import Signatures.Runtime.Caliper.BLSFullResources
+import Signatures.Runtime.Caliper.BLSFullEquivalence
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -521,6 +523,203 @@ run_cmd do
       ``caller_good_correct, ``caller_bad_correct, ``caller_good_time, ``caller_bad_time,
       ``caller_good_stored, ``caller_bad_stored, ``caller_good_names, ``caller_bad_names,
       ``caller_good_fits, ``caller_bad_fits, ``caller_good_memory, ``caller_bad_memory] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+-- The complete programs execute setup before the same adaptive caller.
+private instance : SMul (Word 32) (Word 32) := ⟨fun scalar point => scalar * point⟩
+private instance : SMul (Ty.Value base (.atom ())) (Word 32) := inferInstanceAs (SMul (Word 32) (Word 32))
+private def fullLayout : BLSFull.Layouts 32 Nat (Word 32) (Word 32) (Word 32) goodLayout.Request where
+  shared := ⟨layout, by decide, by decide, by decide, by decide⟩
+  key := rows.point
+  setupFits := by decide
+  randomBound := 4294967295
+  randomFits := by decide
+  state := requestRep
+  goodCallerFits := by decide
+  badCallerFits := by decide
+private def fullRoutines : BLSFull.Routines fullLayout where
+  zeroValid := trivial
+  scalarMul := mul
+  scalarAdd := add
+  scalarSub := sub
+  scalarNeg := negate
+  scalarDiv := divide
+  groupScale := mul
+  groupAdd := add
+  keyScale := mul
+  slots := 3
+  reserve := by decide
+  mulNames := mul_names
+  addNames := add_names
+  subNames := sub_names
+  negNames := neg_names
+  divNames := div_names
+  scaleNames := mul_names
+  groupAddNames := add_names
+  keyNames := mul_names
+private def fullBounds : BLSFull.Routines.Bounds fullLayout fullRoutines where
+  mul := ⟨6, 27⟩
+  add := ⟨6, 27⟩
+  sub := ⟨6, 27⟩
+  neg := ⟨118, 631⟩
+  divide := ⟨6, 27⟩
+  scale := ⟨6, 27⟩
+  groupAdd := ⟨6, 27⟩
+  key := ⟨6, 27⟩
+  mulBound := mul_bound
+  addBound := add_bound
+  subBound := sub_bound
+  negBound := neg_bound
+  divBound := div_bound
+  scaleBound := mul_bound
+  groupAddBound := add_bound
+  keyBound := mul_bound
+
+private def keyBound (value : fullLayout.key.Value) : Fin 4294967296 := ⟨value.val.toNat, value.val.isLt⟩
+private def keyBoundCode : Realizer .unit fullLayout.key.representation port.request keyBound :=
+  (Implementation.identity fullLayout.key (by decide)).program.viewOutput port.request keyBound (by
+    intro value
+    change [BitVec.ofNat 32 value.val.toNat] = [value.val]
+    simp only [BitVec.ofNat_toNat, BitVec.setWidth_eq])
+private def keyRequestCode := keyBoundCode.then
+  (inlRealizer .unit (by decide) port.request
+    (accumulation.cache.key.representation.sum accumulation.cache.key.representation (by decide) (by decide)) (by decide) (by decide))
+private def fullInitial (value : fullLayout.key.Value) : fullLayout.Next := initial (.inl (keyBound value))
+private def fullInitialCode : Realizer .unit fullLayout.key.representation (CallerStep.next fullLayout.good.control) fullInitial :=
+  keyRequestCode.then initialCode
+private theorem full_initial_code : fullInitialCode.code =
+    (.skip ;; Assembly.code (Construction.taggedOperands 0 1 1)) ;; initialRaw := rfl
+private theorem full_initial_words : descriptionWords fullInitialCode.code ≤ 2000 := by
+  have old := initial_words
+  rw [initial_code] at old
+  have tagged := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 32) 0 1 1)
+  simp only [Construction.prefix_length] at tagged
+  rw [full_initial_code, descriptionWords_seq, descriptionWords_seq]
+  have skip : descriptionWords (.skip : Stmt 32) = 1 := rfl
+  rw [skip]
+  omega
+private theorem full_initial_names : NamesAccounted fullInitialCode.code 5 := by
+  rw [full_initial_code]
+  exact ((skip_names 5).seq (Assembly.code_namesAccounted _ 5 (Construction.prefix_sources _ _ _))).seq
+    (by simpa only [initial_code] using initial_names)
+private theorem full_initial_name_fits : fullInitialCode.savedBuffer < 2 ^ 32 := by
+  have bounded := full_initial_names.buffers
+  have words := full_initial_words
+  change max 2 fullInitialCode.code.memBound < 2 ^ 32
+  omega
+private theorem full_initial_time (value) : fullInitialCode.time value ≤ 2000 := by
+  change fullInitialCode.time ⟨0, trivial⟩ ≤ 2000
+  decide
+private def fullCaller : BLSFull.Caller fullLayout where
+  advance := advance
+  continuation := continuation
+  localNameFits := continuation_name_fits
+  initial := fullInitial
+  initialCode := fullInitialCode
+  initialNameFits := full_initial_name_fits
+private def fullCallerBounds : BLSFull.Caller.Bounds fullLayout fullCaller where
+  step := ⟨1000, 5000⟩
+  initial := ⟨2000, 2000⟩
+  localTime := continuation_time
+  initialTime := full_initial_time
+  localWords := continuation_words
+  initialWords := full_initial_words
+  names := 5
+  localNames := continuation_names
+  initialNames := full_initial_names
+private def fullInvariant (fuel : Nat) : BLSFull.Caller.Invariant fullLayout fullCaller fuel where
+  domain := localDomain
+  goodAdvance remaining q c _ represented original _ := by
+    cases represented with
+    | inl random => rfl
+    | inr point => trivial
+  badAdvance remaining q c _ represented original _ := by
+    cases represented with
+    | inl random => rfl
+    | inr point => trivial
+  initial _ := rfl
+private def fullGood (fuel : Nat) := BLSFull.goodCode (base := base) (key := .nat) (val := .atom ())
+  fullLayout fullRoutines primitives comparison comparison_correct fullCaller draw fuel
+private def fullBad (fuel : Nat) := BLSFull.badCode (base := base) (key := .nat) (val := .atom ())
+  fullLayout fullRoutines primitives comparison comparison_correct fullCaller draw fuel
+private def fullGoodBudget (fuel : Nat) := BLSFull.goodTime (base := base) (key := .nat) (val := .atom ())
+  fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 26 fuel
+private def fullBadBudget (fuel : Nat) := BLSFull.badTime (base := base) (key := .nat) (val := .atom ())
+  fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 26 fuel
+private theorem fullGoodCertificate (tape : RandomTape 32) (value : fullLayout.setup.challenge.Value)
+    (before : State 32) (holds : fullLayout.setup.challenge.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 32) (reached : some finished ∈ support ((fullGood 2).execute port .unit tape before)) :
+    ∃ execution : WordIO.Exec .unit tape ((fullGood 2).lower port) before finished.state finished.trace finished.time finished.net finished.peak,
+      ∀ between, execution.Visits between →
+        (((fullGood 2).lower port).staticWords registers buffers : Int) + between.liveMem (max buffers ((fullGood 2).lower port).memBound) ≤
+          5 * BLSFull.goodWords (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 200 2 +
+            4 * 5 + registers + 3 * buffers + before.liveMem buffers + fullGoodBudget 2 := by
+  have certified := BLSFull.good_resources (base := base) (key := .nat) (val := .atom ())
+    fullLayout fullRoutines primitives comparison comparison_correct fullCaller draw 2 drawSource draw_correct
+    fullBounds fullCallerBounds draw_time draw_words draw_law (fullInvariant 2) (by decide) (by decide) draw_names
+    tape value before holds registers buffers initialRegisters initialBuffers finished reached
+  obtain ⟨_, _, _, _, execution, bounded⟩ := certified
+  exact ⟨execution, fun between visited => (bounded between visited).2.2.2⟩
+private theorem fullBadCertificate (tape : RandomTape 32) (value : fullLayout.setup.challenge.Value)
+    (before : State 32) (holds : fullLayout.setup.challenge.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 32) (reached : some finished ∈ support ((fullBad 2).execute port .unit tape before)) :
+    ∃ execution : WordIO.Exec .unit tape ((fullBad 2).lower port) before finished.state finished.trace finished.time finished.net finished.peak,
+      ∀ between, execution.Visits between →
+        (((fullBad 2).lower port).staticWords registers buffers : Int) + between.liveMem (max buffers ((fullBad 2).lower port).memBound) ≤
+          5 * BLSFull.badWords (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds fullCaller fullCallerBounds 200 2 +
+            4 * 5 + registers + 3 * buffers + before.liveMem buffers + fullBadBudget 2 := by
+  have certified := BLSFull.bad_resources (base := base) (key := .nat) (val := .atom ())
+    fullLayout fullRoutines primitives comparison comparison_correct fullCaller draw 2 drawSource draw_correct
+    fullBounds fullCallerBounds draw_time draw_words draw_law (fullInvariant 2) (by decide) (by decide) draw_names
+    tape value before holds registers buffers initialRegisters initialBuffers finished reached
+  obtain ⟨_, _, _, _, execution, bounded⟩ := certified
+  exact ⟨execution, fun between visited => (bounded between visited).2.2.2⟩
+private theorem full_addresses : BLSFull.AddressBounds (base := base) (key := .nat) (val := .atom ())
+    fullLayout fullRoutines fullBounds 3 200 := by constructor <;> decide
+private theorem full_good_fits (fuel : Nat) : ((fullGood fuel).lower port).DescriptionFits :=
+  BLSFull.good_fits (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds primitives comparison comparison_correct
+    fullCaller draw fuel draw_names draw_words draw_fits full_addresses
+private theorem full_bad_fits (fuel : Nat) : ((fullBad fuel).lower port).DescriptionFits :=
+  BLSFull.bad_fits (base := base) (key := .nat) (val := .atom ()) fullLayout fullRoutines fullBounds primitives comparison comparison_correct
+    fullCaller draw fuel draw_names draw_words draw_fits full_addresses
+private def challenge : fullLayout.setup.challenge.Value := ⟨((7, 11), (3, 3)), by exact ⟨⟨trivial, trivial⟩, trivial, trivial⟩⟩
+private def runFullGood (fuel : Nat) := run fullLayout.setup.challenge.representation (fullGood fuel) (fullGoodBudget fuel) challenge
+private def runFullBad (fuel : Nat) := run fullLayout.setup.challenge.representation (fullBad fuel) (fullBadBudget fuel) challenge
+
+open Lean in
+run_cmd do
+  let full : Word 32 := 4294967295
+  for (fuel, samples, expected) in [
+      (2, [(3, 2), (full, 5), (full, 10)], 3),
+      (0, [], 0),
+      (1, [(3, 2)], 0)] do
+    unless runFullGood fuel (wire samples ++ [88]) ==
+        some (#[expected], #[77], 4, 91, 9, true, events samples, [88], true) do
+      throwError "complete good BLS program failed at fuel {fuel}"
+  -- The sampled setup scalar changes the public key from 3 to 6, and therefore
+  -- changes the caller's first random-query bound from 3 to 6.
+  for (fuel, samples, expected) in [
+      (2, [(full, 2), (6, 2), (full, 5), (full, 2), (full, 7), (full, 0)], 0),
+      (0, [(full, 2)], 0),
+      (1, [(full, 2), (6, 2)], 0)] do
+    unless runFullBad fuel (wire samples ++ [88]) ==
+        some (#[expected], #[77], 4, 91, 9, true, events samples, [88], true) do
+      throwError "complete bad BLS program failed at fuel {fuel}"
+  unless (runFullGood 2 (wire [(3, 2), (full, 5)])).isNone do
+    throwError "complete good program accepted a missing final scalar"
+  unless (runFullBad 2 (wire [(full, 2), (6, 2), (full, 5), (full, 2), (full, 7)])).isNone do
+    throwError "complete bad program accepted a partial final pair"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``BLSFull.good_refines, ``BLSFull.bad_refines, ``BLSFull.good_time, ``BLSFull.bad_time,
+      ``BLSFull.good_words, ``BLSFull.bad_words, ``BLSFull.good_names, ``BLSFull.bad_names,
+      ``BLSFull.good_fits, ``BLSFull.bad_fits, ``BLSFull.good_resources, ``BLSFull.bad_resources,
+      ``BLSCallerHandler.original_run, ``BLSFull.good_extract_original, ``BLSFull.bad_extract_original,
+      ``BLSFull.good_tail_original, ``BLSFull.bad_tail_original, ``BLSFull.good_original_finish, ``BLSFull.bad_original_finish,
+      ``BLSFull.good_source, ``BLSFull.bad_source, ``BLSFull.good_observe_original, ``BLSFull.bad_observe_original,
+      ``fullGoodCertificate, ``fullBadCertificate, ``full_good_fits, ``full_bad_fits] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

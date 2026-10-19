@@ -925,8 +925,9 @@ Implemented and checked:
   values and scalar replies (including zero), check cache/transcript padding and
   untouched storage/replies/tape, instantiate source/resource endpoints and
   audit their axioms. The executable scale fixture uses word arithmetic, not a
-  curve implementation. These setup and caller phases still need composition
-  with final-forgery handling and extraction into full reduction certificates.
+  curve implementation. `BLSFull` below now composes these setup and caller
+  phases with final-forgery handling and extraction. Public model/family
+  certificates remain outstanding.
 
 - [ListReverse](../Signatures/Runtime/Caliper/ListReverse.lean) constructs actual
   reversal of an admitted source list. Its staged fold grows the accumulator
@@ -1230,8 +1231,8 @@ Implemented and checked:
   The word fixture tests composition; the general field theorems establish
   source equality. [Invariant views](../Signatures/Runtime/Caliper/InteractiveInvariantViews.lean)
   only change mathematical product views after proving identical encoded bytes.
-  Caller termination is implemented below; complete solver setup/caller composition
-  and public security-model instantiation remain unfinished.
+  Caller termination and complete BLS AGM setup/caller composition are
+  implemented below; public security-model instantiation remains unfinished.
 
 - [BLSExtractionExit](../Signatures/Runtime/Caliper/BLSExtractionExit.lean)
   instantiates executed caller-return/cutoff handling with both complete AGM
@@ -1261,7 +1262,7 @@ Implemented and checked:
   completed caller. The service uses positive log capacity, so a zero-query
   family can choose one slot. Its configuration/address fit is explicit.
   Generated caller execution now composes with this terminal handler below;
-  joining setup into full solvers remains unfinished.
+  setup is now joined into the full BLS AGM programs below.
 
 - [BLSCallerExtraction](../Signatures/Runtime/Caliper/BLSCallerExtraction.lean)
   constructs the generated caller followed by terminal handling and extraction.
@@ -1289,8 +1290,40 @@ Implemented and checked:
   missing scalar/partial pair responses, exact traces and preserved caller data.
   This word-arithmetic fixture tests execution composition; it does not supply a
   curve implementation or field instance. The existing general field source
-  theorems remain separate. Setup composition, complete solver specialization
-  and public security-model instantiation are still outstanding.
+  theorems remain separate. Setup composition and complete solver source
+  specialization are now implemented below; public security-model instantiation
+  is still outstanding.
+
+- [BLSFullProgram](../Signatures/Runtime/Caliper/BLSFullProgram.lean) constructs
+  both complete BLS AGM programs: setup, generated adaptive caller, lazy query
+  service, terminal handling and extraction. [Shared layouts](../Signatures/Runtime/Caliper/BLSFullLayout.lean)
+  make the setup/service/extractor stores agree by construction. The parameters
+  are named scalar/group routines and local caller initialization/continuation
+  code; there is no supplied complete-solver implementation or budget contract.
+  [Correctness](../Signatures/Runtime/Caliper/BLSFullCorrectness.lean) derives the
+  initial extraction headroom from executed empty-store setup and composes all
+  phases. [Source equivalence](../Signatures/Runtime/Caliper/BLSFullEquivalence.lean)
+  identifies the erased executions with `goodReductionList` and `badReductionList`.
+  It preserves the caller output, chronological transcript and private cache, and
+  derives the bad-case setup law from the scalar sampler's uniform law.
+  The caller still supplies local oracle-machine correspondence, bounded query
+  termination, and erasure of its represented forgery to the algebraic output.
+  These obligations do not yet prove coverage of every intended efficient attacker.
+  [Budgets](../Signatures/Runtime/Caliper/BLSFullBudget.lean),
+  [bounds](../Signatures/Runtime/Caliper/BLSFullBounds.lean),
+  [operand acceptance](../Signatures/Runtime/Caliper/BLSFullAcceptance.lean), and
+  [resources](../Signatures/Runtime/Caliper/BLSFullResources.lean) charge all phases,
+  stored code, scratch descriptors, initial challenge data and every visited
+  memory state. Width conditions are explicit arithmetic inequalities derived
+  from component budgets. The ideal uniform sampling port remains explicit;
+  it is not a fair-bit sampler implementation.
+  [Full-program regressions](../SignaturesTest/CaliperBLSCallerExtraction.lean)
+  instantiate actual scalar and group arithmetic routines, make the first caller
+  query depend on the public key produced by setup, and check exact traces,
+  output, cutoffs, missing randomness, preserved memory and proved time budgets.
+  The bad program still samples setup at zero caller fuel. The fixture is word
+  arithmetic, not a field or curve implementation. Other schemes, replay,
+  parameter families and public security-model integration remain outstanding.
 
 Remaining integration sequence:
 
@@ -1307,8 +1340,8 @@ regression uses five cache entries and two transcript slots and rejects a
 five-slot joint reservation. This is the capacity precondition for the
 complete extractor implementation above. The service bridge transfers it to
 the terminal branch. `BLSCallerExtraction` now composes the generated caller
-execution and terminal handler; solver assembly still needs setup and the
-scheme-specific source/output conversions.
+execution and terminal handler. `BLSFull` now joins setup and specializes
+the source/output conversion for both complete BLS AGM reductions.
 
 1. Compile the remaining scheme code and establish reachable-state invariants.
    Fixed-capacity `cacheProgram` and `cacheGetExpr`, encoded
@@ -1352,8 +1385,8 @@ scheme-specific source/output conversions.
    The original-machine bridge is now instantiated with the constructed BLS handler,
    carrying reservations through the generated controller. The caller and terminal
    execution now compose with derived extraction room and complete resource bounds.
-   Join the proved setup to this composition and discharge the scheme-specific
-   source/output conversions to obtain complete solvers. The complete
+   Both BLS AGM setups and source/output conversions are now joined in `BLSFull`.
+   Repeat the full construction for the other signature reductions. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and
    final lookup/arithmetic. The service bridge connects the caller's proved
