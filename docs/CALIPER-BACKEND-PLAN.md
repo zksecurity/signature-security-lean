@@ -1441,8 +1441,28 @@ Implemented and checked:
   does not enumerate the message domain or execute its function-valued caches.
   Reusing the existing reply machinery will retain both explicit reply logs;
   those logs must remain charged in the complete controller budgets.
-  Coron reply arithmetic, executed final handling, the complete controller,
+  Executed final handling, the complete controller,
   public Caliper security theorem and its polynomial family remain unfinished.
+- [Coron response code](../Signatures/Runtime/Caliper/CoronResponse.lean) now
+  constructs the hash and signing arithmetic from implemented group scaling and
+  addition. Its input contains the scalar/coin entry and all three challenge
+  points. The finite coin zero test executes five instructions; branch selection,
+  argument copies, retained frames and the encoded zero constant are also actual
+  code. Zero-point representability follows from the scalar sampler's full
+  support, implemented scaling and an already represented point, so no separate
+  zero-coverage contract is needed at integration.
+  For encoded input width `W`, [derived bounds](../Signatures/Runtime/Caliper/CoronResponseBounds.lean)
+  are `scaleTime + addTime + 388*W + 48` hash steps and
+  `scaleTime + 260*W + 48` signing steps. Stored code is at most
+  `scaleWords + addWords + 1287*W + 768` for hashing and
+  `scaleWords + 871*W + 599` for signing. [Name and buffer bounds](../Signatures/Runtime/Caliper/CoronResponseNames.lean)
+  and [complete memory bounds](../Signatures/Runtime/Caliper/CoronResponseMemory.lean)
+  retain the primitive reservations and charge initial capacities, code and every
+  intermediate copy. Source output agrees with the paired Coron oracle. Tests
+  execute both branches with distinct challenge points, zero scalars and maximal
+  full-word coins, checking real elapsed time and preserved private state.
+  Joining these responses to the cache/log service, complete caller controller
+  and terminal extraction remains the next construction step.
 
 Remaining integration sequence:
 

@@ -286,8 +286,10 @@ Pinned upstreams:
   and a derived independence law. Its persistent paired cache now has actual
   Caliper code and complete resource bounds. Paired-cache source execution is
   proved equal to the original co-CDH reduction for adaptive callers, including
-  the final hash and extraction. Executed hash/sign replies and the complete
-  co-CDH controller, extraction and public theorem still need integration.
+  the final hash and extraction. Hash/sign reply arithmetic now has executed
+  coin tests, branches and argument handling, with resource bounds derived from
+  implemented group scaling and addition. The complete co-CDH controller,
+  extraction and public theorem still need integration.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
