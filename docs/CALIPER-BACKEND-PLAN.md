@@ -1627,6 +1627,31 @@ Implemented and checked:
   Broader arbitrary Caliper caller coverage, Schnorr/OOPS/Proximity migration
   and full replay/reset composition remain unfinished.
 
+- [Schnorr AGM layouts](../Signatures/Runtime/Caliper/SchnorrAGMLayout.lean)
+  now represent the original tuple/list store with explicit word/address/count
+  bounds. Capacities are `qH + qS + 1` cache entries, `qS + 2` affine basis
+  entries, and `qS` signed messages. Encoded cache entries retain the original
+  challenge, optional-representation tag and affine coefficients. The cache
+  uses the shared fixed-capacity lookup layout for subsequent handler code.
+  [Initialization](../Signatures/Runtime/Caliper/SchnorrAGMSetup.lean) emits
+  instructions for both runtime challenge copies, the basis `[(1,0),(0,1)]`,
+  all empty stores, flags and reserved padding. Its returned state equals the
+  original finite-store reduction's initial state. Time, stored code and dense
+  names are bounded; the shared complete-memory theorem applies to the same
+  execution. No sampled value or group operation is needed for this stage.
+  [Reachability](../Signatures/Runtime/Caliper/SchnorrAGMReachability.lean)
+  proves message validity and capacity reservations for adaptive source callers,
+  including malformed requests, cache hits and signing collisions. Remaining
+  query allowances preserve space for the final extraction read; every final
+  source state fits its layout when scalar/point coverage and admitted caller
+  messages hold. It does not assume a finite mathematical message type.
+  [Regression checks](../SignaturesTest/CaliperSchnorrAGMSetup.lean) execute
+  setup on different runtime challenges and zero-query budgets, reject invalid
+  messages and overflowing lists, check preserved external state and released
+  scratch, exercise complete memory accounting, and audit kernel axioms.
+  The full Schnorr handler/extractor refinement, caller integration, cyclic
+  DLog resource class and public concrete/family migration remain unfinished.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

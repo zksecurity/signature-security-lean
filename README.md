@@ -325,6 +325,13 @@ Pinned upstreams:
   The shared reply presentation is also used by the BLS AGM caller.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
+  Schnorr AGM now has [bounded store layouts](Signatures/Runtime/Caliper/SchnorrAGMLayout.lean),
+  [executed initialization](Signatures/Runtime/Caliper/SchnorrAGMSetup.lean), and
+  [adaptive source invariants](Signatures/Runtime/Caliper/SchnorrAGMReachability.lean).
+  Setup copies the runtime challenge and writes the initial affine basis and
+  empty stores, with code/time bounds and complete memory accounting. The
+  invariants reserve one final cache entry and permit infinite source message
+  types. Its complete Caliper handler, extractor and public theorem are still pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
