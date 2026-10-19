@@ -1484,9 +1484,9 @@ Implemented and checked:
   logs, incomplete randomness and private-frame preservation. They instantiate
   the complete resource certificate and audit its axioms. These tests use small
   word arithmetic, not a curve implementation.
-  Complete co-CDH setup and the caller/controller, followed by its public
-  concrete and polynomial-family statements, remain to be joined to the
-  terminal implementation below.
+  The complete program below now joins this service to initialization, the
+  caller/controller and terminal extraction. Public concrete and
+  polynomial-family statement migration remains unfinished.
 - [Coron's terminal implementation](../Signatures/Runtime/Caliper/CoronTerminal.lean)
   executes the final paired cache read and computes `signature - scalar • X`
   using implemented group scaling/subtraction. The signature and challenge point
@@ -1533,7 +1533,47 @@ Implemented and checked:
   relocation, distinct challenge points, both fresh coin branches, full cache
   and logs, incomplete randomness, and cutoff with leftover replies. Private
   state and actual elapsed time are checked; resource/source proofs are audited
-  for axioms. Setup and full caller/controller composition remain unfinished.
+  for axioms. The complete controller and setup composition is now below.
+- [Coron's caller/controller](../Signatures/Runtime/Caliper/CoronCaller.lean)
+  runs actual local initialization and continuation code against the constructed
+  service, then dispatches the returned forgery or cutoff to the terminal handler.
+  Its [layout and local contracts](../Signatures/Runtime/Caliper/CoronCallerLayout.lean)
+  share exactly the terminal input encoding. Store validity is carried by the
+  represented data; numeric cache/log capacities derive the service reservation.
+  The proved caller postcondition supplies final-read readiness on every exit.
+  Only local caller steps and their matching-reply invariant are supplied; no
+  completed-controller correctness or efficiency contract is assumed.
+  [Derived resources](../Signatures/Runtime/Caliper/CoronCallerBounds.lean) add the
+  controller and terminal budgets, charge both stored branches and unrolled
+  iterations, and account for the initial store and every visited memory state.
+  The handler retention address is bounded by its constructed code/name ledger.
+  [Source correspondence](../Signatures/Runtime/Caliper/CoronCallerSource.lean)
+  uses local machine-head correspondence and `ImplementsWithin` to exclude
+  cutoff. It proves equality with the paired Coron oracle followed by extraction,
+  including the private store and all random draws. The source adversary is
+  not required to belong to the arithmetic source language.
+- [The complete Coron program](../Signatures/Runtime/Caliper/CoronFull.lean)
+  first copies the input and challenge configuration and writes every empty
+  cache/log word using `BLSInitialization`, then executes the composed caller.
+  From empty storage, cache capacity `q + 1` and log capacity `q` imply readiness.
+  [Whole-program bounds](../Signatures/Runtime/Caliper/CoronFullBounds.lean) include
+  this initialization and the original input buffer; for caller input/store
+  width `W`, setup adds at most `8*W` steps and `26*W + 16` stored-code words.
+  [Exact source theorems](../Signatures/Runtime/Caliper/CoronFullSource.lean)
+  identify the paired reduction and then the existing `coronReductionLazyPK`.
+  `within_original` supplies the actual generated program as the complete
+  resource witness, rather than assuming a completed reduction implementation.
+  New [execution tests](../SignaturesTest/CaliperCoronCaller.lean) run both the
+  composed caller and full initialized program through hash/sign requests,
+  attacker randomness, a fresh final message occupying the last cache slot,
+  repeated-message hits, changed saved signature data and cutoff. They check
+  exact random traces, incomplete randomness, remaining replies, scratch release,
+  private-state preservation and real elapsed time. Concrete `Within` witnesses
+  are instantiated and source/resource proofs are axiom-audited. These are word
+  arithmetic fixtures, not curve implementations. The public co-CDH concrete and
+  polynomial-family theorems still use their earlier backend contracts until
+  they are migrated to these witnesses. Broader Caliper caller coverage and the
+  Schnorr/OOPS/Proximity migrations remain separate unfinished work.
 
 Remaining integration sequence:
 

@@ -300,8 +300,13 @@ Pinned upstreams:
   now routes the ordinary forgery and full store into that extractor using
   executed copies and return/cutoff dispatch, with complete resource bounds.
   Starting with an empty cache, capacity `q + 1` suffices after at most `q`
-  caller queries for this final read; no spare transcript slot is required. Connecting setup, the
-  caller/controller and the public co-CDH theorem remains unfinished.
+  caller queries for this final read; no spare transcript slot is required.
+  The [complete Coron program](Signatures/Runtime/Caliper/CoronFullSource.lean)
+  now executes initialization, the caller/controller, oracle service and
+  extraction, with derived time, code and total-memory bounds. It implements
+  the original lazy co-CDH reduction under local caller correspondence and
+  termination proofs. Migrating the public co-CDH concrete and family theorems
+  to this constructed resource witness remains unfinished.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
