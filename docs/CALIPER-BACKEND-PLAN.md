@@ -1665,8 +1665,8 @@ Implemented and checked:
   states of the same run; generated descriptions are proved to fit word bounds.
   [Schnorr's instance](../Signatures/Runtime/Caliper/SchnorrAGMCacheLayout.lean)
   carries the pre-challenge affine explanation and bad flag and defines the
-  typed fresh-entry source with its uniform-sampling law. Constructing that
-  source's Caliper fresh arithmetic, and the full Schnorr read wrapper, remain
+  typed fresh-entry source with its uniform-sampling law. Its Caliper fresh
+  routine is now constructed below; the full Schnorr read wrapper remains
   unfinished. The generic reader requires only that local fresh routine's
   refinement and budgets, not a completed cache or solver certificate.
   [Executable regressions](../SignaturesTest/CaliperStatefulCache.lean) check
@@ -1674,6 +1674,33 @@ Implemented and checked:
   returned states, fresh zero entries, missing-reply failure, released scratch
   and preservation of external buffers/registers/tape. The fixture's stateful
   oracle is a wiring test, not a cryptographic sampler implementation.
+
+- [Schnorr's fresh-entry routine](../Signatures/Runtime/Caliper/SchnorrAGMFresh.lean)
+  now executes scalar sampling, retained affine state, field addition, encoded
+  zero comparison, Boolean disjunction and entry construction. The explanation
+  and old flag are runtime inputs, saved beyond the sampler's buffer footprint.
+  [Arithmetic](../Signatures/Runtime/Caliper/SchnorrAGMFreshArithmetic.lean)
+  invokes only a local field-addition implementation; zero words, comparison,
+  Boolean operations and every permutation/copy are constructed Caliper code.
+  For scalar encoding width `f`, its derived arithmetic budgets are
+  `addTime + 300*f + 140` and `addWords + 900*f + 620`.
+  [Fresh-routine bounds](../Signatures/Runtime/Caliper/SchnorrAGMFreshBounds.lean)
+  additionally charge sampling and retention and prove complete memory bounds
+  for all intermediate states of the same source-correct execution.
+  [The assembled cache](../Signatures/Runtime/Caliper/SchnorrAGMCache.lean)
+  connects this routine to the bounded stateful reader. Its joint entry/table/
+  state source law matches the original first-entry-preserving cache operation;
+  hits make no fresh draw and misses update the exceptional-challenge flag.
+  [Complete cache resources](../Signatures/Runtime/Caliper/SchnorrAGMCacheMemory.lean)
+  are derived from local addition and scalar-sampling budgets, with stored code,
+  names, initial caller capacity and every intermediate live buffer included.
+  [Execution tests](../SignaturesTest/CaliperSchnorrAGMFresh.lean) cover changed
+  coefficients, ordinary and exceptional challenges, sampled zero, an existing
+  bad flag, missing replies, full-table duplicate-key hits, fresh insertion,
+  padding, unused replies, released scratch and preserved external state.
+  The modular-word arithmetic fixture is not a cryptographic field instance.
+  The full read wrapper's metadata packing/restoration, hash flattening/signing,
+  extraction, caller and public concrete/asymptotic integration remain pending.
 
 Remaining integration sequence:
 

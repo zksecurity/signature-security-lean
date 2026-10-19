@@ -334,9 +334,13 @@ Pinned upstreams:
   types. Its complete Caliper handler, extractor and public theorem are still pending.
   The [stateful cache reader](Signatures/Runtime/Caliper/StatefulCacheRead.lean)
   now executes lookup, hit/miss selection, saved-state handling and insertion
-  with derived time, code and complete memory bounds. Schnorr's affine/bad-flag
-  layouts instantiate it; the fresh-entry arithmetic routine and full Schnorr
-  read wrapper remain to be assembled.
+  with derived time, code and complete memory bounds. The
+  [Schnorr cache](Signatures/Runtime/Caliper/SchnorrAGMCache.lean) now supplies
+  an executed fresh-entry routine: it retains the runtime affine explanation,
+  samples the challenge, computes the exceptional-challenge test and updates
+  the bad flag. Only local scalar sampling and addition implementations supply
+  budgets; the remaining cache overhead and complete memory bounds are derived.
+  The full read wrapper that restores Schnorr's other metadata is still pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

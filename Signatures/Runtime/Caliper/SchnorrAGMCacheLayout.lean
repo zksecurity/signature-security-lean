@@ -3,8 +3,8 @@ import Signatures.Runtime.Caliper.StatefulCacheMemory
 
 /-! Instantiate the stateful cache with Schnorr's affine explanation and bad
 flag. The explanation is fixed before the fresh challenge; the resulting entry
-and mutable flag have explicit represented source values. The fresh routine's
-Caliper arithmetic and the full read wrapper are separate remaining components. -/
+and mutable flag have explicit represented source values. SchnorrAGMFresh
+implements the fresh routine; the full metadata read wrapper remains separate. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrAGM.Cache
 open Caliper BoundedSource OracleComp OracleSpec
 open Signatures.Runtime.SchnorrAGM.Native
