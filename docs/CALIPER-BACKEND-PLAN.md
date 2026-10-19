@@ -904,6 +904,30 @@ Implemented and checked:
   Its response routine is a small word operation, not curve code; this does not
   establish coverage of every Caliper attacker or finalize the full reduction.
 
+- [BLSInitialization](../Signatures/Runtime/Caliper/BLSInitialization.lean) copies
+  a runtime caller input and configuration, then writes the complete bounded
+  empty cache and transcript encodings. Every word is charged: time is at most
+  `8*outputWords`, stored code at most `26*outputWords + 14`. The resulting store
+  has a proved reservation up to the configured cache and log capacities.
+  [BLSSetup](../Signatures/Runtime/Caliper/BLSSetup.lean) builds both AGM setup
+  branches from runtime challenge data. The good branch selects the supplied
+  public key and stores the challenge points. The bad branch retains the
+  challenge while sampling a scalar, calls an individual scale routine to obtain
+  its public key, and stores the sampled scalar with the challenge points.
+  [BLSSetupSampling](../Signatures/Runtime/Caliper/BLSSetupSampling.lean) proves
+  exact source-tree correspondence, using only the primitive sampler's uniform
+  law. No completed setup implementation or efficiency premise is supplied.
+  [BLSSetupResources](../Signatures/Runtime/Caliper/BLSSetupResources.lean) derives
+  time, complete code, generated names, accepted descriptions and memory bounds
+  for every state visited by the same sampled execution. The linear overhead
+  depends on the admitted setup width; sampler and scale costs remain explicit.
+  [Regressions](../SignaturesTest/CaliperBLSSetup.lean) vary runtime challenge
+  values and scalar replies (including zero), check cache/transcript padding and
+  untouched storage/replies/tape, instantiate source/resource endpoints and
+  audit their axioms. The executable scale fixture uses word arithmetic, not a
+  curve implementation. These setup and caller phases still need composition
+  with final-forgery handling and extraction into full reduction certificates.
+
 Remaining integration sequence:
 
 1. Compile the remaining scheme code and establish reachable-state invariants.
@@ -947,8 +971,9 @@ Remaining integration sequence:
    interface; oracle packet transport alone does not supply this distribution proof.
    The original-machine bridge is now instantiated with the constructed BLS handler,
    carrying reservations through the generated controller. Complete the reduction's
-   setup, final-forgery and extraction phases, including `2*q + 1` cache headroom
-   and charged transcript reversal. Caller state and private store are already
+   final-forgery and extraction phases, then compose the proved setup and caller
+   phases into complete solvers. Reserve `2*q + 1` cache headroom and charge
+   transcript reversal. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with

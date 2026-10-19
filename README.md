@@ -199,8 +199,12 @@ Pinned upstreams:
   The constructed BLS caller now connects this handler to actual local initialization
   and continuation code. Its executed word program agrees with the original source
   computation, and its time, stored code and every intermediate memory state are
-  bounded from primitive and local caller resources. Setup, final-forgery handling,
-  extraction and coverage of the intended Caliper attacker class remain to be done.
+  bounded from primitive and local caller resources. Both BLS AGM setup branches
+  now execute their runtime challenge selection and empty-store construction;
+  the sampled branch also executes scalar sampling and public-key multiplication.
+  Their source correspondence and resource bounds are proved. Connecting setup,
+  caller, final-forgery handling and extraction into complete reductions, and
+  coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
