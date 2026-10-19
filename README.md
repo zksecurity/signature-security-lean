@@ -340,7 +340,11 @@ Pinned upstreams:
   samples the challenge, computes the exceptional-challenge test and updates
   the bad flag. Only local scalar sampling and addition implementations supply
   budgets; the remaining cache overhead and complete memory bounds are derived.
-  The full read wrapper that restores Schnorr's other metadata is still pending.
+  The [complete read](Signatures/Runtime/Caliper/SchnorrAGMRead.lean) now also
+  executes metadata packing and restoration, with exact original-read
+  correspondence and derived time, stored-code and complete memory bounds.
+  Its overhead above the cache is linear in the declared storage width.
+  The full handler, extractor, caller and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

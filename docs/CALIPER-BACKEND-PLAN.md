@@ -1666,9 +1666,9 @@ Implemented and checked:
   [Schnorr's instance](../Signatures/Runtime/Caliper/SchnorrAGMCacheLayout.lean)
   carries the pre-challenge affine explanation and bad flag and defines the
   typed fresh-entry source with its uniform-sampling law. Its Caliper fresh
-  routine is now constructed below; the full Schnorr read wrapper remains
-  unfinished. The generic reader requires only that local fresh routine's
-  refinement and budgets, not a completed cache or solver certificate.
+  routine and full Schnorr read wrapper are now constructed below. The generic
+  reader requires only that local fresh routine's refinement and budgets, not a
+  completed cache or solver certificate.
   [Executable regressions](../SignaturesTest/CaliperStatefulCache.lean) check
   full-table and duplicate-key hits, no sampling on hits, dynamic input and
   returned states, fresh zero entries, missing-reply failure, released scratch
@@ -1699,8 +1699,38 @@ Implemented and checked:
   bad flag, missing replies, full-table duplicate-key hits, fresh insertion,
   padding, unused replies, released scratch and preserved external state.
   The modular-word arithmetic fixture is not a cryptographic field instance.
-  The full read wrapper's metadata packing/restoration, hash flattening/signing,
-  extraction, caller and public concrete/asymptotic integration remain pending.
+  Hash flattening/signing, extraction, caller and public concrete/asymptotic
+  integration remain pending.
+
+- [Complete Schnorr reads](../Signatures/Runtime/Caliper/SchnorrAGMRead.lean)
+  now execute argument packing, metadata retention and return routing around
+  the constructed cache. [Layouts](../Signatures/Runtime/Caliper/SchnorrAGMReadLayout.lean)
+  admit full-cache hits and require a spare slot only on misses. The setup
+  builds the zero fallback from stored scalar words and copies the current key,
+  affine coefficients and cache. Metadata is saved beyond the cache's mutation
+  footprint; return routing preserves the basis, signing history and malformed
+  flag while installing the returned cache and mutable bad flag.
+  [Source correctness](../Signatures/Runtime/Caliper/SchnorrAGMReadSource.lean)
+  proves exact equality with the original finite-state read, including its joint
+  challenge/state law and no sampling on hits. The existing reachable-state
+  reservation implies input admissibility, without requiring a finite or fully
+  represented mathematical message domain.
+  [Derived bounds](../Signatures/Runtime/Caliper/SchnorrAGMReadBounds.lean)
+  add at most `100*W` time and `400*W+80` stored words above the cache, where
+  `W` is the declared scheme storage width. The
+  [buffer bound](../Signatures/Runtime/Caliper/StatefulCacheBuffers.lean)
+  depends on the local fresh routine's footprint rather than cache capacity or
+  program size. [Complete memory](../Signatures/Runtime/Caliper/SchnorrAGMReadMemory.lean)
+  bounds stored code plus every intermediate state's live storage in the same
+  execution that returns the source result, including initial caller memory.
+  [Execution tests](../SignaturesTest/CaliperSchnorrAGMRead.lean) cover full-cache
+  duplicate hits, ordinary and exceptional misses, existing bad flags, changed
+  runtime keys/coefficients/metadata, the final reserved slot, preserved entries
+  without explanations, inadmissible full-cache misses and out-of-range messages,
+  absent replies, external frame preservation, scratch release and time limits.
+  All central construction, source and resource proofs receive kernel axiom
+  audits. The full Schnorr handler, extractor, caller, cyclic DLog class and
+  public concrete/family theorem integration remain pending.
 
 Remaining integration sequence:
 
