@@ -305,14 +305,24 @@ Pinned upstreams:
   now executes initialization, the caller/controller, oracle service and
   extraction, with derived time, code and total-memory bounds. It implements
   the original lazy co-CDH reduction under local caller correspondence and
-  termination proofs. Migrating the public co-CDH concrete and family theorems
-  to this constructed resource witness remains unfinished.
+  termination proofs. The public co-CDH concrete theorem now uses this
+  [constructed Caliper witness](Signatures/BLS/Proofs/CaliperCoCDH.lean).
+  [Challenge coverage](Signatures/Runtime/Caliper/CoronFullChallenges.lean)
+  follows from the scalar sampler and implemented scaling; changing the input's
+  mathematical view preserves exactly the stored bytes. Layouts, primitive
+  implementations and numeric caller allowances are fixed before the attacker.
+  The [co-CDH family theorem](Signatures/BLS/CaliperCoCDHFamilyStatement.lean)
+  derives polynomial time, code and total memory from component bounds and
+  obtains negligible forgery success from nonuniform Caliper co-CDH hardness.
+  It does not require polynomial message-space or sampling-range cardinality.
+  Both BLS public routes now use Caliper; ordinary co-CDH attackers still return
+  a plain message/signature pair, without algebraic output requirements.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
-  replay controllers. BLS co-CDH, OOPS, Proximity and Schnorr still use their
-  explicit abstract-backend contracts pending migration.
+  replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
+  still use their explicit abstract-backend contracts pending migration.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.
 - The original pairing-based AGM reductions sample private finite tables. BLS additionally has
   lazy reductions with sparse extraction, finite-list cache refinement, and the same probability

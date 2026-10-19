@@ -1,5 +1,6 @@
 import Signatures.BLS.Statement
 import Signatures.BLS.GeneralAGMStatement
+import Signatures.BLS.GeneralExecutionModel
 import Lean.Util.CollectAxioms
 
 /-! Guard the public statement and its underlying resource theorem. In

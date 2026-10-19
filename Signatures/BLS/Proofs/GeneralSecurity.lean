@@ -1,5 +1,7 @@
 import Signatures.BLS.GeneralSecurityModel
 import Signatures.BLS.Proofs.CaliperAGM
+import Signatures.BLS.Proofs.CaliperCoCDH
+import Signatures.BLS.CoCDH.Proofs.ArbitraryMessages
 import Signatures.BLS.Proofs.ROM
 import Signatures.BLS.Proofs.Game
 
@@ -12,8 +14,6 @@ open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram
 
 namespace BLS
-
-universe v w x
 
 section AGM
 
@@ -109,7 +109,7 @@ end AGM
 
 section CoCDH
 
-variable (curve : Model.PairingCurve) [model : CoCDHSecurityModel.{v, w, x} curve]
+variable (curve : Model.PairingCurve) [model : CoCDHSecurityModel curve]
 
 /-- The three allowances bound the actual source computation at every public key. -/
 theorem UnrestrictedAdversary.query_allowances (securityParameter : Nat) (queries : QueryAllowance)
@@ -117,8 +117,7 @@ theorem UnrestrictedAdversary.query_allowances (securityParameter : Nat) (querie
     (∀ pk, IsQueryBoundP (adversary.source pk) (fun i => queryKind i = 0) queries.random) ∧
     (∀ pk, IsQueryBoundP (adversary.source pk) (fun i => queryKind i = 1) queries.hash) ∧
     (∀ pk, IsQueryBoundP (adversary.source pk) (fun i => Sum.isRight i = true) queries.sign) := by
-  simpa only [CoCDHSecurityModel.queries_eq] using
-    And.intro adversary.randomQueries (And.intro adversary.hashQueries adversary.signingQueries)
+  exact ⟨adversary.randomQueries, adversary.hashQueries, adversary.signingQueries⟩
 
 /-- Exact equality to the established lazy ROM game. -/
 theorem cocdhEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
@@ -128,35 +127,53 @@ theorem cocdhEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
   exact Game.rom_eq_source curve securityParameter adversary.source
 
+/-- The original probability inequality, independent of the solver's resource
+membership. Both the concrete and family theorems use this same reduction. -/
+theorem Proofs.cocdh_probability (securityParameter : Nat) (queries : QueryAllowance)
+    (adversary : UnrestrictedAdversary curve securityParameter queries) :
+    𝒟[cocdhEufCmaGame curve securityParameter adversary] {true} ≤
+      Model.coronFactor queries.sign * Model.coCDHAdvantage (F := curve.Scalar securityParameter)
+        (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+        (CoCDH.coronReductionLazyPK (F := curve.Scalar securityParameter) queries.sign (ROM.cacheForgeryPK adversary.source)) := by
+  have pairingInjective : Function.Injective (fun point : curve.SignatureGroup securityParameter =>
+      BilinearGroup.pairing (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
+        point (curve.keyGenerator securityParameter)) := by
+    intro left right equal
+    obtain ⟨a, rfl⟩ := (curve.generates securityParameter).surjective left
+    obtain ⟨b, rfl⟩ := (curve.generates securityParameter).surjective right
+    have scalars := (curve.pairingInjective securityParameter)
+      (by simpa only [BilinearGroup.pairing_smul_left] using equal)
+    exact congrArg (fun scalar : curve.Scalar securityParameter => scalar • curve.generator securityParameter) scalars
+  rw [cocdhEufCmaGame_eq]
+  exact CoCDH.Proofs.security_arbitrary_messages
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter) queries.sign adversary.source
+    (curve.generates securityParameter) pairingInjective
+    (fun r => adversary.signingQueries (r • curve.keyGenerator securityParameter))
+
 /-- Every unrestricted attacker within the declared resources and query allowances
-obeys this EUF-CMA bound. `solverTime` charges the complete native Coron reduction,
+obeys this EUF-CMA bound. `solverTime` charges the complete Caliper Coron reduction,
 including the caller, lazy oracle simulation, setup and extraction. For `s` signing
 queries, `coronFactor s = ((s+1)⁻¹ * (s/(s+1))^s)⁻¹`, approximately `e*s`
 for large `s` and exactly `1` when `s = 0`. -/
 theorem Proofs.cocdh_security
     (curve : Model.PairingCurve) [model : CoCDHSecurityModel curve]
-    (securityParameter : Nat)
-    (queries : QueryAllowance)
+    (securityParameter : Nat) (queries : QueryAllowance)
     (adversary : UnrestrictedAdversary curve securityParameter queries) :
     let resources := model.parameters securityParameter queries
     𝒟[cocdhEufCmaGame curve securityParameter adversary] {true} ≤
       Model.coronFactor queries.sign *
         coCDHSuccessBound curve securityParameter queries resources.solverTime := by
   let resources := model.parameters securityParameter queries
-  -- The existing probability reduction covers arbitrary messages and group outputs.
-  have probabilityBound := CoCDH.Proofs.security_arbitrary_messages
-    resources.generator resources.keyGenerator resources.queries.sign adversary.source
-    resources.generates resources.pairingInjective (fun r => adversary.signingQueries (r • resources.keyGenerator))
-  -- Build the native executable and derive its code/time bounds from primitive contracts.
-  have fits := GeneralCoCDH.reduction_within resources adversary
-  have solverBound : Model.coCDHAdvantage resources.generator resources.keyGenerator
-      (CoCDH.coronReductionLazyPK (F := curve.Scalar securityParameter) resources.queries.sign
+  -- Construct the complete Caliper code/time/total-memory witness, including challenge coverage.
+  have fits := CaliperCoCDH.reduction_within resources adversary (curve.generates securityParameter).surjective
+  have solverBound : Model.coCDHAdvantage (F := curve.Scalar securityParameter)
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+      (CoCDH.coronReductionLazyPK (F := curve.Scalar securityParameter) queries.sign
         (BLS.ROM.cacheForgeryPK adversary.source)) ≤
       coCDHSuccessBound curve securityParameter queries resources.solverTime :=
     le_iSup_of_le _ (le_iSup_of_le fits le_rfl)
-  simpa only [resources, cocdhEufCmaGame_eq, CoCDHSecurityModel.queries_eq,
-    CoCDHSecurityModel.generator_eq, CoCDHSecurityModel.keyGenerator_eq] using
-    probabilityBound.trans (mul_le_mul_right solverBound (Model.coronFactor resources.queries.sign))
+  exact (Proofs.cocdh_probability curve securityParameter queries adversary).trans
+    (mul_le_mul_right solverBound (Model.coronFactor queries.sign))
 
 end CoCDH
 

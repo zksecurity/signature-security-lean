@@ -1570,10 +1570,43 @@ Implemented and checked:
   exact random traces, incomplete randomness, remaining replies, scratch release,
   private-state preservation and real elapsed time. Concrete `Within` witnesses
   are instantiated and source/resource proofs are axiom-audited. These are word
-  arithmetic fixtures, not curve implementations. The public co-CDH concrete and
-  polynomial-family theorems still use their earlier backend contracts until
-  they are migrated to these witnesses. Broader Caliper caller coverage and the
-  Schnorr/OOPS/Proximity migrations remain separate unfinished work.
+  arithmetic fixtures, not curve implementations.
+- [The fixed Caliper co-CDH class](../Signatures/Runtime/Caliper/CoCDH.lean)
+  accounts for code, runtime and total memory on every represented input and
+  local tape. Every sampled scalar/public key/challenge point must fit.
+  [Coverage](../Signatures/Runtime/Caliper/CoronFullChallenges.lean) is derived
+  from the uniform scalar sampler, represented generators and implemented
+  scaling; no challenge-completeness premise is added to the attacker.
+  [The full membership theorem](../Signatures/Runtime/Caliper/CoronFullCoCDH.lean)
+  connects the actual initialized Coron program to this class. Its raw challenge
+  and nested represented inputs have identical bytes. `Within.viewInput` proves
+  that this mathematical relabeling preserves the initial state, including its
+  capacity, and every resource bound.
+- [Public co-CDH parameters](../Signatures/BLS/CaliperCoCDHParameters.lean)
+  fix layouts, primitives, sampler and numeric caller allowances before the
+  ordinary attacker. `CoronFullLimits` exposes the existing resource ledgers
+  without depending on a chosen caller or its proofs. The attacker supplies
+  only its local code, termination/correspondence, query bounds and local costs.
+  [Membership](../Signatures/BLS/Proofs/CaliperCoCDH.lean) is constructed from
+  those components. `BLS.cocdh_security` now uses that Caliper witness in its
+  explicit co-CDH supremum, including total memory, while its displayed
+  curve/parameter/queries/adversary shape and mathematical game stay the same.
+  The previous abstract execution interface remains separate in
+  `BLS/GeneralExecutionModel.lean` for the earlier component-based results.
+- [Polynomial co-CDH resources](../Signatures/BLS/CaliperCoCDHFamilyResources.lean)
+  derive polynomial complete time, stored code and total memory from primitive
+  and local caller bounds, encoding widths and capacities. Neither the message
+  space nor the scalar/sampling range cardinality must be polynomial. The
+  [public family statement](../Signatures/BLS/CaliperCoCDHFamilyStatement.lean)
+  uses nonuniform Caliper co-CDH hardness and the proved linear Coron loss to
+  obtain negligible forgery success. These are fixed ideal-uniform-port word
+  machine families, not CPU adequacy or universal conventional-PPT coverage.
+  [Regression guards](../SignaturesTest/CaliperCoCDHSecurity.lean) audit axioms,
+  actual Caliper dependencies, ordinary outputs, challenge coverage, separated
+  game/statement/proof APIs and the absence of completed-solver polynomiality
+  assumptions. Canonical co-CDH caller presentation, broader Caliper caller
+  coverage, Schnorr/OOPS/Proximity migration and full replay/reset composition
+  remain unfinished.
 
 Remaining integration sequence:
 
@@ -1626,7 +1659,7 @@ the source/output conversion for both complete BLS AGM reductions.
    Checked emission proves generated-word acceptance and intermediate
    descriptor bounds. Complete machine-memory bounds include
    static storage and every intermediate buffer state. These finite-program
-   bounds have polynomial-family proofs for BLS AGM; the other schemes still
+   bounds have polynomial-family proofs for BLS AGM and co-CDH; the other schemes still
    need their corresponding proofs.
 3. Link the proved word oracle adapter and replay primitives into complete signature
    callers and rewinding. Ordinary saved-state query composition, generated

@@ -1,18 +1,17 @@
 import Signatures.BLS.Game
 import Signatures.Model.PairingCurve
 import Signatures.BLS.CaliperAGMParameters
-import Signatures.BLS.GeneralCoCDHParameters
+import Signatures.BLS.CaliperCoCDHParameters
 
 /-! Inspectable definitions for the two public BLS statements.
 
 `AGMSecurityModel` and `AlgebraicAdversary` describe the AGM-to-DLog route.
 `CoCDHSecurityModel` and `UnrestrictedAdversary` describe ordinary ROM security
-to co-CDH. Both use the common query-allowance type. The AGM route uses actual
-Caliper word programs; the co-CDH route still uses `ExecutionModel`. Their
+to co-CDH. Both use actual Caliper word programs and the common query-allowance type. Their
 component contracts, output types, reductions and hardness classes differ.
 
 The games are in `Game.lean`; each success measure below is an explicit supremum
-over solvers in the fixed resource model. The AGM bounds include code, runtime
+over solvers in the fixed resource model. Both bounds include code, runtime
 and total memory. These are concrete resource models. Polynomial families and
 a conventional-machine instantiation need further hypotheses when making those stronger claims.
 The public statements are in `Statement.lean`; their proofs and exact game
@@ -22,31 +21,6 @@ open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram
 
 namespace BLS
-
-universe v w x
-
-/-- Abstract local computation and message types for the co-CDH route.
-The message type only needs decidable equality; it need not be finite. The
-quantitative backend measures encoded sizes and costs of local computation. -/
-class ExecutionModel (curve : Model.PairingCurve) where
-  steps : StepClass.{0, v}
-  [products : steps.HasProd]
-  [sums : steps.HasSum]
-  [options : steps.HasOption]
-  quantitative : QuantitativeStepClass.{0, v, w} steps
-  [category : quantitative.HasCategory]
-  [quantitativeProducts : quantitative.HasProd]
-  [quantitativeSums : quantitative.HasSum]
-  [quantitativeOptions : quantitative.HasOption]
-  [distributive : quantitative.IsDistributive]
-  [optionCode : OptionCode (Q := quantitative)]
-  Message : Nat → Type
-  [messageEquality : ∀ n, DecidableEq (Message n)]
-
-attribute [instance_reducible, instance] ExecutionModel.products ExecutionModel.sums ExecutionModel.options
-  ExecutionModel.category ExecutionModel.quantitativeProducts ExecutionModel.quantitativeSums
-  ExecutionModel.quantitativeOptions ExecutionModel.distributive ExecutionModel.optionCode
-  ExecutionModel.messageEquality
 
 /-- Caliper implementations and attacker allowances, fixed before choosing the attacker.
 `parameters` supplies bounded layouts, individual primitive implementations,
@@ -62,17 +36,18 @@ class AGMSecurityModel (curve : Model.PairingCurve) where
 
 attribute [instance_reducible, instance] AGMSecurityModel.messageEquality
 
-/-- Unrestricted execution contracts and attacker limits for the co-CDH route.
-The detailed fields in `GeneralCoCDHParameters.lean` require a plain message and
-signature output, without algebraic coefficients. The native Coron reduction's
-complete resource certificate is derived from these component contracts. -/
-class CoCDHSecurityModel (curve : Model.PairingCurve) extends ExecutionModel.{v, w} curve where
-  parameters : ∀ n, QueryAllowance → GeneralCoCDH.Parameters.{v, w, x}
-    (Q := quantitative) (F := curve.Scalar n) (G₁ := curve.SignatureGroup n)
-    (G₂ := curve.KeyGroup n) (Gₜ := curve.TargetGroup n) (M := Message n)
-  queries_eq : ∀ n q, (parameters n q).queries = q
-  generator_eq : ∀ n q, (parameters n q).generator = curve.generator n
-  keyGenerator_eq : ∀ n q, (parameters n q).keyGenerator = curve.keyGenerator n
+/-- Caliper implementations and ordinary attacker allowances for co-CDH.
+The detailed fields in `CaliperCoCDHParameters.lean` require a plain message and
+signature output, without algebraic coefficients. The complete Coron program
+and its resource certificate are constructed from those components. -/
+class CoCDHSecurityModel (curve : Model.PairingCurve) where
+  Message : Nat → Type
+  [messageEquality : ∀ n, DecidableEq (Message n)]
+  parameters : ∀ n q, CaliperCoCDH.Parameters
+    (curve.Scalar n) (curve.SignatureGroup n) (curve.KeyGroup n) (Message n)
+    q (curve.generator n) (curve.keyGenerator n)
+
+attribute [instance_reducible, instance] CoCDHSecurityModel.messageEquality
 
 section AGM
 
@@ -130,17 +105,18 @@ end AGM
 
 section CoCDH
 
-variable (curve : Model.PairingCurve) [model : CoCDHSecurityModel.{v, w, x} curve]
+variable (curve : Model.PairingCurve) [model : CoCDHSecurityModel curve]
 
 /-- Any implemented attacker within the declared execution, code and query limits.
-Its local computation is general backend code and its output is an arbitrary
-message/signature pair; no algebraic representation is supplied or inspected. -/
+Its local computation is Caliper code and its output is an arbitrary
+message/signature pair; no algebraic representation is supplied or inspected.
+Coverage of every conventional efficient attacker is a separate adequacy claim. -/
 abbrev UnrestrictedAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
-  GeneralCoCDH.Adversary (model.parameters securityParameter queries)
+  CaliperCoCDH.Adversary (model.parameters securityParameter queries)
 
 /-- The constructed Coron solver's proved complete runtime, including attacker
 execution, lazy oracle simulation, setup and extraction. The detailed formula
-is `GeneralCoCDH.Parameters.solverTime`; no completed-solver budget is assumed. -/
+is `CaliperCoCDH.Parameters.solverTime`; no completed-solver budget is assumed. -/
 def cocdhReductionTime (securityParameter : Nat) (queries : QueryAllowance) : Nat :=
   (model.parameters securityParameter queries).solverTime
 
@@ -156,18 +132,22 @@ noncomputable def cocdhEufCmaGame (securityParameter : Nat) {queries : QueryAllo
 /-- Supremum of co-CDH success: sample a scalar `x` and group point `h`, give a
 solver `(g₁, g₂, x • g₁, x • g₂, h)`, and test whether it returns `x • h`.
 
-`coCDHWithin` requires an executable in this model's fixed backend, exact solver
-semantics, and derived code/input/time bounds. Every sampled challenge must fit
-`inputWidth`. See `Runtime/BackendCoronSolverWithin.lean` for the predicate and
-`GeneralCoCDHParameters.lean` for the derived `solverCode` and `solverTime`.
+`coCDHWithin` requires actual Caliper code, exact solver semantics and fixed
+code, time and total-memory bounds. Memory includes stored code, initial data
+and every visited state. Every sampled challenge must fit the fixed layout.
+See `Runtime/Caliper/CoCDH.lean` and `Within.lean` for the resource class and
+`CaliperCoCDHParameters.lean` for the derived budgets. The reduction's membership
+is proved in `CaliperCoCDH.reduction_within` from its full constructed program.
 A numerical hardness assumption is needed to bound this supremum. -/
 noncomputable def coCDHSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
     (time : Nat) : ENNReal :=
   let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Signatures.Runtime.Coron.NativeSolver.coCDHWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.keyGenerator resources.inputWidth resources.solverCode time solver),
-    𝒟[CoCDH.coCDHExp resources.generator resources.keyGenerator solver] {true}
+  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.coCDHWithin (F := curve.Scalar securityParameter)
+      resources.service.port resources.challenge resources.service.point
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+      resources.solverCode resources.solverMemory time solver),
+    𝒟[CoCDH.coCDHExp (F := curve.Scalar securityParameter)
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter) solver] {true}
 
 end CoCDH
 
