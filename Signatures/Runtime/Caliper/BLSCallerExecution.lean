@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.BLSCaller
+import Signatures.Runtime.Caliper.BLSCallerPostcondition
 
 /-! The generated BLS caller executes the original source program. Only local
 caller initialization/continuation correspondence and primitive sampling laws
@@ -42,6 +43,31 @@ variable (continuation : Realizer .unit (CallerStep.resume (layout service rando
 variable (fuel : Nat) (admissible : U × service.store.Value → Prop)
     (initialValid : ∀ value, admissible value → HeadValid service randomBound domain fuel (initial value.1))
     (initialReserved : ∀ value, admissible value → BLSReply.Reserved service fuel value.2.val)
+
+include drawCorrect drawLaw advanceValid initialValid initialReserved in
+/-- The store-size postcondition holds of the bytes returned by the actual
+caller execution, including early returns and cutoffs. It is derived from local
+caller code and the constructed handler, not a completed-caller premise. -/
+theorem execution_postcondition
+    (tape : RandomTape w) (value : U × service.store.Value) (valid : admissible value)
+    (before : State w) (holds : (input.prod service.store.representation inputFits).Holds value before)
+    (finished : WordIO.Result w)
+    (reached : some finished ∈ support ((program service default randomBound randomFits P comparison correct response responseBuffers reserve draw advance
+      state result fits continuation localNameFits input initial initialCode initialNameFits inputFits fuel).execute
+        (UniformQuery.port randomBound service.cache.wordFits randomFits) .unit tape before)) :
+    ∃ answer, (CallerStep.output (layout service randomBound randomFits state result fits)).Holds answer finished.state ∧
+      Postcondition service fuel value.2 answer.2 ∧
+      WordIO.Exec .unit tape ((program service default randomBound randomFits P comparison correct response responseBuffers reserve draw advance
+        state result fits continuation localNameFits input initial initialCode initialNameFits inputFits fuel).lower
+          (UniformQuery.port randomBound service.cache.wordFits randomFits))
+        before finished.state finished.trace finished.time finished.net finished.peak := by
+  have refined := refines service default randomBound randomFits P comparison correct response responseBuffers reserve draw drawSource drawCorrect drawLaw
+    domain advance advanceValid state result fits continuation localNameFits input initial initialCode initialNameFits inputFits
+    fuel admissible initialValid initialReserved
+  obtain ⟨answer, supported, actual, equal, output, _, execution⟩ := (refined tape value valid before holds).right_support reached
+  cases Option.some.inj equal
+  exact ⟨answer, output, start_postcondition service default randomBound P comparison correct response responseBuffers reserve drawSource drawLaw
+    advance fuel (initial value.1, value.2) (initialReserved value valid) answer supported, execution⟩
 
 variable {V : Type}
     (machine : OracleMachine (Model.LazyAGM.advSpec (key.Value base) (key.Value base) G) V B)

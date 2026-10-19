@@ -930,6 +930,19 @@ Implemented and checked:
 
 Remaining integration sequence:
 
+The caller completion bound is now proved in
+[BLSCallerPostcondition](../Signatures/Runtime/Caliper/BLSCallerPostcondition.lean).
+Every supported exit preserves the configuration and adds at most `q` cache
+entries and `q` transcript tokens after at most `q` calls, including early return
+and fuel cutoff. [BLSCallerExecution](../Signatures/Runtime/Caliper/BLSCallerExecution.lean)
+transfers this postcondition to the actual returned bytes and execution.
+From an empty store, cache capacity `2*q + 1` leaves room for one private read
+per transcript token plus the final message. Transcript capacity stays at `q`;
+no extraction reservation is imposed on the logs. The asymmetric-capacity
+regression uses five cache entries and two transcript slots and rejects a
+five-slot joint reservation. This is the capacity precondition for the remaining
+extractor implementation, not a claim that extraction has been compiled.
+
 1. Compile the remaining scheme code and establish reachable-state invariants.
    Fixed-capacity `cacheProgram` and `cacheGetExpr`, encoded
    key/message equality, the original
@@ -972,8 +985,8 @@ Remaining integration sequence:
    The original-machine bridge is now instantiated with the constructed BLS handler,
    carrying reservations through the generated controller. Complete the reduction's
    final-forgery and extraction phases, then compose the proved setup and caller
-   phases into complete solvers. Reserve `2*q + 1` cache headroom and charge
-   transcript reversal. Caller state and private store are already
+   phases into complete solvers. Use the proved `2*q + 1` cache headroom and charge
+   transcript reversal and each private read. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with

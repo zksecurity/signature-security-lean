@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.BLSCallerResources
+import Signatures.Runtime.Caliper.BLSInitialization
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -222,6 +223,41 @@ private theorem caller_refines : Interactive.RefinesOn admitted port .unit calle
     primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw drawSource
     draw_correct draw_law localDomain advance advance_valid requestRep layout.point.representation (by decide)
     continuation (by decide) requestRep initial initialCode (by decide) (by decide) 2 admitted initial_valid (fun _ valid => valid)
+
+private theorem caller_postcondition (tape : RandomTape 10) (value) (valid : admitted value)
+    (before : State 10) (holds : callerInput.Holds value before)
+    (finished : WordIO.Result 10) (reached : some finished ∈ support ((caller 2).execute port .unit tape before)) :
+    ∃ answer, (CallerStep.output callerLayout).Holds answer finished.state ∧
+      BLSCaller.Postcondition layout 2 value.2 answer.2 ∧
+      WordIO.Exec .unit tape ((caller 2).lower port) before finished.state finished.trace finished.time finished.net finished.peak :=
+  BLSCaller.execution_postcondition (base := base) (key := .nat) (val := .atom ()) layout default 3 (by decide)
+    primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) draw drawSource
+    draw_correct draw_law localDomain advance advance_valid requestRep layout.point.representation (by decide)
+    continuation (by decide) requestRep initial initialCode (by decide) (by decide) 2 admitted initial_valid (fun _ valid => valid)
+    tape value valid before holds finished reached
+
+-- Extraction capacity is only needed in the private cache: five cache entries
+-- and two transcript entries suffice for a two-query caller from an empty store.
+private def extractionLayout : BLSReply.Layouts 10 Nat (Fin 4) Unit (Word 10) :=
+  { layout with
+    cache := { cache with capacityPred := 4, countFits := by decide, storageFits := by decide }
+    storageFits := by decide }
+private def extractionEmpty := BLSInitialization.store extractionLayout ⟨(), trivial⟩
+private def extractionHandler := BLSCallerHandler.denote (base := base) (key := .nat) (val := .atom ()) extractionLayout default 3
+  primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) drawSource
+private theorem extraction_reserved : BLSReply.Reserved extractionLayout 2 extractionEmpty.val :=
+  BLSInitialization.reserved extractionLayout 2 (by decide) (by decide) ⟨(), trivial⟩
+example : ¬ BLSReply.Reserved extractionLayout 5 extractionEmpty.val := by
+  intro reserved
+  have impossible : 5 ≤ 2 := reserved.logRoom
+  omega
+private theorem caller_extraction_room (q : BLSCallerPackets.Request extractionLayout 3)
+    (answer) (reached : answer ∈ support (CallerControl.start advance extractionHandler 2 (initial q, extractionEmpty))) :
+    answer.2.val.2.1.length + (answer.2.val.2.2.1.length + answer.2.val.2.2.2.length + 1) ≤ 5 := by
+  have post := BLSCaller.start_postcondition (base := base) (key := .nat) (val := .atom ()) extractionLayout default 3
+    primitives comparison comparison_correct (fun _ => response) (fun _ => response_buffers) (by decide) drawSource draw_law
+    advance 2 (initial q, extractionEmpty) extraction_reserved answer reached
+  exact post.extraction_room (by change 5 ≤ 5; decide)
 
 private abbrev SourceSpec := Model.LazyAGM.advSpec Nat Nat (Word 10)
 private def sourceNext : (q : SourceSpec.Domain) → SourceSpec.Range q → layout.point.Value ⊕ SourceSpec.Domain
@@ -472,6 +508,9 @@ run_cmd do
       ``Synchronizes.symm, ``Synchronizes.left_support, ``BLSCaller.preserves, ``BLSCaller.initial_invariant,
       ``BLSCaller.refines, ``BLSCaller.observe_source, ``BLSCaller.time, ``BLSCaller.words, ``BLSCaller.names,
       ``BLSCaller.descriptionFits, ``BLSCaller.resources, ``caller_implements, ``advance_matches, ``initial_matches,
+      ``CallerControl.start_store, ``BLSCallerHandler.growth, ``BLSCaller.start_postcondition,
+      ``BLSCaller.Postcondition.extraction_room, ``BLSCaller.execution_postcondition,
+      ``caller_postcondition, ``extraction_reserved, ``caller_extraction_room,
       ``empty_admitted, ``caller_refines, ``caller_source, ``caller_time, ``caller_words, ``caller_memory] do
     let axioms ← collectAxioms name
     for dependency in axioms do

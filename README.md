@@ -199,7 +199,11 @@ Pinned upstreams:
   The constructed BLS caller now connects this handler to actual local initialization
   and continuation code. Its executed word program agrees with the original source
   computation, and its time, stored code and every intermediate memory state are
-  bounded from primitive and local caller resources. Both BLS AGM setup branches
+  bounded from primitive and local caller resources. Its returned store retains
+  the configuration and has at most one new cache entry and transcript token per
+  call, including early returns and cutoffs. From an empty store, cache capacity
+  `2*q + 1` leaves room for extraction after `q` calls; transcript capacity remains
+  `q`. Both BLS AGM setup branches
   now execute their runtime challenge selection and empty-store construction;
   the sampled branch also executes scalar sampling and public-key multiplication.
   Their source correspondence and resource bounds are proved. Connecting setup,
