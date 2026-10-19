@@ -217,7 +217,11 @@ Pinned upstreams:
   remain charged and create no rows. A private read followed by scalar or pair
   accumulation now has executed code, source agreement, and derived time, code
   and intermediate-memory bounds. Pair sampling and arithmetic are constructed
-  from the scalar routines. The row-evaluation loop remains. Connecting setup,
+  from the scalar routines. The bounded row-evaluation loop now executes request
+  construction, private reads and these updates in source order, with time,
+  stored-code and all-visited-memory bounds. Its cache reservation counts actual
+  remaining rows, and its source equality preserves the final private cache.
+  Final-target arithmetic and connecting setup,
   caller, final-forgery handling and extraction into complete reductions, and
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain

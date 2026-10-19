@@ -997,8 +997,8 @@ Implemented and checked:
   duplicate messages with different returned points, missing/surplus coefficients,
   early padding and all scratch release. They reject invalid counters and input
   bounds, check that surplus coefficients increase charged work, and audit the
-  complete source bridge and resource proofs. The private evaluation step below
-  still needs to be assembled into the row loop, final target lookup and extraction.
+  complete source bridge and resource proofs. The row evaluator below consumes
+  these rows; final target lookup and extraction still need to be assembled.
 
 - [BLSAccumulate](../Signatures/Runtime/Caliper/BLSAccumulate.lean) constructs
   scalar `acc + coeff * answer` and both coordinates of pair accumulation from
@@ -1028,8 +1028,42 @@ Implemented and checked:
   exercise full-cache hits without sampling, scalar/pair misses, zero and distinct
   coordinates, duplicate-key priority, invalid full-cache misses and message
   bounds, caller storage preservation and scratch release. This is the compiled
-  per-read update; row traversal, final-target arithmetic and complete solver
-  composition remain.
+  per-read update used by the row loop below. Final-target arithmetic and
+  complete solver composition remain.
+
+- [InteractiveFold](../Signatures/Runtime/Caliper/InteractiveFold.lean) constructs
+  an effectful list fold from an executed body, a runtime length branch and
+  charged head/tail copies. Capacity bounds the stored unrolling; an empty or
+  partially occupied list stops early. Its decreasing invariant reserves actual
+  tail length. With entry width `e`, state width `s`, capacity `n`, and
+  `W = 1 + (n+1)*e + s`, the derived budgets are `8*s + n*(Tbody + 44*W + 7)`
+  steps and `26*s + 15 + n*(Cbody + 169*W + 130)` stored code words.
+  [InteractiveFoldMemory](../Signatures/Runtime/Caliper/InteractiveFoldMemory.lean)
+  proves instruction acceptance and memory throughout the same execution,
+  including initial caller capacity and the complete stored program.
+  [RowRequest](../Signatures/Runtime/Caliper/RowRequest.lean) constructs each
+  private lookup request and its saved coefficient/accumulator by actual copies
+  and literal default construction. Point bytes remain in the row encoding.
+  Its bounds are `584*Wrow` steps and `1898*Wrow + 779` code words, where
+  `Wrow` includes the accumulation frame and point width.
+  [RowEvaluation](../Signatures/Runtime/Caliper/RowEvaluation.lean) composes this
+  preparation with the existing private cache/read update and proves that
+  `cache.length + remainingRows <= cacheCapacity` is preserved after consuming
+  one row. [RowFold](../Signatures/Runtime/Caliper/RowFold.lean) instantiates the
+  actual fold with this constructed body, deriving time, code, names and
+  [whole-memory bounds](../Signatures/Runtime/Caliper/RowFoldMemory.lean).
+  Its [postcondition](../Signatures/Runtime/Caliper/RowFoldPostcondition.lean)
+  bounds total cache growth by the occupied row count and preserves any extra
+  reservation for subsequent row folds or the final target lookup.
+  [BLSRows](../Signatures/Runtime/Caliper/BLSRows.lean) instantiates scalar and
+  pair accumulation from named scalar routines, including two scalar draws for
+  a pair miss. Its [source agreement](../Signatures/Runtime/Caliper/BLSRowsOracle.lean)
+  is an equality to the ordered fold using the original BLS private oracle,
+  preserving both accumulator and final cache. No whole row evaluator is assumed.
+  [Execution regressions](../SignaturesTest/CaliperBLSRows.lean) cover empty and
+  zero-capacity loops, two successive misses, repeated messages with different
+  points, cache hits, zero coefficients, missing replies, partially occupied
+  row capacity, preserved caller storage and released scratch space.
 
 Remaining integration sequence:
 
@@ -1089,9 +1123,9 @@ extractor implementation, not a claim that extraction has been compiled.
    carrying reservations through the generated controller. Complete the reduction's
    final-forgery and extraction phases, then compose the proved setup and caller
    phases into complete solvers. Use the proved `2*q + 1` cache headroom and
-   charged chronological coefficient-row preparation. Compose the constructed
-   private read/accumulator update into row evaluation with its remaining-capacity
-   invariant, then implement final-target field arithmetic. Caller state and private store are already
+   charged chronological coefficient-row preparation and row evaluation with
+   its proved remaining-capacity invariant. Implement final-target field
+   arithmetic. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
