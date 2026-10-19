@@ -1174,8 +1174,34 @@ Implemented and checked:
   chronological coefficients, missing and surplus coefficients, repeated-message
   reuse, zero-weight queries, target reuse, empty logs, partial replies, zero
   division, caller preservation and released scratch in the composed program.
-  Initial output/log routing, the good hash phase, complete BLS solver assembly
+  The initial routing programs below now supply the surrounding frames.
+  Their composition with the good hash phase, complete BLS solver assembly
   and public model instantiation remain separate unfinished steps.
+
+- [BLSExtractorLayout](../Signatures/Runtime/Caliper/BLSExtractorLayout.lean)
+  represents the original `(mstar, beta, gamma, xi)` output alongside the cache
+  and both reverse-stored transcripts. It derives combined address fits from
+  the existing evaluator layouts and keeps coefficient and token capacities
+  independent. [Initial routing](../Signatures/Runtime/Caliper/BLSExtractorRouting.lean)
+  executes slice copies into the hash-evaluator input plus retained signature
+  context; the bad route selects the signature input and original target/beta.
+  Its input still stores the discarded hash explanation/log, and the memory
+  theorem charges that initial capacity. These programs preserve log order;
+  the existing evaluator remains responsible for chronological reversal.
+  [The handoff](../Signatures/Runtime/Caliper/BLSExtractorTransition.lean) after
+  hash evaluation executes another permutation, selecting the signature log
+  and coefficients while retaining the updated cache, target, beta and hash sum.
+  Its output is exactly the existing signature tail's input representation.
+  [Resource proofs](../Signatures/Runtime/Caliper/BLSExtractorFrameBounds.lean)
+  bound each router by `8*n` steps and `26*n + 14` stored code words, where `n`
+  is its padded output width; three register slots and two buffer slots suffice.
+  The same execution has a whole-memory bound at every visited state of
+  `34*n + 14 + max(registers,3) + 3*max(buffers,2) + initialCapacity`.
+  [Operational regressions](../SignaturesTest/CaliperBLSExtractorFrame.lean)
+  check distinct gamma/xi and log lengths, surplus coefficients, empty logs,
+  discarded hash data, scalar/pair caches, updated cache retention, exact output
+  bytes, actual runtime, caller storage preservation and released scratch.
+  This establishes the routers, not yet the complete extractor composition.
 
 Remaining integration sequence:
 

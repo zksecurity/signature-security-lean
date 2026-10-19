@@ -32,6 +32,7 @@ import Signatures.Runtime.Caliper.BLSTokensSource
 import Signatures.Runtime.Caliper.BLSFinalFrameNames
 import Signatures.Runtime.Caliper.BLSSignatureTailSource
 import Signatures.Runtime.Caliper.BLSSignatureTailAcceptance
+import Signatures.Runtime.Caliper.BLSExtractorFrameBounds
 import Signatures.Runtime.Caliper.RowFoldPostcondition
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement

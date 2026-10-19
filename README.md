@@ -233,10 +233,13 @@ Pinned upstreams:
   derived resource bounds. Signature-transcript evaluation, physically saved
   forgery context and final extraction now compose in both branches, with exact
   original-oracle semantics, a proved remaining-slot invariant, accepted word
-  operands, and time, code and all-visited-memory bounds. Connecting the good
-  branch's hash evaluation and the original forgery/transcript input to this
-  phase, and connecting setup, caller and extraction into complete reductions,
-  coverage of the intended Caliper attacker class, remain to be done.
+  operands, and time, code and all-visited-memory bounds. Initial forgery/log/cache
+  routing and the handoff after hash evaluation now also execute charged word
+  copies, with exact encoding, time/code and all-visited-memory proofs. Their
+  bounded inputs include both explanations and both logs, even when the bad
+  branch discards hash data. Composing the hash phase and these routes into full
+  extractors, connecting setup and caller to extraction, and proving coverage
+  of the intended Caliper attacker class remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
