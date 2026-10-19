@@ -228,9 +228,10 @@ Pinned upstreams:
   The final private lookup and scalar extraction arithmetic now also execute
   constructed programs, with original-oracle equality and time, code and
   intermediate-memory bounds. Both branches preserve total division semantics
-  and the updated cache. Connecting the transcript evaluations to the final
-  lookup, constructing the incoming extraction frames and numerator addition,
-  and connecting setup,
+  and the updated cache. Final-request packing now also executes its copies,
+  default construction and the good branch's `beta + hashes` addition, with
+  derived resource bounds. Connecting the transcript evaluations through the
+  retained forgery frames to this final phase, and connecting setup,
   caller, final-forgery handling and extraction into complete reductions, and
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain

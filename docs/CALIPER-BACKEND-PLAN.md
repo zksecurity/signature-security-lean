@@ -1092,9 +1092,9 @@ Implemented and checked:
   zero denominators, missing replies, both pair coordinates, preserved caller
   storage and released scratch space. The word-arithmetic fixtures test wiring;
   the general theorems require the selected field routines' actual contracts.
-  The incoming good frame already contains `beta + hashes`. Constructing this
-  frame, paying for that addition, and joining row preparation/evaluation to
-  the final lookup are still part of complete extractor assembly.
+  The incoming good frame already contains `beta + hashes`; the executed
+  constructor below now supplies that addition. Joining transcript evaluations
+  through their retained forgery frames remains part of full extractor assembly.
 
 - [TokenEvaluation](../Signatures/Runtime/Caliper/TokenEvaluation.lean) composes
   chronological token/coefficients preparation, literal initial-accumulator
@@ -1122,6 +1122,28 @@ Implemented and checked:
   sampling replies, cache reservation, instruction acceptance and caller storage.
   These phases still need executed outer frames retaining the forgery data,
   the other transcript and intermediate sums before full extractor composition.
+
+- [CacheTargetFrame](../Signatures/Runtime/Caliper/CacheTargetFrame.lean) packs
+  the returned transcript sum/cache and saved target/scalar into the final
+  private-lookup request. Projections, literal defaults, retained input copies
+  and output construction execute instructions. The hit-or-room invariant
+  admits full-cache hits; a remaining-slot reservation supplies it on misses.
+  Time is at most `616*W`, code at most `2002*W + 794`, and scratch buffer names
+  are at most six. The entire cache capacity, including padding, is charged.
+  [BLSFinalFrame](../Signatures/Runtime/Caliper/BLSFinalFrame.lean) constructs
+  the good branch's numerator from separately stored `beta` and `hashes` using
+  the named scalar addition routine. Its complete frame takes at most
+  `864*W + addTime` steps and `2808*W + 1116 + addWords` code words. The bad
+  branch uses the pair-valued constructor and preserves the original coordinate
+  ordering. Bounds and names are derived from addition and the executed code;
+  no whole-frame implementation contract is assumed.
+  [Execution regressions](../SignaturesTest/CaliperBLSFinalFrame.lean) run these
+  frames followed by the existing final lookup/extraction arithmetic. They cover
+  hits, misses, duplicates, empty caches, zero division, incomplete pair replies,
+  preserved caller storage and released scratch. The word fixture also checks
+  that addition executes; it is not a field implementation.
+  Outer frames must still retain forgery data across the transcript evaluations
+  before these phases can constitute a complete extractor.
 
 Remaining integration sequence:
 
