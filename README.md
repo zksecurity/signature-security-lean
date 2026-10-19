@@ -206,7 +206,9 @@ Pinned upstreams:
   `q`. Both BLS AGM setup branches
   now execute their runtime challenge selection and empty-store construction;
   the sampled branch also executes scalar sampling and public-key multiplication.
-  Their source correspondence and resource bounds are proved. Connecting setup,
+  Their source correspondence and resource bounds are proved. BLS transcript
+  reversal now executes charged list folds, with proved chronological ordering,
+  time, stored-code and intermediate-memory bounds. Connecting setup,
   caller, final-forgery handling and extraction into complete reductions, and
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain

@@ -928,6 +928,28 @@ Implemented and checked:
   curve implementation. These setup and caller phases still need composition
   with final-forgery handling and extraction into full reduction certificates.
 
+- [ListReverse](../Signatures/Runtime/Caliper/ListReverse.lean) constructs actual
+  reversal of an admitted source list. Its staged fold grows the accumulator
+  and executes padding on early return. [StagedFoldAcceptance](../Signatures/Runtime/Caliper/StagedFoldAcceptance.lean)
+  proves successful emission from the local body implementations and bounds the
+  reused scratch namespace independently of traversal capacity.
+  [ListReverseBounds](../Signatures/Runtime/Caliper/ListReverseBounds.lean) derives
+  polynomial time and stored-code budgets from entry width and list capacity;
+  it includes all copied/padded words and stored unrolled bodies. The reversal
+  uses at most three buffer names. Its memory theorem includes stored code,
+  registers/descriptors, all initial capacity and every intermediate state.
+  [BLSChronological](../Signatures/Runtime/Caliper/BLSChronological.lean) executes
+  this reversal for both explicit-reply logs, implementing the original source
+  `chronological` view with at most four buffer names. If one reversal has
+  budgets `T`/`C` and each stored log has `L` words, the complete preparation
+  costs at most `2*T + 172*L` steps and `2*C + 559*L + 154` code words.
+  [Regressions](../SignaturesTest/CaliperBLSChronological.lean) check empty,
+  partial and full lists, zero-capacity and zero-word-entry layouts, invalid
+  length/entry bounds, duplicate-message transcript occurrences, separate log
+  padding, released scratch and untouched caller storage. Source/resource
+  endpoints and axiom guards are instantiated. Coefficient association and
+  private row evaluation still need their Caliper implementations.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in
@@ -985,8 +1007,9 @@ extractor implementation, not a claim that extraction has been compiled.
    The original-machine bridge is now instantiated with the constructed BLS handler,
    carrying reservations through the generated controller. Complete the reduction's
    final-forgery and extraction phases, then compose the proved setup and caller
-   phases into complete solvers. Use the proved `2*q + 1` cache headroom and charge
-   transcript reversal and each private read. Caller state and private store are already
+   phases into complete solvers. Use the proved `2*q + 1` cache headroom and
+   charged chronological preparation. Implement coefficient association and
+   evaluation, charging each private read and field operation. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
