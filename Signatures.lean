@@ -25,6 +25,7 @@ import Signatures.Runtime.Caliper.BLSSetupResources
 import Signatures.Runtime.Caliper.BLSChronological
 import Signatures.Runtime.Caliper.ListIndexBounds
 import Signatures.Runtime.Caliper.TokenRowsSource
+import Signatures.Runtime.Caliper.BLSPrivateAccumulateOracle
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics

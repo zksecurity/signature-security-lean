@@ -997,8 +997,39 @@ Implemented and checked:
   duplicate messages with different returned points, missing/surplus coefficients,
   early padding and all scratch release. They reject invalid counters and input
   bounds, check that surplus coefficients increase charged work, and audit the
-  complete source bridge and resource proofs. Private evaluation of these rows,
-  final target lookup and extraction arithmetic remain to be connected.
+  complete source bridge and resource proofs. The private evaluation step below
+  still needs to be assembled into the row loop, final target lookup and extraction.
+
+- [BLSAccumulate](../Signatures/Runtime/Caliper/BLSAccumulate.lean) constructs
+  scalar `acc + coeff * answer` and both coordinates of pair accumulation from
+  individual scalar multiplication/addition implementations. Copies, projections
+  and each stored routine occurrence are charged. With scalar width `s`, scalar
+  time budgets `Tm, Ta` and code budgets `Cm, Ca`, the scalar update costs at most
+  `Tm + Ta + 472*s` steps and `Cm + Ca + 1534*s + 322` code words. The pair update
+  costs at most `2*Tm + 2*Ta + 2776*s` steps and `2*Cm + 2*Ca + 9022*s + 1470`
+  code words. [BLSAccumulateSource](../Signatures/Runtime/Caliper/BLSAccumulateSource.lean)
+  proves agreement with the original `goodCombine` and `badCombine` expressions.
+  No complete accumulator implementation is assumed.
+  [CacheAccumulate](../Signatures/Runtime/Caliper/CacheAccumulate.lean) retains
+  the represented coefficient and accumulator across the actual encoded cache
+  read, then constructs update arguments and returns the new accumulator jointly
+  with the updated cache. On the explicit hit-or-room domain, this agrees with
+  the original association-list handler and adds at most one cache entry.
+  Its overhead beyond the cache read and local update is at most `404*W` steps
+  and `1313*W + 532` code words, where `W` includes the cache request, coefficient
+  and accumulator widths. [CacheAccumulateMemory](../Signatures/Runtime/Caliper/CacheAccumulateMemory.lean)
+  bounds generated names, stored descriptions and every intermediate state of
+  the same execution, including initial caller capacity.
+  [BLSPrivateAccumulate](../Signatures/Runtime/Caliper/BLSPrivateAccumulate.lean)
+  instantiates both updates and derives the pair sampler from two scalar draws.
+  [Source agreement](../Signatures/Runtime/Caliper/BLSPrivateAccumulateOracle.lean)
+  uses the existing BLS private oracle, with its uniform scalar law explicit;
+  these reads create no public transcript tokens. [Regressions](../SignaturesTest/CaliperBLSPrivateAccumulate.lean)
+  exercise full-cache hits without sampling, scalar/pair misses, zero and distinct
+  coordinates, duplicate-key priority, invalid full-cache misses and message
+  bounds, caller storage preservation and scratch release. This is the compiled
+  per-read update; row traversal, final-target arithmetic and complete solver
+  composition remain.
 
 Remaining integration sequence:
 
@@ -1058,8 +1089,9 @@ extractor implementation, not a claim that extraction has been compiled.
    carrying reservations through the generated controller. Complete the reduction's
    final-forgery and extraction phases, then compose the proved setup and caller
    phases into complete solvers. Use the proved `2*q + 1` cache headroom and
-   charged chronological coefficient-row preparation. Implement private row
-   evaluation, charging each private read and field operation. Caller state and private store are already
+   charged chronological coefficient-row preparation. Compose the constructed
+   private read/accumulator update into row evaluation with its remaining-capacity
+   invariant, then implement final-target field arithmetic. Caller state and private store are already
    framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with

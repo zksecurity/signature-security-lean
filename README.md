@@ -214,7 +214,10 @@ Pinned upstreams:
   Chronological coefficient-row assembly now executes both reversals, bounded
   indexing, counter increments and row allocation, with a proof that it implements
   the original AGM row expression. Missing coefficients use zero; surplus entries
-  remain charged and create no rows. Private row evaluation remains. Connecting setup,
+  remain charged and create no rows. A private read followed by scalar or pair
+  accumulation now has executed code, source agreement, and derived time, code
+  and intermediate-memory bounds. Pair sampling and arithmetic are constructed
+  from the scalar routines. The row-evaluation loop remains. Connecting setup,
   caller, final-forgery handling and extraction into complete reductions, and
   coverage of the intended Caliper attacker class, remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
