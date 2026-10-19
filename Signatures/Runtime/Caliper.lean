@@ -43,6 +43,7 @@ import Signatures.Runtime.Caliper.InteractiveMemory
 import Signatures.Runtime.Caliper.InteractiveInvariantBounds
 import Signatures.Runtime.Caliper.SumContextBounds
 import Signatures.Runtime.Caliper.CallerStepBounds
+import Signatures.Runtime.Caliper.CallerExecution
 
 /-! Caliper execution and separately certified encoded cryptographic routines.
 This module is independent of the signature games. It supplies a concrete local
@@ -102,7 +103,11 @@ Interactive loops now carry decreasing reachable-domain invariants through
 supported source answers, with time and complete memory bounds for the same run.
 Generated caller steps preserve caller state across handlers and private stores
 across local continuations. Their copying, padding and routing have linear
-overhead bounds; whole-caller source-machine linkage remains to be completed.
+overhead bounds. Complete bounded controllers include charged initialization,
+early return and observable cutoff, with time, stored-code and whole-memory bounds.
+Their original OracleMachine bridge preserves the final private store and uses
+ImplementsWithin to identify the source program and exclude cutoff. Scheme-specific
+packet layouts and the local source-correspondence proofs still need instantiation.
 Scheme-specific primitive implementations, reachable-state invariants, replay
 linking and signature model instantiation remain separate obligations.
 -/

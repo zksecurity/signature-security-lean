@@ -790,9 +790,46 @@ Implemented and checked:
   the tape cursor. They exercise zero-range follow-ups, zero-fuel stopping and
   both unequal-width routing branches. A decreasing-domain loop refinement and
   time bound are checked for every represented input and supported reply.
-  This is a generated step and loop framework, not yet the whole BLS caller:
-  initialization, original `OracleMachine` linkage, dependent BLS packet routing,
-  finalization and extraction still need their composition proofs.
+  The complete generated controller and original-machine bridge are described
+  below. Dependent BLS packet routing, finalization and extraction still need
+  their scheme-specific composition proofs.
+- [CallerControl](../Signatures/Runtime/Caliper/CallerControl.lean) constructs
+  initialization with a retained private store, initial-result dispatch, a
+  bounded handler/continuation loop, early return and cutoff. Final packets retain
+  either a result or the pending request and caller state. Cutoff stays distinct
+  from return in the actual stored tag. [Refinement](../Signatures/Runtime/Caliper/CallerControlRefinement.lean)
+  carries readiness and decreasing reservations through supported handler replies;
+  no finished-controller implementation or efficiency contract is assumed.
+  [Routing](../Signatures/Runtime/Caliper/CallerControlRouting.lean) charges all
+  padding, tag and saved-state transfers. For `W = CallerStep.width`, input width
+  `A`, allowance `q`, and primitive times `I,L,H`, the
+  [complete time bound](../Signatures/Runtime/Caliper/CallerControlTime.lean) is
+  `I + 8*A + 88*W + 4 + q*(H + L + 172*W + 6)`.
+  [Stored instructions](../Signatures/Runtime/Caliper/CallerControlStorage.lean)
+  occupy at most `CI + 26*A + 507*W + 286 + q*(CH + CL + 742*W + 389)` words.
+  This includes every inlined copy of the bounded loop body. Description
+  acceptance and dense register/buffer name bounds follow from the primitive
+  implementations and their reserved names.
+- [CallerMachine](../Signatures/Runtime/Caliper/CallerMachine.lean) connects the
+  controller to an arbitrary original `OracleMachine`. Explicit views relate
+  bounded caller/private states to the original mathematical types. The local
+  caller transition matches the original next head; handler synchronization
+  matches typed replies and private state jointly. The whole-run correspondence
+  is proved by induction, preserving the original adaptive query tree.
+  `ImplementsWithin` identifies the source program and rules out fuel exhaustion.
+  [CallerExecution](../Signatures/Runtime/Caliper/CallerExecution.lean) applies this
+  bridge to the actual generated word program and proves its complete memory
+  account for every visited state of the same supported execution. Initial
+  buffer capacity, code, register slots and descriptors are all included.
+  [Regressions](../SignaturesTest/CaliperCallerControl.lean) check immediate return
+  at zero allowance, pending cutoff, return after a query, early return with spare
+  allowance, and repeated adaptive calls ending in cutoff. They check traces,
+  unconsumed replies and unrelated machine storage. An original machine with a
+  Nat query interface and an implementation certificate is instantiated; kernel
+  proofs connect its source program to the actual controller and instantiate
+  time and every-intermediate-state memory bounds. These fixtures test the generic
+  theorem and do not establish coverage of all efficient Caliper attackers or
+  instantiate BLS's dependent packets and source correspondences.
 
 Remaining integration sequence:
 
@@ -835,8 +872,8 @@ Remaining integration sequence:
    caller steps and decreasing-domain loop composition are proved.
    Prove private finite-domain sampling agrees with the chosen randomness
    interface; oracle packet transport alone does not supply this distribution proof.
-   Complete original-machine linkage and the BLS packet layouts, carrying the
-   existing reservations through generated caller steps. Caller state and private
+   Instantiate the proved original-machine bridge for the BLS packet layouts,
+   carrying the existing reservations through generated caller steps. Caller state and private
    store are already framed across their respective callees in those steps.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with

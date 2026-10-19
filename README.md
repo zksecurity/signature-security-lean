@@ -188,8 +188,12 @@ Pinned upstreams:
   overhead from executed copies. Interactive loops can carry decreasing capacity
   reservations, and retain time and complete memory bounds on their reachable
   domains. Regressions execute adaptive next-request selection across two calls.
-  Whole-caller source-machine linkage, initialization, final-forgery handling and
-  extraction remain to be connected.
+  Complete generated controllers now include initialization, early return and
+  observable cutoff, with proved time, stored-code and complete memory bounds.
+  A bridge to the original attacker machine preserves its final private store;
+  the original implementation certificate identifies the source program and
+  excludes cutoff. Scheme-specific packet layouts and source-correspondence
+  proofs, final-forgery handling and extraction remain to be connected.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
