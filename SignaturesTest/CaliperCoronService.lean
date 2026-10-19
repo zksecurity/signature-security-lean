@@ -1,5 +1,6 @@
 import Signatures.Runtime.Caliper.CoronServiceBounds
 import Signatures.Runtime.Caliper.CoronServiceSource
+import Signatures.Runtime.Caliper.CoronTerminalBounds
 import Lean
 
 /-! Whole-service execution with real sampling and word arithmetic. These are
@@ -131,6 +132,65 @@ private def hashThenSign (coin : Word 16) := do
   let signed ← observe sign decoded.2 hashed.remaining
   pure (BLSCallerHandler.replyValue layout.service 255 decoded.1, hashed.trace, signed)
 
+private def subtraction : Implementation .unit layout.response.points layout.point (fun value => value.1 - value.2) where
+  preserves _ _ := trivial
+  program := ((WordBinary.realizer .unit .sub layout.cache.wordFits).viewInput layout.response.points.representation
+    (fun value => value.val) (fun _ => rfl)).viewOutput layout.point.representation
+      (fun value => ⟨value.val.1 - value.val.2, trivial⟩) (fun _ => rfl)
+private def terminalArithmetic : CoronTerminal.Arithmetic layout where
+  scale := scale
+  sub := subtraction
+  scaleTime := 6
+  scaleWords := 27
+  subTime := 6
+  subWords := 27
+  scaleBound := ⟨fun _ => le_rfl, le_rfl⟩
+  subBound := ⟨fun _ => le_rfl, le_rfl⟩
+  slots := 3
+  scaleNames := by constructor <;> decide
+  subNames := by constructor <;> decide
+  reserve := by decide
+
+private theorem terminal_valid_iff (message : Nat) (fallback : Fin 4 × Fin 2)
+    (entries : List (Nat × (Fin 4 × Fin 2))) (sigma X : Word 16) :
+    (CoronTerminal.input layout).valid ((message, fallback, entries, ()), (sigma, X)) ↔
+      (message < 256 ∧ entries.length ≤ 2 ∧ ∀ entry ∈ entries, entry.1 < 256) ∧
+        ((lookupValue message fallback entries).1 = false → entries.length ≤ 1) := by
+  change (((message < 256 ∧ (True ∧ True) ∧
+    (entries.length ≤ 2 ∧ ∀ entry ∈ entries, entry.1 < 256 ∧ (True ∧ True)) ∧ True) ∧
+    ((lookupValue message fallback entries).1 = false → entries.length ≤ 1)) ∧ (True ∧ True)) ↔ _
+  simp only [true_and, and_true]
+private def finalFresh : (CoronTerminal.input layout).Value :=
+  ⟨((5, (0, 1), [], ()), (100, 11)), by rw [terminal_valid_iff]; decide +kernel⟩
+private def finalHit : (CoronTerminal.input layout).Value :=
+  ⟨((5, (0, 0), [(5, (3, 1)), (6, (2, 0))], ()), (100, 11)), by rw [terminal_valid_iff]; decide +kernel⟩
+private def finalShadowed : (CoronTerminal.input layout).Value :=
+  ⟨((5, (3, 0), [(5, (0, 1)), (5, (3, 0))], ()), (100, 11)), by rw [terminal_valid_iff]; decide +kernel⟩
+example : ¬(CoronTerminal.input layout).valid
+    ((7, (0, 0), [(5, (3, 1)), (6, (2, 0))], ()), (100, 11)) := by
+  rw [terminal_valid_iff]; decide +kernel
+
+private theorem terminal_within : Interactive.Within layout.port (CoronTerminal.input layout) layout.point
+    (CoronTerminal.codeBudget layout sampler terminalArithmetic) (CoronTerminal.memoryBudget layout sampler terminalArithmetic)
+    (CoronTerminal.timeBudget layout sampler terminalArithmetic)
+    (fun value => (fun result => value.val.2.1 - result.1.1 • value.val.2.2) <$>
+      ((BLS.LazyAGM.Reduction.privateListOracle (M := Nat) (R := Fin 4 × Fin 2))
+        (.inr value.val.1.1)).run value.val.1.2.2.1) :=
+  CoronTerminal.within layout sampler terminalArithmetic
+
+private def finish (value : (CoronTerminal.input layout).Value) (replies : List (Word 16)) := do
+  let initial := (CoronTerminal.input layout).representation.initial value
+  let before := { initial with
+    regs := fun register => if register = 200 then 99 else initial.regs register
+    bufs := fun buffer => if buffer = 200 then #[77] else initial.bufs buffer
+    caps := fun buffer => if buffer = 200 then 3 else initial.caps buffer
+    tapePos := 7 }
+  let result ← WordIO.run .unit RandomTape.zero 100000
+    ((CoronTerminal.code layout sampler terminalArithmetic).lower layout.port) before replies
+  pure (result.state.bufs 0, result.trace, result.remaining,
+    result.state.bufs 200, result.state.caps 200, result.state.regs 200, result.state.tapePos,
+    decide (result.time ≤ CoronTerminal.timeBudget layout sampler terminalArithmetic))
+
 open Lean in
 run_cmd do
   let draws : List (WordIO.Event 16) :=
@@ -155,11 +215,25 @@ run_cmd do
     throwError "random forwarding changed the persistent store or dependent reply range"
   unless (execute hash empty [3, 3]).isNone do
     throwError "fresh hashing completed without its coin reply"
+  unless finish finalFresh [3, 3, 1, 0, 42] == some (#[67], draws, [42], #[77], 3, 99, 7, true) do
+    throwError "fresh terminal extraction did not return sigma minus rho times X"
+  unless finish finalFresh [3, 3, 1, 1, 42] == some (#[67], ordinaryDraws, [42], #[77], 3, 99, 7, true) do
+    throwError "terminal extraction improperly depends on the coin branch"
+  unless finish finalHit [42] == some (#[67], [], [42], #[77], 3, 99, 7, true) do
+    throwError "full-cache terminal hit resampled or changed the cached scalar"
+  unless finish finalShadowed [42] == some (#[100], [], [42], #[77], 3, 99, 7, true) do
+    throwError "terminal lookup ignored the first binding or mishandled zero scalar"
+  unless (finish finalFresh [3, 3]).isNone do
+    throwError "terminal sampling omitted the source computation's coin draw"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``CoronService.refines, ``CoronService.time_bound, ``CoronService.code_words,
       ``CoronService.names, ``CoronService.descriptionFits, ``CoronService.within,
       ``CoronService.denote_source, ``CoronService.denote_native, ``CoronService.ready_of_reserved,
-      ``CoronService.reserved_after, ``within] do
+      ``CoronService.reserved_after, ``within, ``Coron.Paired.finish_hash, ``Coron.Paired.reduction_finish,
+      ``CoronTerminal.extract, ``CoronTerminal.extract_bounded, ``CoronTerminal.extract_names,
+      ``CoronTerminal.refines, ``CoronTerminal.source_eq, ``CoronTerminal.time_bound,
+      ``CoronTerminal.code_words, ``CoronTerminal.names, ``CoronTerminal.descriptionFits,
+      ``CoronTerminal.within, ``CoronTerminal.within_finish, ``terminal_within] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

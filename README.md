@@ -292,8 +292,12 @@ Pinned upstreams:
   random/hash/sign [Coron service](Signatures/Runtime/Caliper/CoronService.lean),
   with derived time, code and total-memory bounds and exact correspondence to
   the original oracle, including its caches and signing set. Cache/log capacity
-  preservation is proved. The complete co-CDH caller/controller, terminal
-  extraction and public theorem still need integration.
+  preservation is proved. The [terminal cache read and extraction](Signatures/Runtime/Caliper/CoronTerminalBounds.lean)
+  now also have actual code and complete resource bounds. A source equality
+  fuses the final verification hash and extraction into this paired read and
+  `signature - scalar • challenge`, preserving both draws on a miss.
+  Connecting setup, the caller/controller, terminal input preparation and the
+  public co-CDH theorem remains unfinished.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

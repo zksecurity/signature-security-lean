@@ -1441,8 +1441,9 @@ Implemented and checked:
   does not enumerate the message domain or execute its function-valued caches.
   The constructed service below retains both explicit reply logs and charges
   them in its complete resource bounds.
-  Executed final handling, the complete controller,
-  public Caliper security theorem and its polynomial family remain unfinished.
+  The terminal cache read and extraction below are now executed. Terminal input
+  preparation, the complete controller, public Caliper security theorem and its
+  polynomial family remain unfinished.
 - [Coron response code](../Signatures/Runtime/Caliper/CoronResponse.lean) now
   constructs the hash and signing arithmetic from implemented group scaling and
   addition. Its input contains the scalar/coin entry and all three challenge
@@ -1483,8 +1484,34 @@ Implemented and checked:
   logs, incomplete randomness and private-frame preservation. They instantiate
   the complete resource certificate and audit its axioms. These tests use small
   word arithmetic, not a curve implementation.
-  Complete co-CDH setup, caller/controller, final hashing and extraction, followed
-  by its public concrete and polynomial-family statements, remain to be joined.
+  Complete co-CDH setup, caller/controller and terminal input preparation,
+  followed by its public concrete and polynomial-family statements, remain
+  to be joined to the terminal implementation below.
+- [Coron's terminal implementation](../Signatures/Runtime/Caliper/CoronTerminal.lean)
+  executes the final paired cache read and computes `signature - scalar • X`
+  using implemented group scaling/subtraction. The signature and challenge point
+  survive the read in a charged saved buffer. Cache hits work at full capacity
+  without drawing randomness; misses require one free entry and retain the
+  source's scalar-then-coin sampling order, even though extraction ignores the coin.
+  [Exact source equalities](../Signatures/Runtime/CoronFinalCache.lean) prove that
+  this computation replaces the appended verification hash and scalar lookup
+  in the existing reduction, for every source adversary. The discarded hash
+  value and final transcript entry are unobserved; ordinary caller hash/sign
+  events still use the complete service and retain its logs.
+  [Extraction arithmetic](../Signatures/Runtime/Caliper/CoronTerminalArithmeticBounds.lean)
+  derives projection, pairing, time and name bounds from the actual primitive
+  code. At `W = pairedCache.lookup.width + 4*pointWords`, the
+  [complete terminal bounds](../Signatures/Runtime/Caliper/CoronTerminalBounds.lean)
+  add `scaleTime + subTime + 292*W` steps and
+  `scaleWords + subWords + 949*W + 395` code words to the cache-read budgets.
+  The memory witness includes code, descriptors, the prepared input and all
+  intermediate copies; `within_finish` implements the factored original source.
+  Tests execute fresh targets with both coin branches, full-cache hits and
+  shadowed zero-scalar entries, preserving private state and checking real time.
+  Missing coin input fails, and a full-cache miss is outside the admitted domain.
+  The prepared terminal input currently contains the cache request, signature
+  and challenge point. Constructing that input from the complete caller result
+  and composing setup/controller/terminal remain explicit integration work.
 
 Remaining integration sequence:
 
