@@ -1,5 +1,7 @@
 import Signatures.Runtime.Caliper.BLSExtractorAcceptance
 import Signatures.Runtime.Caliper.BLSExtractorSource
+import Signatures.Runtime.Caliper.BLSExtractionExitSource
+import Signatures.Runtime.Caliper.BLSCallerFinishService
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -121,9 +123,9 @@ private theorem good_time : Interactive.TimeBoundOn (BLSExtractor.goodReady layo
     layout (by trivial) primitives comparison comparison_correct mul add sub divide mul_names.buffers add_names.buffers sub_names.buffers reserve div_names.buffers port draw_correct draw_time mul_bound add_bound sub_bound div_bound
 example : (good.lower port).descriptionWords ≤ BLSExtractor.goodWords (base := base) (key := .nat) (val := .atom ()) layout 20 27 27 27 27 :=
   BLSExtractor.good_words (base := base) (key := .nat) (val := .atom ()) (slots := 3) layout (by trivial) primitives comparison comparison_correct mul add sub divide mul_names.buffers add_names.buffers sub_names.buffers reserve div_names.buffers port draw draw_words mul_bound add_bound sub_bound div_bound
-example : WordIO.NamesAccounted (good.lower port) 5 :=
+private theorem good_accounted : WordIO.NamesAccounted (good.lower port) 5 :=
   BLSExtractor.good_names (drawNames := 3) (names := 3) (base := base) (key := .nat) (val := .atom ()) (slots := 3) layout (by trivial) primitives comparison comparison_correct mul add sub divide mul_names.buffers add_names.buffers sub_names.buffers reserve div_names.buffers port draw draw_names mul_names.accounted add_names.accounted sub_names.accounted div_names.accounted
-example : (good.lower port).DescriptionFits :=
+private theorem good_fits : (good.lower port).DescriptionFits :=
   BLSExtractor.good_descriptionFits (base := base) (key := .nat) (val := .atom ()) (slots := 3) layout (by trivial) primitives comparison comparison_correct mul add sub divide mul_names.buffers add_names.buffers sub_names.buffers reserve div_names.buffers port draw draw_fits draw_names (by decide)
 private def bad := BLSExtractor.badCode (base := base) (key := .nat) (val := .atom ()) (slots := 3)
   layout (by trivial) primitives comparison comparison_correct mul add sub negate divide mul_names.buffers add_names.buffers sub_names.buffers reserve neg_names.buffers div_names.buffers port draw
@@ -139,9 +141,9 @@ private theorem bad_time : Interactive.TimeBoundOn (BLSExtractor.badReady layout
     layout (by trivial) primitives comparison comparison_correct mul add sub negate divide mul_names.buffers add_names.buffers sub_names.buffers reserve neg_names.buffers div_names.buffers port draw_correct draw_time mul_bound add_bound sub_bound neg_bound div_bound
 example : (bad.lower port).descriptionWords ≤ BLSExtractor.badWords (base := base) (key := .nat) (val := .atom ()) layout 20 27 27 27 631 27 :=
   BLSExtractor.bad_words (base := base) (key := .nat) (val := .atom ()) (slots := 3) layout (by trivial) primitives comparison comparison_correct mul add sub negate divide mul_names.buffers add_names.buffers sub_names.buffers reserve neg_names.buffers div_names.buffers port draw draw_words mul_bound add_bound sub_bound neg_bound div_bound
-example : WordIO.NamesAccounted (bad.lower port) 5 :=
+private theorem bad_accounted : WordIO.NamesAccounted (bad.lower port) 5 :=
   BLSExtractor.bad_names (drawNames := 3) (names := 3) (base := base) (key := .nat) (val := .atom ()) (slots := 3) layout (by trivial) primitives comparison comparison_correct mul add sub negate divide mul_names.buffers add_names.buffers sub_names.buffers reserve neg_names.buffers div_names.buffers port draw draw_names mul_names.accounted add_names.accounted sub_names.accounted neg_names.accounted div_names.accounted
-example : (bad.lower port).DescriptionFits :=
+private theorem bad_fits : (bad.lower port).DescriptionFits :=
   BLSExtractor.bad_descriptionFits (base := base) (key := .nat) (val := .atom ()) (slots := 3) layout (by trivial) primitives comparison comparison_correct mul add sub negate divide mul_names.buffers add_names.buffers sub_names.buffers reserve neg_names.buffers div_names.buffers port draw draw_fits draw_names (by decide)
 
 open BLSExtractorFrame
@@ -244,6 +246,128 @@ run_cmd do
       ``BLSExtractor.good_descriptionFits, ``BLSExtractor.bad_descriptionFits,
       ``Interactive.RefinesOn.viewInput, ``Interactive.RefinesOn.viewOutput, ``Interactive.TimeBoundOn.viewInput,
       ``good_correct, ``bad_correct, ``good_time, ``bad_time] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+-- Pending caller data can exceed the forgery width: union padding lies before
+-- the nonzero configuration. Both must be skipped without corrupting the cache.
+private def exitConfig := (wordRepresentation 16 (by decide)).prod (wordRepresentation 16 (by decide)) (by decide)
+private def exitPending := (forgery layout.good).representation.prod exitConfig (by decide)
+private def service := BLSCallerFinish.service layout.good (Layout.all exitConfig) (by decide) (by decide)
+private def callerStore (value : BLSExtractor.GoodInput layout) : service.store.Value :=
+  ⟨((99, 100), value.val.2), trivial, value.property.2⟩
+private def emptyCallerStore : service.store.Value :=
+  ⟨((99, 100), ([], ([], []))), trivial, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩⟩
+private theorem caller_postcondition : BLSCaller.Postcondition service 2 emptyCallerStore (callerStore goodHit) where
+  reserved := {
+    config := trivial
+    cached := (callerStore goodHit).property.2.1.2
+    recorded := ⟨(callerStore goodHit).property.2.2.1.2, (callerStore goodHit).property.2.2.2.2⟩
+    cacheRoom := by decide
+    logRoom := by decide }
+  config := rfl
+  cache := by decide
+  logs := by decide
+example : BLSCallerFinish.ready layout.good (BLSExtractor.goodReady layout)
+    (BLSCallerFinish.packetView layout.good (Layout.all exitConfig) (by decide) (by decide)
+      ((.inl ⟨goodHit.val.1, goodHit.property.1⟩ : (forgery layout.good).Value ⊕ Unit), callerStore goodHit)) :=
+  BLSCallerFinish.packet_ready layout.good (Layout.all exitConfig) (by decide) (by decide) caller_postcondition (by decide) _
+example : BLSCallerFinish.ready layout.good (BLSExtractorFrame.signatureReady layout.good)
+    (BLSCallerFinish.packetView layout.good (Layout.all exitConfig) (by decide) (by decide)
+      ((.inl ⟨goodHit.val.1, goodHit.property.1⟩ : (forgery layout.good).Value ⊕ Unit), callerStore goodHit)) :=
+  BLSCallerFinish.packet_signature_ready layout.good (Layout.all exitConfig) (by decide) (by decide) caller_postcondition (by decide) _
+private def exitGood := BLSExtractionExit.goodCode (base := base) (key := .nat) (val := .atom ()) (slots := 3)
+  layout (by trivial) primitives comparison comparison_correct mul add sub divide mul_names.buffers add_names.buffers sub_names.buffers reserve div_names.buffers
+  exitConfig exitPending (by decide) port draw
+private def exitBad := BLSExtractionExit.badCode (base := base) (key := .nat) (val := .atom ()) (slots := 3)
+  layout (by trivial) primitives comparison comparison_correct mul add sub negate divide mul_names.buffers add_names.buffers sub_names.buffers reserve neg_names.buffers div_names.buffers
+  exitConfig exitPending (by decide) port draw
+private def exitGoodSmall := BLSExtractionExit.goodCode (base := base) (key := .nat) (val := .atom ()) (slots := 3)
+  layout (by trivial) primitives comparison comparison_correct mul add sub divide mul_names.buffers add_names.buffers sub_names.buffers reserve div_names.buffers
+  exitConfig accumulation.cache.lookup.unit.representation (by decide) port draw
+
+private def goodPacket (value : BLSExtractor.GoodInput layout) (configuration : Word 16 × Word 16) :
+    BLSCallerFinish.Packet (P := (forgery layout.good).Value × (Word 16 × Word 16)) (C := Word 16 × Word 16) layout.good :=
+  (.inl ⟨value.val.1, value.property.1⟩, configuration, ⟨value.val.2, value.property.2⟩)
+private def badPacket (value : BLSExtractor.BadInput layout) (configuration : Word 16 × Word 16) :
+    BLSCallerFinish.Packet (P := (forgery layout.good).Value × (Word 16 × Word 16)) (C := Word 16 × Word 16) layout.bad :=
+  (.inl ⟨value.val.1, value.property.1⟩, configuration, ⟨value.val.2, value.property.2⟩)
+private def goodCutoff (value : BLSExtractor.GoodInput layout) :
+    BLSCallerFinish.Packet (P := (forgery layout.good).Value × (Word 16 × Word 16)) (C := Word 16 × Word 16) layout.good :=
+  (.inr (⟨value.val.1, value.property.1⟩, (77, 88)), (99, 100), ⟨value.val.2, value.property.2⟩)
+private def badCutoff (value : BLSExtractor.BadInput layout) :
+    BLSCallerFinish.Packet (P := (forgery layout.good).Value × (Word 16 × Word 16)) (C := Word 16 × Word 16) layout.bad :=
+  (.inr (⟨value.val.1, value.property.1⟩, (77, 88)), (99, 100), ⟨value.val.2, value.property.2⟩)
+private def noRoom := goodValue 5 20 gamma xi (scalarCache [(2, 5)] (by decide) (by decide)) hashes signatures
+example : BLSCallerFinish.ready layout.good (BLSExtractor.goodReady layout) (goodCutoff noRoom) := by trivial
+
+private def exitGoodTime := BLSCallerFinish.timeBudget layout.good exitConfig exitPending (by decide)
+  (BLSExtractor.goodTime (base := base) (key := .nat) (val := .atom ()) layout 4 6 6 6 6)
+private def exitBadTime := BLSCallerFinish.timeBudget layout.bad exitConfig exitPending (by decide)
+  (BLSExtractor.badTime (base := base) (key := .nat) (val := .atom ()) layout 4 6 6 6 118 6)
+private theorem exit_good_time : Interactive.TimeBoundOn (BLSCallerFinish.ready layout.good (BLSExtractor.goodReady layout)) port .unit
+    (BLSCallerFinish.input layout.good exitConfig exitPending (by decide)) exitGood exitGoodTime :=
+  BLSExtractionExit.good_time (base := base) (key := .nat) (val := .atom ()) (slots := 3) (scalar := draw) (source := drawSource)
+    layout (by trivial) primitives comparison comparison_correct mul add sub divide mul_names.buffers add_names.buffers sub_names.buffers reserve div_names.buffers
+    exitConfig exitPending (by decide) port draw_correct draw_time mul_bound add_bound sub_bound div_bound
+private theorem exit_bad_time : Interactive.TimeBoundOn (BLSCallerFinish.ready layout.bad (BLSExtractor.badReady layout)) port .unit
+    (BLSCallerFinish.input layout.bad exitConfig exitPending (by decide)) exitBad exitBadTime :=
+  BLSExtractionExit.bad_time (base := base) (key := .nat) (val := .atom ()) (slots := 3) (scalar := draw) (source := drawSource)
+    layout (by trivial) primitives comparison comparison_correct mul add sub negate divide mul_names.buffers add_names.buffers sub_names.buffers reserve neg_names.buffers div_names.buffers
+    exitConfig exitPending (by decide) port draw_correct draw_time mul_bound add_bound sub_bound neg_bound div_bound
+example : (exitGood.lower port).DescriptionFits :=
+  BLSCallerFinish.descriptionFits layout.good exitConfig exitPending (by decide) port (BLSTokens.zero layout (by trivial)) good_fits
+example : (exitBad.lower port).DescriptionFits :=
+  BLSCallerFinish.descriptionFits layout.bad exitConfig exitPending (by decide) port (BLSTokens.zero layout (by trivial)) bad_fits
+example : WordIO.NamesAccounted (exitGood.lower port) 5 :=
+  BLSCallerFinish.names layout.good exitConfig exitPending (by decide) port good_accounted (BLSTokens.zero layout (by trivial))
+example : WordIO.NamesAccounted (exitBad.lower port) 5 :=
+  BLSCallerFinish.names layout.bad exitConfig exitPending (by decide) port bad_accounted (BLSTokens.zero layout (by trivial))
+
+private def runExitGood := run (BLSCallerFinish.input layout.good exitConfig exitPending (by decide)) exitGood exitGoodTime
+private def runCallerExit := run
+  (BLSCallerFinish.callerOutput layout.good (Layout.all exitConfig) (by decide) (by decide) exitPending (by decide)) exitGood exitGoodTime
+private def runExitBad := run (BLSCallerFinish.input layout.bad exitConfig exitPending (by decide)) exitBad exitBadTime
+private def runExitGoodSmall := run (BLSCallerFinish.input layout.good exitConfig accumulation.cache.lookup.unit.representation (by decide)) exitGoodSmall
+  (BLSCallerFinish.timeBudget layout.good exitConfig accumulation.cache.lookup.unit.representation (by decide)
+    (BLSExtractor.goodTime (base := base) (key := .nat) (val := .atom ()) layout 4 6 6 6 6))
+
+open Lean in
+run_cmd do
+  for configuration in [(0, 0), (99, 100)] do
+    unless runExitGood (goodPacket goodFresh configuration) [5, 7, 11, 13, 102, 88] ==
+        some (#[3], #[77], 4, 91, 9, true, events [5, 7, 11, 13, 102], [88], true) do
+      throwError "good return routing or scalar projection failed"
+    unless runExitBad (badPacket badFresh configuration) [5, 2, 7, 3, 55, 6, 88] ==
+        some (#[1], #[77], 4, 91, 9, true, events [5, 2, 7, 3, 55, 6], [88], true) do
+      throwError "bad return routing or scalar projection failed"
+  unless runExitGood (goodPacket goodEmpty (99, 100)) [] ==
+      some (#[5], #[77], 4, 91, 9, true, [], [], true) do throwError "cached return failed"
+  unless runCallerExit (.inl ⟨goodHit.val.1, goodHit.property.1⟩, callerStore goodHit) [15, 88] ==
+      some (#[5], #[77], 4, 91, 9, true, events [15], [88], true) do throwError "caller service store did not reach extraction"
+  unless runCallerExit (.inr (⟨goodHit.val.1, goodHit.property.1⟩, (77, 88)), callerStore goodHit) [88] ==
+      some (#[0], #[77], 4, 91, 9, true, [], [88], true) do throwError "caller service cutoff failed"
+  unless runExitGood (goodCutoff noRoom) [88] ==
+      some (#[0], #[77], 4, 91, 9, true, [], [88], true) do throwError "cutoff required extraction room or queried"
+  unless runExitBad (badCutoff badFresh) [88] ==
+      some (#[0], #[77], 4, 91, 9, true, [], [88], true) do throwError "bad cutoff queried or lost its fallback"
+  unless runExitGoodSmall (.inl ⟨goodFresh.val.1, goodFresh.property.1⟩, (99, 100), ⟨goodFresh.val.2, goodFresh.property.2⟩)
+      [5, 7, 11, 13, 102, 88] == some (#[3], #[77], 4, 91, 9, true, events [5, 7, 11, 13, 102], [88], true) do
+    throwError "return with smaller pending representation failed"
+  unless runExitGoodSmall (.inr ⟨(), trivial⟩, (99, 100), ⟨noRoom.val.2, noRoom.property.2⟩) [88] ==
+      some (#[0], #[77], 4, 91, 9, true, [], [88], true) do throwError "padded cutoff failed"
+  unless (runExitGood (goodPacket goodFresh (99, 100)) [5, 7, 11, 13]).isNone do
+    throwError "returned forgery accepted a missing final scalar"
+  unless (runExitBad (badPacket badFresh (99, 100)) [5, 2, 7, 3, 55]).isNone do
+    throwError "returned forgery accepted a partial pair"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``BLSCallerFinish.refines, ``BLSCallerFinish.time_bound, ``BLSCallerFinish.code_bound, ``BLSCallerFinish.resources,
+      ``BLSCallerFinish.service_cacheLogs, ``BLSCallerFinish.packet_bytes, ``BLSCallerFinish.packet_ready, ``BLSCallerFinish.packet_signature_ready,
+      ``BLSExtractionExit.good_refines, ``BLSExtractionExit.bad_refines, ``BLSExtractionExit.good_return_source, ``BLSExtractionExit.bad_return_source,
+      ``BLSExtractionExit.good_cutoff_source, ``BLSExtractionExit.bad_cutoff_source,
+      ``BLSExtractionExit.good_time, ``BLSExtractionExit.bad_time, ``BLSExtractionExit.good_words, ``BLSExtractionExit.bad_words,
+      ``BLSExtractionExit.good_names, ``BLSExtractionExit.bad_names, ``BLSExtractionExit.good_descriptionFits, ``BLSExtractionExit.bad_descriptionFits,
+      ``exit_good_time, ``exit_bad_time, ``caller_postcondition] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 end SignaturesTest.CaliperBLSExtractor

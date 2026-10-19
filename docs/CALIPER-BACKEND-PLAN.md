@@ -1230,8 +1230,38 @@ Implemented and checked:
   The word fixture tests composition; the general field theorems establish
   source equality. [Invariant views](../Signatures/Runtime/Caliper/InteractiveInvariantViews.lean)
   only change mathematical product views after proving identical encoded bytes.
-  Complete solver setup/caller/termination composition and public security-model
-  instantiation remain unfinished.
+  Caller termination is implemented below; complete solver setup/caller composition
+  and public security-model instantiation remain unfinished.
+
+- [BLSExtractionExit](../Signatures/Runtime/Caliper/BLSExtractionExit.lean)
+  instantiates executed caller-return/cutoff handling with both complete AGM
+  extractors. Its input contains the tagged forgery or pending caller state,
+  union padding, configuration, cache, and reverse-stored transcripts.
+  [Routing](../Signatures/Runtime/Caliper/BLSCallerFinishLayout.lean) copies the
+  forgery and private store past padding and configuration. Successful returns
+  run extraction and copy out the scalar; cutoffs execute a stored zero without
+  querying or requiring extraction headroom. [Composition](../Signatures/Runtime/Caliper/BLSCallerFinish.lean)
+  refines this control flow on the branch-specific reachable domain.
+  [Resource bounds](../Signatures/Runtime/Caliper/BLSCallerFinishBounds.lean)
+  include both stored branches, all copies, scalar projection, initial
+  configuration/pending data and every visited memory state. Actual BLS
+  instantiations derive time/code/name and operand-acceptance bounds from the
+  already constructed extractors and their primitive contracts.
+  [Source theorems](../Signatures/Runtime/Caliper/BLSExtractionExitSource.lean)
+  identify successful exits with the original scalar `goodFinish`/`badFinish`
+  computation and cutoff with zero. Operational regressions extend the complete
+  extractor fixture with nonzero configuration, both padding directions,
+  preserved caller storage, no-query cutoffs without extraction room, exact
+  scalar outputs, charged runtime and incomplete sampling replies.
+  [The service bridge](../Signatures/Runtime/Caliper/BLSCallerFinishService.lean)
+  constructs the caller service with the extractor's cache, token encoding and
+  log capacity, and proves that its stored configuration/cache/log bytes match
+  the terminal frame. The caller's existing growth postcondition supplies both
+  branches' extraction reservation; this is derived rather than assumed of the
+  completed caller. The service uses positive log capacity, so a zero-query
+  family can choose one slot. Its configuration/address fit is explicit.
+  Composing the generated caller execution with this handler, then with setup
+  into full solvers, remains unfinished.
 
 Remaining integration sequence:
 
@@ -1246,8 +1276,9 @@ per transcript token plus the final message. Transcript capacity stays at `q`;
 no extraction reservation is imposed on the logs. The asymmetric-capacity
 regression uses five cache entries and two transcript slots and rejects a
 five-slot joint reservation. This is the capacity precondition for the
-complete extractor implementation above. Connecting the caller's returned
-configuration/output frame to that extractor remains part of solver assembly.
+complete extractor implementation above. The service bridge transfers it to
+the terminal branch. Composing the generated caller execution and terminal
+handler remains part of solver assembly.
 
 1. Compile the remaining scheme code and establish reachable-state invariants.
    Fixed-capacity `cacheProgram` and `cacheGetExpr`, encoded
@@ -1290,14 +1321,13 @@ configuration/output frame to that extractor remains part of solver assembly.
    interface; oracle packet transport alone does not supply this distribution proof.
    The original-machine bridge is now instantiated with the constructed BLS handler,
    carrying reservations through the generated controller. Complete the reduction's
-   final-forgery and extraction phases, then compose the proved setup and caller
-   phases into complete solvers. Use the proved `2*q + 1` cache headroom and
-   charged chronological coefficient-row preparation and row evaluation with
-   its proved remaining-capacity invariant. The final lookup and arithmetic are
-   implemented, and row preparation/evaluation now form complete transcript
-   phases; construct the outer frames, including the good branch's numerator
-   addition, and connect these phases to the final lookup. Caller state and private store are already
-   framed across their respective callees.
+   execution composition, then compose the proved setup, caller and terminal
+   phases into complete solvers. The complete
+   extractors and terminal branches above execute chronological coefficient-row
+   preparation/evaluation, the retained outer frames, numerator addition and
+   final lookup/arithmetic. The service bridge connects the caller's proved
+   `2*q + 1` cache headroom to the terminal success branch's extraction reservation. Caller state and
+   private store are already framed across their respective callees.
    For rewinding, either copy all saved registers,
    buffer contents and capacities, or prove restart-from-initial-state replay with
    charged reinitialization. Caliper has no capacity-read instruction, so arbitrary

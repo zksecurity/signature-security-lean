@@ -243,8 +243,10 @@ Pinned upstreams:
   preserves the remaining cache reservation. Their erased results equal the
   original `goodFinish`/`badFinish` programs, including final cache and query
   order, with full time, code, intermediate-memory and operand-acceptance proofs.
-  Connecting setup and caller to extraction and proving coverage of the intended
-  Caliper attacker class remain to be done.
+  Caller-exit handling now executes tag dispatch, removal of padded configuration
+  data, extraction, and scalar projection, with a literal zero for cutoff.
+  Connecting the complete setup/caller pipeline to this exit and proving coverage
+  of the intended Caliper attacker class remain to be done.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
