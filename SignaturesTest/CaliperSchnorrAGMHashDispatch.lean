@@ -1,5 +1,7 @@
 import Signatures.Runtime.Caliper.SchnorrAGMHashDispatchMemory
 import Signatures.Runtime.Caliper.SchnorrAGMExtractionMemory
+import Signatures.Runtime.Caliper.SchnorrAGMCallerFinishBounds
+import Signatures.Runtime.Caliper.SchnorrAGMCallerFinishSource
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -206,6 +208,44 @@ private def emptyRequest : (CaliperBackend.SchnorrAGM.Extraction.input emptyLayo
 private def emptyProgram := CaliperBackend.SchnorrAGM.Extraction.code emptyLayout trivial mul add sub divide
   mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide) port sampler
 
+open CaliperBackend.SchnorrAGM in
+private def finishPacket {P : Type} (request : layout.input.Value) (response : Word 16) : CallerFinish.Packet layout P :=
+  (.inl ⟨((request.val.1, response), request.val.2.1, request.val.2.2.1),
+    ⟨request.property.1.1, trivial⟩, request.property.1.2.1, request.property.1.2.2.1⟩,
+    ⟨((20, 31), request.val.2.2.2), ⟨trivial, trivial⟩, request.property.1.2.2.2⟩)
+open CaliperBackend.SchnorrAGM in
+private theorem finishReady {P : Type} (request : layout.input.Value) (response : Word 16) :
+    CallerFinish.ready layout (finishPacket (P := P) request response) := request.property.2
+
+open CaliperBackend.SchnorrAGM in
+private def executeFinish {P : Type} (pending : Representation 16 P)
+    (fits : 1 + max (CallerFinish.forgery layout).representation.encoding.words pending.encoding.words + scheme.store.representation.encoding.words < 2 ^ 16)
+    (packet : CallerFinish.Packet layout P) (replies : List (Word 16)) :=
+  executeProgram (CallerFinish.code layout pending fits ⟨0, trivial⟩ extractionProgram)
+    (CallerFinish.timeBudget layout pending fits (Extraction.timeBudget layout 6 6 6 6 4))
+    ((CallerFinish.input layout pending fits).initial packet) replies
+
+open CaliperBackend.SchnorrAGM in
+private def finishProgram := CallerFinish.code layout scheme.scalar.representation (by decide) ⟨0, trivial⟩ extractionProgram
+open CaliperBackend.SchnorrAGM in
+private theorem finishRefined : Interactive.RefinesOn (CallerFinish.ready layout) port .unit
+    (CallerFinish.input layout scheme.scalar.representation (by decide)) scheme.scalar.representation
+    (CallerFinish.denote layout ⟨0, trivial⟩ (Extraction.source layout trivial mul add sub divide
+      mulNames.buffers addNames.buffers subNames.buffers (by decide) sampleSource)) finishProgram :=
+  CallerFinish.refines layout scheme.scalar.representation (by decide) port extractionRefined ⟨0, trivial⟩
+open CaliperBackend.SchnorrAGM in
+private theorem finishTimed : Interactive.TimeBoundOn (CallerFinish.ready layout) port .unit
+    (CallerFinish.input layout scheme.scalar.representation (by decide)) finishProgram
+    (CallerFinish.timeBudget layout scheme.scalar.representation (by decide) (Extraction.timeBudget layout 6 6 6 6 4)) :=
+  CallerFinish.time_bound layout scheme.scalar.representation (by decide) port extractionRefined extractionTimed ⟨0, trivial⟩
+open CaliperBackend.SchnorrAGM in
+private theorem finishStored : (finishProgram.lower port).descriptionWords ≤
+    CallerFinish.codeBudget layout scheme.scalar.representation (by decide) (Extraction.codeBudget layout 27 27 27 27 20) :=
+  CallerFinish.code_bound layout scheme.scalar.representation (by decide) port extractionStored ⟨0, trivial⟩
+open CaliperBackend.SchnorrAGM in
+private theorem finishFits : (finishProgram.lower port).DescriptionFits :=
+  CallerFinish.descriptionFits layout scheme.scalar.representation (by decide) port ⟨0, trivial⟩ extractionAccepted
+
 open Lean in
 run_cmd do
   let check := fun input replies bytes trace remaining =>
@@ -271,6 +311,25 @@ run_cmd do
     throwError "zero-capacity final-forgery lists failed to reject while preserving a full cache"
   unless executeExtraction miss 102 [] == none do
     throwError "fresh final forgery succeeded without its required challenge"
+  let finishCheck := fun request response replies scalar trace remaining =>
+    executeFinish scheme.scalar.representation (by decide) (finishPacket request response) replies ==
+      some (#[scalar], trace, remaining, #[77], 4, 99, 7, true, true) &&
+    executeFinish scheme.state.representation (by decide) (finishPacket request response) replies ==
+      some (#[scalar], trace, remaining, #[77], 4, 99, 7, true, true)
+  unless finishCheck duplicate 33 [88] 2 [] [88] do
+    throwError "caller return routing failed across a padded forgery or pending branch"
+  unless finishCheck miss 142 [9, 88] 3 [.invoke, .input 9] [88] do
+    throwError "caller return did not route the response, stored state or sampler through extraction"
+  for value in malformedInputs do
+    unless finishCheck value 73 [] 0 [] [] do
+      throwError "malformed caller return failed after configuration and padding removal"
+  let stored := (finishPacket (P := Word 16) duplicate 33).2
+  unless executeFinish scheme.scalar.representation (by decide) (.inr ⟨77, trivial⟩, stored) [88] ==
+      some (#[0], [], [88], #[77], 4, 99, 7, true, true) do
+    throwError "padded cutoff invoked extraction, needed room, or failed to return stored zero"
+  unless executeFinish scheme.state.representation (by decide) (.inr ⟨stored.val.2, stored.property.2⟩, stored) [] ==
+      some (#[0], [], [], #[77], 4, 99, 7, true, true) do
+    throwError "large pending cutoff sampled or failed to release its copied frame"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``ListBytes.singleton_bytes, ``CaliperBackend.SchnorrAGM.HashDispatch.test,
       ``CaliperBackend.SchnorrAGM.HashDispatch.selector, ``CaliperBackend.SchnorrAGM.HashDispatch.accept,
@@ -286,7 +345,13 @@ run_cmd do
       ``CaliperBackend.SchnorrAGM.Extraction.source_no, ``CaliperBackend.SchnorrAGM.Extraction.reserved_input,
       ``CaliperBackend.SchnorrAGM.Extraction.time_bound, ``CaliperBackend.SchnorrAGM.Extraction.code_bound,
       ``CaliperBackend.SchnorrAGM.Extraction.names, ``CaliperBackend.SchnorrAGM.Extraction.descriptionFits,
-      ``CaliperBackend.SchnorrAGM.Extraction.resources, ``extractionRefined, ``extractionTimed, ``extractionStored, ``extractionAccepted, ``extractionMemory] do
+      ``CaliperBackend.SchnorrAGM.Extraction.resources, ``extractionRefined, ``extractionTimed, ``extractionStored, ``extractionAccepted, ``extractionMemory,
+      ``CaliperBackend.SchnorrAGM.CallerFinish.route, ``CaliperBackend.SchnorrAGM.CallerFinish.route_time,
+      ``CaliperBackend.SchnorrAGM.CallerFinish.route_words, ``CaliperBackend.SchnorrAGM.CallerFinish.refines,
+      ``CaliperBackend.SchnorrAGM.CallerFinish.success_original, ``CaliperBackend.SchnorrAGM.CallerFinish.time_bound,
+      ``CaliperBackend.SchnorrAGM.CallerFinish.code_bound, ``CaliperBackend.SchnorrAGM.CallerFinish.names,
+      ``CaliperBackend.SchnorrAGM.CallerFinish.descriptionFits, ``CaliperBackend.SchnorrAGM.CallerFinish.resources,
+      ``finishReady, ``finishRefined, ``finishTimed, ``finishStored, ``finishFits] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

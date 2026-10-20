@@ -3,6 +3,7 @@ import Signatures.Runtime.Caliper.SchnorrAGMCallerMemory
 import Signatures.Runtime.Caliper.SchnorrAGMCallerResources
 import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.EncodedConstant
+import Signatures.Runtime.Caliper.SchnorrAGMCallerExtractionBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -285,6 +286,77 @@ private def controlProgram (fuel : Nat) := Caller.program layout operations samp
   (CallerPackets.request layout) controlInitial controlInitialize controlInitialFits (by decide) fuel
 private def controlTime (fuel : Nat) := CallerControl.timeBudget 22 (CallerStep.width controlLayout) callerTime 208 208 fuel
 
+private def divide : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 / value.2) where
+  preserves _ _ := trivial
+  program := ((WordBinary.realizer .unit .udiv (by decide)).viewInput scheme.affine.representation
+    (fun input => input.val) (fun _ => rfl)).viewOutput scheme.scalar.representation
+      (fun input => ⟨input.val.1 / input.val.2, trivial⟩) (fun _ => rfl)
+private theorem divNames : NamesBound divide.program.code 3 := ⟨by decide, by decide⟩
+private def extractionLayout : CallerExtraction.Layouts 16 Nat (Word 16) (Word 16) 1 2 65535 Unit where
+  service := layout
+  state := Pairing.unitRepresentation 16
+  callerFits := by decide
+private def forgery : extractionLayout.forgery.Value := ⟨((7, 41), [23], [[9, 8, 7, 6]]), by
+  change (7 < 256 ∧ True) ∧ (1 ≤ 2 ∧ ∀ _ ∈ ([23] : List (Word 16)), True) ∧
+    1 ≤ 3 ∧ ∀ row ∈ ([[9, 8, 7, 6]] : List (List (Word 16))), row.length ≤ 4 ∧ ∀ _ ∈ row, True
+  simp⟩
+private def extractionAdvance (_ : Unit × extractionLayout.Reply) :
+    extractionLayout.forgery.Value ⊕ (extractionLayout.Request × Unit) := .inl forgery
+private def extractionInitial (value : extractionLayout.Request) :
+    extractionLayout.forgery.Value ⊕ (extractionLayout.Request × Unit) := .inr (value, ())
+private def extractionReturn {X : Type} (input : Representation 16 X) :
+    Realizer .unit input (CallerStep.next extractionLayout.control) (fun _ => .inl forgery) :=
+  Assembly.realizer .unit (by decide) _ _ _
+    (((CallerStep.next extractionLayout.control).encoding.encode (.inl forgery)).map Assembly.Operand.literal)
+    scheme.wordFits (by simp only [List.length_map, Encoding.encode_length])
+    (by intro operand member; obtain ⟨word, _, rfl⟩ := List.mem_map.mp member; trivial)
+    (by intro value state represented operand member; obtain ⟨word, _, rfl⟩ := List.mem_map.mp member; trivial)
+    (by intro value state represented; simp only [Assembly.values, List.map_map]; exact List.map_id _)
+private def extractionContinue : Realizer .unit (CallerStep.resume extractionLayout.control) (CallerStep.next extractionLayout.control) extractionAdvance :=
+  extractionReturn _
+private def extractionInitialize : Realizer .unit (CallerPackets.request layout) (CallerStep.next extractionLayout.control) extractionInitial :=
+  (inrRealizer .unit (by decide) extractionLayout.forgery.representation extractionLayout.pending
+    scheme.wordFits (CallerStep.next extractionLayout.control).fits).viewInput (CallerPackets.request layout) (fun value => (value, ()))
+      (by intro value; change _ = _ ++ []; exact (List.append_nil _).symm)
+private theorem extractionReturnFits {X : Type} (input : Representation 16 X) :
+    (extractionReturn input).savedBuffer < 2 ^ 16 := by
+  have bound := (Assembly.code_names
+    (((CallerStep.next extractionLayout.control).encoding.encode (.inl forgery)).map Assembly.Operand.literal) 1
+    (by intro operand member; obtain ⟨word, _, rfl⟩ := List.mem_map.mp member; trivial)).2
+  change (extractionReturn input).code.memBound ≤ 2 at bound
+  unfold Realizer.savedBuffer
+  omega
+private theorem extractionLocalFits : extractionContinue.savedBuffer < 2 ^ 16 := extractionReturnFits _
+private theorem extractionInitialFits : extractionInitialize.savedBuffer < 2 ^ 16 := by
+  have bound := (inr_names extractionLayout.forgery.representation extractionLayout.pending
+    scheme.wordFits (CallerStep.next extractionLayout.control).fits).buffers
+  change extractionInitialize.code.memBound ≤ 3 at bound
+  unfold Realizer.savedBuffer
+  omega
+private def extractionProgram (fuel : Nat) := CallerExtraction.program extractionLayout operations sub divide subNames.buffers divNames.buffers
+  sampler extractionAdvance extractionContinue extractionLocalFits (CallerPackets.request layout) extractionInitial extractionInitialize
+  extractionInitialFits (by decide) fuel
+private def earlyProgram (fuel : Nat) := CallerExtraction.program extractionLayout operations sub divide subNames.buffers divNames.buffers
+  sampler extractionAdvance extractionContinue extractionLocalFits (CallerPackets.request layout) (fun _ => .inl forgery)
+  (extractionReturn _) (extractionReturnFits _) (by decide) fuel
+private def extractionTime (fuel : Nat) :=
+  CallerControl.timeBudget (CallerPackets.request layout).encoding.words (CallerStep.width extractionLayout.control) callerTime
+    (8 * (CallerStep.next extractionLayout.control).encoding.words) (8 * (CallerStep.next extractionLayout.control).encoding.words) fuel +
+    CallerFinish.timeBudget layout.hash extractionLayout.pending extractionLayout.exitFits (Extraction.timeBudget layout.hash 6 6 6 6 26)
+
+private def executeExtraction (early : Bool) (fuel : Nat) (args : Dispatch.Input layout) (replies : List (Word 16)) := do
+  let initial := (CallerPackets.input layout).initial (callerPacket args)
+  let before := { initial with
+    bufs := fun b => if b = 200 then #[77] else initial.bufs b
+    caps := fun b => if b = 200 then 4 else initial.caps b
+    regs := fun r => if r = 99 then 91 else initial.regs r
+    tapePos := 9 }
+  let body := if early then earlyProgram fuel else extractionProgram fuel
+  let result ← WordIO.run .unit RandomTape.zero 1000000 (body.lower layout.random.port) before replies
+  pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
+    result.state.regs 99, result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0),
+    decide (result.time ≤ extractionTime fuel))
+
 private def execute (args : Dispatch.Input layout) (replies : List (Word 16)) := do
   let initial := (Dispatch.input layout).initial args
   let before := { initial with
@@ -377,8 +449,33 @@ run_cmd do
   unless executeControl 1 (.inr (.inr (fresh 3 5))) [65535, 2, 65535] == none &&
       executeControl 1 (.inr (.inl freshHash)) [] == none && executeControl 1 (.inl (random 5)) [] == none do
     throwError "generated caller accepted incomplete external randomness"
+  let extractionCheck := fun early fuel args replies scalar trace remaining =>
+    executeExtraction early fuel args replies == some (#[scalar], trace, remaining, #[77], 4, 91, 9, true, true)
+  for fuel in [1, 2] do
+    unless extractionCheck false fuel (.inr (.inl fullHitHash)) [88] 3 [] [88] do
+      throwError "composed caller/extractor lost the first cached explanation or sampled on its terminal hit"
+    unless extractionCheck false fuel (.inr (.inl freshHash)) [65535, 2, 88] 3 [.output 65535, .invoke, .input 65535, .input 2] [88] do
+      throwError "fresh hash and final extraction did not share one cached challenge"
+    unless extractionCheck false fuel (.inl (random 0)) [0, 0, 65535, 5, 88] 2
+        [.output 0, .invoke, .input 0, .input 0, .output 65535, .invoke, .input 65535, .input 5] [88] do
+      throwError "composed random caller followed by fresh extraction had wrong scalar or query trace"
+  unless extractionCheck false 0 (.inr (.inl freshHash)) [88] 0 [] [88] do
+    throwError "caller cutoff consumed a query or invoked final extraction"
+  unless extractionCheck true 0 (.inr (.inl fullHitHash)) [88] 3 [] [88] do
+    throwError "zero-fuel early return was confused with a pending cutoff"
+  unless extractionCheck true 2 (.inr (.inl freshHash)) [65535, 5, 88] 2 [.output 65535, .invoke, .input 65535, .input 5] [88] do
+    throwError "early return executed a caller query or omitted fresh terminal extraction"
+  unless executeExtraction false 1 (.inr (.inl freshHash)) [] == none &&
+      executeExtraction false 1 (.inl (random 0)) [0, 0] == none &&
+      executeExtraction false 1 (.inl (random 0)) [0, 0, 65535] == none do
+    throwError "composed caller/extractor accepted missing caller or terminal randomness"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
-  for name in [``Interactive.Prefix.refines, ``Interactive.Prefix.time_bound, ``Interactive.Prefix.code_bound,
+  for name in [``CallerFinish.success_original, ``CallerExtraction.Layouts.packet_ready,
+      ``CallerExtraction.called_postcondition, ``CallerExtraction.called_ready, ``CallerExtraction.refines,
+      ``CallerExtraction.finish_source, ``CallerExtraction.called_source, ``CallerExtraction.denote_source,
+      ``CallerExtraction.observe_source, ``CallerExtraction.time, ``CallerExtraction.words, ``CallerExtraction.names,
+      ``CallerExtraction.descriptionFits, ``CallerExtraction.resources, ``extractionReturn, ``extractionContinue,
+      ``extractionInitialize, ``extractionLocalFits, ``extractionInitialFits, ``Interactive.Prefix.refines, ``Interactive.Prefix.time_bound, ``Interactive.Prefix.code_bound,
       ``Dispatch.refines, ``Dispatch.time_bound, ``Dispatch.code_bound, ``CaliperBackend.SchnorrAGM.Handler.Dispatch.names, ``Dispatch.descriptionFits,
       ``refines, ``time_bound, ``code_bound, ``names, ``descriptionFits, ``resources, ``source_original, ``source_request,
       ``refined, ``timed, ``stored, ``named, ``fitting, ``memory,

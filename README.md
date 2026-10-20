@@ -419,7 +419,10 @@ Pinned upstreams:
   now executes shape dispatch and coefficient flattening before that extraction,
   preserving the original joint scalar/state law. Malformed final forgeries
   return zero without changing either flag or requesting randomness.
-  Complete reduction composition and public theorem integration remain pending.
+  The [caller and terminal](Signatures/Runtime/Caliper/SchnorrAGMCallerExtraction.lean)
+  now compose with derived extraction room, exact original-machine semantics,
+  and complete time, code and total-memory bounds. Setup composition and public
+  theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

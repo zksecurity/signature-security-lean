@@ -2313,8 +2313,37 @@ Implemented and checked:
   unchanged flags, zero-capacity lists, full caches, caller frames, scratch
   release and time bounds. Its modular-word arithmetic is a wiring fixture;
   the generic source theorem separately uses field division.
-  Full setup/caller/terminal composition and public concrete/family integration
-  are still pending; this checkpoint does not change the public Schnorr backend.
+  Setup and public concrete/family integration remain pending; the caller
+  composition below does not yet change the public Schnorr backend.
+- [Schnorr caller termination](../Signatures/Runtime/Caliper/SchnorrAGMCallerFinish.lean)
+  now executes return/cutoff dispatch, removes tagged-union padding and the
+  saved public configuration, moves the response scalar behind the private
+  state, runs extraction, and projects its scalar result. All four routing
+  copies and both stored branches are charged. The cutoff branch writes an
+  explicit zero and makes no query. Mathematical admission only restricts the
+  correctness domain; it supplies no uncharged runtime test or movement.
+  [Complete caller/terminal composition](../Signatures/Runtime/Caliper/SchnorrAGMCallerExtraction.lean)
+  supplies the actual constructed extractor and caller, with the caller's
+  proved exit postcondition establishing cache room and canonical state.
+  Its source theorem proves the original oracle machine followed by
+  `finishScalar`, and the machine's query bound excludes cutoff. Local caller
+  initialization/continuation correspondence and named primitive/sampler
+  contracts remain explicit; no completed-caller or completed-extractor
+  implementation is assumed.
+  [Combined resources](../Signatures/Runtime/Caliper/SchnorrAGMCallerExtractionBounds.lean)
+  include unrolled caller code, the complete terminal, static storage and all
+  visited buffer capacities in the same source-correct execution. Descriptor
+  acceptance retains the caller's explicit saved-buffer fit premises.
+  Existing dispatcher tests cover both directions of union padding, admitted
+  and malformed returns, full-cache cutoff, and scalar projection. Existing
+  handler tests now execute the composed program for first-duplicate cache
+  hits, a fresh hash reused by extraction, a random call followed by fresh
+  extraction, early returns, zero-fuel cutoff, and missing/surplus randomness.
+  They check literal scalar/trace expectations, external caller storage,
+  scratch release and time bounds. The generic field proofs and concrete word
+  wiring fixtures remain distinct.
+  Next: compose initialization, specialize the source boundary to the named
+  DLog reduction, and migrate the public concrete and polynomial-family models.
 
 Remaining integration sequence:
 
