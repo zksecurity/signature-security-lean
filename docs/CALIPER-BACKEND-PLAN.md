@@ -2289,8 +2289,32 @@ Implemented and checked:
   cache slot, exceptional challenges, retained bad flags, missing/surplus
   randomness, caller frames, scratch release and time bounds. The word fixture
   uses unsigned division, while the generic source theorem uses field division.
-  Final-forgery shape dispatch and coefficient flattening must still be composed
-  with this routine, then with setup/caller and the public DLog reduction.
+  Final-forgery dispatch and coefficient flattening are now composed with this
+  routine as described below. Setup/caller and public DLog integration remain.
+- [Complete Schnorr final-forgery extraction](../Signatures/Runtime/Caliper/SchnorrAGMExtraction.lean)
+  now executes the stored singleton-list shape test, accepted-input routing,
+  coefficient flattening, full-entry read and scalar extraction. The response
+  is physically retained around the entry dispatcher. Rejected forgeries use
+  a stored unexplained entry, so the existing arithmetic returns zero while
+  the entire state is copied unchanged. Unlike hash-query rejection, this
+  branch preserves both flags and makes no random query; it requires no spare
+  cache slot, including when either list capacity is zero.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMExtractionSource.lean)
+  proves the original `finishScalar` joint scalar/state law for every represented
+  forgery shape. Canonical source states and the sampler's uniform-law premise
+  remain explicit. Caller reservations supply the accepted branch's cache room.
+  [Bounds](../Signatures/Runtime/Caliper/SchnorrAGMExtractionBounds.lean) derive
+  time, stored code, names and descriptor acceptance from primitive/sampler
+  contracts. [Total memory](../Signatures/Runtime/Caliper/SchnorrAGMExtractionMemory.lean)
+  includes the same execution's code, initial caller storage and every visited
+  retained copy. The existing dispatcher regression now also runs the complete
+  terminal, checking first-duplicate hits, changed response scalars, runtime
+  flattening, one fresh draw, missing/surplus randomness, all malformed shapes,
+  unchanged flags, zero-capacity lists, full caches, caller frames, scratch
+  release and time bounds. Its modular-word arithmetic is a wiring fixture;
+  the generic source theorem separately uses field division.
+  Full setup/caller/terminal composition and public concrete/family integration
+  are still pending; this checkpoint does not change the public Schnorr backend.
 
 Remaining integration sequence:
 

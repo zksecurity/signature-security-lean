@@ -415,8 +415,11 @@ Pinned upstreams:
   derived. The [terminal read and scalar extraction](Signatures/Runtime/Caliper/SchnorrAGMExtractionRead.lean)
   now preserve the full cached explanation, execute the quotient, and retain
   the updated private state with proved source correspondence and resource
-  bounds. Final-forgery dispatch, complete reduction composition and public
-  theorem integration remain pending.
+  bounds. The [complete final-forgery terminal](Signatures/Runtime/Caliper/SchnorrAGMExtraction.lean)
+  now executes shape dispatch and coefficient flattening before that extraction,
+  preserving the original joint scalar/state law. Malformed final forgeries
+  return zero without changing either flag or requesting randomness.
+  Complete reduction composition and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.SchnorrAGMHashDispatchMemory
+import Signatures.Runtime.Caliper.SchnorrAGMExtractionMemory
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -28,16 +29,19 @@ private def layout : CaliperBackend.SchnorrAGM.HashDispatch.Layouts 16 Nat (Word
   rowCountFits := by decide
   storageFits := by decide
 
-private def mul : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 * value.2) where
+private def binary (op : BinOp) : Implementation .unit scheme.affine scheme.scalar (fun value => op.eval value.1 value.2) where
   preserves _ _ := trivial
-  program := ((WordBinary.realizer .unit .mul (by decide)).viewInput scheme.affine.representation
+  program := ((WordBinary.realizer .unit op (by decide)).viewInput scheme.affine.representation
     (fun value => value.val) (fun _ => rfl)).viewOutput scheme.scalar.representation
-      (fun value => ⟨value.val.1 * value.val.2, trivial⟩) (fun _ => rfl)
-private def add : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 + value.2) where
-  preserves _ _ := trivial
-  program := ((WordBinary.realizer .unit .add (by decide)).viewInput scheme.affine.representation
-    (fun value => value.val) (fun _ => rfl)).viewOutput scheme.scalar.representation
-      (fun value => ⟨value.val.1 + value.val.2, trivial⟩) (fun _ => rfl)
+      (fun value => ⟨op.eval value.val.1 value.val.2, trivial⟩) (fun _ => rfl)
+private def mul : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 * value.2) := binary .mul
+private def add : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 + value.2) := binary .add
+private def sub : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 - value.2) := binary .sub
+private def divide : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 / value.2) := binary .udiv
+private theorem subBound : sub.BoundedBy 6 27 := ⟨fun _ => le_rfl, by decide⟩
+private theorem divBound : divide.BoundedBy 6 27 := ⟨fun _ => le_rfl, by decide⟩
+private theorem subNames : NamesBound sub.program.code 3 := ⟨by decide, by decide⟩
+private theorem divNames : NamesBound divide.program.code 3 := ⟨by decide, by decide⟩
 private theorem mulBound : mul.BoundedBy 6 27 := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
 private theorem addBound : add.BoundedBy 6 27 := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
 private theorem mulNames : NamesBound mul.program.code 3 := ⟨by decide, by decide⟩
@@ -86,6 +90,23 @@ private theorem accepted : (program.lower port).DescriptionFits :=
 private theorem buffers : (program.lower port).memBound ≤ 11 :=
   CaliperBackend.SchnorrAGM.HashDispatch.buffers layout trivial mul add mulNames.buffers addNames.buffers (by decide) port sampler addNames sampleNames
 
+private def extractionProgram := CaliperBackend.SchnorrAGM.Extraction.code layout trivial mul add sub divide
+  mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide) port sampler
+private theorem extractionRefined : Interactive.Refines port .unit (CaliperBackend.SchnorrAGM.Extraction.input layout).representation
+    (CaliperBackend.SchnorrAGM.Read.output scheme).representation
+    (CaliperBackend.SchnorrAGM.Extraction.source layout trivial mul add sub divide mulNames.buffers addNames.buffers subNames.buffers (by decide) sampleSource) extractionProgram :=
+  CaliperBackend.SchnorrAGM.Extraction.refines layout trivial mul add sub divide mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide) port sampleCorrect
+private theorem extractionTimed : Interactive.TimeBound port .unit (CaliperBackend.SchnorrAGM.Extraction.input layout).representation extractionProgram
+    (CaliperBackend.SchnorrAGM.Extraction.timeBudget layout 6 6 6 6 4) :=
+  CaliperBackend.SchnorrAGM.Extraction.time_bound layout trivial mul add sub divide mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide)
+    mulBound addBound subBound divBound port sampleCorrect sampleTime
+private theorem extractionStored : (extractionProgram.lower port).descriptionWords ≤ CaliperBackend.SchnorrAGM.Extraction.codeBudget layout 27 27 27 27 20 :=
+  CaliperBackend.SchnorrAGM.Extraction.code_bound layout trivial mul add sub divide mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide)
+    mulBound addBound subBound divBound port sampleWords
+private theorem extractionAccepted : (extractionProgram.lower port).DescriptionFits :=
+  CaliperBackend.SchnorrAGM.Extraction.descriptionFits layout trivial mul add sub divide mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide)
+    port sampleFits addNames sampleNames (by decide)
+
 private theorem valid_iff (message : Nat) (groups : List (Word 16)) (rows : List (List (Word 16)))
     (entries : List ((Nat × Word 16) × SchnorrAGM.Native.EncodedEntry (Word 16)))
     (basis : List (Word 16 × Word 16)) (signed : List Nat) (malformed bad : Bool) :
@@ -133,18 +154,57 @@ private theorem memory (tape : RandomTape 16) (value : layout.input.Value) (befo
       mulBound addBound sampleTime sampleWords mulNames addNames sampleNames tape value before holds registers buffers initialRegisters initialBuffers finished reached
   exact ⟨elapsed, answer, supported, result, execution, fun between visited => (bounds between visited).2.2.2⟩
 
-private def execute (request : layout.input.Value) (replies : List (Word 16)) := do
-  let initial := layout.input.representation.initial request
+private theorem extractionMemory (tape : RandomTape 16) (value : (CaliperBackend.SchnorrAGM.Extraction.input layout).Value) (before : State 16)
+    (holds : (CaliperBackend.SchnorrAGM.Extraction.input layout).representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (extractionProgram.execute port .unit tape before)) :
+    finished.time ≤ CaliperBackend.SchnorrAGM.Extraction.timeBudget layout 6 6 6 6 4 ∧
+      ∃ answer ∈ support (CaliperBackend.SchnorrAGM.Extraction.source layout trivial mul add sub divide mulNames.buffers addNames.buffers subNames.buffers (by decide) sampleSource value),
+        (CaliperBackend.SchnorrAGM.Read.output scheme).representation.Holds answer finished.state ∧
+        ∃ execution : WordIO.Exec .unit tape (extractionProgram.lower port) before finished.state finished.trace finished.time finished.net finished.peak,
+          ∀ between, execution.Visits between →
+            ((extractionProgram.lower port).staticWords registers buffers : Int) + between.liveMem (max buffers (extractionProgram.lower port).memBound) ≤
+              5 * CaliperBackend.SchnorrAGM.Extraction.codeBudget layout 27 27 27 27 20 + 24 + registers + 3 * buffers + before.liveMem buffers +
+                CaliperBackend.SchnorrAGM.Extraction.timeBudget layout 6 6 6 6 4 := by
+  obtain ⟨elapsed, answer, supported, result, execution, bounds⟩ :=
+    CaliperBackend.SchnorrAGM.Extraction.resources layout trivial mul add sub divide mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide) port sampleCorrect
+      mulBound addBound subBound divBound sampleTime sampleWords mulNames addNames subNames.accounted divNames.accounted sampleNames tape value before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, answer, supported, result, execution, fun between visited => (bounds between visited).2.2.2⟩
+
+private def executeProgram (body : Interactive.Code 16) (budget : Nat) (initial : State 16) (replies : List (Word 16)) := do
   let before := { initial with
     regs := fun r => if r = 200 then 99 else initial.regs r
     bufs := fun b => if b = 200 then #[77] else initial.bufs b
     caps := fun b => if b = 200 then 4 else initial.caps b
     tapePos := 7 }
-  let result ← WordIO.run .unit RandomTape.zero 1000000 (program.lower port) before replies
+  let result ← WordIO.run .unit RandomTape.zero 1000000 (body.lower port) before replies
   pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200,
     result.state.caps 200, result.state.regs 200, result.state.tapePos,
     (List.range 30).all (fun i => result.state.caps (i + 1) == 0),
-    decide (result.time ≤ CaliperBackend.SchnorrAGM.HashDispatch.timeBudget layout 6 6 4))
+    decide (result.time ≤ budget))
+
+private def execute (request : layout.input.Value) (replies : List (Word 16)) :=
+  executeProgram program (CaliperBackend.SchnorrAGM.HashDispatch.timeBudget layout 6 6 4)
+    (layout.input.representation.initial request) replies
+private def executeExtraction (request : layout.input.Value) (response : Word 16) (replies : List (Word 16)) :=
+  executeProgram extractionProgram (CaliperBackend.SchnorrAGM.Extraction.timeBudget layout 6 6 6 6 4)
+    ((CaliperBackend.SchnorrAGM.Extraction.input layout).representation.initial ⟨(request.val, response), request.property, trivial⟩) replies
+
+-- Independent zero-capacity lists exercise rejection when neither singleton
+-- branch can be represented; no cache room is required for the full table.
+private def emptyLayout : CaliperBackend.SchnorrAGM.HashDispatch.Layouts 16 Nat (Word 16) (Word 16) 1 1 where
+  hash := hash
+  groups := 0
+  rows := 0
+  groupCountFits := by decide
+  rowCountFits := by decide
+  storageFits := by decide
+private def emptyRequest : (CaliperBackend.SchnorrAGM.Extraction.input emptyLayout).Value :=
+  ⟨((3, [], [], full, [(1, 0), (0, 1), (5, 7)], [9], false, true), 73), by
+    refine ⟨⟨⟨by change 3 < 256; decide, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩, ?_⟩, trivial⟩, trivial⟩
+    exact (refused [] [] true (by rw [valid_iff]; decide)).property.1.2.2.2⟩
+private def emptyProgram := CaliperBackend.SchnorrAGM.Extraction.code emptyLayout trivial mul add sub divide
+  mulNames.buffers addNames.buffers subNames.buffers divNames.buffers (by decide) port sampler
 
 open Lean in
 run_cmd do
@@ -175,6 +235,42 @@ run_cmd do
     throwError "largest malformed request needed a random reply, lost bad, or overwrote histories"
   unless execute miss [] == none do
     throwError "accepted fresh request succeeded without its challenge reply"
+  let terminalCheck := fun request response replies bytes trace remaining =>
+    executeExtraction request response replies == some (bytes, trace, remaining, #[77], 4, 99, 7, true, true)
+  unless terminalCheck duplicate 33 [88]
+      #[2, 3, 3, 4, 2, 1, 9, 10, 3, 4, 8, 1, 11, 12, 5, 6, 1, 1, 13, 14,
+        3, 1, 0, 0, 1, 5, 7, 1, 9, 1, 0] [] [88] do
+    throwError "terminal did not use the first cached explanation or preserve response and state"
+  let missState := #[2, 3, 4, 9, 1, 22, 31, 5, 6, 1, 1, 13, 14] ++ Array.replicate 6 0 ++
+    #[3, 1, 0, 0, 1, 5, 7, 1, 9, 0, 0]
+  unless terminalCheck miss 102 [9, 88] (#[2] ++ missState) [.invoke, .input 9] [88] do
+    throwError "terminal did not flatten coefficients, sample once, and compute the quotient"
+  unless terminalCheck miss 142 [9, 88] (#[3] ++ missState) [.invoke, .input 9] [88] do
+    throwError "terminal failed to use its runtime response scalar"
+  let terminalRejected := fun malformed bad =>
+    #[0, 3, 3, 4, 2, 1, 9, 10, 3, 4, 8, 1, 11, 12, 5, 6, 1, 1, 13, 14,
+      3, 1, 0, 0, 1, 5, 7, 1, 9, malformed, bad]
+  let malformedInputs := [
+    refused [] [] false (by rw [valid_iff]; decide),
+    refused [] [[2, 3, 4]] false (by rw [valid_iff]; decide),
+    refused [4, 7] [[2, 3, 4]] false (by rw [valid_iff]; decide),
+    refused [4] [] false (by rw [valid_iff]; decide),
+    refused [4] [[2], [3]] false (by rw [valid_iff]; decide)]
+  for value in malformedInputs do
+    unless terminalCheck value 73 [88] (terminalRejected 0 0) [] [88] do
+      throwError "malformed final forgery sampled, changed state, or returned a nonzero scalar"
+  unless terminalCheck (refused [4, 7, 9] [[2, 3, 4, 5, 6], [], [7]] true (by rw [valid_iff]; decide))
+      73 [] (terminalRejected 0 1) [] [] do
+    throwError "largest malformed final forgery lost the bad flag or needed randomness"
+  let flagged : layout.input.Value := ⟨(3, [], [], full, [(1, 0), (0, 1), (5, 7)], [9], true, true), by rw [valid_iff]; decide⟩
+  unless terminalCheck flagged 73 [] (terminalRejected 1 1) [] [] do
+    throwError "malformed final forgery reset a preexisting flag"
+  unless executeProgram emptyProgram (CaliperBackend.SchnorrAGM.Extraction.timeBudget emptyLayout 6 6 6 6 4)
+      ((CaliperBackend.SchnorrAGM.Extraction.input emptyLayout).representation.initial emptyRequest) [] ==
+        some (terminalRejected 0 1, [], [], #[77], 4, 99, 7, true, true) do
+    throwError "zero-capacity final-forgery lists failed to reject while preserving a full cache"
+  unless executeExtraction miss 102 [] == none do
+    throwError "fresh final forgery succeeded without its required challenge"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``ListBytes.singleton_bytes, ``CaliperBackend.SchnorrAGM.HashDispatch.test,
       ``CaliperBackend.SchnorrAGM.HashDispatch.selector, ``CaliperBackend.SchnorrAGM.HashDispatch.accept,
@@ -183,7 +279,14 @@ run_cmd do
       ``CaliperBackend.SchnorrAGM.HashDispatch.reserved_input, ``CaliperBackend.SchnorrAGM.HashDispatch.time_bound,
       ``CaliperBackend.SchnorrAGM.HashDispatch.code_bound, ``CaliperBackend.SchnorrAGM.HashDispatch.names,
       ``CaliperBackend.SchnorrAGM.HashDispatch.buffers, ``CaliperBackend.SchnorrAGM.HashDispatch.descriptionFits,
-      ``CaliperBackend.SchnorrAGM.HashDispatch.resources, ``refined, ``timed, ``stored, ``accepted, ``buffers, ``memory] do
+      ``CaliperBackend.SchnorrAGM.HashDispatch.resources, ``refined, ``timed, ``stored, ``accepted, ``buffers, ``memory,
+      ``CaliperBackend.SchnorrAGM.ExtractionEntry.refines, ``CaliperBackend.SchnorrAGM.ExtractionEntry.time_bound,
+      ``CaliperBackend.SchnorrAGM.ExtractionEntry.code_bound, ``CaliperBackend.SchnorrAGM.ExtractionEntry.descriptionFits,
+      ``CaliperBackend.SchnorrAGM.Extraction.refines, ``CaliperBackend.SchnorrAGM.Extraction.source_original,
+      ``CaliperBackend.SchnorrAGM.Extraction.source_no, ``CaliperBackend.SchnorrAGM.Extraction.reserved_input,
+      ``CaliperBackend.SchnorrAGM.Extraction.time_bound, ``CaliperBackend.SchnorrAGM.Extraction.code_bound,
+      ``CaliperBackend.SchnorrAGM.Extraction.names, ``CaliperBackend.SchnorrAGM.Extraction.descriptionFits,
+      ``CaliperBackend.SchnorrAGM.Extraction.resources, ``extractionRefined, ``extractionTimed, ``extractionStored, ``extractionAccepted, ``extractionMemory] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 
