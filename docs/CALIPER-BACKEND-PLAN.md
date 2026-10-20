@@ -2923,6 +2923,25 @@ Implemented and checked:
   Broader caller coverage and canonical local-routine instantiations remain;
   Schnorr ROM replay/composition remains separate work.
 
+- [Schnorr ROM tape reset](../Signatures/Runtime/Caliper/SchnorrROMTapeReset.lean)
+  now executes the retained-tape transformation used by `RawTape.restart`.
+  [Layouts](../Signatures/Runtime/Caliper/SchnorrROMTapeLayout.lean) store the
+  original family/scalar/natural cells with explicit word and capacity limits.
+  The [scan](../Signatures/Runtime/Caliper/SchnorrROMTapeTrim.lean) keeps all
+  private-family cells and only the selected prefix of challenge-family cells.
+  It then reverses the accumulator and inserts the replacement challenge.
+  Actual duplication installs separate saved and remaining tapes.
+  [Resource proofs](../Signatures/Runtime/Caliper/SchnorrROMTapeResetBounds.lean)
+  derive polynomial time/code expressions, bounded scratch names and full memory
+  for every visited state, including stored code and both installed copies.
+  `restart_resources` couples those bounds to execution of the original restart.
+  The [regression](../SignaturesTest/CaliperSchnorrROMTapeReset.lean) checks
+  interleaved private families, zero/middle/past-end slots, zero challenges,
+  early-return padding, zero tape capacity, invalid bounds, external frames and
+  standard axiom footprints. This component takes an already represented reset
+  packet; constructing that packet, raw-tape replay queries, both pass executions
+  and public ROM security/family integration remain to be composed.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

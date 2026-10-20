@@ -563,6 +563,11 @@ Pinned upstreams:
   every scalar from the uniform source, including zero.
   [Polynomial resources](Signatures/Runtime/Caliper/WeightedFamilyResources.lean)
   are derived for both full reductions, with no completed-solver budget premise.
+  Schnorr ROM now has an [executed tape reset](Signatures/Runtime/Caliper/SchnorrROMTapeResetBounds.lean)
+  matching `RawTape.restart`, with derived time, code and complete memory bounds.
+  It preserves every private family, retains the selected challenge prefix and
+  charges both copies of the installed replay tape. Preparing its input packet
+  and composing the complete two-pass reduction remain part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
