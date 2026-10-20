@@ -3202,6 +3202,26 @@ Implemented and checked:
   field sampler and checks the commitment, separate managed/LIVE tables, tapes,
   traces, scratch release and elapsed bound. Theorem axiom footprints are checked.
 
+- The [direct scalar draw](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedDraw.lean)
+  constructs the canonical uniform sampler for public hash challenges using
+  the full-width uniform port. It executes the fixed-range request and copies
+  the returned index, with a byte-identical scalar view. Its bounds are 26 local
+  steps, 125 stored-code words, 166 total-memory words and two buffers, regardless
+  of the scalar domain size. Exact query-program equality also holds for the
+  existing `FinEnum` sampler.
+  [Complete raw replay queries](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedReplay.lean)
+  now instantiate both private and public query paths with this sampler. Exact
+  source/observation theorems match `RawTape.oracle` interpreted by `LazyROM.sample`;
+  complete code, time and visited-memory certificates require no sampler premise.
+  Public challenge misses append one scalar-family cell without recording their
+  internal uniform query as a private cell. Private requests retain their dynamic
+  ranges and replay semantics. The [regression](../SignaturesTest/CaliperSchnorrROMEnumeratedReplay.lean)
+  covers both paths, zero and repeated challenges, preservation of other families,
+  modulo decoding, the last reserved slot, exhausted capacity, incomplete replies,
+  traces, scratch release, external state and axiom footprints. A direct draw
+  over more than sixteen million indices executes within the same local bound.
+  Managed/LIVE hash and final-hash composition remain the next integration step.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

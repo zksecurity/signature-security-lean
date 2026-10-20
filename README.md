@@ -617,6 +617,13 @@ Pinned upstreams:
   steps and 38 reply-transition steps independent of the field size. The
   [signing construction](Signatures/Runtime/Caliper/SchnorrROMEnumeratedSigning.lean)
   supplies its sampler code, termination and resource proofs internally.
+  The [direct challenge sampler](Signatures/Runtime/Caliper/SchnorrROMEnumeratedDraw.lean)
+  also implements the canonical finite-index draw, with 26 local steps and 125
+  stored-code words independent of the field size. The
+  [complete replay queries](Signatures/Runtime/Caliper/SchnorrROMEnumeratedReplay.lean)
+  use this code without an assumed scalar sampler. They match the original raw
+  oracle and have complete resource certificates. A fresh public challenge
+  records one scalar cell; its internal uniform draw creates no private cell.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
