@@ -631,7 +631,10 @@ Pinned upstreams:
   retains the public configuration and managed table through executed copies,
   reads and updates LIVE, and matches the original shared-tape final lookup.
   Its complete resource bounds include these copies and every visited state.
-  Normal managed/LIVE hash routing remains to be composed.
+  The [normal hash handler](Signatures/Runtime/Caliper/SchnorrROMHashSource.lean)
+  now checks managed first, calls final hashing only on a miss, and inserts the
+  answer into managed. Its checked resource bounds charge the copied key and
+  shared store. Managed hits need no LIVE or replay-tape reservation.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

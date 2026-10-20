@@ -3242,7 +3242,7 @@ Implemented and checked:
   slot. It also checks missing replies, capacity rejection, traces, scratch
   release, external state, elapsed bounds and theorem axiom footprints.
   The final-hash wrapper below composes this read with the retained configuration
-  and managed table. Normal managed/LIVE hash routing remains to be composed.
+  and managed table. The normal hash wrapper below adds managed lookup and insertion.
 
 - The [complete final-hash handler](../Signatures/Runtime/Caliper/SchnorrROMFinalHash.lean)
   reads and updates LIVE while retaining the public configuration and managed
@@ -3264,8 +3264,36 @@ Implemented and checked:
   replayed and fresh misses, and last-slot insertion. It checks source equality
   with the existing `FinEnum` sampler, a nonidentity scalar encoding, missing
   replies, capacity rejection, exact traces, scratch release, external state,
-  elapsed bounds and theorem axiom footprints. Normal hash routing, complete
-  pass/replay/extraction composition and public ROM migration remain.
+  elapsed bounds and theorem axiom footprints. The normal hash wrapper below
+  adds managed routing; complete pass/replay/extraction composition and public
+  ROM migration remain.
+
+- The [complete normal hash handler](../Signatures/Runtime/Caliper/SchnorrROMHash.lean)
+  performs managed lookup, bypasses LIVE and replay on a hit, and otherwise calls
+  final hashing and inserts its returned scalar into managed. The
+  [miss-only invariant theorem](../Signatures/Runtime/Caliper/StatefulCacheMissInvariant.lean)
+  requires the callee's reservation only when the cache misses. Thus a managed
+  hit remains valid with a full unrelated LIVE table and a full saved tape.
+  The [miss routine](../Signatures/Runtime/Caliper/SchnorrROMHashMiss.lean)
+  preserves the requested key using executed copying. Its
+  [routes](../Signatures/Runtime/Caliper/SchnorrROMHashMissRoute.lean) and the
+  [outer routes](../Signatures/Runtime/Caliper/SchnorrROMHashRoute.lean) copy the
+  represented shared store and restore the new managed table with the callee's
+  public configuration, LIVE table and tapes. No captured runtime state is free.
+  The [source and observation theorems](../Signatures/Runtime/Caliper/SchnorrROMHashSource.lean)
+  match the original `Shared.interpret handler` hash query exactly and prove
+  configuration preservation, growth of each table by at most one, and remaining
+  table reservations. The [complete resource bounds](../Signatures/Runtime/Caliper/SchnorrROMHashBounds.lean)
+  include every copy, stored code, dense names, initial state and every visited
+  memory state of the same execution, with at most twelve buffer slots.
+  The [regression](../SignaturesTest/CaliperSchnorrROMHash.lean) checks full managed
+  zero hits with exhausted unrelated LIVE/tape capacity, duplicate managed keys,
+  full LIVE zero hits, public replay, fresh sampling, last-slot insertion into
+  both tables and the saved tape, nonidentity scalar encoding, missing replies,
+  exhausted-capacity rejection, traces, scratch release, external state, elapsed
+  bounds and theorem axiom footprints. Its source instance matches the existing
+  `FinEnum` sampler. Complete pass/replay/extraction composition and public ROM
+  migration remain.
 
 Remaining integration sequence:
 
