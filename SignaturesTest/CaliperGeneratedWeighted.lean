@@ -16,6 +16,7 @@ import Signatures.Runtime.Caliper.WeightedCallerOriginal
 import Signatures.Runtime.Caliper.WeightedCaller
 import Signatures.Runtime.Caliper.WeightedCallerPostcondition
 import Signatures.Runtime.Caliper.WeightedCallerResources
+import Signatures.Runtime.Caliper.WeightedCoefficientBounds
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
 import Mathlib.Data.BitVec
@@ -1337,6 +1338,173 @@ run_cmd do
       ``WeightedCaller.execution_postcondition, ``WeightedCaller.observe_source, ``WeightedCaller.words, ``WeightedCaller.time,
       ``WeightedCaller.names, ``WeightedCaller.descriptionFits, ``WeightedCaller.resources,
       ``adaptiveTimeBound, ``adaptiveWordsBound, ``adaptiveFits, ``adaptiveMemory, ``adaptiveExecutedPostcondition] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+-- The extraction coefficient is applied after evaluating every original term.
+private instance : Module (Word 16) (Ty.Value base (.atom true)) :=
+  inferInstanceAs (Module (Word 16) (Word 16))
+private def coefficientLayout : WeightedCoefficient.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) :=
+  ⟨accumulation.good, oops.input, by decide⟩
+private def coefficientProximityLayout :
+    WeightedCoefficient.Layouts 16 Key ((Fin 3 → Word 16) × Word 16) (Word 16) (Word 16) :=
+  ⟨accumulation.good, proximity.input, by decide⟩
+private def coefficientPairLayout :
+    WeightedCoefficient.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16 × Word 16) :=
+  ⟨accumulation.bad, oops.input, by decide⟩
+private def coefficientCode := WeightedCoefficient.code (base := base) (key := .atom false) (val := .atom true)
+  coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+private def coefficientProximityCode := WeightedCoefficient.code (base := base) (key := .atom false) (val := .atom true)
+  coefficientProximityLayout ⟨0, trivial⟩ 4 (by decide) (by decide) proximityGenerator ⟨99, trivial⟩
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+private def coefficientPairCode := WeightedCoefficient.code (base := base) (key := .atom false)
+  (val := .pair (.atom true) (.atom true)) coefficientPairLayout ⟨(0, 0), trivial, trivial⟩
+  4 (by decide) (by decide) oopsGenerator ⟨(99, 98), trivial, trivial⟩
+  primitives comparison comparison_correct badUpdate badBuffers (by decide) uniformPort uniformPairDraw
+private def coefficientInput (coefficient accumulator : Word 16) (cache : List (Key × Word 16))
+    (bounded : cache.length ≤ 8) : coefficientLayout.input.Value :=
+  ⟨(message.val, coefficient, accumulator, cache), message.property, trivial,
+    trivial, bounded, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩
+private def coefficientTime := WeightedCoefficient.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  coefficientLayout 4 (by decide) (by decide) (OOPSTerms.timeBudget oops 6) 26
+    (BLSAccumulate.goodTime accumulation.arithmetic 6 6)
+private def coefficientWords := WeightedCoefficient.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  coefficientLayout 4 (by decide) (by decide) (OOPSTerms.codeBudget oops 27) 125
+    (BLSAccumulate.goodCode accumulation.arithmetic 27 27)
+private theorem coefficientBound : Interactive.TimeBoundOn
+    (WeightedCoefficient.valid (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout (generate := OOPSTerms.value))
+    uniformPort .unit coefficientLayout.input.representation coefficientCode coefficientTime :=
+  WeightedCoefficient.time_bound (base := base) (key := .atom false) (val := .atom true)
+    coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw uniformCorrect
+    oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) goodBound
+private theorem coefficientCodeBound : (coefficientCode.lower uniformPort).descriptionWords ≤ coefficientWords :=
+  WeightedCoefficient.code_bound (base := base) (key := .atom false) (val := .atom true)
+    coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+    oopsBound (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535) goodBound
+private theorem coefficientFits : (coefficientCode.lower uniformPort).DescriptionFits :=
+  WeightedCoefficient.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide)
+private theorem coefficientSource (value : coefficientLayout.input.Value)
+    (admitted : WeightedCoefficient.valid (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout (generate := OOPSTerms.value) value) :
+    Subtype.val <$> WeightedCoefficient.denote (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+      primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformSource value =
+      (fun answer => (value.val.2.2.1 + answer.1, answer.2)) <$>
+        (simulateQ (BLS.LazyAGM.Reduction.privateListOracle (M := Key) (R := Word 16))
+          (Model.LazyAGM.evalTerms ((OOPSTerms.value value.val.1).map
+            fun term => (term.1, value.val.2.1 * term.2)))).run value.val.2.2.2 :=
+  WeightedCoefficient.denote_source (base := base) (key := .atom false) (val := .atom true)
+    coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    (fun _ => rfl) rfl uniformSource uniformLaw value admitted
+private theorem coefficientMemory
+    (tape : RandomTape 16) (value : coefficientLayout.input.Value)
+    (admitted : WeightedCoefficient.valid (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout (generate := OOPSTerms.value) value)
+    (before : State 16) (holds : coefficientLayout.input.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers)
+    (initialBuffers : before.SupportBound buffers) (finished : WordIO.Result 16)
+    (reached : some finished ∈ support (coefficientCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ coefficientTime ∧
+      ∃ execution : WordIO.Exec .unit tape (coefficientCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((coefficientCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (coefficientCode.lower uniformPort).memBound) ≤
+              5 * coefficientWords + 20 + registers + 3 * buffers + before.liveMem buffers + coefficientTime := by
+  obtain ⟨elapsed, _, _, _, execution, memory⟩ :=
+    WeightedCoefficient.resources (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+      primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+      uniformCorrect oopsBound
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535)
+      goodBound oopsNames (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, memory⟩
+
+open Lean in
+run_cmd do
+  let samples : List (Word 16) := [2, 5, 7, 11]
+  let fresh := samples.flatMap (fun sample => [65535, sample]) ++ [88]
+  let trace := samples.flatMap (fun sample =>
+    [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+  for coefficient in ([0, 5] : List (Word 16)) do
+    for cache in ([⟨[], by decide⟩, ⟨entries, by decide⟩] : List {cache : List (Key × Word 16) // cache.length ≤ 8}) do
+      let value := coefficientInput coefficient 9 cache.val cache.property
+      match executeUniform coefficientLayout.input.representation coefficientLayout.state coefficientCode
+          value (if cache.val.isEmpty then fresh else [88]) with
+      | none => throwError "weighted coefficient execution failed"
+      | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+        unless answer == (9 + coefficient * 377, entries) && framed == #[77] && capacity == 4 &&
+            register == 91 && tape == 9 && scratch && remaining == [88] && elapsed ≤ coefficientTime &&
+            events == (if cache.val.isEmpty then trace else []) do
+          throwError "coefficient scaling changed reads, cache, old accumulator, frame or time bound"
+  -- The second occurrence receives a new coefficient but reuses the first result's cache.
+  match executeUniform coefficientLayout.input.representation coefficientLayout.state coefficientCode
+      (coefficientInput 5 9 [] (by decide)) fresh with
+  | none => throwError "first coefficient occurrence failed"
+  | some (first, _, _, _, _, _, _, _, _) =>
+    if bounded : first.2.length ≤ 8 then
+      match executeUniform coefficientLayout.input.representation coefficientLayout.state coefficientCode
+          (coefficientInput 7 first.1 first.2 bounded) [88] with
+      | none => throwError "second coefficient occurrence failed"
+      | some (answer, _, _, _, _, _, events, remaining, elapsed) =>
+        unless answer == (4533, entries) && events.isEmpty && remaining == [88] && elapsed ≤ coefficientTime do
+          throwError "repeated message occurrence lost positional coefficient or cache sharing"
+    else throwError "first coefficient occurrence exceeded its cache capacity"
+  let pvalue : coefficientProximityLayout.input.Value :=
+    ⟨((vector 3 9 27).val, 5, 9, []), (vector 3 9 27).property, trivial,
+      trivial, by decide, by simp⟩
+  match executeUniform coefficientProximityLayout.input.representation coefficientProximityLayout.state
+      coefficientProximityCode pvalue fresh with
+  | none => throwError "Proximity coefficient execution failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+    unless answer == (1894, entries) && framed == #[77] && capacity == 4 &&
+        register == 91 && tape == 9 && scratch && events == trace && remaining == [88] do
+      throwError "Proximity coefficient changed vector terms, sampling or retained frame"
+  let pairSamples : List (Word 16) := [2, 3, 5, 7, 11, 13, 17, 19]
+  let pairTrace := pairSamples.flatMap (fun sample =>
+    [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+  for coefficient in ([0, 5] : List (Word 16)) do
+    let value : coefficientPairLayout.input.Value :=
+      ⟨(message.val, coefficient, (9, 10), []), message.property, trivial,
+        ⟨trivial, trivial⟩, by change (0 : Nat) ≤ 8; decide, by simp⟩
+    match executeUniform coefficientPairLayout.input.representation coefficientPairLayout.state coefficientPairCode
+        value (pairSamples.flatMap (fun sample => [65535, sample]) ++ [88]) with
+    | none => throwError "pair coefficient execution failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+      unless answer == ((9 + coefficient * 575, 10 + coefficient * 654),
+          [((3, 42), (17, 19)), ((2, 42), (11, 13)), ((1, 42), (5, 7)), ((0, 42), (2, 3))]) &&
+          framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+          events == pairTrace && remaining == [88] do
+        throwError "pair coefficient changed coordinate scaling, zero reads, cache or frame"
+  let transcript : List ((Word 16 × Word 16) × Word 16) := [(message.val, 17), (message.val, 13)]
+  let shortRows := WeightedAGM.Batching.chronologicalRows transcript [5]
+  let longRows := WeightedAGM.Batching.chronologicalRows transcript [5, 7, 11]
+  unless shortRows.map Prod.snd == [5, 0] && longRows.map Prod.snd == [5, 7] &&
+      shortRows.map (fun row => row.1.2) == [13, 17] &&
+      WeightedAGM.Batching.reads (OOPSTerms.value (degree := 3)) shortRows == 8 &&
+      (WeightedAGM.Batching.expanded (OOPSTerms.value (degree := 3)) shortRows).length == 8 do
+    throwError "chronological batching dropped repeated or zero-coefficient occurrences"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``WeightedAGM.Batching.evalTerms_scale, ``WeightedAGM.Batching.evalTerms_append,
+      ``WeightedAGM.Batching.execute_source, ``WeightedAGM.Batching.execute_signedTerms,
+      ``WeightedAGM.Batching.cached_signedTerms, ``WeightedAGM.Batching.cache_growth,
+      ``WeightedAGM.Batching.chronological_reads_bound, ``WeightedAGM.Batching.remaining_room,
+      ``WeightedCoefficient.refines, ``WeightedCoefficient.cache_growth, ``WeightedCoefficient.denote_source,
+      ``WeightedCoefficient.time_bound, ``WeightedCoefficient.code_bound, ``WeightedCoefficient.names,
+      ``WeightedCoefficient.descriptionFits, ``WeightedCoefficient.resources,
+      ``coefficientBound, ``coefficientCodeBound, ``coefficientFits, ``coefficientSource, ``coefficientMemory] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

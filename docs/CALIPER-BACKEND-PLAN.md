@@ -2666,9 +2666,33 @@ Implemented and checked:
   or two units of fuel. Exact traces, frames, scratch release and derived
   elapsed-time bounds are checked. Concrete source, reservation, complete
   caller resource and execution-postcondition instances are axiom-audited.
-  Chronological coefficient expansion/extraction, complete OOPS/Proximity solvers
-  and public concrete/family models also remain. Schnorr ROM replay/composition
-  remains pending; conventional CPU/flat-memory adequacy stays outside this migration.
+- [Streaming weighted extraction](../Signatures/Runtime/WeightedBatching.lean)
+  evaluates each message's original terms before applying its positional
+  coefficient. The proof identifies the complete oracle computation with the
+  source's flattened, scaled term list, before interpreting the cache. Thus
+  query order and zero-coefficient reads are preserved. The cached theorem
+  preserves the full ordered cache, and bounds its growth by the sum of the
+  generated lengths, at most term capacity times transcript length. Reversing
+  the stored log and attaching coefficients matches `signedTerms`: repeated
+  occurrences remain separate, missing coefficients are zero, and surplus
+  coefficients are ignored. The flattened list is proof-side only.
+- [One executed weighted occurrence](../Signatures/Runtime/Caliper/WeightedCoefficient.lean)
+  generates and evaluates a message from zero while retaining its coefficient
+  and old accumulator. It then reuses the constructed accumulator finisher to
+  compute `old + coefficient • value`, keeping the returned private cache.
+  [Input routing](../Signatures/Runtime/Caliper/WeightedCoefficientRouting.lean)
+  executes the copies. [Bounds](../Signatures/Runtime/Caliper/WeightedCoefficientBounds.lean)
+  include generation, each original term read/update, the final coefficient
+  update, saved-state copying, stored code, address acceptance and every visited
+  memory state. They derive from the primitive component budgets.
+  [Regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) cover scalar and
+  pair values, zero coefficients with fresh sampling, cache hits, distinct
+  coefficients on repeated messages sharing the returned cache, Proximity's
+  vector messages, exact traces, retained frames and scratch release.
+  The chronological outer Caliper fold, complete extraction/setup/caller
+  composition, OOPS/Proximity public concrete/family models and Schnorr ROM
+  replay/composition remain. Conventional CPU/flat-memory adequacy stays
+  outside this migration.
 
 Remaining integration sequence:
 

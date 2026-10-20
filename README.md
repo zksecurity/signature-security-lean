@@ -496,7 +496,14 @@ Pinned upstreams:
   include controller overhead and all stored iterations.
   [Completion bounds](Signatures/Runtime/Caliper/WeightedCallerPostcondition.lean)
   cover early return and cutoff and provide cache headroom for later extraction.
-  Chronological weighted extraction and full-solver integration remain.
+  [Streaming extraction identities](Signatures/Runtime/WeightedBatching.lean)
+  preserve the original query computation and full cache while bounding reads
+  by term capacity times transcript length.
+  [One weighted occurrence](Signatures/Runtime/Caliper/WeightedCoefficient.lean)
+  now executes term generation/evaluation and the final coefficient update,
+  with [derived resources](Signatures/Runtime/Caliper/WeightedCoefficientBounds.lean).
+  Zero coefficients retain every read. The chronological outer fold and
+  full-solver integration remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

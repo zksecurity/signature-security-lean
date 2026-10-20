@@ -54,6 +54,7 @@ import Signatures.Runtime.Caliper.WeightedOracleMemory
 import Signatures.Runtime.Caliper.WeightedOracleOriginal
 import Signatures.Runtime.Caliper.WeightedOracleInvariant
 import Signatures.Runtime.Caliper.WeightedCallerResources
+import Signatures.Runtime.Caliper.WeightedCoefficientBounds
 import Signatures.Runtime.Caliper.WeightedCallerOriginal
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
