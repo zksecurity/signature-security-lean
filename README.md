@@ -64,10 +64,11 @@ derives negligible forgery from polynomial component resources, Caliper DLog
 hardness and negligible inverse field size. The
 [parameters](Signatures/Schnorr/CaliperAGMParameters.lean) fix the layouts,
 implemented primitives, sampler and caller limits before choosing the attacker.
-The [caller constructor](Signatures/Schnorr/CaliperAGMCaller.lean) derives the
-source machine, capacity invariant and source query bounds from local Caliper
-code and branchwise query allowances. The shared AGM source and its identification
-with that code remain explicit.
+The [local caller constructor](Signatures/Schnorr/CaliperAGMSource.lean) derives the
+shared AGM source, source machine, capacity invariant and source query bounds
+from local Caliper code, branchwise query allowances and algebraicity.
+No separate source program or proof identifying it with that code is required.
+Local implementation/resource contracts and algebraic explanations remain explicit.
 The earlier [abstract-backend family theorem](Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
 remains separate. The same public file
 also exposes `Schnorr.rom_security` for unrestricted attackers, with the full-field
@@ -445,6 +446,11 @@ Pinned upstreams:
   before dependent tagging, so distinct stored answers cannot be identified by
   modulo conversion. The implemented handler proves this property on every
   supported reply; local caller code can inspect the original stored words.
+  Its [source constructor](Signatures/Schnorr/CaliperAGMSource.lean) now also proves
+  shared-AGM algebraicity directly from the local caller's outgoing explanations.
+  Unrepresented source inputs/replies stop with an empty-group output valid at
+  every basis. Every related implemented reply preserves the exact continuation,
+  so the same Caliper program and complete resource bounds apply.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

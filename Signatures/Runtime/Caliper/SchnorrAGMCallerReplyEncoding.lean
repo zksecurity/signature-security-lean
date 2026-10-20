@@ -81,4 +81,17 @@ theorem representReply_eq (q : Request layout) (represented : Reply layout)
   exact canonical_reply_injective layout related.2 existsPacket.choose_spec.2
     (related.1.trans existsPacket.choose_spec.1.symm)
 
+include zeroValid in
+/-- Every represented request has a represented zero/empty source answer.
+This supplies a return value from a locally terminating caller without assuming
+that the message or forgery type was inhabited independently. -/
+theorem defaultReply_represented (q : Request layout) :
+    ∃ represented, replyMatches layout q represented (Interface.defaultReply (query layout q)) := by
+  refine ⟨defaultPacket layout zeroValid q, ?_⟩
+  rcases q with args | (args | args)
+  · refine ⟨?_, Nat.zero_le _⟩
+    exact Interface.randomTag_fin args.val.1 args.val.2.1 args.val.2.2 (0 : Fin (args.val.1 + 1)) []
+  · exact ⟨rfl, trivial⟩
+  · exact ⟨rfl, trivial⟩
+
 end Signatures.Runtime.CaliperBackend.SchnorrAGM.CallerHandler

@@ -1,6 +1,6 @@
 import Signatures.Schnorr.Game
 import Signatures.Model.CyclicCurve
-import Signatures.Schnorr.CaliperAGMCaller
+import Signatures.Schnorr.CaliperAGMSource
 
 /-! Inspectable game and Caliper resource model for the public Schnorr AGM
 statement. Implemented primitives, layouts, sampler and caller allowances are
@@ -24,6 +24,8 @@ variable (curve : Model.CyclicCurve) [model : AGMSecurityModel curve]
 /-- An algebraic source attacker with actual local Caliper code and its own
 query/resource bounds and source correspondence. Internal code is general
 Caliper code; requests and output carry the shared AGM's algebraic explanations.
+`CaliperAGM.AlgebraicAdversary.ofLocalCaller` derives the source and its
+correspondence from local query, algebraicity and resource contracts.
 Coverage of conventional machines is a separate adequacy theorem. -/
 abbrev AlgebraicAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
   CaliperAGM.AlgebraicAdversary (model.parameters securityParameter queries)

@@ -2413,9 +2413,31 @@ Implemented and checked:
   out-of-range packet while preserving the canonical answer.
   Mathematical replies outside the bounded packet representation use a
   source-only extension. Every related executed reply uses its unique exact
-  packet. This constructs local machine correspondence; it does not eliminate
-  all algebraic-source coverage obligations or prove conventional-machine
-  adequacy.
+  packet. The constructor below additionally derives the algebraic source.
+- [Partial caller presentation](../Signatures/Runtime/Caliper/PartialCaller.lean)
+  stops immediately on source replies outside the represented interface and
+  follows the exact local transition on represented replies. Its machine/source
+  equality and query bounds follow from local termination and branchwise query
+  allowances; pending calls at zero fuel remain inadmissible.
+  [Schnorr reply conversion](../Signatures/Runtime/Caliper/SchnorrAGMPartialReplies.lean)
+  proves exact decoding of every related packet. Each request has a represented
+  zero/empty reply, so termination supplies a represented output without an
+  assumed default message. Clearing that output's group and coefficient lists
+  gives a source-only fallback valid at every basis.
+  [Local algebraicity](../Signatures/Runtime/Caliper/SchnorrAGMLocalAlgebraic.lean)
+  tracks the chronological received basis as a proof parameter and derives
+  the shared AGM property. The [global source](../Signatures/Runtime/Caliper/SchnorrAGMSourceAdversary.lean)
+  preserves every represented initial pair and extends other inputs with the
+  same universally algebraic fallback. Its query bounds hold at every input.
+  The [public local caller constructor](../Signatures/Schnorr/CaliperAGMSource.lean)
+  now requires only local code, resource/query bounds and algebraicity. It
+  constructs the shared AGM source, machine, invariant and source equality.
+  The existing complete Caliper reduction and security theorem apply to that
+  constructed source. No finished-solver or independent source certificate is
+  added; the actual charged code and budgets are unchanged. Tests distinguish
+  rejected replies from continued replies, reject exhausted fuel/counts, check
+  the constructor's inputs and instantiate its complete resource/security bounds.
+  Coverage of every conventional machine remains a separate adequacy theorem.
 
 Remaining integration sequence:
 
