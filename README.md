@@ -519,7 +519,13 @@ Pinned upstreams:
   retains the forgery context and passes the same cache between both stages.
   Its [source theorem](Signatures/Runtime/Caliper/WeightedSignatureTailSource.lean)
   and [resource bounds](Signatures/Runtime/Caliper/WeightedSignatureTailMemory.lean)
-  cover the whole composed execution. Hash-prefix and full-solver integration remain.
+  cover the whole composed execution.
+  [Complete weighted extraction](Signatures/Runtime/Caliper/WeightedExtractor.lean)
+  now adds the hash prefix and executed runtime numerator addition, with independent
+  hash/signing types and coefficient capacities. Its
+  [source identity](Signatures/Runtime/Caliper/WeightedExtractorSource.lean) and
+  [resource bounds](Signatures/Runtime/Caliper/WeightedExtractorMemory.lean) preserve
+  the shared cache and account for the full good/bad extractor. Full-solver integration remains.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

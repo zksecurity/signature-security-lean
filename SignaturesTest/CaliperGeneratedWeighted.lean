@@ -22,6 +22,8 @@ import Signatures.Runtime.Caliper.WeightedTargetSource
 import Signatures.Runtime.Caliper.WeightedTargetBounds
 import Signatures.Runtime.Caliper.WeightedSignatureTailSource
 import Signatures.Runtime.Caliper.WeightedSignatureTailMemory
+import Signatures.Runtime.Caliper.WeightedExtractorSource
+import Signatures.Runtime.Caliper.WeightedExtractorMemory
 import Signatures.Runtime.Caliper.BLSExtractArithmeticNames
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
@@ -2075,6 +2077,216 @@ run_cmd do
       ``WeightedSignatureTail.time_bound, ``WeightedSignatureTail.code_bound, ``WeightedSignatureTail.names,
       ``WeightedSignatureTail.buffers, ``WeightedSignatureTail.descriptionFits, ``WeightedSignatureTail.resources,
       ``tailBound, ``tailPairBound, ``tailFits, ``tailBufferBound, ``tailOracle, ``tailMemory] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+-- Complete extraction has independent hash/sign keys and coefficient capacities.
+private def extractorAccumulation : BLSPrivateAccumulate.Layouts 16 Key (Word 16) where
+  cache := { accumulation.cache with capacityPred := 9, countFits := by decide, storageFits := by decide }
+  pairStorageFits := by decide
+  scalarStorageFits := by decide
+  goodStorageFits := by decide
+  badStorageFits := by decide
+private def extractorSigning : WeightedExtraction.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16) :=
+  ⟨⟨⟨extractorAccumulation.good, oops.input, by decide⟩, scalar, by decide⟩,
+    3, 4, 4, by decide, by decide, by decide, by decide, by decide⟩
+private def extractorLayout : WeightedExtractor.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16) :=
+  ⟨extractorSigning, 2, 3, by decide, by decide, by decide⟩
+private def extractorProximitySigning :
+    WeightedExtraction.Layouts 16 Key ((Fin 3 → Word 16) × Word 16) (Word 16) (Word 16) (Word 16) :=
+  ⟨⟨⟨extractorAccumulation.good, proximity.input, by decide⟩, scalar, by decide⟩,
+    3, 4, 4, by decide, by decide, by decide, by decide, by decide⟩
+private def extractorProximityLayout :
+    WeightedExtractor.Layouts 16 Key ((Fin 3 → Word 16) × Word 16) (Word 16) (Word 16) (Word 16) :=
+  ⟨extractorProximitySigning, 2, 3, by decide, by decide, by decide⟩
+private def extractorPairSigning :
+    WeightedExtraction.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16 × Word 16) :=
+  ⟨⟨⟨extractorAccumulation.bad, oops.input, by decide⟩, scalar, by decide⟩,
+    3, 4, 4, by decide, by decide, by decide, by decide, by decide⟩
+private def extractorPairLayout :
+    WeightedExtractor.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16 × Word 16) :=
+  ⟨extractorPairSigning, 2, 3, by decide, by decide, by decide⟩
+private def extractorCode := WeightedExtractor.code (base := base) (key := .atom false) (val := .atom true)
+  extractorLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) goodExtract goodExtractBuffers (by decide) add addNames.buffers (by decide) uniformPort uniformDraw
+private def extractorProximityCode := WeightedExtractor.code (base := base) (key := .atom false) (val := .atom true)
+  extractorProximityLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ proximityGenerator primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) goodExtract goodExtractBuffers (by decide) add addNames.buffers (by decide) uniformPort uniformDraw
+private def extractorPairCode := WeightedExtractor.badCode (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+  extractorPairLayout ⟨0, trivial⟩ ⟨(0, 0), trivial, trivial⟩ ⟨(99, 98), trivial, trivial⟩ oopsGenerator
+  primitives comparison comparison_correct badUpdate badBuffers (by decide)
+  badExtract badExtractBuffers (by decide) uniformPort uniformPairDraw
+private def extractorInput (forged : Word 16 × Word 16) (beta : Word 16)
+    (gamma xi : List (Word 16)) (hashes : List (Key × Word 16))
+    (signs : List ((Word 16 × Word 16) × Word 16)) (cache : List (Key × Word 16))
+    (gammaBound : gamma.length ≤ 3) (xiBound : xi.length ≤ 4) (hashBound : hashes.length ≤ 2)
+    (signBound : signs.length ≤ 3) (cacheBound : cache.length ≤ 10) : extractorLayout.input.Value :=
+  ⟨((forged, beta, gamma, xi), (cache, hashes, signs)),
+    ⟨⟨trivial, trivial⟩, trivial, ⟨gammaBound, fun _ _ => trivial⟩, xiBound, fun _ _ => trivial⟩,
+    ⟨cacheBound, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+    ⟨hashBound, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+    signBound, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩
+private def extractorTime := WeightedExtractor.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  extractorLayout (OOPSTerms.timeBudget oops 6) 26 (BLSAccumulate.goodTime accumulation.arithmetic 6 6)
+    (BLSExtractArithmetic.goodTime accumulation.arithmetic 6 6) 6
+private def extractorWords := WeightedExtractor.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  extractorLayout (OOPSTerms.codeBudget oops 27) 125 (BLSAccumulate.goodCode accumulation.arithmetic 27 27)
+    (BLSExtractArithmetic.goodCode accumulation.arithmetic 27 27) 27
+private def extractorPairTime := WeightedExtractor.badTimeBudget (base := base) (key := .atom false)
+  (val := .pair (.atom true) (.atom true)) extractorPairLayout (OOPSTerms.timeBudget oops 6)
+    (PairSampling.timeBudget scalar scalar 26 26) (BLSAccumulate.badTime accumulation.arithmetic 6 6)
+    (BLSExtractArithmetic.badTime accumulation.arithmetic 6 118 6)
+private theorem extractorBound : Interactive.TimeBoundOn extractorLayout.ready uniformPort .unit
+    extractorLayout.input.representation extractorCode extractorTime :=
+  WeightedExtractor.time_bound (base := base) (key := .atom false) (val := .atom true)
+    extractorLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) goodExtract goodExtractBuffers (by decide) add addNames.buffers (by decide)
+    uniformPort uniformCorrect oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+    goodBound goodExtractBound addBound
+private theorem extractorFits : (extractorCode.lower uniformPort).DescriptionFits :=
+  WeightedExtractor.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    extractorLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) goodExtract goodExtractBuffers (by decide) add addNames.buffers (by decide)
+    uniformPort uniformDraw (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide) (by decide)
+private theorem extractorOracle (tape : RandomTape 16) (value : extractorLayout.input.Value)
+    (admitted : extractorLayout.ready value) (before : State 16) (holds : extractorLayout.input.representation.Holds value before) :
+    (fun result => (fun answer => (answer.val.1, answer.val.2.map (Prod.map Prod.swap id))) <$>
+        Interactive.observe (WeightedSignatureTail.output extractorSigning).representation result) <$>
+      extractorCode.execute uniformPort .unit tape before =
+      some <$> WeightedExtractor.sourceProgram extractorLayout (OOPS.LazyAGM.terms 3)
+        (fun value => value.1 + value.2) (fun value => value.1 / (value.2.1 - value.2.2)) value
+        (value.val.2.2.1.map (Prod.map Prod.swap id)) (value.val.2.1.map (Prod.map Prod.swap id)) :=
+  WeightedExtractor.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    extractorLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) goodExtract goodExtractBuffers (by decide) add
+    (fun _ => rfl) rfl rfl uniformSource uniformLaw (Equiv.prodComm (Word 16) (Fin 4))
+    (OOPS.LazyAGM.terms 3) (OOPSTerms.source 3) addNames.buffers (by decide)
+    uniformPort uniformDraw uniformCorrect tape value admitted before holds
+private theorem extractorMemory (tape : RandomTape 16) (value : extractorLayout.input.Value)
+    (admitted : extractorLayout.ready value) (before : State 16) (holds : extractorLayout.input.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (extractorCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ extractorTime ∧
+      ∃ execution : WordIO.Exec .unit tape (extractorCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((extractorCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (extractorCode.lower uniformPort).memBound) ≤
+              5 * extractorWords + 80 + registers + 3 * buffers + before.liveMem buffers + extractorTime := by
+  obtain ⟨elapsed, _, _, _, execution, memory⟩ :=
+    WeightedExtractor.resources (base := base) (key := .atom false) (val := .atom true)
+      extractorLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator primitives comparison comparison_correct
+      goodUpdate goodBuffers (by decide) goodExtract goodExtractBuffers (by decide) add addNames.buffers (by decide)
+      uniformPort uniformDraw uniformCorrect oopsBound
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535) goodBound goodExtractBound
+      oopsNames (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames goodExtractNames addBound addNames.accounted
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, fun between visited => (memory between visited).2.2.2⟩
+
+open Lean in
+run_cmd do
+  let hashes : List (Key × Word 16) := [((1, 42), 13), ((0, 42), 17)]
+  let signs : List ((Word 16 × Word 16) × Word 16) := [(message.val, 23)]
+  let samples : List (Word 16) := [2, 5, 7, 11]
+  let more : List (Word 16) := [3, 7, 11, 13]
+  let moreCache : List (Key × Word 16) := [((3, 43), 13), ((2, 43), 11), ((1, 43), 7), ((0, 43), 3)]
+  let reused := extractorInput message.val 64002 [3, 4] [5] hashes signs []
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  let runtimeZero := extractorInput message.val 65510 [3, 4] [5] hashes signs []
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  let distinct := extractorInput (2, 43) 63790 [3, 4] [5] hashes signs []
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  let padded := extractorInput message.val 64002 [3, 4, 99] [5, 98] hashes signs []
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  let missingSign := extractorInput message.val 728 [3, 4] [] hashes signs []
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  let cached := extractorInput message.val 728 [3, 4] [] hashes [] entries
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  let empty := extractorInput message.val 754 [] [] [] [] []
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  let cases : List (extractorLayout.input.Value × List (Word 16) × Word 16 × List (Key × Word 16)) :=
+    [(reused, samples, 1, entries), (runtimeZero, samples, 0, entries),
+     (distinct, samples ++ more, 1, moreCache ++ entries), (padded, samples, 1, entries),
+     (missingSign, samples, 2, entries), (cached, [], 2, entries), (empty, samples, 2, entries)]
+  for (value, draws, expected, cache) in cases do
+    unless decide (extractorLayout.ready value) do throwError "full extractor rejected occupied transcript bounds"
+    match executeUniform extractorLayout.input.representation (WeightedSignatureTail.output extractorSigning)
+        extractorCode value (draws.flatMap (fun sample => [65535, sample]) ++ [88]) with
+    | none => throwError "complete weighted extractor failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      let trace := draws.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+      unless answer == (expected, cache) && framed == #[77] && capacity == 4 && register == 91 && tape == 9 &&
+          scratch && events == trace && remaining == [88] && elapsed ≤ extractorTime do
+        throwError "full extractor changed runtime numerator, chronological coefficients, cache sharing, frame or time: expected={expected.toNat}, actual={answer.1.toNat}"
+  let unrelatedHashes : List (Key × Word 16) := [((0, 78), 13), ((0, 77), 17)]
+  for gamma in ([⟨[], by decide⟩, ⟨[0, 0], by decide⟩] : List {gamma : List (Word 16) // gamma.length ≤ 3}) do
+    let value := extractorInput message.val 64028 gamma.val [5] unrelatedHashes signs []
+      gamma.property (by decide) (by decide) (by decide) (by decide)
+    let draws := [17, 19] ++ samples
+    match executeUniform extractorLayout.input.representation (WeightedSignatureTail.output extractorSigning)
+        extractorCode value (draws.flatMap (fun sample => [65535, sample]) ++ [88]) with
+    | none => throwError "zero/default hash coefficients failed"
+    | some (answer, _, _, _, _, scratch, events, remaining, elapsed) =>
+      let trace := draws.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+      unless answer == (1, entries ++ [((0, 78), 19), ((0, 77), 17)]) && scratch && events == trace &&
+          remaining == [88] && elapsed ≤ extractorTime do
+        throwError "zero/default hash coefficients skipped source reads or lost unrelated entries"
+  let noRoom := extractorInput message.val 64002 [3, 4] [5] hashes signs (List.replicate 1 ((0, 99), 123))
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+  unless !(decide (extractorLayout.ready noRoom)) do throwError "full extraction failed to reserve hash/sign/target room"
+  let pvalue : extractorProximityLayout.input.Value :=
+    ⟨((((vector 2 4 8).val.1, 43), 63790, [3, 4], [5]), ([], hashes, [((vector 3 9 27).val, 23)])),
+      ⟨⟨(fun _ => trivial), trivial⟩, trivial, ⟨by decide, fun _ _ => trivial⟩, by decide, fun _ _ => trivial⟩,
+      ⟨by decide, by simp⟩, ⟨by decide, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+      by decide, fun _ _ => ⟨⟨(fun _ => trivial), trivial⟩, trivial⟩⟩
+  let draws := samples ++ more
+  match executeUniform extractorProximityLayout.input.representation (WeightedSignatureTail.output extractorProximitySigning)
+      extractorProximityCode pvalue (draws.flatMap (fun sample => [65535, sample]) ++ [88]) with
+  | none => throwError "complete Proximity extractor failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+    let trace := draws.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+    unless answer == (1, moreCache ++ entries) && framed == #[77] && capacity == 4 && register == 91 && tape == 9 &&
+        scratch && events == trace && remaining == [88] do
+      throwError "complete Proximity extractor changed vector/hash composition"
+  let pairSamples : List (Word 16) := [2, 3, 5, 7, 11, 13, 17, 19]
+  let pairCache : List (Key × (Word 16 × Word 16)) :=
+    [((3, 42), (17, 19)), ((2, 42), (11, 13)), ((1, 42), (5, 7)), ((0, 42), (2, 3))]
+  let pairCases : List ((Word 16 × Word 16) × List (Word 16) × Word 16 × List (Key × (Word 16 × Word 16))) :=
+    [(message.val, pairSamples, 0, pairCache),
+     ((0, 43), pairSamples ++ [577, 700, 5, 7, 11, 13, 17, 19], 32745,
+       [((3, 43), (17, 19)), ((2, 43), (11, 13)), ((1, 43), (5, 7)), ((0, 43), (577, 700))] ++ pairCache)]
+  for (forged, draws, expected, cache) in pairCases do
+    for beta in ([0, 999] : List (Word 16)) do
+      let value : extractorPairLayout.input.Value :=
+        ⟨((forged, beta, [111, 222, 333], [1]), ([], unrelatedHashes, signs)),
+          ⟨⟨trivial, trivial⟩, trivial,
+            ⟨by change (3 : Nat) ≤ 3; decide, fun _ _ => trivial⟩,
+            (by change (1 : Nat) ≤ 4; decide), fun _ _ => trivial⟩,
+          ⟨by change (0 : Nat) ≤ 10; decide, by simp⟩,
+          ⟨by change (2 : Nat) ≤ 2; decide, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+          (by change (1 : Nat) ≤ 3; decide), fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩
+      unless decide (extractorPairLayout.badReady value) do throwError "bad extractor rejected its signing/target reservation"
+      match executeUniform extractorPairLayout.input.representation (WeightedSignatureTail.output extractorPairSigning)
+          extractorPairCode value (draws.flatMap (fun sample => [65535, sample]) ++ [88]) with
+      | none => throwError "complete pair extractor failed"
+      | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+        let trace := draws.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+        unless answer == (expected, cache) && framed == #[77] && capacity == 4 && register == 91 && tape == 9 &&
+            scratch && events == trace && remaining == [88] && elapsed ≤ extractorPairTime do
+          throwError "bad extractor evaluated ignored hash rows, used beta or changed shared cache/framing"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``TokenEvaluation.evalTerms_source, ``WeightedExtractor.refines, ``WeightedExtractor.bad_refines,
+      ``WeightedExtractor.hashPreserves, ``WeightedExtractor.denote_source, ``WeightedExtractor.bad_denote_source,
+      ``WeightedExtractor.denote_encoded, ``WeightedExtractor.denote_equiv, ``WeightedExtractor.observe_equiv,
+      ``WeightedExtractor.transition_time, ``WeightedExtractor.transition_words, ``WeightedExtractor.transition_buffers,
+      ``WeightedExtractor.time_bound, ``WeightedExtractor.code_bound, ``WeightedExtractor.bad_time_bound,
+      ``WeightedExtractor.bad_code_bound, ``WeightedExtractor.names, ``WeightedExtractor.bad_names,
+      ``WeightedExtractor.buffers, ``WeightedExtractor.descriptionFits, ``WeightedExtractor.bad_descriptionFits,
+      ``WeightedExtractor.resources, ``WeightedExtractor.bad_resources,
+      ``extractorBound, ``extractorFits, ``extractorOracle, ``extractorMemory] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

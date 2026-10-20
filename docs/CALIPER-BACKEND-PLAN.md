@@ -2773,7 +2773,30 @@ Implemented and checked:
   vectors, exact query traces/cache order, retained external frames, scratch
   release and full-tail elapsed bounds. Concrete original-game observation,
   memory, address and buffer instances are axiom-audited.
-  Remaining: add the hash prefix to the composed signing/target tail, terminal/setup/caller
+- [Complete weighted extraction](../Signatures/Runtime/Caliper/WeightedExtractor.lean)
+  composes the chronological hash pass, executed addition of the runtime forgery
+  scalar, signing pass and target extraction against one private cache. The bad
+  branch routes directly to the pair-valued signing/target tail; its unused hash
+  and coefficient fields remain part of the charged initial data.
+  Hash keys and signed-message types differ, and all four transcript/coefficient
+  capacities are independent. Capacity admission reserves occupied hash tokens,
+  `termCapacity * occupiedSigningTokens`, and the final target's term capacity.
+  [Source equality](../Signatures/Runtime/Caliper/WeightedExtractorSource.lean)
+  recovers original `traceTerms`, `signedTerms` and target `evalTerms`, preserves
+  the full ordered cache, and transports injective/equivalent source keys.
+  [Local transition bounds](../Signatures/Runtime/Caliper/WeightedExtractorTransitionBounds.lean)
+  and [complete resources](../Signatures/Runtime/Caliper/WeightedExtractorMemory.lean)
+  derive runtime, stored code, names, address acceptance and every visited memory
+  state from primitive routines. Runtime beta enters the actual addition routine;
+  it never selects a host-generated program or becomes an uncharged constant.
+  [Executed regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) use
+  distinct hash/signing types and capacities, OOPS and Proximity messages,
+  reused/fresh/prefilled caches, runtime numerator changes, missing/zero/surplus
+  coefficients and empty logs. Pair extraction tests both reused and fresh
+  targets while ignoring nonempty hash logs and gamma coefficients. Exact
+  samples, full cache order, framing, scratch release and elapsed budgets are
+  checked, alongside concrete source/address/memory witnesses and axiom audits.
+  Remaining: terminal/setup/caller
   composition, OOPS/Proximity public concrete/family models and Schnorr ROM
   replay/composition. Conventional CPU/flat-memory adequacy stays outside this
   migration.
