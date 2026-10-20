@@ -2246,8 +2246,51 @@ Implemented and checked:
   without querying. Missing randomness, caller frames, scratch release and time
   are checked, and the new generic proofs are axiom-audited. Local saved-buffer
   bounds follow from name lemmas without increasing Lean's recursion limit.
-  Remaining Schnorr work is terminal extraction, complete setup/caller/terminal
-  composition, cyclic DLog and public concrete/family integration.
+  The terminal read and scalar extraction follow below. Final-forgery dispatch,
+  complete setup/caller/terminal composition, cyclic DLog and public
+  concrete/family integration remain.
+
+- [The full-entry terminal read](../Signatures/Runtime/Caliper/SchnorrAGMEntryRead.lean)
+  reuses the implemented input packing, cache access and retained metadata.
+  Its charged output assembly preserves the entire first cached entry, including
+  the optional affine explanation. It performs no second lookup.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMEntryReadSource.lean)
+  proves the exact original `readEntry` result/state law under the sampler law.
+  [Time/code bounds](../Signatures/Runtime/Caliper/SchnorrAGMEntryReadBounds.lean)
+  add at most `100*W` time and `400*W+80` stored words to the cache bounds,
+  where `W` is the scheme storage width. Descriptor acceptance and
+  [every-visited-state memory](../Signatures/Runtime/Caliper/SchnorrAGMEntryReadMemory.lean)
+  are derived for the same source-correct execution.
+  [Terminal arithmetic](../Signatures/Runtime/Caliper/SchnorrAGMExtractionArithmetic.lean)
+  tests the cached representation flag and returns zero when it is absent;
+  otherwise it computes `(z-constant)/(secret+challenge)` from the actual entry.
+  Projections, retained inputs, pairing and branching are generated code. Only
+  addition, subtraction and total division implementations are supplied.
+  For scalar encoding width `s`, [its bounds](../Signatures/Runtime/Caliper/SchnorrAGMExtractionArithmeticBounds.lean)
+  are `1300*s+339` time plus the three primitive time bounds, and
+  `4329*s+1886` stored words plus their code bounds. Both branches count.
+  The encoded-field equation is exactly the original `entrySolution`.
+  [Their composition](../Signatures/Runtime/Caliper/SchnorrAGMExtractionRead.lean)
+  copies the response scalar across the interactive read, reorders the returned
+  entry/response/state bytes, and retains the updated state across arithmetic.
+  [The source theorem](../Signatures/Runtime/Caliper/SchnorrAGMExtractionReadSource.lean)
+  preserves the joint scalar/state law, including newly raised bad flags.
+  [Whole-routine bounds](../Signatures/Runtime/Caliper/SchnorrAGMExtractionReadBounds.lean)
+  add at most `100*W` time and `400*W+100` code words to the sum of read and
+  arithmetic bounds. Saved-buffer addresses are derived from the primitive and
+  sampler name bounds; the common reserve is `max(primitiveSlots,samplerSlots)+3`.
+  [Total memory](../Signatures/Runtime/Caliper/SchnorrAGMExtractionReadMemory.lean)
+  includes code, descriptors, initial caller storage and every intermediate copy.
+  [Execution tests](../SignaturesTest/CaliperSchnorrAGMRead.lean) share the original
+  read fixtures and compare challenge-only read, full-entry read and complete
+  read/arithmetic executions with independent expected bytes and traces. They
+  cover first-duplicate hits with a different supplied explanation, absent
+  explanations with nonzero padding, cached zero challenges, misses, the last
+  cache slot, exceptional challenges, retained bad flags, missing/surplus
+  randomness, caller frames, scratch release and time bounds. The word fixture
+  uses unsigned division, while the generic source theorem uses field division.
+  Final-forgery shape dispatch and coefficient flattening must still be composed
+  with this routine, then with setup/caller and the public DLog reduction.
 
 Remaining integration sequence:
 

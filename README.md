@@ -412,7 +412,11 @@ Pinned upstreams:
   and signing allowances. Its [execution theorem](Signatures/Runtime/Caliper/SchnorrAGMCallerExecution.lean)
   matches the original oracle machine and retains extraction space at every
   return or cutoff. Complete caller time, stored-code and memory bounds are
-  derived. Extraction and public theorem integration remain pending.
+  derived. The [terminal read and scalar extraction](Signatures/Runtime/Caliper/SchnorrAGMExtractionRead.lean)
+  now preserve the full cached explanation, execute the quotient, and retain
+  the updated private state with proved source correspondence and resource
+  bounds. Final-forgery dispatch, complete reduction composition and public
+  theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
