@@ -538,7 +538,13 @@ Pinned upstreams:
   connect the result to the existing good reduction and the bad branch at a fixed
   scalar. [Store initialization](Signatures/Runtime/Caliper/WeightedInitialization.lean)
   writes the empty cache/logs and establishes query/extraction reservations.
-  Challenge setup and the public OOPS/Proximity Caliper models remain.
+  [Initialized programs](Signatures/Runtime/Caliper/WeightedFullProgram.lean)
+  now compose runtime challenge setup with the caller and extractor.
+  [The good reduction](Signatures/Runtime/Caliper/WeightedGood.lean) has exact
+  source equality and a complete Caliper DLog resource certificate, conditional
+  on the stated local routines, caller correspondence and challenge coverage.
+  The bad branch's outer sampling/key generation and public OOPS/Proximity
+  Caliper models remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

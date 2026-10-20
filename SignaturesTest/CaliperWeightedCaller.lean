@@ -1,6 +1,7 @@
 import Signatures.Runtime.Caliper.WeightedCallerProgramResources
 import Signatures.Runtime.Caliper.WeightedCallerReduction
 import Signatures.Runtime.Caliper.WeightedInitialization
+import Signatures.Runtime.Caliper.WeightedGood
 import Signatures.Runtime.Caliper.OOPSTermsBounds
 import Signatures.Runtime.Caliper.BLSExtractArithmeticNames
 import Signatures.Runtime.Caliper.BLSResponseNames
@@ -331,6 +332,120 @@ private theorem complete_source (hashes : Bool) (tape : RandomTape 32)
     sourceKeys sourceTerms terms_source sourceMachine sourceState sourceInput advance_source initial_source
     sourceProgram source_implements tape value valid before holds
 
+private def setup : WeightedSetup.Layouts layout.service (layout.Request × extraction.forgery.Value) :=
+  ⟨Layout.all input, by decide⟩
+private theorem routineNames {code : Stmt 32} {words : Nat} (names : NamesAccounted code 3)
+    (stored : descriptionWords code ≤ words) (fits : 3 + words ≤ 65536) : NamesBound code 65536 :=
+  NamesBound.mono names ((Nat.add_le_add_left stored 3).trans fits)
+private def routines : WeightedFull.Routines (base := base) (key := .atom false) (val := .atom true) layout where
+  generate := OOPSTerms.value (degree := 1)
+  generator := oopsGenerator
+  combine := fun (value : Word 32 × (Word 32 × Word 32)) => value.2.2 + value.1 * value.2.1
+  update := goodUpdate
+  respond := fun _ value => value.1
+  response := response
+  calculate := fun (value : Word 32 × (Word 32 × Word 32)) => value.1 / (value.2.1 - value.2.2)
+  extract := goodExtract
+  numerator := fun (value : Word 32 × Word 32) => value.1 + value.2
+  sum := add
+  coefficientDefault := ⟨0, trivial⟩
+  slots := 65536
+  reserve := by decide
+  generatorNames := routineNames oopsNames oopsBound.code_le (by decide)
+  updateNames := routineNames goodNames goodBound.code_le (by decide)
+  responseNames _ := routineNames (Implementation.first_names _ _ _ _ 3)
+    (Implementation.first_boundedBy _ _ _ _).code_le (by decide)
+  extractNames := routineNames goodExtractNames goodExtractBound.code_le (by decide)
+  sumNames := addNames.mono (by decide)
+private def fullCaller : WeightedFull.Caller (base := base) (key := .atom false) (val := .atom true) layout setup.key.representation where
+  advance := advance
+  continuation := continuation
+  localNameFits := continuationNameFits
+  initial := fun value => initial value.val
+  initialCode := initialCode.viewInput setup.key.representation Subtype.val (fun _ => rfl)
+  initialNameFits := initialNameFits
+private def fullInvariant : WeightedFull.Invariant (base := base) (key := .atom false) (val := .atom true) layout setup fullCaller 1 where
+  domain := fun _ _ => True
+  advanceValid := fun _ _ _ _ _ _ _ => trivial
+  initialValid := fun _ => trivial
+private def fullProgram (fuel : Nat) (hashes : Bool) :=
+  WeightedFull.code (base := base) (key := .atom false) (val := .atom true) layout setup routines primitives comparison comparison_correct fullCaller uniformDraw fuel hashes
+private def routineBounds : WeightedFull.Routines.Bounds (base := base) (key := .atom false) (val := .atom true) layout routines where
+  generator := ⟨OOPSTerms.timeBudget oops 6, OOPSTerms.codeBudget oops 27⟩
+  update := ⟨BLSAccumulate.goodTime accumulation.arithmetic 6 6, BLSAccumulate.goodCode accumulation.arithmetic 27 27⟩
+  response := fun _ => ⟨8, 40⟩
+  extract := ⟨BLSExtractArithmetic.goodTime accumulation.arithmetic 6 6, BLSExtractArithmetic.goodCode accumulation.arithmetic 27 27⟩
+  sum := ⟨6, 27⟩
+  generatorBound := oopsBound
+  updateBound := goodBound
+  responseBound _ := Implementation.first_boundedBy _ _ _ _
+  extractBound := goodExtractBound
+  sumBound := addBound
+private def callerBounds : WeightedFull.Caller.Bounds (base := base) (key := .atom false) (val := .atom true) layout setup fullCaller where
+  step := ⟨400, 1000⟩
+  initial := ⟨400, 1000⟩
+  localTime _ := by change continuationRaw.staticTime .unit ≤ 400; decide
+  initialTime _ := by change initialRaw.staticTime .unit ≤ 400; decide
+  localWords := by
+    have raw := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 32) 0 12 4)
+    change descriptionWords (Assembly.code (Construction.taggedOperands (w := 32) 0 12 4)) ≤ 26 * 17 + 14 at raw
+    change descriptionWords continuationRaw ≤ 1000
+    rw [continuationRaw, descriptionWords_seq, selectSlice_descriptionWords]
+    omega
+  initialWords := by
+    have raw := Assembly.code_descriptionWords_le (Construction.taggedOperands (w := 32) 1 16 0)
+    change descriptionWords initialRaw ≤ 26 * 17 + 14 at raw
+    exact raw.trans (by decide)
+  slots := 3
+  localNames := by
+    have raw := Assembly.code_names (Construction.taggedOperands (w := 32) 0 12 4) 1
+      (Construction.prefix_sources 0 12 4)
+    exact (selectSlice_names 0 12 3).seq (show NamesBound _ 3 from ⟨raw.1, raw.2.trans (by decide)⟩).accounted
+  initialNames := by
+    have raw := Assembly.code_names (Construction.taggedOperands (w := 32) 1 16 0) 1
+      (Construction.prefix_sources 1 16 0)
+    exact (show NamesBound _ 3 from ⟨raw.1, raw.2.trans (by decide)⟩).accounted
+private theorem full_refines (hashes : Bool) : Interactive.Refines layout.port .unit setup.challenge.representation scalar.representation
+    (WeightedFull.denote (base := base) (key := .atom false) (val := .atom true) layout setup routines primitives comparison comparison_correct fullCaller 1 hashes uniformSource)
+    (fullProgram 1 hashes) :=
+  WeightedFull.refines (base := base) (key := .atom false) (val := .atom true) layout setup routines primitives comparison comparison_correct fullCaller uniformDraw 1 hashes uniformSource
+    fullInvariant (by decide) (by decide) (by decide) uniformCorrect (fun _ => rfl) rfl uniformLaw
+private theorem full_within (hashes : Bool) : Interactive.Within layout.port setup.challenge scalar
+    (WeightedFull.codeBudget (base := base) (key := .atom false) (val := .atom true) layout setup routines fullCaller routineBounds callerBounds hashes 125 1)
+    (WeightedFull.memoryBudget (base := base) (key := .atom false) (val := .atom true) layout setup routines fullCaller routineBounds callerBounds hashes 26 125 3 1)
+    (WeightedFull.timeBudget (base := base) (key := .atom false) (val := .atom true) layout setup routines fullCaller routineBounds callerBounds hashes 26 1)
+    (fun value => Subtype.val <$> WeightedFull.denote (base := base) (key := .atom false) (val := .atom true) layout setup routines primitives comparison comparison_correct fullCaller 1 hashes uniformSource value) :=
+  WeightedFull.within (base := base) (key := .atom false) (val := .atom true) layout setup routines fullCaller routineBounds callerBounds primitives comparison comparison_correct
+    uniformDraw 1 hashes uniformSource uniformCorrect
+    (UniformSampling.time_bound (w := 32) 4294967295 (by decide) (by decide) 4294967295)
+    (UniformSampling.code_words (w := 32) 4294967295 (by decide) (by decide) 4294967295)
+    (UniformSampling.names (w := 32) 4294967295 (by decide) (by decide) 4294967295)
+    fullInvariant (by decide) (by decide) (by decide) (fun _ => rfl) rfl uniformLaw
+    (UniformSampling.descriptionFits (w := 32) 4294967295 (by decide) (by decide) 4294967295) (by decide) (by decide)
+private def fullSourceMachine : OracleMachine SourceSpec (layout.Request × extraction.forgery.Value) extraction.forgery.Value :=
+  PFunctor.DynSystem.DynComputation.ofStep sourceStep (fun value => .inr (sourceInput value))
+private def fullCorrespondence : WeightedFull.Correspondence (base := base) (key := .atom false) (val := .atom true) layout setup fullCaller 1 fullInvariant sourceKeys where
+  source := fun value => sourceProgram (sourceInput value)
+  machine := fullSourceMachine
+  implements := fun value => source_implements (sourceInput value)
+  stateView := sourceState
+  advanceMatches := by
+    intro remaining q c valid next view represented original matched
+    rw [fullSourceMachine.next_eq_of_view_query view (show fullSourceMachine.view (sourceState (q, c)) =
+      .inr ⟨WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm q, fun _ => .inl c⟩ from rfl)]
+    exact CallerMachine.Matches.returned (machine := fullSourceMachine)
+      (query := WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm) (state := sourceState) c (.inl c) rfl
+  initialMatches value := .pending value.val.1 value.val.2 (fun _ => .inl value.val.2) rfl
+private theorem initialized_source (hashes : Bool) (value : setup.challenge.Value) :
+    Subtype.val <$> WeightedFull.denote (base := base) (key := .atom false) (val := .atom true) layout setup routines primitives comparison comparison_correct fullCaller 1 hashes uniformSource value =
+      ((simulateQ (WeightedCallerHandler.original sourceTerms (fun (_ : Bool) (value : Word 32 × Word 32) => value.1))
+        (sourceProgram (sourceInput value.val.2.2))).run (value.val.1, [], [], []) >>=
+          fun answer => Prod.fst <$> WeightedCallerProgram.extractionSource hashes sourceTerms
+            (fun value => value.1 + value.2) (fun value => value.1 / (value.2.1 - value.2.2)) (answer.1.val, answer.2.2)) :=
+  WeightedFull.denote_source (base := base) (key := .atom false) (val := .atom true) layout setup fullCaller 1 fullInvariant sourceKeys routines primitives comparison comparison_correct hashes
+    uniformSource rfl (fun _ => rfl) rfl uniformLaw (by decide) (by decide) (by decide)
+    sourceTerms terms_source fullCorrespondence value
+
 open Lean in
 run_cmd do
   -- The hash queried by the caller is reused by hash correction and target evaluation.
@@ -352,6 +467,18 @@ run_cmd do
       unless answer == expected && framed == #[77] && capacity == 4 && register == 91 && tape == 9 &&
           scratch && trace == expectedTrace && remaining == [88] do
         throwError "weighted caller changed result/cache reuse/frame/cutoff: {answer.toNat}, expected {expected.toNat}"
+  for (fuel, hashes, request, forged, draws, expected) in tests do
+    let key := (request, forged)
+    let challenge : setup.challenge.Value := ⟨(123, (key, key)), trivial, trivial, trivial⟩
+    let replies := draws.flatMap (fun sample => [4294967295, sample]) ++ [88]
+    match executeUniform setup.challenge.representation scalar (fullProgram fuel hashes) challenge replies with
+    | none => throwError "initialized weighted program failed"
+    | some (answer, framed, capacity, register, tape, scratch, trace, remaining, elapsed) =>
+      let expectedTrace := draws.flatMap (fun sample => [WordIO.Event.output 4294967295, .invoke, .input 4294967295, .input sample])
+      unless answer == expected && framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+          trace == expectedTrace && remaining == [88] &&
+          elapsed ≤ WeightedFull.timeBudget (base := base) (key := .atom false) (val := .atom true) layout setup routines fullCaller routineBounds callerBounds hashes 26 fuel do
+        throwError "initialized weighted program changed source result, lazy draws, frame, scratch or elapsed bound"
   for hashes in [true, false] do
     let forged := forgery (3, 42) 34 [] [] (by decide) (by decide)
     match executeUniform returnedInput scalar (immediate hashes) (forged, emptyStore)
@@ -398,7 +525,11 @@ run_cmd do
       ``source_implements, ``advance_source, ``initial_source, ``complete_source,
       ``WeightedInitialization.code, ``WeightedInitialization.time, ``WeightedInitialization.words,
       ``WeightedInitialization.names, ``WeightedInitialization.buffers, ``WeightedInitialization.reserved,
-      ``WeightedInitialization.extraction_reserved, ``WeightedInitialization.implementation_bounded, ``initialized_admitted] do
+      ``WeightedInitialization.extraction_reserved, ``WeightedInitialization.implementation_bounded, ``initialized_admitted,
+      ``WeightedSetup.implementation, ``WeightedSetup.bounded, ``WeightedSetup.names, ``WeightedSetup.buffers,
+      ``WeightedFull.refines, ``WeightedFull.denote_source, ``WeightedFull.observe_source,
+      ``WeightedFull.time, ``WeightedFull.words, ``WeightedFull.names, ``WeightedFull.descriptionFits, ``WeightedFull.within,
+      ``WeightedFull.good_source, ``WeightedFull.good_dlogWithin, ``full_refines, ``full_within, ``initialized_source] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 end SignaturesTest.CaliperWeightedCaller

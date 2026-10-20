@@ -2825,8 +2825,8 @@ Implemented and checked:
   and cutoff (including a full cache). Exact scalar results, sample traces,
   untouched input sentinel, external frame and scratch release are checked.
   A concrete full-program refinement and standard-axiom audits accompany them.
-  The source identity is completed below. Challenge setup and public
-  OOPS/Proximity Caliper security models remain pending.
+  The source identity and good challenge setup are completed below. The sampled
+  bad setup and public OOPS/Proximity Caliper security models remain pending.
 
 
 - [Weighted caller source equality](../Signatures/Runtime/Caliper/WeightedCallerExtractionSource.lean)
@@ -2844,7 +2844,7 @@ Implemented and checked:
   and `WeightedReduction.badProgram` at a fixed scalar, after erasing the bounded
   forgery to the existing algebraic-output structure. The shared cache and
   chronological transcript order are unchanged. The outer bad-branch scalar draw
-  and public-key computation belong to the remaining challenge setup.
+  and public-key computation belong to the remaining bad challenge setup.
   [The concrete regression](../SignaturesTest/CaliperWeightedCaller.lean) implements
   a one-query source machine in OOPS's original `(topic, degree)` domain and proves
   the generated caller's observed computation equals that source followed by
@@ -2857,8 +2857,33 @@ Implemented and checked:
   cache capacity `max(1,d)*(2*q+1)` imply both the caller query reservation and the
   later extraction allowance. The source implementation, concrete admitted-store
   instance, copied bytes, exact empty state, frame, scratch, no-query trace and
-  elapsed bound are checked. No challenge setup or public security-model
-  migration is claimed by this initialization lemma alone.
+  elapsed bound are checked. The complete good setup is joined below.
+
+- [Weighted challenge setup](../Signatures/Runtime/Caliper/WeightedSetup.lean)
+  copies the runtime configuration/public key and executes the initializer.
+  Its layouts support independent index/message types and log capacities.
+  [Complete initialized programs](../Signatures/Runtime/Caliper/WeightedFullProgram.lean)
+  build setup, caller, service, terminal and extraction from named local routines
+  and caller code. Query/extraction reservations follow from the initialized
+  empty store; no whole-extractor or whole-solver implementation is an input.
+  [Source correspondence](../Signatures/Runtime/Caliper/WeightedFullSource.lean)
+  connects this complete program to the original-key caller and private-list
+  extraction using local machine correspondence and bounded termination.
+  [Resource certificates](../Signatures/Runtime/Caliper/WeightedFullBounds.lean)
+  derive time, stored code, names, operand acceptance and every visited memory
+  bound for the same generated execution, including setup and the input.
+  [The good reduction](../Signatures/Runtime/Caliper/WeightedGood.lean) is now
+  identified with `WeightedReduction.goodReductionList` and proved to belong to
+  `dlogWithin`. Its explicit premises are local routine implementations/bounds,
+  caller correspondence, capacity/address bounds, and representability of every
+  sampled DLog challenge. The challenge-coverage premise is not yet discharged
+  by a public OOPS/Proximity parameter constructor.
+  The concrete word-arithmetic regression instantiates the complete resource and
+  source proofs and executes setup through extraction, checking hash/sign calls,
+  cache reuse, cutoff, sample traces, framing, scratch release and elapsed bounds.
+  It is an execution fixture, not a field or curve implementation.
+  Remaining for weighted schemes: the bad branch's outer scalar sampling and
+  computed public key, both public concrete/family models, and caller coverage.
 
 Remaining integration sequence:
 
