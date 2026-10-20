@@ -2796,8 +2796,7 @@ Implemented and checked:
   targets while ignoring nonempty hash logs and gamma coefficients. Exact
   samples, full cache order, framing, scratch release and elapsed budgets are
   checked, alongside concrete source/address/memory witnesses and axiom audits.
-  Remaining: setup and full-solver source/security
-  integration, OOPS/Proximity public concrete/family models and Schnorr ROM
+  Remaining: challenge setup and OOPS/Proximity public concrete/family models, and Schnorr ROM
   replay/composition. Conventional CPU/flat-memory adequacy stays outside this
   migration.
 
@@ -2826,8 +2825,40 @@ Implemented and checked:
   and cutoff (including a full cache). Exact scalar results, sample traces,
   untouched input sentinel, external frame and scratch release are checked.
   A concrete full-program refinement and standard-axiom audits accompany them.
-  The full setup/source-game identity and public OOPS/Proximity Caliper security
-  models are still pending; this checkpoint does not change those public models.
+  The source identity is completed below. Challenge setup and public
+  OOPS/Proximity Caliper security models remain pending.
+
+
+- [Weighted caller source equality](../Signatures/Runtime/Caliper/WeightedCallerExtractionSource.lean)
+  links the composed caller and terminal to the original oracle computation.
+  Local machine-head correspondence and `ImplementsWithin` exclude cutoff on the
+  admitted source program; supported caller exits supply extraction readiness.
+  The [key-equivalence version](../Signatures/Runtime/Caliper/WeightedCallerExtractionSourceEquiv.lean)
+  preserves the joint typed reply and complete decoded cache/log state. Only
+  encountered keys are mapped; no source index domain is enumerated.
+  [Constructed program identities](../Signatures/Runtime/Caliper/WeightedCallerProgramSourceEquiv.lean)
+  instantiate extraction with the actual good/no-hash programs, derive their
+  original private-list semantics, and prove exact observed execution equality.
+  [Reduction identities](../Signatures/Runtime/Caliper/WeightedCallerReduction.lean)
+  then identify the caller/extractor source with `WeightedReduction.goodReductionList`
+  and `WeightedReduction.badProgram` at a fixed scalar, after erasing the bounded
+  forgery to the existing algebraic-output structure. The shared cache and
+  chronological transcript order are unchanged. The outer bad-branch scalar draw
+  and public-key computation belong to the remaining challenge setup.
+  [The concrete regression](../SignaturesTest/CaliperWeightedCaller.lean) implements
+  a one-query source machine in OOPS's original `(topic, degree)` domain and proves
+  the generated caller's observed computation equals that source followed by
+  extraction, for either branch and all admitted initial stores. All new source
+  and reduction identities pass standard-axiom audits.
+- [Weighted store initialization](../Signatures/Runtime/Caliper/WeightedInitialization.lean)
+  copies runtime caller input/configuration and explicitly writes every empty
+  cache/log word, including padding. Its time, stored code and scratch/name bounds
+  follow from the executed assembly. Independent hash/sign log reservations and
+  cache capacity `max(1,d)*(2*q+1)` imply both the caller query reservation and the
+  later extraction allowance. The source implementation, concrete admitted-store
+  instance, copied bytes, exact empty state, frame, scratch, no-query trace and
+  elapsed bound are checked. No challenge setup or public security-model
+  migration is claimed by this initialization lemma alone.
 
 Remaining integration sequence:
 

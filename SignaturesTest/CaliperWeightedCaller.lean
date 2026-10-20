@@ -1,4 +1,6 @@
 import Signatures.Runtime.Caliper.WeightedCallerProgramResources
+import Signatures.Runtime.Caliper.WeightedCallerReduction
+import Signatures.Runtime.Caliper.WeightedInitialization
 import Signatures.Runtime.Caliper.OOPSTermsBounds
 import Signatures.Runtime.Caliper.BLSExtractArithmeticNames
 import Signatures.Runtime.Caliper.BLSResponseNames
@@ -260,6 +262,75 @@ private theorem complete (fuel : Nat) (hashes : Bool) : Interactive.RefinesOn (a
     uniformSource uniformCorrect (fun _ => rfl) rfl uniformLaw (fun _ _ => True) (fun _ _ _ _ _ _ _ => trivial)
     (admitted fuel) (fun _ _ => trivial) (fun _ valid => valid.1) (fun _ valid => valid.2)
 
+private def initializer :=  WeightedInitialization.code layout.service input (by decide)
+private theorem initialized_admitted (value : layout.Request × extraction.forgery.Value) (config : scalar.Value) :
+    admitted 1 (WeightedInitialization.initialized layout.service (value, config)) :=
+  WeightedInitialization.extraction_reserved layout.service 2 1 (by decide) (by decide) (by decide) config
+
+-- Source keys use (topic, degree), whereas stored keys use (degree, topic).
+private instance : Module (Word 32) (Ty.Value base (.atom true)) :=
+  inferInstanceAs (Module (Word 32) (Word 32))
+private def sourceKeys : (Word 32 × Fin 2) ≃ Key := Equiv.prodComm _ _
+private def sourceTerms := OOPS.LazyAGM.terms (F := Word 32) (T := Word 32) 1
+private theorem terms_source (message : Word 32 × Word 32) :
+    OOPSTerms.value (degree := 1) message = (sourceTerms message).map (Prod.map sourceKeys id) :=
+  OOPSTerms.source 1 message
+private abbrev SourceSpec := Model.LazyAGM.advSpec (Word 32 × Fin 2) (Word 32 × Word 32) (Word 32)
+private abbrev SourceInput := SourceSpec.Domain × extraction.forgery.Value
+private abbrev SourceState := extraction.forgery.Value ⊕ SourceInput
+private def sourceStep : SourceState → extraction.forgery.Value ⊕ SourceSpec.toPFunctor.Obj SourceState
+  | .inl result => .inl result
+  | .inr (q, forged) => .inr ⟨q, fun _ => .inl forged⟩
+private def sourceMachine : OracleMachine SourceSpec SourceInput extraction.forgery.Value :=
+  PFunctor.DynSystem.DynComputation.ofStep sourceStep Sum.inr
+private def sourceProgram (value : SourceInput) : OracleComp SourceSpec extraction.forgery.Value :=
+  SourceSpec.query value.1 >>= fun _ => pure value.2
+private theorem source_implements : sourceMachine.ImplementsWithin sourceProgram 1 := by
+  intro value
+  simp [sourceMachine, sourceProgram, PFunctor.DynSystem.DynComputation.run,
+    PFunctor.DynSystem.DynComputation.unroll, sourceStep, bind_pure_comp]
+  rfl
+private def sourceInput (value : layout.Request × extraction.forgery.Value) : SourceInput :=
+  (WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm value.1, value.2)
+private def sourceState (value : layout.Request × extraction.forgery.Value) : sourceMachine.State :=
+  .inr (sourceInput value)
+private theorem advance_source (_remaining : Nat) (q : layout.Request) (c : extraction.forgery.Value) (_ : True)
+    (next : SourceSpec.Range (WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm q) → sourceMachine.State)
+    (view : sourceMachine.view (sourceState (q, c)) =
+      .inr ⟨WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm q, next⟩)
+    (represented : layout.Reply) (original : SourceSpec.Range (WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm q))
+    (_ : WeightedCallerHandler.replyMatchesIn layout.service layout.randomBound sourceKeys.symm q represented original) :
+    CallerMachine.Matches sourceMachine (WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm)
+      sourceState (advance (c, represented)) (next original) := by
+  rw [sourceMachine.next_eq_of_view_query view (show sourceMachine.view (sourceState (q, c)) =
+    .inr ⟨WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm q, fun _ => .inl c⟩ from rfl)]
+  exact CallerMachine.Matches.returned (machine := sourceMachine)
+    (query := WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm) (state := sourceState) c (.inl c) rfl
+private theorem initial_source (value : (layout.Request × extraction.forgery.Value) × layout.service.store.Value) (_ : admitted 1 value) :
+    CallerMachine.Matches sourceMachine (WeightedCallerHandler.queryIn layout.service layout.randomBound sourceKeys.symm)
+      sourceState (initial value.1) (sourceMachine.init (sourceInput value.1)) :=
+  .pending value.1.1 value.1.2 (fun _ => .inl value.1.2) rfl
+
+private theorem complete_source (hashes : Bool) (tape : RandomTape 32)
+    (value : (layout.Request × extraction.forgery.Value) × layout.service.store.Value) (valid : admitted 1 value)
+    (before : State 32) (holds : fullInput.Holds value before) :
+    (fun finished => Subtype.val <$> Interactive.observe scalar.representation finished) <$>
+        (program 1 hashes).execute layout.port .unit tape before =
+      some <$> ((simulateQ (WeightedCallerHandler.original sourceTerms
+        (fun (_ : Bool) (value : Word 32 × Word 32) => value.1)) (sourceProgram (sourceInput value.1))).run
+          (WeightedOracle.decodeStore sourceKeys.symm value.2.val) >>=
+        fun answer => Prod.fst <$> WeightedCallerProgram.extractionSource hashes sourceTerms
+          (fun value => value.1 + value.2) (fun value => value.1 / (value.2.1 - value.2.2))
+          (answer.1.val, answer.2.2)) :=
+  WeightedCallerProgram.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    layout oopsGenerator primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformDraw
+    response responseBuffers (by decide) advance continuation continuationNameFits input initial initialCode initialNameFits (by decide) 1
+    ⟨0, trivial⟩ hashes goodExtract goodExtractBuffers (by decide) add addNames.buffers (by decide)
+    uniformSource uniformCorrect rfl (fun _ => rfl) rfl uniformLaw (fun _ _ => True) (fun _ _ _ _ _ _ _ => trivial)
+    (admitted 1) (fun _ _ => trivial) (fun _ accepted => accepted.1) (fun _ accepted => accepted.2)
+    sourceKeys sourceTerms terms_source sourceMachine sourceState sourceInput advance_source initial_source
+    sourceProgram source_implements tape value valid before holds
+
 open Lean in
 run_cmd do
   -- The hash queried by the caller is reused by hash correction and target evaluation.
@@ -297,13 +368,37 @@ run_cmd do
     | some (answer, _, _, _, _, scratch, trace, remaining, _) =>
       unless answer == 0 && scratch && trace == [] && remaining == [88] do
         throwError "cutoff sampled from the full cache"
+  for request in [hash, sign] do
+    let forged := forgery (3, 42) 28 [3] [] (by decide) (by decide)
+    let callerInput := (request, forged)
+    match executeUniform (WeightedInitialization.input layout.service input (by decide)) (Layout.all fullInput)
+        (.compute initializer.code) (callerInput, ⟨123, trivial⟩) [88] with
+    | none => throwError "weighted store initialization failed"
+    | some (answer, framed, capacity, register, tape, scratch, trace, remaining, elapsed) =>
+      unless fullInput.encoding.encode answer == fullInput.encoding.encode (callerInput, emptyStore) &&
+          framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch && trace == [] &&
+          remaining == [88] && elapsed ≤ 8 * fullInput.encoding.words do
+        throwError "weighted initializer changed runtime input, configuration, padding, frame, or time"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``WeightedCallerFinish.refines, ``WeightedCallerFinish.time_bound, ``WeightedCallerFinish.resources,
       ``WeightedCallerFinish.extraction_ready, ``WeightedCallerExtraction.called_postcondition, ``WeightedCallerExtraction.called_ready,
       ``WeightedCallerExtraction.refines, ``WeightedCallerExtraction.time, ``WeightedCallerExtraction.words,
       ``WeightedCallerExtraction.names, ``WeightedCallerExtraction.descriptionFits, ``WeightedCallerExtraction.resources,
       ``WeightedCallerProgram.refines, ``WeightedCallerProgram.time, ``WeightedCallerProgram.words,
-      ``WeightedCallerProgram.names, ``WeightedCallerProgram.descriptionFits, ``WeightedCallerProgram.resources, ``empty_reserved, ``complete] do
+      ``WeightedCallerProgram.names, ``WeightedCallerProgram.descriptionFits, ``WeightedCallerProgram.resources, ``empty_reserved, ``complete,
+      ``WeightedCallerHandler.synchronizes_equiv, ``WeightedCallerHandler.original_run,
+      ``WeightedCallerExtraction.finish_source, ``WeightedCallerExtraction.called_source,
+      ``WeightedCallerExtraction.denote_source, ``WeightedCallerExtraction.observe_source,
+      ``WeightedCallerExtraction.finish_equiv, ``WeightedCallerExtraction.called_equiv,
+      ``WeightedCallerExtraction.denote_equiv, ``WeightedCallerExtraction.observe_equiv,
+      ``WeightedCallerProgram.extraction_source, ``WeightedCallerProgram.denote_source, ``WeightedCallerProgram.observe_source,
+      ``WeightedCallerProgram.extraction_equiv, ``WeightedCallerProgram.denote_equiv, ``WeightedCallerProgram.observe_equiv,
+      ``WeightedCallerProgram.good_extraction_original, ``WeightedCallerProgram.bad_extraction_original,
+      ``WeightedCallerProgram.good_original_finish, ``WeightedCallerProgram.bad_original_finish,
+      ``source_implements, ``advance_source, ``initial_source, ``complete_source,
+      ``WeightedInitialization.code, ``WeightedInitialization.time, ``WeightedInitialization.words,
+      ``WeightedInitialization.names, ``WeightedInitialization.buffers, ``WeightedInitialization.reserved,
+      ``WeightedInitialization.extraction_reserved, ``WeightedInitialization.implementation_bounded, ``initialized_admitted] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 end SignaturesTest.CaliperWeightedCaller

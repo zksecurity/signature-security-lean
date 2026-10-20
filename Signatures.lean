@@ -63,6 +63,8 @@ import Signatures.Runtime.Caliper.WeightedSignatureTailMemory
 import Signatures.Runtime.Caliper.WeightedExtractorSource
 import Signatures.Runtime.Caliper.WeightedExtractorMemory
 import Signatures.Runtime.Caliper.WeightedCallerProgramResources
+import Signatures.Runtime.Caliper.WeightedCallerReduction
+import Signatures.Runtime.Caliper.WeightedInitialization
 import Signatures.Runtime.Caliper.WeightedCallerOriginal
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement

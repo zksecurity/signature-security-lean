@@ -532,7 +532,13 @@ Pinned upstreams:
   fallback. The caller growth theorem supplies extraction capacity, and
   [combined resources](Signatures/Runtime/Caliper/WeightedCallerProgramResources.lean)
   derive time, code and every visited memory bound from local routines.
-  Setup and full-solver source/security integration remain.
+  [Source correspondence](Signatures/Runtime/Caliper/WeightedCallerProgramSourceEquiv.lean)
+  recovers the original caller and private-list extraction, including the original
+  key domain. [Reduction identities](Signatures/Runtime/Caliper/WeightedCallerReduction.lean)
+  connect the result to the existing good reduction and the bad branch at a fixed
+  scalar. [Store initialization](Signatures/Runtime/Caliper/WeightedInitialization.lean)
+  writes the empty cache/logs and establishes query/extraction reservations.
+  Challenge setup and the public OOPS/Proximity Caliper models remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
