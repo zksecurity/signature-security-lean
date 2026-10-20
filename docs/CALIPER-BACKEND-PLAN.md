@@ -2547,10 +2547,42 @@ Implemented and checked:
   caller state preservation, released scratch and derived runtime bounds; OOPS
   instantiates the full observation theorem in its original topic/index types
   and the same-execution total-memory theorem.
-  Hash/random dispatch, caller capacity invariants, chronological coefficient
-  expansion/extraction, complete OOPS/Proximity solvers and public concrete/family
-  models remain integration work. Schnorr ROM replay/composition remains separate
-  pending work; conventional CPU/flat-memory adequacy stays outside this migration.
+- [Complete weighted hashing](../Signatures/Runtime/Caliper/WeightedHash.lean)
+  uses the actual lazy cache read, computes the local scalar/pair group response
+  once, and records that delivered point in the hash log. The signing log may
+  have a different message type, width and capacity, and may already be full.
+  The input guard accepts hits in a full private cache and reserves an insertion
+  slot only for misses. The source and execution-observation identities preserve
+  the response, configuration, entire ordered cache and both logs, including
+  original key types through an equivalence. Shadowed entries remain in place.
+  [Resource bounds](../Signatures/Runtime/Caliper/WeightedHashBounds.lean) include
+  actual lookup/insertion, frame copies, response computation, recording, stored
+  code, address acceptance and every visited memory state in that execution.
+  Only the primitive sampler and local group response supply component budgets.
+  [Executed regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) check a
+  scalar miss, ordinary hits, a full cache with shadowed entries, and pair
+  sampling with a hash response distinct from the signing response. They preserve
+  a full vector-message signing log, caller buffers/registers/tape and exact
+  tagged replies, release scratch and meet the derived time bounds. The decoder
+  rejects a full-cache miss and a full selected hash log. Proximity instantiates
+  the original-key observation theorem, plus time/address/total-memory bounds.
+- [Handler growth](../Signatures/Runtime/Caliper/WeightedHandlerGrowth.lean)
+  follows from the constructed hash/sign handlers without uniform-sampling or
+  algebraic response assumptions: configuration is unchanged, exactly the
+  delivered reply is recorded, hashing adds at most one cache entry, and signing
+  adds at most the generated term count.
+  [Query reservations](../Signatures/Runtime/Caliper/WeightedCapacity.lean) track
+  the cache and two log capacities independently. For at most `q` remaining
+  calls and at most `d` terms per signature, they reserve `max(1,d)*q` cache
+  entries and `q` entries in each log. The one-step theorem consumes a reservation
+  using the actual handler growth; weakening covers early termination.
+  Concrete OOPS signing derives its cache precondition from this reservation and
+  the actual generator's output bound. Hash and signing regressions instantiate
+  reservation preservation. These are the per-query steps; the complete caller
+  invariant and combined random/hash/sign service still need assembly.
+  Chronological coefficient expansion/extraction, complete OOPS/Proximity solvers
+  and public concrete/family models also remain. Schnorr ROM replay/composition
+  remains pending; conventional CPU/flat-memory adequacy stays outside this migration.
 
 Remaining integration sequence:
 

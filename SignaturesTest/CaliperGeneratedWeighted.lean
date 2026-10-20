@@ -5,6 +5,8 @@ import Signatures.Runtime.Caliper.GeneratedWeightedOracle
 import Signatures.Runtime.Caliper.UniformSampling
 import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.WeightedSignBounds
+import Signatures.Runtime.Caliper.WeightedHashBounds
+import Signatures.Runtime.Caliper.WeightedCapacity
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
 import Mathlib.Data.BitVec
@@ -531,18 +533,22 @@ private theorem fullBadBound : Interactive.TimeBoundOn
     (BLSAccumulate.bad_bounded accumulation.arithmetic mul add mulBound addBound mulNames.buffers (by decide) addNames.buffers)
     badSigningBound
 
-private def executeSigning {M : Type} {R C : Type} (layout : WeightedSign.Layouts 16 Key M (Word 16) R C (Word 16))
-    (code : Interactive.Code 16) (value : layout.input.Value) (replies : List (Word 16)) := do
-  let initial := layout.input.representation.initial value
+private def executeUniform {A B : Type} (input : Representation 16 A) (output : Layout 16 B)
+    (code : Interactive.Code 16) (value : A) (replies : List (Word 16)) := do
+  let initial := input.initial value
   let before := { initial with
     bufs := fun buffer => if buffer = 200 then #[77] else initial.bufs buffer
     caps := fun buffer => if buffer = 200 then 4 else initial.caps buffer
     regs := fun register => if register = 99 then 91 else initial.regs register
     tapePos := 9 }
   let result ← WordIO.run .unit RandomTape.zero 1000000 (code.lower uniformPort) before replies
-  let answer ← layout.output.representation.encoding.decode (result.state.bufs 0).toList
+  let answer ← output.representation.encoding.decode (result.state.bufs 0).toList
   pure (answer.val, result.state.bufs 200, result.state.caps 200, result.state.regs 99, result.state.tapePos,
     (List.range 40).all (fun i => result.state.caps (i + 1) == 0), result.trace, result.remaining, result.time)
+
+private def executeSigning {M : Type} {R C : Type} (layout : WeightedSign.Layouts 16 Key M (Word 16) R C (Word 16))
+    (code : Interactive.Code 16) (value : layout.input.Value) (replies : List (Word 16)) :=
+  executeUniform layout.input.representation layout.output code value replies
 
 open Lean in
 run_cmd do
@@ -593,6 +599,202 @@ run_cmd do
       ``WeightedSign.denote_equiv, ``WeightedSign.observe_equiv, ``fullOracle,
       ``WeightedSign.time_bound, ``WeightedSign.code_bound, ``WeightedSign.resources,
       ``WeightedSign.descriptionFits_of_components, ``fullBound, ``fullFits, ``fullMemory, ``fullBadBound] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+private def fullHashLayout :
+    WeightedHash.Layouts 16 Key ((Fin 3 → Word 16) × Word 16) (Word 16) (Word 16 × Word 16) (Word 16) where
+  cache := accumulation.cache
+  default := ⟨99, trivial⟩
+  message := proximity.input
+  config := groupLayout.points
+  point := scalar
+  hashCapacityPred := 1
+  signCapacity := 1
+  hashCountFits := by decide
+  signCountFits := by decide
+  storageFits := by decide
+private def hashingResponse := BLSResponse.good groupLayout scale false
+private theorem hashingBound : hashingResponse.BoundedBy
+    (BLSResponse.goodTime groupLayout 6) (BLSResponse.goodWords groupLayout 27) :=
+  BLSResponse.good_bounded groupLayout scale mulBound false
+private theorem hashingBuffers : hashingResponse.program.code.memBound ≤ 3 :=
+  BLSResponse.good_buffers groupLayout scale mulNames.buffers false
+private theorem hashingNames : NamesAccounted hashingResponse.program.code 3 :=
+  BLSResponse.good_names groupLayout 3 scale mulNames.accounted false
+private def fullHashCode := WeightedHash.code (base := base) (key := .atom false) (val := .atom true)
+  fullHashLayout primitives comparison comparison_correct uniformPort uniformDraw hashingResponse hashingBuffers (by decide)
+private def fullHashTime := WeightedHash.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  fullHashLayout 26 (BLSResponse.goodTime groupLayout 6)
+private def fullHashWords := WeightedHash.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  fullHashLayout 125 (BLSResponse.goodWords groupLayout 27)
+private theorem fullHashBound : Interactive.TimeBound uniformPort .unit fullHashLayout.input.representation fullHashCode fullHashTime :=
+  WeightedHash.time_bound (base := base) (key := .atom false) (val := .atom true)
+    fullHashLayout primitives comparison comparison_correct uniformPort uniformDraw hashingResponse hashingBuffers (by decide)
+    uniformCorrect (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) hashingBound
+private theorem fullHashFits : (fullHashCode.lower uniformPort).DescriptionFits :=
+  WeightedHash.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    fullHashLayout primitives comparison comparison_correct uniformPort uniformDraw hashingResponse hashingBuffers (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide)
+private theorem fullHashOracle (tape : RandomTape 16) (value : fullHashLayout.input.Value)
+    (before : State 16) (holds : fullHashLayout.input.representation.Holds value before) :
+    (fun result => (fun answer => WeightedHash.decodeOutput Weights.decodeProximityKey answer.val) <$>
+        Interactive.observe fullHashLayout.output.representation result) <$>
+      fullHashCode.execute uniformPort .unit tape before =
+      some <$> ((fun answer => (answer.1, value.val.2.1, answer.2)) <$>
+        ((WeightedAGM.listOracle Proximity.LazyAGM.terms
+          (fun scalar : Word 16 => scalar • value.val.2.1.1)
+          (fun scalar : Word 16 => scalar • value.val.2.1.2))
+          (.inl (.inr (Weights.decodeProximityKey value.val.1)))).run
+            (value.val.2.2.1.map (Prod.map Weights.decodeProximityKey id),
+              value.val.2.2.2.1.map (Prod.map Weights.decodeProximityKey id), value.val.2.2.2.2)) :=
+  WeightedHash.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    fullHashLayout primitives comparison comparison_correct hashingResponse hashingBuffers (by decide)
+    (fun scalar : Word 16 => scalar • value.val.2.1.2) (Weights.proximityKeyEquiv 3).symm Proximity.LazyAGM.terms
+    uniformPort uniformDraw uniformSource uniformCorrect uniformLaw tape value before holds
+private theorem fullHashMemory (tape : RandomTape 16) (value : fullHashLayout.input.Value)
+    (before : State 16) (holds : fullHashLayout.input.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (fullHashCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ fullHashTime ∧
+      ∃ execution : WordIO.Exec .unit tape (fullHashCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((fullHashCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (fullHashCode.lower uniformPort).memBound) ≤
+              5 * fullHashWords + 20 + registers + 3 * buffers + before.liveMem buffers + fullHashTime := by
+  obtain ⟨elapsed, answer, supported, represented, execution, memory⟩ :=
+    WeightedHash.resources (base := base) (key := .atom false) (val := .atom true)
+      fullHashLayout primitives comparison comparison_correct uniformPort uniformDraw hashingResponse hashingBuffers (by decide)
+      uniformCorrect (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535) hashingBound
+      (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) hashingNames
+      tape value before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, memory⟩
+
+private def fullBadHashLayout :
+    WeightedHash.Layouts 16 Key (Word 16 × Word 16) (Word 16 × Word 16) (Word 16 × Word 16 × Word 16) (Word 16) where
+  cache := accumulation.bad.cache
+  default := ⟨(99, 98), trivial, trivial⟩
+  message := oops.input
+  config := groupLayout.config
+  point := scalar
+  hashCapacityPred := 1
+  signCapacity := 1
+  hashCountFits := by decide
+  signCountFits := by decide
+  storageFits := by decide
+private def badHashResponse := BLSResponse.bad groupLayout scale add mulNames.buffers (by decide) addNames.buffers false
+private theorem badHashBuffers : badHashResponse.program.code.memBound ≤ 5 :=
+  BLSResponse.bad_buffers groupLayout scale add mulNames.buffers (by decide) addNames.buffers false
+private def fullBadHashCode := WeightedHash.code (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+  fullBadHashLayout primitives comparison comparison_correct uniformPort uniformPairDraw badHashResponse badHashBuffers (by decide)
+private def fullBadHashTime := WeightedHash.timeBudget (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+  fullBadHashLayout (PairSampling.timeBudget scalar scalar 26 26) (BLSResponse.badTime groupLayout false 6 6)
+private theorem fullBadHashBound : Interactive.TimeBound uniformPort .unit fullBadHashLayout.input.representation fullBadHashCode fullBadHashTime :=
+  WeightedHash.time_bound (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+    fullBadHashLayout primitives comparison comparison_correct uniformPort uniformPairDraw badHashResponse badHashBuffers (by decide)
+    uniformPairCorrect
+    (PairSampling.time_bound uniformCorrect uniformCorrect
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535))
+    (BLSResponse.bad_bounded groupLayout scale add mulBound addBound mulNames.buffers (by decide) addNames.buffers false)
+
+private theorem hashReservation (value : fullHashLayout.input.Value) {remaining : Nat}
+    (reserved : WeightedState.Reserved 8 2 1 4 (remaining + 1) value.val.2)
+    (answer : fullHashLayout.output.Value)
+    (reached : answer ∈ support (WeightedHash.denote (base := base) (key := .atom false) (val := .atom true)
+      fullHashLayout primitives comparison comparison_correct hashingResponse uniformSource value)) :
+    WeightedState.Reserved 8 2 1 4 remaining answer.val.2 :=
+  (WeightedHash.growth (base := base) (key := .atom false) (val := .atom true)
+    fullHashLayout primitives comparison comparison_correct hashingResponse uniformSource value answer reached).reserved_after
+      reserved (by decide)
+
+private theorem signingReservation (value : fullLayout.input.Value) {remaining : Nat}
+    (reserved : WeightedState.Reserved 8 1 2 4 (remaining + 1) value.val.2)
+    (answer : fullLayout.output.Value)
+    (reached : answer ∈ support (WeightedSign.denote (base := base) (key := .atom false) (val := .atom true)
+      fullLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+      primitives comparison comparison_correct goodUpdate goodBuffers (by decide) signingResponse uniformSource value)) :
+    WeightedState.Reserved 8 1 2 4 remaining answer.val.2 := by
+  have termBound : (OOPSTerms.value value.val.1).length ≤ 4 :=
+    (oopsGenerator.preserves value.val.1 value.property.1.1).1
+  have admitted : WeightedSign.valid (base := base) (key := .atom false) (val := .atom true)
+      fullLayout (generate := OOPSTerms.value) value :=
+    (reserved.sign_room (OOPSTerms.value value.val.1) termBound).1
+  exact (WeightedSign.growth (base := base) (key := .atom false) (val := .atom true)
+    fullLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) signingResponse uniformSource value admitted answer reached).reserved_after
+      reserved (termBound.trans (Nat.le_max_right _ _))
+
+private def hashRequest (key : Key) (cache : List (Key × Word 16)) (bounded : cache.length ≤ 8)
+    (hashes : List (Key × Word 16)) (logBound : hashes.length ≤ 2) : fullHashLayout.plainInput.Value :=
+  ⟨(key, (3, 13), cache, hashes, [((vector 3 9 27).val, 10)]),
+    ⟨trivial, trivial⟩, ⟨trivial, trivial⟩,
+    ⟨bounded, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+    ⟨logBound, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+    ⟨by change 1 ≤ 1; decide, by
+      intro entry member
+      simp only [List.mem_singleton] at member
+      subst entry
+      exact ⟨⟨fun _ => trivial, trivial⟩, trivial⟩⟩⟩
+private def shadowed : List (Key × Word 16) :=
+  entries ++ [((2, 42), 99), ((3, 42), 101), ((0, 42), 111), ((1, 42), 119)]
+private def pairHashRequest : fullBadHashLayout.plainInput.Value :=
+  ⟨((2, 42), (5, 3, 13), [], [((0, 42), 9)], [(message.val, 10)]),
+    ⟨trivial, trivial⟩, ⟨trivial, trivial, trivial⟩, ⟨by decide, by simp⟩,
+    ⟨by decide, by intro entry member; simp only [List.mem_singleton] at member; subst entry; exact ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+    ⟨by decide, by intro entry member; simp only [List.mem_singleton] at member; subst entry; exact ⟨message.property, trivial⟩⟩⟩
+
+open Lean in
+run_cmd do
+  let caches : List {cache : List (Key × Word 16) // cache.length ≤ 8} :=
+    [⟨[], by decide⟩, ⟨entries, by decide⟩, ⟨shadowed, by decide⟩]
+  for cache in caches do
+    let raw := hashRequest (2, 42) cache.val cache.property [((0, 42), 9)] (by decide)
+    if valid : fullHashLayout.room raw.val then
+      let fresh := cache.val.isEmpty
+      let replies : List (Word 16) := if fresh then [65535, 7, 88] else [88]
+      let wantedTrace := if fresh then [WordIO.Event.output 65535, .invoke, .input 65535, .input 7] else []
+      let wantedCache := if fresh then [((2, 42), 7)] else cache.val
+      match executeUniform fullHashLayout.input.representation fullHashLayout.output fullHashCode ⟨raw.val, raw.property, valid⟩ replies with
+      | none => throwError "complete weighted hash failed"
+      | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+        let signatures := answer.2.2.2.2.map (fun entry => (List.ofFn entry.1.1, entry.1.2, entry.2))
+        unless answer.1 == 21 && answer.2.1 == (3, 13) && answer.2.2.1 == wantedCache &&
+            answer.2.2.2.1 == [((2, 42), 21), ((0, 42), 9)] && signatures == [([3, 9, 27], 42, 10)] &&
+            framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+            events == wantedTrace && remaining == [88] && elapsed ≤ fullHashTime do
+          throwError "hash changed source value, cache order, vector signing log, framing or resource bound"
+    else throwError "hash rejected an admissible miss or full-cache hit"
+  let missing := hashRequest (2, 43) shadowed (by decide) [((0, 42), 9)] (by decide)
+  let fullLog := hashRequest (2, 42) entries (by decide) [((0, 42), 9), ((1, 42), 15)] (by decide)
+  for invalid in [missing, fullLog] do
+    if (fullHashLayout.input.representation.encoding.decode
+        (fullHashLayout.plainInput.representation.encoding.encode invalid)).isSome then
+      throwError "hash decoder admitted a full-cache miss or full selected log"
+  let raw := pairHashRequest
+  if valid : fullBadHashLayout.room raw.val then
+    match executeUniform fullBadHashLayout.input.representation fullBadHashLayout.output fullBadHashCode
+        ⟨raw.val, raw.property, valid⟩ [65535, 2, 65535, 3, 88] with
+    | none => throwError "complete pair hash failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      unless answer == (35, (5, 3, 13), [((2, 42), (2, 3))],
+          [((2, 42), 35), ((0, 42), 9)], [(message.val, 10)]) &&
+          framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+          events == [.output 65535, .invoke, .input 65535, .input 2, .output 65535, .invoke, .input 65535, .input 3] &&
+          remaining == [88] && elapsed ≤ fullBadHashTime do
+        throwError "pair hash changed independent samples, response, logs, framing or time bound"
+  else throwError "pair hash rejected a represented request"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``WeightedHash.refines, ``WeightedHash.denote_source, ``WeightedHash.observe,
+      ``WeightedHash.denote_equiv, ``WeightedHash.observe_equiv, ``WeightedHash.time_bound,
+      ``WeightedHash.code_bound, ``WeightedHash.descriptionFits, ``WeightedHash.resources,
+      ``WeightedHash.growth, ``WeightedSign.growth, ``WeightedState.Change.reserved_after,
+      ``WeightedState.Reserved.empty, ``WeightedState.Reserved.weaken, ``WeightedState.Reserved.hash_room,
+      ``WeightedState.Reserved.sign_room, ``hashReservation, ``signingReservation,
+      ``fullHashBound, ``fullHashFits, ``fullHashOracle, ``fullHashMemory, ``fullBadHashBound] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

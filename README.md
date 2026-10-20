@@ -473,7 +473,12 @@ Pinned upstreams:
   cache and both logs in the original key types.
   [Derived resource bounds](Signatures/Runtime/Caliper/WeightedSignBounds.lean)
   charge all routing and saved-state copies, stored code and every visited
-  memory state. Hash/random dispatch, caller capacity invariants,
+  memory state. The [complete hash handler](Signatures/Runtime/Caliper/WeightedHashBounds.lean)
+  now has the same source and resource guarantees, permits full-cache hits,
+  and preserves the separately typed signing log. Proved
+  [state growth and reservations](Signatures/Runtime/Caliper/WeightedCapacity.lean)
+  supply the capacity steps for caller composition.
+  Combined random/hash/sign dispatch, complete caller invariants,
   transcript extraction and full-solver integration remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking

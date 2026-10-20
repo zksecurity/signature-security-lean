@@ -48,6 +48,8 @@ import Signatures.Runtime.Caliper.GeneratedWeightedBounds
 import Signatures.Runtime.Caliper.GeneratedWeightedOracle
 import Signatures.Runtime.Caliper.WeightedRecord
 import Signatures.Runtime.Caliper.WeightedSignBounds
+import Signatures.Runtime.Caliper.WeightedHashBounds
+import Signatures.Runtime.Caliper.WeightedCapacity
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics
