@@ -2796,10 +2796,38 @@ Implemented and checked:
   targets while ignoring nonempty hash logs and gamma coefficients. Exact
   samples, full cache order, framing, scratch release and elapsed budgets are
   checked, alongside concrete source/address/memory witnesses and axiom audits.
-  Remaining: terminal/setup/caller
-  composition, OOPS/Proximity public concrete/family models and Schnorr ROM
+  Remaining: setup and full-solver source/security
+  integration, OOPS/Proximity public concrete/family models and Schnorr ROM
   replay/composition. Conventional CPU/flat-memory adequacy stays outside this
   migration.
+
+
+- [Weighted caller terminals](../Signatures/Runtime/Caliper/WeightedCallerFinish.lean)
+  execute return/cutoff dispatch. A return copies the forgery and cache/log store
+  past union padding and configuration, runs extraction, and projects the scalar.
+  Cutoff constructs a scalar default without invoking extraction. The
+  [service bridge](../Signatures/Runtime/Caliper/WeightedCallerFinishService.lean)
+  preserves independent hash/sign and coefficient capacities and derives terminal
+  readiness from the caller growth postcondition. From an initially empty store,
+  `max(1, termCapacity) * (2*q + 1)` cache entries suffice for `q` calls plus
+  extraction. Physical log capacities are positive; query allowance may be zero.
+  [Complete caller programs](../Signatures/Runtime/Caliper/WeightedCallerProgram.lean)
+  instantiate the terminal with the constructed weighted extractor in both branches.
+  Their [bounds](../Signatures/Runtime/Caliper/WeightedCallerProgramBounds.lean) and
+  [memory theorem](../Signatures/Runtime/Caliper/WeightedCallerProgramResources.lean)
+  require only local routines, the sampler and caller representation/invariant
+  contracts. They derive the handler's saved-buffer address from primitive names
+  and its code budget, and share the same execution witness for the scalar result,
+  elapsed time and all visited memory states. No completed-extractor correctness
+  or efficiency hypothesis remains in these program theorems.
+  [Regressions](../SignaturesTest/CaliperWeightedCaller.lean) execute independent
+  key/message domains with degree-one OOPS terms, nonempty configuration, dynamic
+  forgeries, shared/fresh target caches, both extraction paths, immediate returns
+  and cutoff (including a full cache). Exact scalar results, sample traces,
+  untouched input sentinel, external frame and scratch release are checked.
+  A concrete full-program refinement and standard-axiom audits accompany them.
+  The full setup/source-game identity and public OOPS/Proximity Caliper security
+  models are still pending; this checkpoint does not change those public models.
 
 Remaining integration sequence:
 

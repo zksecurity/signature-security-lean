@@ -525,7 +525,14 @@ Pinned upstreams:
   hash/signing types and coefficient capacities. Its
   [source identity](Signatures/Runtime/Caliper/WeightedExtractorSource.lean) and
   [resource bounds](Signatures/Runtime/Caliper/WeightedExtractorMemory.lean) preserve
-  the shared cache and account for the full good/bad extractor. Full-solver integration remains.
+  the shared cache and account for the full good/bad extractor.
+  [Caller and extraction programs](Signatures/Runtime/Caliper/WeightedCallerProgram.lean)
+  now execute the terminal dispatch, remove stored configuration and padding,
+  run the constructed extractor and project its scalar; cutoff constructs the
+  fallback. The caller growth theorem supplies extraction capacity, and
+  [combined resources](Signatures/Runtime/Caliper/WeightedCallerProgramResources.lean)
+  derive time, code and every visited memory bound from local routines.
+  Setup and full-solver source/security integration remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
