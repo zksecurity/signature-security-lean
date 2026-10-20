@@ -3222,6 +3222,28 @@ Implemented and checked:
   over more than sixteen million indices executes within the same local bound.
   Managed/LIVE hash and final-hash composition remain the next integration step.
 
+- The [stateful cache invariant extension](../Signatures/Runtime/Caliper/StatefulCacheInvariant.lean)
+  proves refinement and time bounds when the draw requires an input reservation
+  that it may consume. It uses the existing cache program, including charged
+  frame retention, and imposes no false promise that the output retains a spare
+  slot. The [public replay draw](../Signatures/Runtime/Caliper/SchnorrROMReplayDraw.lean)
+  uses unrestricted bounded tape storage with this input invariant, preserving
+  exact original-oracle semantics on the admitted domain.
+  The [constructed hash-cache read](../Signatures/Runtime/Caliper/SchnorrROMHashCache.lean)
+  reuses the signing configuration's key, scalar and table encodings. It supplies
+  the replay draw internally, derives code/time/name/address bounds, uses at most
+  nine buffer slots, and charges stored code, initial data and every visited
+  state in one execution. Its [source theorem](../Signatures/Runtime/Caliper/SchnorrROMHashCacheSource.lean)
+  matches lookup followed by `RawTape.oracle` and `LazyROM.sample` on a miss.
+  Hits preserve both tapes and the first stored answer, including zero.
+  The [regression](../SignaturesTest/CaliperSchnorrROMHashCache.lean) executes full
+  table hits, duplicate keys, replayed and fresh misses, preservation of private
+  families, and fresh reads that fill both the last cache slot and last saved-tape
+  slot. It also checks missing replies, capacity rejection, traces, scratch
+  release, external state, elapsed bounds and theorem axiom footprints.
+  Full managed/LIVE hash and final-hash wrappers still need composition with the
+  retained configuration and the other table; this is a single-cache read.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

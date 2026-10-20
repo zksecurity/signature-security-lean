@@ -624,6 +624,11 @@ Pinned upstreams:
   use this code without an assumed scalar sampler. They match the original raw
   oracle and have complete resource certificates. A fresh public challenge
   records one scalar cell; its internal uniform draw creates no private cell.
+  The [replay-backed hash cache](Signatures/Runtime/Caliper/SchnorrROMHashCacheSource.lean)
+  now composes lookup and insertion with that draw, with complete execution
+  resource bounds. Hits preserve both tapes; misses may consume the final
+  reserved tape slot. Composing this read with the separate managed/LIVE tables
+  and retained public configuration remains part of the hash-handler work.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
