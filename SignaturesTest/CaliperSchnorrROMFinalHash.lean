@@ -111,6 +111,7 @@ run_cmd do
   for name in [``FinalHash.refines, ``FinalHash.source_value, ``FinalHash.source_original,
       ``FinalHash.observe_original, ``FinalHash.preserves_config, ``FinalHash.preserves_managed,
       ``FinalHash.live_length, ``FinalHash.reserved_after,
+      ``FinalHash.tape_lengths, ``FinalHash.tape_reserved_after,
       ``FinalHash.time_bound, ``FinalHash.code_bound, ``FinalHash.names, ``FinalHash.buffers,
       ``FinalHash.descriptionFits, ``FinalHash.resources, ``matches_original] do
     for dependency in (← collectAxioms name) do

@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.SchnorrROMFinalHash
+import Signatures.Runtime.SchnorrRawTapeBounds
 
 /-! Final hashing is the original shared-tape final verification lookup. The
 source equality preserves the complete joint reply, both tables and both tapes. -/
@@ -33,6 +34,34 @@ theorem source_value (value : (input config).Value) (valid : ready config value)
   cases found : cacheMap value.val.2.1.2.2 value.val.1 <;> simp only [map_pure]
   · exact (PFunctor.FreeM.comp_map _ _ _).symm
   · rfl
+
+theorem tape_lengths (value : (input config).Value) (valid : ready config value)
+    (answer : (output config).Value) (reached : answer ∈ support (source config value)) :
+    answer.val.2.2.1.length ≤ value.val.2.2.1.length + 1 ∧
+      answer.val.2.2.2.length ≤ value.val.2.2.2.length := by
+  let := PrivateSampler.Enumerated.sampleable config.sampler
+  have erased : answer.val ∈ support (Subtype.val <$> source config value) := by
+    rw [support_map]
+    exact ⟨answer, reached, rfl⟩
+  rw [source_value config value valid] at erased
+  cases found : cacheMap value.val.2.1.2.2 value.val.1 with
+  | none =>
+    simp only [found, Functor.map_map, support_map, Set.mem_image] at erased
+    obtain ⟨read, supported, same⟩ := erased
+    rw [← same]
+    exact Schnorr.RawTape.oracle_lengths _root_.Schnorr.LazyROM.sample (.inr ())
+      ⟨value.val.2.2.1, value.val.2.2.2⟩ read supported
+  | some challenge =>
+    simp only [found, support_pure, Set.mem_singleton_iff] at erased
+    rw [erased]
+    exact ⟨Nat.le_succ _, le_rfl⟩
+
+theorem tape_reserved_after (reserve : Nat) (value : (input config).Value) (valid : ready config value)
+    (room : value.val.2.2.1.length + (reserve + 1) ≤ config.sampler.capacity)
+    (answer : (output config).Value) (reached : answer ∈ support (source config value)) :
+    answer.val.2.2.1.length + reserve ≤ config.sampler.capacity := by
+  have growth := tape_lengths config value valid answer reached
+  omega
 
 section Original
 variable {w : Nat} {M F G G₂ K : Type} [Field F] [DecidableEq F]

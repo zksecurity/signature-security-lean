@@ -120,6 +120,7 @@ run_cmd do
       ``HashMiss.descriptionFits, ``HashMiss.resources,
       ``Hash.refines, ``Hash.source_value, ``Hash.source_original, ``Hash.observe_original,
       ``Hash.postcondition, ``Hash.reserved_after,
+      ``Hash.tape_lengths, ``Hash.tape_reserved_after,
       ``Hash.time_bound, ``Hash.code_bound, ``Hash.names, ``Hash.buffers,
       ``Hash.descriptionFits, ``Hash.resources, ``matches_original] do
     for dependency in (← collectAxioms name) do

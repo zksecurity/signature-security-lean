@@ -635,6 +635,11 @@ Pinned upstreams:
   now checks managed first, calls final hashing only on a miss, and inserts the
   answer into managed. Its checked resource bounds charge the copied key and
   shared store. Managed hits need no LIVE or replay-tape reservation.
+  The [private random-query handler](Signatures/Runtime/Caliper/SchnorrROMRandomSource.lean)
+  retains both tables and the public configuration while replaying or sampling
+  the requested finite range. Its resource bounds charge that retention and
+  do not enumerate the range. Random queries and both hash handlers have proved
+  one-cell saved-tape growth bounds for the caller's capacity invariant.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

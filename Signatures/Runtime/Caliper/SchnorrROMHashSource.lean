@@ -84,6 +84,33 @@ theorem reserved_after (reserve : Nat) (value : (input config).Value) (valid : r
   have growth := postcondition config value valid answer reached
   constructor <;> omega
 
+theorem tape_lengths (value : (input config).Value) (valid : ready config value)
+    (answer : (output config).Value) (reached : answer ∈ support (source config value)) :
+    answer.val.2.2.1.length ≤ value.val.2.2.1.length + 1 ∧
+      answer.val.2.2.2.length ≤ value.val.2.2.2.length := by
+  have erased : answer.val ∈ support (Subtype.val <$> source config value) := by
+    rw [support_map]
+    exact ⟨answer, reached, rfl⟩
+  rw [source_value config value valid] at erased
+  by_cases missing : cacheMap value.val.2.1.2.1 value.val.1 = none
+  · rw [dite_eq_left missing] at erased
+    simp only [support_map, Set.mem_image] at erased
+    obtain ⟨read, supported, same⟩ := erased
+    rw [← same]
+    exact FinalHash.tape_lengths config (HashMiss.admitted config (saved config value) (valid missing).1)
+      (valid missing).2 read supported
+  · rw [dite_eq_right missing] at erased
+    simp only [support_pure, Set.mem_singleton_iff] at erased
+    rw [erased]
+    exact ⟨Nat.le_succ _, le_rfl⟩
+
+theorem tape_reserved_after (reserve : Nat) (value : (input config).Value) (valid : ready config value)
+    (room : value.val.2.2.1.length + (reserve + 1) ≤ config.sampler.capacity)
+    (answer : (output config).Value) (reached : answer ∈ support (source config value)) :
+    answer.val.2.2.1.length + reserve ≤ config.sampler.capacity := by
+  have growth := tape_lengths config value valid answer reached
+  omega
+
 section Original
 variable {w : Nat} {M F G G₂ K : Type} [Field F] [DecidableEq F]
     [AddCommGroup G] [Module F G] [DecidableEq G] [DecidableEq M]

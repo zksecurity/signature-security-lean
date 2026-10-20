@@ -104,4 +104,25 @@ theorem replay_growth {A B : Type} (main : OracleComp (Spec F) A)
   rw [hsame] at hr'
   exact ⟨by omega, by omega⟩
 
+/-- Sampling a raw replay query preserves its one-cell growth bound, for any
+implementation of the sampling interface. -/
+theorem oracle_lengths {I : Type} {target : OracleSpec I}
+    (sample : QueryImpl (Spec F) (OracleComp target))
+    (query : (Spec F).Domain) (state : State F) (answer : (Spec F).Range query × State F)
+    (reached : answer ∈ support (simulateQ sample ((oracle query).run state))) :
+    answer.2.saved.length ≤ state.saved.length + 1 ∧
+      answer.2.remaining.length ≤ state.remaining.length := by
+  simp only [oracle, StateT.run] at reached
+  cases found : (SeedTape.pop (tag query) (0, (0 : F), 0) state.remaining).1 with
+  | false =>
+    simp only [found, Bool.false_eq_true, ite_false, simulateQ_map,
+      simulateQ_spec_query, support_map, Set.mem_image] at reached
+    obtain ⟨fresh, _, rfl⟩ := reached
+    exact ⟨by simp only [List.length_append, List.length_singleton]; exact le_rfl, le_rfl⟩
+  | true =>
+    simp only [found, ite_true, simulateQ_pure, support_pure,
+      Set.mem_singleton_iff] at reached
+    subst answer
+    exact ⟨Nat.le_succ _, SeedTape.pop_length _ _ _⟩
+
 end Signatures.Runtime.Schnorr.RawTape

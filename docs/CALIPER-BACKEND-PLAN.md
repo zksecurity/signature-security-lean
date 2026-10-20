@@ -3295,6 +3295,31 @@ Implemented and checked:
   `FinEnum` sampler. Complete pass/replay/extraction composition and public ROM
   migration remain.
 
+- The [complete private random-query handler](../Signatures/Runtime/Caliper/SchnorrROMRandom.lean)
+  accepts the adversary's dynamic range with the complete shared store, replays
+  the first matching private cell or samples a fresh answer, and restores both
+  hash tables and the public configuration. The
+  [routes](../Signatures/Runtime/Caliper/SchnorrROMRandomRoute.lean) reuse the
+  charged tail-reordering implementation; retained state is physically copied.
+  The [source and observation theorems](../Signatures/Runtime/Caliper/SchnorrROMRandomSource.lean)
+  match the original private branch of `Shared.interpret handler` jointly with
+  the updated tapes, including the range-dependent finite answer. They require
+  no extra sampler or complete-handler certificate. The
+  [resource bounds](../Signatures/Runtime/Caliper/SchnorrROMRandomBounds.lean)
+  cover time, stored program, dense names and every visited memory state, with
+  at most nine buffer slots and no enumeration of the requested range.
+  `RawTape.oracle_lengths` preserves the one-cell growth bound through any
+  sampling implementation. Random, normal-hash and final-hash handlers now
+  prove saved-tape reservation preservation and non-growth of the remaining
+  tape. All pre-existing raw replay bounds remain available.
+  The [regression](../SignaturesTest/CaliperSchnorrROMRandom.lean) checks replay,
+  duplicate families, fresh draws, singleton and maximum encodable ranges,
+  full unrelated tables, last-slot recording, nonidentity scalar encoding,
+  incomplete replies, overflowing tags, exhausted tape capacity, exact traces,
+  external state, scratch release, elapsed bounds and theorem axiom footprints.
+  The finite instance matches the existing `FinEnum` sampler. Joining these
+  handlers into the complete pass, replay and extraction remains open below.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in
