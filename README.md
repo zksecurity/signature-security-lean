@@ -407,8 +407,12 @@ Pinned upstreams:
   now executes conversion between independent request/reply packets and the
   handler's private-store format. Its source correspondence and complete
   resource bounds are proved, including copying across tagged-union padding.
-  Caller capacity invariants and controller composition, extraction and public
-  theorem integration remain pending.
+  The [generated caller](Signatures/Runtime/Caliper/SchnorrAGMCaller.lean) now
+  composes local caller routines with that service, preserving separate hash
+  and signing allowances. Its [execution theorem](Signatures/Runtime/Caliper/SchnorrAGMCallerExecution.lean)
+  matches the original oracle machine and retains extraction space at every
+  return or cutoff. Complete caller time, stored-code and memory bounds are
+  derived. Extraction and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

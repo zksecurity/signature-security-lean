@@ -1,5 +1,6 @@
 import Signatures.Runtime.Caliper.SchnorrAGMHandlerMemory
 import Signatures.Runtime.Caliper.SchnorrAGMCallerMemory
+import Signatures.Runtime.Caliper.SchnorrAGMCallerResources
 import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.EncodedConstant
 import Lean
@@ -251,6 +252,39 @@ private theorem callerMemory (tape : RandomTape 16) (args : CallerPackets.Packet
     CallerHandler.resources layout operations budget sampleCorrect sampleTime sampleWords sampleNames tape args valid before holds registers buffers initialRegisters initialBuffers finished reached
   exact ⟨elapsed, answer, supported, result, execution, fun between visited => (bounds between visited).2.2.2⟩
 
+private def controlLayout := Caller.layout layout (Pairing.unitRepresentation 16) (CallerPackets.reply layout) (by decide)
+private def controlAdvance (value : Unit × CallerPackets.Reply layout) :
+    CallerPackets.Reply layout ⊕ (CallerPackets.Request layout × Unit) := .inl value.2
+private def controlInitial (value : CallerPackets.Request layout) :
+    CallerPackets.Reply layout ⊕ (CallerPackets.Request layout × Unit) := .inr (value, ())
+private def controlContinue : Realizer .unit (CallerStep.resume controlLayout) (CallerStep.next controlLayout) controlAdvance :=
+  (inlRealizer .unit (by decide) controlLayout.result (CallerStep.pending controlLayout)
+    layout.scheme.wordFits (CallerStep.next controlLayout).fits).viewInput (CallerStep.resume controlLayout) Prod.snd (fun _ => rfl)
+private def controlInitialize : Realizer .unit (CallerPackets.request layout) (CallerStep.next controlLayout) controlInitial :=
+  (inrRealizer .unit (by decide) controlLayout.result (CallerStep.pending controlLayout)
+    layout.scheme.wordFits (CallerStep.next controlLayout).fits).viewInput (CallerPackets.request layout) (fun value => (value, ()))
+      (by intro value; change _ = _ ++ []; exact (List.append_nil _).symm)
+private theorem controlLocalTime (value) : controlContinue.time value ≤ 208 :=
+  inl_time controlLayout.result (CallerStep.pending controlLayout) layout.scheme.wordFits (CallerStep.next controlLayout).fits value.2
+private theorem controlInitialTime (value) : controlInitialize.time value ≤ 208 :=
+  inr_time controlLayout.result (CallerStep.pending controlLayout) layout.scheme.wordFits (CallerStep.next controlLayout).fits (value, ())
+private theorem controlLocalNames : NamesBound controlContinue.code 3 :=
+  inl_names controlLayout.result (CallerStep.pending controlLayout) layout.scheme.wordFits (CallerStep.next controlLayout).fits
+private theorem controlInitialNames : NamesBound controlInitialize.code 3 :=
+  inr_names controlLayout.result (CallerStep.pending controlLayout) layout.scheme.wordFits (CallerStep.next controlLayout).fits
+private theorem controlLocalFits : controlContinue.savedBuffer < 2 ^ 16 := by
+  have := controlLocalNames.buffers
+  unfold Realizer.savedBuffer
+  omega
+private theorem controlInitialFits : controlInitialize.savedBuffer < 2 ^ 16 := by
+  have := controlInitialNames.buffers
+  unfold Realizer.savedBuffer
+  omega
+private def controlProgram (fuel : Nat) := Caller.program layout operations sampler controlAdvance
+  (Pairing.unitRepresentation 16) (CallerPackets.reply layout) (by decide) controlContinue controlLocalFits
+  (CallerPackets.request layout) controlInitial controlInitialize controlInitialFits (by decide) fuel
+private def controlTime (fuel : Nat) := CallerControl.timeBudget 22 (CallerStep.width controlLayout) callerTime 208 208 fuel
+
 private def execute (args : Dispatch.Input layout) (replies : List (Word 16)) := do
   let initial := (Dispatch.input layout).initial args
   let before := { initial with
@@ -273,6 +307,17 @@ private def executeCaller (args : Dispatch.Input layout) (replies : List (Word 1
   pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
     result.state.regs 99, result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0), decide (result.time ≤ callerTime))
 
+private def executeControl (fuel : Nat) (args : Dispatch.Input layout) (replies : List (Word 16)) := do
+  let initial := (CallerPackets.input layout).initial (callerPacket args)
+  let before := { initial with
+    bufs := fun b => if b = 200 then #[77] else initial.bufs b
+    caps := fun b => if b = 200 then 4 else initial.caps b
+    regs := fun r => if r = 99 then 91 else initial.regs r
+    tapePos := 9 }
+  let result ← WordIO.run .unit RandomTape.zero 1000000 ((controlProgram fuel).lower layout.random.port) before replies
+  pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
+    result.state.regs 99, result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0), decide (result.time ≤ controlTime fuel))
+
 -- This fixture has 3 reply words, 20 original-request words and 41 private-store
 -- words. The caller format places all tags/request padding before the store.
 private def callerBytes (args : Dispatch.Input layout) (bytes : Array (Word 16)) : Array (Word 16) :=
@@ -284,7 +329,9 @@ open Lean in
 run_cmd do
   let check := fun args replies bytes trace remaining =>
     execute args replies == some (bytes, trace, remaining, #[77], 4, 91, 9, true, true) &&
-      executeCaller args replies == some (callerBytes args bytes, trace, remaining, #[77], 4, 91, 9, true, true)
+      executeCaller args replies == some (callerBytes args bytes, trace, remaining, #[77], 4, 91, 9, true, true) &&
+      executeControl 1 args replies == some (#[0] ++ callerBytes args bytes, trace, remaining, #[77], 4, 91, 9, true, true) &&
+      executeControl 2 args replies == some (#[0] ++ callerBytes args bytes, trace, remaining, #[77], 4, 91, 9, true, true)
   let signingRequest : Array (Word 16) := #[7, 0, 0, 0, 3, 0, 0, 0, 0, 0, 4, 9, 8, 7, 6, 1, 5, 0, 0, 0]
   let hashRequest : Array (Word 16) := #[7, 1, 23, 0, 1, 4, 9, 8, 7, 6] ++ Array.replicate 10 0
   let hitRequest : Array (Word 16) := #[7, 1, 23, 0, 1, 4, 5, 6, 7, 8] ++ Array.replicate 10 0
@@ -322,6 +369,14 @@ run_cmd do
       check (.inr (.inr refusedSign)) [88] (#[1, 1] ++ refusedBytes) [] [88] do
     throwError "combined malformed rejection sampled, required free space or lost the request"
   unless execute (.inr (.inl freshHash)) [] == none && executeCaller (.inr (.inl freshHash)) [] == none do throwError "combined fresh hash accepted a missing draw"
+  for args in ([.inr (.inr (fresh 3 5)), .inr (.inl fullHitHash), .inl (random 65535)] : List (Dispatch.Input layout)) do
+    let initial := ((CallerPackets.input layout).initial (callerPacket args)).bufs 0
+    let cutoff := #[1] ++ initial.extract 0 22 ++ Array.replicate 3 0 ++ initial.extract 22 63
+    unless executeControl 0 args [88] == some (cutoff, [], [88], #[77], 4, 91, 9, true, true) do
+      throwError "zero-fuel caller consumed a query, changed its store or lost the pending request"
+  unless executeControl 1 (.inr (.inr (fresh 3 5))) [65535, 2, 65535] == none &&
+      executeControl 1 (.inr (.inl freshHash)) [] == none && executeControl 1 (.inl (random 5)) [] == none do
+    throwError "generated caller accepted incomplete external randomness"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``Interactive.Prefix.refines, ``Interactive.Prefix.time_bound, ``Interactive.Prefix.code_bound,
       ``Dispatch.refines, ``Dispatch.time_bound, ``Dispatch.code_bound, ``CaliperBackend.SchnorrAGM.Handler.Dispatch.names, ``Dispatch.descriptionFits,
@@ -333,7 +388,12 @@ run_cmd do
       ``CallerPackets.finish_time, ``CallerPackets.finish_words, ``CallerPackets.finish_names,
       ``CallerHandler.refines, ``CallerHandler.time_bound, ``CallerHandler.code_bound, ``CallerHandler.names,
       ``CallerHandler.descriptionFits, ``CallerHandler.source_original, ``CallerHandler.synchronizes, ``CallerHandler.resources,
-      ``callerReady, ``callerRefined, ``callerTimed, ``callerStored, ``callerNamed, ``callerFitting, ``callerMemory] do
+      ``callerReady, ``callerRefined, ``callerTimed, ``callerStored, ``callerNamed, ``callerFitting, ``callerMemory,
+      ``CallerHandler.query_reserved, ``CallerHandler.ready_of_reserved, ``CallerHandler.reserved_after, ``CallerHandler.synchronizes_stored,
+      ``CallerControl.start_store_on, ``Caller.refines, ``Caller.start_postcondition, ``Caller.Postcondition.extraction_room,
+      ``Caller.execution_postcondition, ``Caller.observe_source, ``Caller.time, ``Caller.words, ``Caller.names,
+      ``Caller.descriptionFits, ``Caller.resources, ``controlContinue, ``controlInitialize, ``controlLocalTime, ``controlInitialTime,
+      ``controlLocalNames, ``controlInitialNames, ``controlLocalFits, ``controlInitialFits] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

@@ -2205,8 +2205,49 @@ Implemented and checked:
   signing configurations, randomness boundaries, full-store malformed rejection,
   missing/surplus replies, preserved caller frames, scratch release and elapsed
   time. Generic and instantiated correctness/resource theorems are axiom-audited.
-  Remaining Schnorr work includes the caller's capacity invariant and controller
-  composition, extraction, cyclic DLog and public concrete/family integration.
+  The caller's capacity invariant and controller composition follow below;
+  extraction, cyclic DLog and public concrete/family integration remain.
+
+- [Schnorr caller reservations](../Signatures/Runtime/Caliper/SchnorrAGMCallerInvariant.lean)
+  now consume separate hash and signing allowances. Random queries consume
+  neither; hash queries reserve cache growth; signing queries also reserve
+  affine-basis and signed-message growth. The represented private store retains
+  a canonical source-state witness. Existing represented requests and this
+  reservation imply handler admission without requiring a new assumption that
+  every mathematical scalar/group value is representable. The exact handler
+  source law proves reservation preservation after every supported adaptive reply.
+  [The generated caller](../Signatures/Runtime/Caliper/SchnorrAGMCaller.lean)
+  combines actual initialization and continuation routines with the constructed
+  service and controller. Local caller invariants carry the two allowances in
+  proofs; they add no machine counters. They need only admit the pending query
+  and be preserved for replies matching that query's original dependent type.
+  [Exit postconditions](../Signatures/Runtime/Caliper/SchnorrAGMCallerPostcondition.lean)
+  preserve canonical state, runtime configuration and one final-extraction cache
+  slot, including early returns and cutoffs. The shared controller now supports
+  store postconditions under pending-state admission invariants.
+  [Execution correspondence](../Signatures/Runtime/Caliper/SchnorrAGMCallerExecution.lean)
+  transfers the postcondition to actual returned bytes and proves equality with
+  the original oracle machine, retaining its final private state. The original
+  machine's implementation certificate rules out fuel cutoff in the source-program
+  theorem; local caller correspondence and primitive implementation laws remain
+  explicit inputs, rather than a completed reduction implementation assumption.
+  [Full resources](../Signatures/Runtime/Caliper/SchnorrAGMCallerResources.lean)
+  derive time, code and every-visited-state memory bounds. For caller frame width
+  `C`, input width `I`, handler time/code `H/Hc`, continuation time/code `L/Lc`,
+  initialization time/code `J/Jc` and fuel `n`, the bounds are
+  `J+8*I+88*C+4+n*(H+L+172*C+6)` time and
+  `Jc+26*I+507*C+286+n*(Hc+Lc+742*C+389)` stored code words. Every unrolled
+  branch is counted. Descriptor acceptance retains explicit bounds for the
+  actual saved-buffer addresses of the local routines and handler.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMHandler.lean) now run
+  the generated caller with one and two units of fuel on all handler fixtures,
+  checking that early return issues exactly one request and returns the expected
+  bytes/state. Zero fuel preserves the pending request, store and external input
+  without querying. Missing randomness, caller frames, scratch release and time
+  are checked, and the new generic proofs are axiom-audited. Local saved-buffer
+  bounds follow from name lemmas without increasing Lean's recursion limit.
+  Remaining Schnorr work is terminal extraction, complete setup/caller/terminal
+  composition, cyclic DLog and public concrete/family integration.
 
 Remaining integration sequence:
 
