@@ -379,7 +379,12 @@ Pinned upstreams:
   rows, and returns the encoded scalar/singleton-point reply. Malformed requests
   return a zero/empty reply without sampling, even with full stores. Its source
   theorem matches the original handler, and its resource bounds charge selection,
-  routing, both stored branches and reply encoding. The full handler, extraction,
+  routing, both stored branches and reply encoding.
+  [Randomness handling](Signatures/Runtime/Caliper/SchnorrAGMRandom.lean) now
+  forwards one query with the runtime range on every request, including malformed
+  requests. It preserves full stores, updates the malformed flag, and returns
+  the sampled index with an empty group list. Original-handler correspondence
+  and complete resource bounds are proved. Full handler composition, extraction,
   caller and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking

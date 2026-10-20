@@ -2010,6 +2010,48 @@ Implemented and checked:
   source/resource results are axiom-audited. Full handler, extraction, caller,
   cyclic DLog and public concrete/family integration remain pending.
 
+- [Complete Schnorr randomness handling](../Signatures/Runtime/Caliper/SchnorrAGMRandom.lean)
+  now forwards exactly one runtime-selected uniform query on every represented
+  request, including malformed requests and range zero. It uses the existing
+  uniform-oracle interface, with no table over possible ranges. The
+  [layout](../Signatures/Runtime/Caliper/SchnorrAGMRandomLayout.lean) gives explicit
+  range/group/row/coefficient bounds, permits zero list capacities, and requires
+  no free cache, basis or signing slots.
+  [Preparation](../Signatures/Runtime/Caliper/SchnorrAGMRandomPrepare.lean)
+  runs the [stored-length test](../Signatures/Runtime/Caliper/SchnorrAGMRandomShape.lean),
+  projects the range/state and, for nonempty group lists,
+  [updates one malformed-flag word](../Signatures/Runtime/Caliper/SchnorrAGMRandomMark.lean)
+  using an actual word instruction. Empty group lists preserve the old flag;
+  both branches preserve bad, the cache and both histories. Coefficient rows
+  are ignored by the source and may have any represented shape.
+  The query retains the complete state. [Reply assembly](../Signatures/Runtime/Caliper/SchnorrAGMRandomWrap.lean)
+  consumes the returned range word, copies the sampled index/state and emits a
+  padded empty group list. The supported-output theorem proves the answer is
+  within the requested range, not merely the layout's maximum range.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMRandomSource.lean)
+  matches the original handler's joint reply/state distribution for arbitrary
+  groups and rows. Remaining-query reservations provide input representability
+  even with no further hash or signing allowance.
+  [Bounds](../Signatures/Runtime/Caliper/SchnorrAGMRandomBounds.lean) charge
+  the selector, both stored branches, projections, flag instruction, query,
+  retained state and reply encoding: time at most `160*W+200`, code words at
+  most `640*W+800`, buffer identifiers below six and name accounting of five.
+  `W` includes the scheme stores and represented request-list capacities.
+  [Complete memory](../Signatures/Runtime/Caliper/SchnorrAGMRandomMemory.lean)
+  covers every visited state of the same source-correct execution, including
+  stored code, initial caller memory, registers, descriptors and live buffers.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMRandom.lean)
+  check all malformed/bad flag combinations with empty and nonempty group
+  lists, full stores and runtime ranges zero, seven and the full Word16 range.
+  Literal output bytes and traces verify one query even on malformed requests,
+  no range wraparound, preserved cached zero/duplicate entries, and unchanged
+  histories. Missing replies fail; extra replies, external buffers/registers/
+  tape, scratch release and time are checked. Zero hash/signing allowances,
+  zero list capacities and full stores coexist with successful randomness.
+  Invalid ranges/messages and list/store overflows are rejected; central and
+  concrete theorems are axiom-audited. Full handler composition, extraction,
+  caller, cyclic DLog and public concrete/family integration remain pending.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in
