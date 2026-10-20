@@ -566,8 +566,11 @@ Pinned upstreams:
   Schnorr ROM now has an [executed tape reset](Signatures/Runtime/Caliper/SchnorrROMTapeResetBounds.lean)
   matching `RawTape.restart`, with derived time, code and complete memory bounds.
   It preserves every private family, retains the selected challenge prefix and
-  charges both copies of the installed replay tape. Preparing its input packet
-  and composing the complete two-pass reduction remain part of the ROM migration.
+  charges both copies of the installed replay tape. The
+  [complete restart](Signatures/Runtime/Caliper/SchnorrROMTapeRestart.lean)
+  also executes input preparation from the selected slot, scalar and old state,
+  including construction of the replacement challenge cell. Its resource bound
+  includes stored code, initial data and every visited memory state.
   Its [constructed replay-cell handler](Signatures/Runtime/Caliper/SchnorrROMTapeQuery.lean)
   executes first-family lookup, hit consumption and chronological miss recording.
   Private draws forward a runtime range through the uniform word interface;

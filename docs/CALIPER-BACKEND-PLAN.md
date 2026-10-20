@@ -2965,7 +2965,7 @@ Implemented and checked:
   [read](../SignaturesTest/CaliperSchnorrROMTapeRead.lean) regressions execute
   interleaved private families, repeated challenges, zero replies, empty tapes,
   missing replies, external frames and scratch release. Actual caller query/reply
-  routing, reset packet preparation and the
+  routing and the
   complete two-pass solver/public/family composition remain.
 
 - [Runtime uniform draws](../Signatures/Runtime/Caliper/UniformQueryDraw.lean)
@@ -2990,7 +2990,22 @@ Implemented and checked:
   The [regression](../SignaturesTest/CaliperSchnorrROMTapeQuery.lean) executes
   private zero/maximum ranges, challenges with nonzero/zero replies, replay
   hits/misses and caller frames. Query input formation, typed caller reply
-  routing, restart packet construction and full ROM composition remain.
+  routing and full ROM composition remain.
+
+- [Complete replay restart](../Signatures/Runtime/Caliper/SchnorrROMTapeRestart.lean)
+  now starts from the selected slot, replacement scalar and both old tapes.
+  [Preparation](../Signatures/Runtime/Caliper/SchnorrROMTapeRestartPrepare.lean)
+  executes the projections, constructs the challenge cell and prepares the reset
+  packet. It then runs the existing scan, reversal and charged duplication.
+  The exact source is `RawTape.restart`; the old remaining tape is discarded.
+  Preparation adds at most `800*width + 200` steps and `2500*width + 1201`
+  stored words including composition. Complete visited-memory bounds and a
+  six-buffer extent follow from this same execution.
+  The [regression](../SignaturesTest/CaliperSchnorrROMTapeRestart.lean) checks
+  interleaved private families, distinct old remaining data, zero challenges,
+  empty retained state, invalid bounds and preservation of caller frames.
+  The reset output still allows `capacity+1` cells; the full caller must allocate
+  and prove the corresponding replay reservation.
 
 Remaining integration sequence:
 
