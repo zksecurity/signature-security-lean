@@ -402,8 +402,13 @@ Pinned upstreams:
   Its replies retain the original request, including coefficient rows, and its
   [source theorem](Signatures/Runtime/Caliper/SchnorrAGMHandlerSource.lean) proves
   the original dependent handler's joint reply/state law. Complete resource
-  bounds include those copies and all stored branches. Caller packet conversion,
-  extraction, caller composition and public theorem integration remain pending.
+  bounds include those copies and all stored branches. The
+  [caller-facing service](Signatures/Runtime/Caliper/SchnorrAGMCallerHandler.lean)
+  now executes conversion between independent request/reply packets and the
+  handler's private-store format. Its source correspondence and complete
+  resource bounds are proved, including copying across tagged-union padding.
+  Caller capacity invariants and controller composition, extraction and public
+  theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

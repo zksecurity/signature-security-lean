@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.SchnorrAGMHandlerMemory
+import Signatures.Runtime.Caliper.SchnorrAGMCallerMemory
 import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.EncodedConstant
 import Lean
@@ -189,6 +190,8 @@ private def random (n : Fin 65536) : layout.randomInput.Value :=
 private def full : SchnorrAGM.Native.EncodedState (Word 16) (Word 16) Nat :=
   ([((7, 23), (0, true, 9, 10)), ((7, 23), (8, true, 11, 12)), ((5, 6), (1, false, 13, 14)), ((8, 9), (3, true, 15, 16))],
     [(5, 7), (1, 0), (0, 1), (11, 65534)], [7, 7], false, true)
+private def fullHitHash : layout.hashInput.Value :=
+  ⟨((7, [23], [[9, 8, 7, 6]]), (3, 5), full), by rw [hash_valid_iff]; decide⟩
 private def refusedSign : layout.signingInput.Value :=
   ⟨((7, [4, 7], [[2, 3, 4, 5], [], [6]]), (3, 5), full), by rw [signing_valid_iff]; decide⟩
 private def refusedHash : layout.hashInput.Value :=
@@ -208,6 +211,46 @@ private theorem memory (tape : RandomTape 16) (args : Dispatch.Input layout) (be
     resources layout operations budget sampleCorrect sampleTime sampleWords sampleNames tape args before holds registers buffers initialRegisters initialBuffers finished reached
   exact ⟨elapsed, answer, supported, result, execution, fun between visited => (bounds between visited).2.2.2⟩
 
+open CaliperBackend.SchnorrAGM
+private def callerPacket : Dispatch.Input layout → CallerPackets.Packet layout
+  | .inl args => (.inl ⟨args.val.1, args.property.1⟩, ⟨args.val.2, args.property.2⟩)
+  | .inr (.inl args) => (.inr (.inl ⟨args.val.1, args.property.1.1⟩), ⟨args.val.2, args.property.1.2⟩)
+  | .inr (.inr args) => (.inr (.inr ⟨args.val.1, args.property.1.1⟩), ⟨args.val.2, args.property.1.2⟩)
+private theorem callerReady (args : Dispatch.Input layout) : CallerPackets.ready layout (callerPacket args) := by
+  rcases args with args | (args | args)
+  · trivial
+  · exact args.property.2
+  · exact args.property.2
+private def callerProgram := CallerHandler.code layout operations sampler
+private def callerSource := CallerHandler.source layout operations sampleSource
+private def callerTime := CallerHandler.timeBudget layout operations budget 26
+private def callerWords := CallerHandler.codeBudget layout operations budget 125
+private theorem callerRefined : Interactive.RefinesOn (CallerPackets.ready layout) layout.random.port .unit
+    (CallerPackets.input layout) (CallerPackets.output layout) callerSource callerProgram :=
+  CallerHandler.refines layout operations sampleCorrect
+private theorem callerTimed : Interactive.TimeBoundOn (CallerPackets.ready layout) layout.random.port .unit
+    (CallerPackets.input layout) callerProgram callerTime := CallerHandler.time_bound layout operations sampleCorrect budget sampleTime
+private theorem callerStored : (callerProgram.lower layout.random.port).descriptionWords ≤ callerWords :=
+  CallerHandler.code_bound layout operations budget sampleWords
+private theorem callerNamed : WordIO.NamesAccounted (callerProgram.lower layout.random.port) nameLimit :=
+  CallerHandler.names layout operations sampleNames
+private theorem callerFitting : (callerProgram.lower layout.random.port).DescriptionFits :=
+  CallerHandler.descriptionFits layout operations sampleFits sampleNames (by decide)
+
+private theorem callerMemory (tape : RandomTape 16) (args : CallerPackets.Packet layout) (valid : CallerPackets.ready layout args) (before : State 16)
+    (holds : (CallerPackets.input layout).Holds args before) (registers buffers : Nat)
+    (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (callerProgram.execute layout.random.port .unit tape before)) :
+    finished.time ≤ callerTime ∧ ∃ answer ∈ support (callerSource args),
+      (CallerPackets.output layout).Holds answer finished.state ∧
+      ∃ execution : WordIO.Exec .unit tape (callerProgram.lower layout.random.port) before finished.state finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((callerProgram.lower layout.random.port).staticWords registers buffers : Int) + between.liveMem (max buffers (callerProgram.lower layout.random.port).memBound) ≤
+            5 * callerWords + 4 * nameLimit + registers + 3 * buffers + before.liveMem buffers + callerTime := by
+  obtain ⟨elapsed, answer, supported, result, execution, bounds⟩ :=
+    CallerHandler.resources layout operations budget sampleCorrect sampleTime sampleWords sampleNames tape args valid before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, answer, supported, result, execution, fun between visited => (bounds between visited).2.2.2⟩
+
 private def execute (args : Dispatch.Input layout) (replies : List (Word 16)) := do
   let initial := (Dispatch.input layout).initial args
   let before := { initial with
@@ -219,10 +262,29 @@ private def execute (args : Dispatch.Input layout) (replies : List (Word 16)) :=
   pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
     result.state.regs 99, result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0), decide (result.time ≤ timeLimit))
 
+private def executeCaller (args : Dispatch.Input layout) (replies : List (Word 16)) := do
+  let initial := (CallerPackets.input layout).initial (callerPacket args)
+  let before := { initial with
+    bufs := fun b => if b = 200 then #[77] else initial.bufs b
+    caps := fun b => if b = 200 then 4 else initial.caps b
+    regs := fun r => if r = 99 then 91 else initial.regs r
+    tapePos := 9 }
+  let result ← WordIO.run .unit RandomTape.zero 1000000 (callerProgram.lower layout.random.port) before replies
+  pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
+    result.state.regs 99, result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0), decide (result.time ≤ callerTime))
+
+-- This fixture has 3 reply words, 20 original-request words and 41 private-store
+-- words. The caller format places all tags/request padding before the store.
+private def callerBytes (args : Dispatch.Input layout) (bytes : Array (Word 16)) : Array (Word 16) :=
+  match args with
+  | .inl _ => bytes.extract 0 4 ++ bytes.extract 45 65 ++ #[0] ++ bytes.extract 4 45
+  | .inr _ => bytes.extract 0 5 ++ bytes.extract 46 66 ++ bytes.extract 5 46
+
 open Lean in
 run_cmd do
   let check := fun args replies bytes trace remaining =>
-    execute args replies == some (bytes, trace, remaining, #[77], 4, 91, 9, true, true)
+    execute args replies == some (bytes, trace, remaining, #[77], 4, 91, 9, true, true) &&
+      executeCaller args replies == some (callerBytes args bytes, trace, remaining, #[77], 4, 91, 9, true, true)
   let signingRequest : Array (Word 16) := #[7, 0, 0, 0, 3, 0, 0, 0, 0, 0, 4, 9, 8, 7, 6, 1, 5, 0, 0, 0]
   let hashRequest : Array (Word 16) := #[7, 1, 23, 0, 1, 4, 9, 8, 7, 6] ++ Array.replicate 10 0
   let hitRequest : Array (Word 16) := #[7, 1, 23, 0, 1, 4, 5, 6, 7, 8] ++ Array.replicate 10 0
@@ -232,7 +294,8 @@ run_cmd do
       #[3, 1, 0, 0, 1, 11, 65534, 0, 0, 2, 3, 7, 0, 0] ++ signingRequest
     unless check (.inr (.inr (fresh g pk))) [65535, 2, 65535, 11, 99] bytes [.output 65535, .invoke, .input 65535, .input 2, .output 65535, .invoke, .input 65535, .input 11] [99] do
       throwError "combined signing lost its request, runtime configuration, trace or caller frame"
-    unless execute (.inr (.inr (fresh g pk))) [] == none && execute (.inr (.inr (fresh g pk))) [65535, 2, 65535] == none do
+    unless execute (.inr (.inr (fresh g pk))) [] == none && execute (.inr (.inr (fresh g pk))) [65535, 2, 65535] == none &&
+        executeCaller (.inr (.inr (fresh g pk))) [] == none && executeCaller (.inr (.inr (fresh g pk))) [65535, 2, 65535] == none do
       throwError "combined signing accepted missing draws"
   let hashBytes : Array (Word 16) := #[1, 0, 2, 0, 0, 3, 5, 2, 7, 23, 2, 1, 9, 8, 5, 6, 1, 1, 13, 14] ++ Array.replicate 12 0 ++
     #[2, 1, 0, 0, 1, 0, 0, 0, 0, 1, 3, 0, 0, 0] ++ hashRequest
@@ -248,18 +311,29 @@ run_cmd do
       #[2, 1, 0, 0, 1, 0, 0, 0, 0, 1, 3, 0, 1, 1] ++ request ++ #[0]
     unless check (.inl (random n)) [BitVec.ofNat 16 n.val, BitVec.ofNat 16 n.val, 99] bytes [.output (BitVec.ofNat 16 n.val), .invoke, .input (BitVec.ofNat 16 n.val), .input (BitVec.ofNat 16 n.val)] [99] do
       throwError "combined randomness changed its range, request, state or outer padding"
-    unless execute (.inl (random n)) [] == none do throwError "combined randomness accepted a missing reply"
+    unless execute (.inl (random n)) [] == none && executeCaller (.inl (random n)) [] == none do throwError "combined randomness accepted a missing reply"
   let refusedBytes : Array (Word 16) := #[0, 0, 0, 3, 5, 4, 7, 23, 0, 1, 9, 10, 7, 23, 8, 1, 11, 12,
     5, 6, 1, 0, 13, 14, 8, 9, 3, 1, 15, 16, 4, 5, 7, 1, 0, 0, 1, 11, 65534, 2, 7, 7, 1, 1] ++ refusedRequest
+  let fullHitBytes : Array (Word 16) := #[1, 0, 0, 0, 0, 3, 5, 4, 7, 23, 0, 1, 9, 10, 7, 23, 8, 1, 11, 12,
+    5, 6, 1, 0, 13, 14, 8, 9, 3, 1, 15, 16, 4, 5, 7, 1, 0, 0, 1, 11, 65534, 2, 7, 7, 0, 1] ++ hashRequest
+  unless check (.inr (.inl fullHitHash)) [88] fullHitBytes [] [88] do
+    throwError "full-cache caller hit sampled, required room or changed the first duplicate"
   unless check (.inr (.inl refusedHash)) [88] (#[1, 0] ++ refusedBytes) [] [88] &&
       check (.inr (.inr refusedSign)) [88] (#[1, 1] ++ refusedBytes) [] [88] do
     throwError "combined malformed rejection sampled, required free space or lost the request"
-  unless execute (.inr (.inl freshHash)) [] == none do throwError "combined fresh hash accepted a missing draw"
+  unless execute (.inr (.inl freshHash)) [] == none && executeCaller (.inr (.inl freshHash)) [] == none do throwError "combined fresh hash accepted a missing draw"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``Interactive.Prefix.refines, ``Interactive.Prefix.time_bound, ``Interactive.Prefix.code_bound,
       ``Dispatch.refines, ``Dispatch.time_bound, ``Dispatch.code_bound, ``CaliperBackend.SchnorrAGM.Handler.Dispatch.names, ``Dispatch.descriptionFits,
       ``refines, ``time_bound, ``code_bound, ``names, ``descriptionFits, ``resources, ``source_original, ``source_request,
-      ``refined, ``timed, ``stored, ``named, ``fitting, ``memory] do
+      ``refined, ``timed, ``stored, ``named, ``fitting, ``memory,
+      ``ReorderTail.realizer, ``ReorderTail.time, ``ReorderTail.words, ``ReorderTail.names,
+      ``CallerPackets.prepare, ``CallerPackets.finish, ``CallerPackets.request_bytes,
+      ``CallerPackets.prepare_time, ``CallerPackets.prepare_words, ``CallerPackets.prepare_names,
+      ``CallerPackets.finish_time, ``CallerPackets.finish_words, ``CallerPackets.finish_names,
+      ``CallerHandler.refines, ``CallerHandler.time_bound, ``CallerHandler.code_bound, ``CallerHandler.names,
+      ``CallerHandler.descriptionFits, ``CallerHandler.source_original, ``CallerHandler.synchronizes, ``CallerHandler.resources,
+      ``callerReady, ``callerRefined, ``callerTimed, ``callerStored, ``callerNamed, ``callerFitting, ``callerMemory] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

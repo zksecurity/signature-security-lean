@@ -2171,8 +2171,42 @@ Implemented and checked:
   randomness ranges including the maximum word, and malformed hash/sign calls
   on full stores. Exact query traces, missing/surplus replies, distinct original
   coefficient rows, caller frames, scratch release, time and theorem axioms
-  are checked. Caller packet conversion, extraction, caller/cyclic DLog and
-  public concrete/family integration remain pending.
+  are checked. Caller packet conversion is implemented below; extraction,
+  caller/cyclic DLog and public concrete/family integration remain pending.
+
+- [The caller-facing Schnorr service](../Signatures/Runtime/Caliper/SchnorrAGMCallerHandler.lean)
+  now executes request conversion, the complete three-way handler, and reply
+  conversion. [Independent packets](../Signatures/Runtime/Caliper/SchnorrAGMCallerPackets.lean)
+  keep the caller's request/reply separate from the private store. Preparation
+  distributes the store across the two input-tag levels with actual copies.
+  Reply conversion uses [block reordering](../Signatures/Runtime/Caliper/ReorderTail.lean)
+  to move the original request beside its answer, then merges both tag levels
+  while moving the private store past padding. No changed byte layout is
+  justified by an uncharged mathematical reassociation.
+  The admission guard preserves each component's conditional domain: random
+  queries, malformed rejection and cache hits require no extra free slot.
+  [Conversion bounds](../Signatures/Runtime/Caliper/SchnorrAGMCallerPacketBounds.lean)
+  give preparation time `64*P+6`, finishing time `110*P+8`, and complete wrapper
+  overhead `174*P+14` time and `1120*P+774` code words, where `P` is three tag
+  words plus the sum of the two request widths, two reply widths and store width.
+  All stored branches, copies and padding are charged; descriptor fit and name
+  bounds follow from the actual components.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMCallerSource.lean)
+  proves the original dependent reply and joint-state law, plus synchronization
+  for caller composition. The relation to an encoded source state is explicit:
+  arbitrary unused optional-entry padding is not assumed canonical. The original
+  source relation supplies the canonical private states used by the reduction.
+  [Total memory](../Signatures/Runtime/Caliper/SchnorrAGMCallerMemory.lean) bounds
+  the same source-correct execution and all its visited states, including both
+  conversions and pre-existing caller storage.
+  [The handler regressions](../SignaturesTest/CaliperSchnorrAGMHandler.lean) now
+  run both the internal handler and this caller-facing service. They check the
+  expected external byte order, exact query traces, full-cache zero-valued hits,
+  signing configurations, randomness boundaries, full-store malformed rejection,
+  missing/surplus replies, preserved caller frames, scratch release and elapsed
+  time. Generic and instantiated correctness/resource theorems are axiom-audited.
+  Remaining Schnorr work includes the caller's capacity invariant and controller
+  composition, extraction, cyclic DLog and public concrete/family integration.
 
 Remaining integration sequence:
 
