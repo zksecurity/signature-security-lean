@@ -363,8 +363,14 @@ Pinned upstreams:
   append both the affine explanation and signed message in chronological order,
   with the original source function as their specification and complete resource
   bounds. The existing query reservation supplies the required free slots.
-  Signing sampling/cache updates, extraction, caller and public theorem integration
-  remain pending.
+  [Signing cache programming](Signatures/Runtime/Caliper/SchnorrAGMProgramming.lean)
+  now reuses the verified bounded cache and rebuilds the final signature/state
+  result with charged retention and copying. Full-table hits preserve existing
+  answers and explanations; reachable query reservations admit misses. Its
+  [complete resource bounds](Signatures/Runtime/Caliper/SchnorrAGMProgrammingBounds.lean)
+  cover the same source-correct execution.
+  Composition of the signing stages, sampling, dispatch, extraction, caller and
+  public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

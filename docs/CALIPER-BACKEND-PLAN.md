@@ -1852,8 +1852,9 @@ Implemented and checked:
   external buffers/registers/tape preservation, scratch release and time limits.
   Kernel checks reject message and list-capacity overflows; central theorems and
   concrete resource instances are axiom-audited. Chronological history appends
-  are constructed below. The two scalar draws, cache programming, signing
-  dispatch and subsequent full handler/extractor/caller/public integration remain pending.
+  and cache programming are constructed below. Composing these stages, the two
+  scalar draws, signing dispatch and subsequent full handler/extractor/caller/public
+  integration remain pending.
 
 - [Schnorr signing histories](../Signatures/Runtime/Caliper/SchnorrAGMHistories.lean)
   now execute the original `Native.Signing.historiesValue` directly. The new
@@ -1887,8 +1888,40 @@ Implemented and checked:
   and time bounds. Kernel checks reject full histories and invalid messages;
   zero-allowance and zero-word-entry instances are checked, including execution
   of a zero-word append. Central proofs and resource instances are axiom-audited.
-  Sampling, cache programming, signing dispatch and full reduction/public
-  integration remain pending.
+  Cache programming is constructed below. Stage composition, sampling, signing
+  dispatch and full reduction/public integration remain pending.
+
+
+- [Schnorr signing cache programming](../Signatures/Runtime/Caliper/SchnorrAGMProgramming.lean)
+  now reuses the actual `EncodedCache.implementation` with encoded message/point
+  equality. Its input is the history-update output, guarded by cache admission:
+  a full-table hit is allowed; a miss needs a free slot. Existing cached answers,
+  affine explanations and shadowed duplicates remain unchanged, including cached
+  zero. Insertion uses the supplied entry and performs no sampling.
+  The signature and updated histories remain in a saved buffer outside the cache
+  program's mutation footprint. The program physically copies the retained data,
+  restores it, then permutes the table/signature/metadata into the final signature
+  and state. The mathematical views preserve identical bytes; every actual
+  rearrangement is executed and charged. No whole cache or signing primitive is
+  assumed.
+  [Complete bounds](../Signatures/Runtime/Caliper/SchnorrAGMProgrammingBounds.lean)
+  add at most `128*W` time and `416*W + 64` code words to the existing cache
+  budgets. Buffer extent is at most nine; name accounting and operand fit are
+  proved. Complete memory covers stored code, dense registers/descriptors,
+  initial caller memory and every reached state of the source-correct execution.
+  The cache guard follows from the existing remaining-query reservation whenever
+  a signing query remains. The result composed mathematically with the arithmetic
+  and history functions is exactly `Native.Signing.signedValue`; executable
+  composition of these three stages is the next integration step.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMProgramming.lean)
+  check fresh insertion, full-table hits, cached zero, duplicate keys, a final-slot
+  miss with an equal message but different point, changed affine data, reordered
+  and full histories, empty stores and all flag combinations. They check external
+  buffers/registers/tape, scratch release and time bounds; kernel checks reject
+  full-table misses, invalid messages and overflowing cache/history lists.
+  The source, resource and concrete-instance theorems are axiom-audited.
+  Signing-stage composition, both scalar draws, signing dispatch and complete
+  handler/extractor/caller/public integration remain pending.
 
 Remaining integration sequence:
 
