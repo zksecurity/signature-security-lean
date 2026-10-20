@@ -354,8 +354,13 @@ Pinned upstreams:
   complete memory bounds. The [complete hash dispatcher](Signatures/Runtime/Caliper/SchnorrAGMHashDispatch.lean)
   now tests both stored list lengths, routes singleton requests, and rejects
   malformed requests without sampling. Its exact original-handler law and
-  complete resource bounds cover every represented request shape. Signing,
-  extraction, caller and public theorem integration remain pending.
+  complete resource bounds cover every represented request shape.
+  [Signing arithmetic](Signatures/Runtime/Caliper/SchnorrAGMSigningArithmetic.lean)
+  now computes the commitment and affine explanation from the runtime scalars
+  and points, retaining the original state and constructing the source work
+  frame. Its time, stored-code and complete memory bounds include every copy.
+  Signing sampling/history/cache updates, extraction, caller and public theorem
+  integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

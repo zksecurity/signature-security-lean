@@ -1821,9 +1821,39 @@ Implemented and checked:
   cover singleton hits and misses, empty/multiple point or row lists, full-cache
   rejection, maximal malformed requests without replies, preserved bad and
   history fields, capacity rejection, framing, scratch release and time limits.
-  Central proofs and concrete resource instances are axiom-audited. Signing,
+  Central proofs and concrete resource instances are axiom-audited. Full signing,
   the full handler/extractor/caller, cyclic DLog class and public concrete/family
   integration remain pending.
+
+- [Schnorr signing arithmetic](../Signatures/Runtime/Caliper/SchnorrAGMSigningArithmetic.lean)
+  now implements the source arithmetic stage on the sampled runtime request.
+  [Layouts](../Signatures/Runtime/Caliper/SchnorrAGMSigningLayout.lean) explicitly
+  retain both scalars, the generator, public key, message and complete source
+  state. [Argument assembly](../Signatures/Runtime/Caliper/SchnorrAGMSigningArguments.lean)
+  copies the arguments for two scalar multiplications; the
+  [computed stage](../Signatures/Runtime/Caliper/SchnorrAGMSigningComputed.lean)
+  executes `R = z • g - c • pk` and `-c`. Only scalar multiplication, group
+  subtraction and scalar negation implementations are supplied. The original
+  input is duplicated and saved in an actual buffer beyond the computation's
+  scratch footprint. [Final assembly](../Signatures/Runtime/Caliper/SchnorrAGMSigningFinish.lean)
+  constructs the cache-programming frame, signature `(R,z)` and affine pair
+  `(z,-c)`, retaining the existing cache and histories verbatim. The full stage
+  has exact equality with the original `Native.Signing.arithmeticValue`.
+  [Derived budgets and memory](../Signatures/Runtime/Caliper/SchnorrAGMSigningArithmeticBounds.lean)
+  give time at most `2*scaleTime + subTime + negateTime + 512*W` and stored code
+  at most `2*scaleWords + subWords + negateWords + 2048*W + 1024`, where
+  `W = scheme.width + 2*scalarWords + 2*pointWords + 1`. Buffer extent is at
+  most `max 3 primitiveSlots + 3`. The memory theorem includes stored code,
+  register slots, descriptors, initial caller memory and every reached state
+  of the same source-correct execution.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMSigningArithmetic.lean)
+  cover changed runtime scalars/points/messages, empty and full stores,
+  duplicate entries, scalar wraparound, zero scalars, both source flags,
+  external buffers/registers/tape preservation, scratch release and time limits.
+  Kernel checks reject message and list-capacity overflows; central theorems and
+  concrete resource instances are axiom-audited. The two scalar draws,
+  chronological history appends, cache programming, signing dispatch and
+  subsequent full handler/extractor/caller/public integration remain pending.
 
 Remaining integration sequence:
 
