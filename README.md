@@ -451,6 +451,13 @@ Pinned upstreams:
   Unrepresented source inputs/replies stop with an empty-group output valid at
   every basis. Every related implemented reply preserves the exact continuation,
   so the same Caliper program and complete resource bounds apply.
+  The weighted migration now has executed
+  [Proximity term generation](Signatures/Runtime/Caliper/ProximityTerms.lean) and
+  [OOPS term generation](Signatures/Runtime/Caliper/OOPSTermsBounds.lean).
+  Fixed vectors retain the source function type; all coordinates, repeated labels,
+  tags and scalar powers have charged instructions and stored code. Exact source
+  identities and complete memory bounds cover both generators, including degree
+  or dimension zero. Their weighted oracle and extraction integration remains.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

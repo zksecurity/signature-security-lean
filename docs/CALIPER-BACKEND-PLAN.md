@@ -2438,6 +2438,31 @@ Implemented and checked:
   rejected replies from continued replies, reject exhausted fuel/counts, check
   the constructor's inputs and instantiate its complete resource/security bounds.
   Coverage of every conventional machine remains a separate adequacy theorem.
+- [Fixed vector layouts](../Signatures/Runtime/Caliper/VectorLayout.lean) retain
+  the source's `Fin n → F` type and encode exactly its coordinates. Their word
+  count is `n` times the scalar width; decoding and framed coordinate reads are
+  proved, including zero dimensions and zero-word entries.
+  [Proximity term generation](../Signatures/Runtime/Caliper/ProximityTerms.lean)
+  executes the constant term and all coordinate/slot/weight terms in order.
+  For output width `W = 1 + (n+1)*(1+slotWords+scalarWords)`, its runtime is at
+  most `8*W` and stored code at most `26*W+14`, with two buffer slots.
+  [Successive powers](../Signatures/Runtime/Caliper/Powers.lean) construct the
+  OOPS coefficient vector using only an implemented multiplication routine.
+  The unrolled stages charge every retained pair and output copy. Both time
+  and code have explicit polynomial bounds in the dimension, scalar width
+  and multiplication budgets; generated scratch names have a separate bound.
+  [Complete OOPS term generation](../Signatures/Runtime/Caliper/OOPSTermsBounds.lean)
+  retains the input topic, generates powers, and uses the same term assembler.
+  Its source identity proves the finite-degree/topic key permutation exactly.
+  Both generators have total-memory bounds for every visited state of the same
+  source-correct execution, including code and initial capacity.
+  Actual word executions test degree/dimension zero, zero coefficients, modular
+  multiplication, repeated labels, zero-word encodings, untouched private state,
+  released scratch buffers and time bounds. Coordinate validity excludes
+  unrepresentable inputs. No term-generator implementation or completed-generator resource
+  contract is an input: only local scalar multiplication is supplied for OOPS.
+  Weighted lazy signing/evaluation, extraction, full solver assembly and the
+  OOPS/Proximity public concrete/family model migrations remain to be connected.
 
 Remaining integration sequence:
 
