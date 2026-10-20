@@ -3317,8 +3317,41 @@ Implemented and checked:
   full unrelated tables, last-slot recording, nonidentity scalar encoding,
   incomplete replies, overflowing tags, exhausted tape capacity, exact traces,
   external state, scratch release, elapsed bounds and theorem axiom footprints.
-  The finite instance matches the existing `FinEnum` sampler. Joining these
-  handlers into the complete pass, replay and extraction remains open below.
+  The finite instance matches the existing `FinEnum` sampler. The complete
+  dispatch below joins these handlers; caller/pass/replay integration remains.
+
+- The [complete ROM service](../Signatures/Runtime/Caliper/SchnorrROMHandler.lean)
+  dispatches the original `(random | hash) | sign` interface. Its
+  [layouts](../Signatures/Runtime/Caliper/SchnorrROMHandlerLayout.lean) carry the
+  same shared store through each branch. Request tags are read and stripped by
+  executed copies; reply tags and padding are constructed by executed copies.
+  The only local implementations are scalar multiplication and group subtraction.
+  The [source, synchronization and observation theorems](../Signatures/Runtime/Caliper/SchnorrROMHandlerSource.lean)
+  identify the complete joint reply/store program with the original
+  `Shared.interpret handler`. The pending input identifies the dependent reply
+  type, and random replies additionally retain their range. No completed
+  dispatcher or source-equivalence premise is assumed.
+  The [time/code bounds](../Signatures/Runtime/Caliper/SchnorrROMHandlerBounds.lean)
+  are the maximum branch time plus `200 * width + 10`, and the sum of all
+  branch code sizes plus `1400 * width + 200`. These include both tag levels,
+  payload copies and padding. The [memory theorem](../Signatures/Runtime/Caliper/SchnorrROMHandlerMemory.lean)
+  charges static code, dense names, initial data and every visited state of the
+  same execution, with at most `max 12 (primitiveSlots + 3)` buffer slots.
+  The [reservation invariant](../Signatures/Runtime/Caliper/SchnorrROMHandlerInvariant.lean)
+  reserves one managed/LIVE insertion and two saved cells per remaining call,
+  plus one LIVE insertion and saved cell for final verification. It initializes
+  on empty state, supplies branch readiness, decreases after every supported
+  reply, preserves public configuration and supplies final-hash readiness.
+  This is sufficient for the future caller loop; branch-specific conditions
+  still permit a full managed hit with exhausted unrelated LIVE/tape capacity.
+  The [regression](../SignaturesTest/CaliperSchnorrROMHandler.lean) executes every
+  branch with replay and fresh randomness, sign-then-hash with a conflicting
+  LIVE challenge, full managed hits, missing replies and capacity rejection.
+  It checks exact replies, complete stores, traces, external state, scratch
+  release and elapsed bounds, and audits theorem axioms. A field/module source
+  instance matches the repository's original `FinEnum` sampler. Caller-facing
+  packet distribution, the adaptive loop, final verification, both passes and
+  extraction still need composition before public ROM migration.
 
 Remaining integration sequence:
 

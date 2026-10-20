@@ -640,8 +640,15 @@ Pinned upstreams:
   the requested finite range. Its resource bounds charge that retention and
   do not enumerate the range. Random queries and both hash handlers have proved
   one-cell saved-tape growth bounds for the caller's capacity invariant.
-  Joining these calls into the pass handlers and complete two-pass reduction
-  remains part of the ROM migration.
+  The [complete ROM service](Signatures/Runtime/Caliper/SchnorrROMHandlerSource.lean)
+  dispatches randomness, hashing and signing with executed request/reply tags.
+  Its joint reply/store law matches the original CMA oracle. Combined time,
+  stored-code and visited-memory bounds charge every branch and copy; only
+  scalar multiplication and group subtraction remain implementation parameters.
+  A [decreasing capacity invariant](Signatures/Runtime/Caliper/SchnorrROMHandlerInvariant.lean)
+  preserves room for the remaining calls and final LIVE hash.
+  Joining this service to the adaptive caller loop and complete two-pass
+  reduction remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
