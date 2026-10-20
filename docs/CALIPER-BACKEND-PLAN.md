@@ -3018,8 +3018,28 @@ Implemented and checked:
   instructions. Private/scalar buffer extents are six/three.
   The [regression](../SignaturesTest/CaliperSchnorrROMTapeReply.lean) checks zero
   and maximum represented ranges, oversized payloads, zero-divisor remainder,
-  distinct tapes, invalid bounds and caller frames. Request preparation and
-  retaining the range across the query must still be composed with these decoders.
+  distinct tapes, invalid bounds and caller frames.
+
+- [Composed caller queries](../Signatures/Runtime/Caliper/SchnorrROMTapeCaller.lean)
+  now connect request preparation, replay and executed reply decoding.
+  [Preparation](../Signatures/Runtime/Caliper/SchnorrROMTapeCallerPrepare.lean)
+  constructs private tags by direct word addition, writes the fallback cell,
+  copies both tapes and retains the requested range across the query.
+  The range admits every representable private tag (`range < 2^w-2`).
+  The returned packet is reordered by actual copies before decoding.
+  Challenge calls construct tag one and execute scalar reply projection.
+  [Source equality](../Signatures/Runtime/Caliper/SchnorrROMTapeCallerSource.lean)
+  identifies each complete call with the original raw oracle, including its
+  returned value and both tapes. Private output also echoes the retained range.
+  [Time/code](../Signatures/Runtime/Caliper/SchnorrROMTapeCallerBounds.lean) and
+  [memory](../Signatures/Runtime/Caliper/SchnorrROMTapeCallerMemory.lean) bounds
+  derive the whole call's overhead from only the local scalar sampler.
+  Acceptance uses the sampler's actual buffer extent plus the required retention
+  slot; no conservative code-size bound is required to fit a word.
+  [Regressions](../SignaturesTest/CaliperSchnorrROMTapeCaller.lean) execute complete
+  private/challenge hits and misses, maximum tags, oversized replay payloads,
+  zero replies, missing replies, distinct tapes and caller frames.
+  These calls still need joining into the complete ROM pass and fork controller.
 
 Remaining integration sequence:
 

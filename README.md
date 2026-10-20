@@ -582,9 +582,14 @@ Pinned upstreams:
   [Caller reply decoders](Signatures/Runtime/Caliper/SchnorrROMTapeReplyBounds.lean)
   also execute scalar projection, private range/remainder decoding and copies of
   both tapes, with linear time/code bounds and complete memory accounting.
-  The handler requires one reserved saved-tape slot. Preparing caller requests,
-  composing query/decoder execution and the complete two-pass reduction remain
-  part of the ROM migration.
+  [Composed caller queries](Signatures/Runtime/Caliper/SchnorrROMTapeCallerMemory.lean)
+  now prepare requests, retain private ranges across replay, and execute the
+  decoders. [Source equality](Signatures/Runtime/Caliper/SchnorrROMTapeCallerSource.lean)
+  connects each private and challenge call to the original raw oracle, including
+  both tapes. Their full time/code/memory bounds require only the local scalar
+  sampler's resources. The handler requires one reserved saved-tape slot.
+  Joining these calls into the pass handlers and complete two-pass reduction
+  remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
