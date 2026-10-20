@@ -598,6 +598,11 @@ Pinned upstreams:
   also executes the output conversion, returns the scalar and both shared tapes,
   and preserves reserved space for later calls. Its full execution agrees with
   the original private sampler, including internal query chronology.
+  [Two private draws](Signatures/Runtime/Caliper/SchnorrROMPrivatePairBounds.lean)
+  now compose on the same tape, saving the first scalar through executed copies.
+  They match signing's two ordered source draws under the local sampler contract,
+  with complete time, code and memory bounds. Scratch-buffer names depend on
+  the local caller code rather than the query allowance.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

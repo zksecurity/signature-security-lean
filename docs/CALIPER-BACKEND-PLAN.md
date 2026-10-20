@@ -3089,10 +3089,34 @@ Implemented and checked:
   The adaptive regression now executes this service for mixed hits/misses,
   repeated families, zero-range follow-up, cutoff, and absent replies; it checks
   the scalar, both tapes, exact trace and external frame after output conversion.
-  Signing integration next needs two service calls through the **same** tape,
-  with charged retention of the first scalar while the second call executes.
-  The existing independent, stateless `PairSampling` constructor cannot be used
-  unchanged for these shared-state calls.
+
+- [Two private samples](../Signatures/Runtime/Caliper/SchnorrROMPrivatePair.lean)
+  now execute through the **same** shared tape. The first sample returns its
+  scalar and tapes; an executed permutation moves the tapes to the second
+  sampler's input, with the first scalar retained outside that sampler's buffer
+  footprint. Another executed permutation restores the output order. The final
+  subtype views preserve identical bytes. The implementation reserves space for
+  both calls and preserves any additional capacity for subsequent work.
+  [Source equality](../Signatures/Runtime/Caliper/SchnorrROMPrivatePairReplay.lean)
+  identifies the pair with the two ordered `Shared.tapeRun (privateImpl (.inr ()))`
+  draws in `Shared.signing_run`, under the local sampler's termination and exact
+  source-tree contract. This preserves internal uniform-query chronology, rather
+  than replacing the sampler with a merely distribution-equivalent query.
+  [Resources](../Signatures/Runtime/Caliper/SchnorrROMPrivatePairBounds.lean)
+  include both stored sampler bodies, retention and permutations, and every
+  visited machine state. If one sampler costs `t` steps and `c` stored words,
+  the pair costs at most `2*t + 32*tapeWords + 44*scalarWords` steps and
+  `2*c + 104*tapeWords + 143*scalarWords + 74` stored words.
+  [Caller buffer bounds](../Signatures/Runtime/Caliper/CallerBuffers.lean)
+  prove loop scratch-name reuse independently of fuel. Pair description
+  acceptance needs one additional buffer-name slot above the local initializer
+  and continuation extents, derived through the complete service.
+  The adaptive regression checks distinct replayed samples, repeated families,
+  a second-call miss, four fresh internal queries, missing second-call replies,
+  cutoff and invalid capacity. It checks exact scalar/tape output, query traces,
+  external state and the time bound. Remaining signing work is the concrete
+  local sampler witness and commitment/managed-cache composition; LIVE remains
+  separate. Full pass, replay, extraction and public ROM migration remain open.
 
 Remaining integration sequence:
 

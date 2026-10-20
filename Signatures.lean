@@ -76,7 +76,7 @@ import Signatures.Runtime.Caliper.WeightedFamilyResources
 import Signatures.Runtime.Caliper.SchnorrROMTapeRestart
 import Signatures.Runtime.Caliper.SchnorrROMTapeCallerMemory
 import Signatures.Runtime.Caliper.SchnorrROMTapeCallerSource
-import Signatures.Runtime.Caliper.SchnorrROMPrivateServiceBounds
+import Signatures.Runtime.Caliper.SchnorrROMPrivatePairBounds
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement
