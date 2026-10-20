@@ -11,7 +11,7 @@ linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
-The concrete and nonuniform asymptotic BLS AGM statements now use Caliper. The
+The concrete and nonuniform asymptotic BLS AGM and co-CDH statements now use Caliper. The
 other routes retain abstract-backend family corollaries during migration. The
 superseded eager-table AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
 Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
@@ -22,7 +22,7 @@ and [computational-security status](docs/COMPUTATIONAL-SECURITY.md).
 
 The [general adversary reduction plan](docs/GENERAL-ADVERSARY-REDUCTION-PLAN.md)
 records the broader efficiency work. BLS co-CDH now has a public security theorem
-for general realized attacker code in a fixed quantitative backend, with derived
+for general realized attacker code in Caliper, with derived
 solver runtime/code bounds and a nonuniform asymptotic security corollary. It covers
 arbitrary message types under explicit primitive/encoding contracts.
 The [public BLS statements](Signatures/BLS/Statement.lean) now distinguish
@@ -39,8 +39,9 @@ now uses actual Caliper programs with stored-code, runtime and total-memory boun
 Its [parameters](Signatures/BLS/CaliperAGMParameters.lean) fix layouts, implemented
 primitives, sampling and caller allowances before the attacker is chosen; the
 attacker supplies its local code and correspondence proofs. Complete reduction
-efficiency follows from those components. The co-CDH theorem still uses the
-abstract backend.
+efficiency follows from those components. The co-CDH theorem likewise uses
+Caliper, with its own [parameters](Signatures/BLS/CaliperCoCDHParameters.lean)
+and [family corollary](Signatures/BLS/CaliperCoCDHFamilyStatement.lean).
 The [Caliper BLS AGM family corollary](Signatures/BLS/CaliperAGMFamilyStatement.lean)
 gives negligible forgery success from polynomial component resources,
 nonuniform Caliper DLog hardness, and negligible `1/|F|`. Both reduction families'
@@ -384,8 +385,13 @@ Pinned upstreams:
   forwards one query with the runtime range on every request, including malformed
   requests. It preserves full stores, updates the malformed flag, and returns
   the sampled index with an empty group list. Original-handler correspondence
-  and complete resource bounds are proved. Full handler composition, extraction,
-  caller and public theorem integration remain pending.
+  and complete resource bounds are proved. Its
+  [common-store wrapper](Signatures/Runtime/Caliper/SchnorrAGMHandlerRandom.lean)
+  now saves and restores the runtime generator/public key with actual copying,
+  charging their storage throughout the query. Shared layouts derive the
+  randomness, hash and signing encodings from one set of capacities. The hash
+  and signing wrappers, full handler composition, extraction, caller and public
+  theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

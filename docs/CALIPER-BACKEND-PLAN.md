@@ -2052,6 +2052,37 @@ Implemented and checked:
   concrete theorems are axiom-audited. Full handler composition, extraction,
   caller, cyclic DLog and public concrete/family integration remain pending.
 
+- [Common-store Schnorr randomness](../Signatures/Runtime/Caliper/SchnorrAGMHandlerRandom.lean)
+  now accepts `(request, ((generator, publicKey), state))` and returns the reply
+  with that same configuration and updated state. The
+  [shared layouts](../Signatures/Runtime/Caliper/SchnorrAGMHandlerLayout.lean)
+  derive all three core layouts from one scheme, word width and set of request
+  capacities, including the common input/output encodings.
+  [Preparation](../Signatures/Runtime/Caliper/SchnorrAGMHandlerRandomPrepare.lean)
+  executes the argument permutation; the configuration is saved beyond the
+  core's buffer footprint, retained across the query, restored by
+  [output assembly](../Signatures/Runtime/Caliper/SchnorrAGMHandlerRandomFinish.lean),
+  and its scratch storage released. No host closure stores the configuration.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMHandlerRandomSource.lean)
+  preserves the original joint reply/state law, with remaining-query reservations
+  sufficient even for full stores. Supported outputs preserve both configuration
+  values and satisfy the actual requested range.
+  [Bounds](../Signatures/Runtime/Caliper/SchnorrAGMHandlerRandomBounds.lean) give
+  time at most `224*W+200`, stored code at most `864*W+900`, buffers below seven
+  and name accounting of five. Here `W` is the shared layout's width, including
+  each core's storage requirements. All stored operands fit the word width.
+  [Total memory](../Signatures/Runtime/Caliper/SchnorrAGMHandlerRandomMemory.lean)
+  covers the same source-correct execution and every visited state, including
+  configuration storage, program, descriptors and pre-existing caller memory.
+  [Execution checks](../SignaturesTest/CaliperSchnorrAGMHandlerRandom.lean) compare
+  literal output bytes and traces for two runtime configurations, all flags,
+  empty/nonempty group lists, arbitrary ignored rows and boundary ranges on
+  full stores with zero signing/hash allowances. They also check missing and
+  surplus oracle replies, external buffers/registers/tape, scratch release and
+  elapsed time. Central results and concrete instances are axiom-audited.
+  Common-store hash/signing wrappers, dependent request/reply dispatch,
+  extraction, caller/cyclic DLog and public concrete/family integration remain.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in
