@@ -514,7 +514,12 @@ Pinned upstreams:
   extraction arithmetic with the retained numerator and signing contribution.
   [Source equality](Signatures/Runtime/Caliper/WeightedTargetSource.lean) preserves
   the complete cache; [resources](Signatures/Runtime/Caliper/WeightedTargetBounds.lean)
-  include the actual copying and local arithmetic. Full-solver integration remains.
+  include the actual copying and local arithmetic.
+  [The composed signing/target tail](Signatures/Runtime/Caliper/WeightedSignatureTail.lean)
+  retains the forgery context and passes the same cache between both stages.
+  Its [source theorem](Signatures/Runtime/Caliper/WeightedSignatureTailSource.lean)
+  and [resource bounds](Signatures/Runtime/Caliper/WeightedSignatureTailMemory.lean)
+  cover the whole composed execution. Hash-prefix and full-solver integration remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

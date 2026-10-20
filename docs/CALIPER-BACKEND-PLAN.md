@@ -2749,7 +2749,31 @@ Implemented and checked:
   The finite word fixture tests total word division, including a zero denominator;
   it does not assert field laws. Source observation, resource instances and
   generic theorems are audited for unexpected axioms.
-  Remaining: compose the constructed hash/sign/final-target phases, terminal/setup/caller
+- [The composed signing/target tail](../Signatures/Runtime/Caliper/WeightedSignatureTail.lean)
+  now executes both stages as one program. It physically retains the forged
+  message and numerator/beta across signing extraction, then executes a swap
+  to assemble the final-target input. Reassociation is justified by byte equality.
+  Its admission condition reserves
+  `cache.length + termCapacity * occupiedSigningTokens + termCapacity`
+  entries, so the signing postcondition supplies the final-target precondition.
+  This is a proof-domain condition, not a new runtime test.
+  [Source equality and observation](../Signatures/Runtime/Caliper/WeightedSignatureTailSource.lean)
+  recover chronological `signedTerms`, followed by target `evalTerms` against
+  exactly the returned cache and local scalar arithmetic. Injective key transport
+  and equivalence preserve the complete cache and query order.
+  [Derived evaluator buffers](../Signatures/Runtime/Caliper/WeightedExtractionBuffers.lean)
+  establish the saved-buffer address without assuming a whole signing-evaluator
+  footprint. [Time/code](../Signatures/Runtime/Caliper/WeightedSignatureTailBounds.lean)
+  and [names/address/memory](../Signatures/Runtime/Caliper/WeightedSignatureTailMemory.lean)
+  cover both stages, saved context, routing, initial storage and every visited
+  state of the same source-supported execution.
+  [Regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) execute scalar
+  and pair tails with reused or fresh target messages, missing/zero/surplus
+  coefficients, empty signing logs and prefilled caches. They check Proximity
+  vectors, exact query traces/cache order, retained external frames, scratch
+  release and full-tail elapsed bounds. Concrete original-game observation,
+  memory, address and buffer instances are axiom-audited.
+  Remaining: add the hash prefix to the composed signing/target tail, terminal/setup/caller
   composition, OOPS/Proximity public concrete/family models and Schnorr ROM
   replay/composition. Conventional CPU/flat-memory adequacy stays outside this
   migration.

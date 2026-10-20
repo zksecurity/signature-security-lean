@@ -58,6 +58,8 @@ import Signatures.Runtime.Caliper.WeightedCoefficientBounds
 import Signatures.Runtime.Caliper.WeightedExtractionMemory
 import Signatures.Runtime.Caliper.WeightedTargetSource
 import Signatures.Runtime.Caliper.WeightedTargetBounds
+import Signatures.Runtime.Caliper.WeightedSignatureTailSource
+import Signatures.Runtime.Caliper.WeightedSignatureTailMemory
 import Signatures.Runtime.Caliper.WeightedCallerOriginal
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement

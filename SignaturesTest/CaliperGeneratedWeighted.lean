@@ -20,6 +20,8 @@ import Signatures.Runtime.Caliper.WeightedCoefficientBounds
 import Signatures.Runtime.Caliper.WeightedExtractionMemory
 import Signatures.Runtime.Caliper.WeightedTargetSource
 import Signatures.Runtime.Caliper.WeightedTargetBounds
+import Signatures.Runtime.Caliper.WeightedSignatureTailSource
+import Signatures.Runtime.Caliper.WeightedSignatureTailMemory
 import Signatures.Runtime.Caliper.BLSExtractArithmeticNames
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
@@ -1891,6 +1893,188 @@ run_cmd do
       ``WeightedTarget.time_bound, ``WeightedTarget.code_bound, ``WeightedTarget.names,
       ``WeightedTarget.buffers, ``WeightedTarget.descriptionFits, ``WeightedTarget.resources,
       ``targetBound, ``targetPairBound, ``targetFits, ``targetOracle, ``targetMemory] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+-- Signing and target evaluation now execute consecutively in the same program.
+private def tailCode := WeightedSignatureTail.code (base := base) (key := .atom false) (val := .atom true)
+  extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+  goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw
+private def tailProximityCode := WeightedSignatureTail.code (base := base) (key := .atom false) (val := .atom true)
+  extractionProximityLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ proximityGenerator
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+  goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw
+private def tailPairCode := WeightedSignatureTail.code (base := base) (key := .atom false)
+  (val := .pair (.atom true) (.atom true)) extractionPairLayout ⟨0, trivial⟩ ⟨(0, 0), trivial, trivial⟩
+  ⟨(99, 98), trivial, trivial⟩ oopsGenerator primitives comparison comparison_correct badUpdate badBuffers (by decide)
+  badExtract badExtractBuffers (by decide) uniformPort uniformPairDraw
+private def tailInput (signing : extractionLayout.input.Value) (forged : Word 16 × Word 16) (numerator : Word 16) :
+    WeightedSignatureTail.Input extractionLayout :=
+  (signing, ⟨(forged, numerator), ⟨trivial, trivial⟩, trivial⟩)
+private def tailTime := WeightedSignatureTail.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  extractionLayout (OOPSTerms.timeBudget oops 6) 26 (BLSAccumulate.goodTime accumulation.arithmetic 6 6)
+    (BLSExtractArithmetic.goodTime accumulation.arithmetic 6 6)
+private def tailWords := WeightedSignatureTail.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  extractionLayout (OOPSTerms.codeBudget oops 27) 125 (BLSAccumulate.goodCode accumulation.arithmetic 27 27)
+    (BLSExtractArithmetic.goodCode accumulation.arithmetic 27 27)
+private def tailPairTime := WeightedSignatureTail.timeBudget (base := base) (key := .atom false)
+  (val := .pair (.atom true) (.atom true)) extractionPairLayout
+    (OOPSTerms.timeBudget oops 6) (PairSampling.timeBudget scalar scalar 26 26)
+    (BLSAccumulate.badTime accumulation.arithmetic 6 6) (BLSExtractArithmetic.badTime accumulation.arithmetic 6 118 6)
+private theorem tailBound : Interactive.TimeBoundOn (WeightedSignatureTail.ready extractionLayout)
+    uniformPort .unit (WeightedSignatureTail.input extractionLayout) tailCode tailTime :=
+  WeightedSignatureTail.time_bound (base := base) (key := .atom false) (val := .atom true)
+    extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    goodExtract goodExtractBuffers (by decide) uniformPort uniformCorrect
+    oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) goodBound goodExtractBound
+private theorem tailPairBound : Interactive.TimeBoundOn (WeightedSignatureTail.ready extractionPairLayout)
+    uniformPort .unit (WeightedSignatureTail.input extractionPairLayout) tailPairCode tailPairTime :=
+  WeightedSignatureTail.time_bound (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+    extractionPairLayout ⟨0, trivial⟩ ⟨(0, 0), trivial, trivial⟩ ⟨(99, 98), trivial, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct badUpdate badBuffers (by decide)
+    badExtract badExtractBuffers (by decide) uniformPort uniformPairCorrect oopsBound
+    (PairSampling.time_bound uniformCorrect uniformCorrect
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535))
+    (BLSAccumulate.bad_bounded accumulation.arithmetic mul add mulBound addBound mulNames.buffers (by decide) addNames.buffers)
+    badExtractBound
+private theorem tailFits : (tailCode.lower uniformPort).DescriptionFits :=
+  WeightedSignatureTail.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide) (by decide)
+private theorem tailBufferBound : (tailCode.lower uniformPort).memBound ≤ 14 :=
+  WeightedSignatureTail.buffers (base := base) (key := .atom false) (val := .atom true)
+    extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide))
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535).buffers
+private theorem tailOracle (tape : RandomTape 16) (value : WeightedSignatureTail.Input extractionLayout)
+    (admitted : WeightedSignatureTail.ready extractionLayout value) (before : State 16)
+    (holds : (WeightedSignatureTail.input extractionLayout).Holds value before) :
+    (fun result => (fun answer => (answer.val.1, answer.val.2.map (Prod.map Prod.swap id))) <$>
+        Interactive.observe (WeightedSignatureTail.output extractionLayout).representation result) <$>
+      tailCode.execute uniformPort .unit tape before =
+      some <$> (do
+        let signatures ← (simulateQ (BLS.LazyAGM.Reduction.privateListOracle (M := Word 16 × Fin 4) (R := Word 16))
+          (Model.LazyAGM.evalTerms (Model.LazyAGM.WeightedReduction.signedTerms (OOPS.LazyAGM.terms 3)
+            value.1.val.1.2 value.1.val.1.1.reverse))).run (value.1.val.2.map (Prod.map Prod.swap id))
+        (fun target => (value.2.val.2 / (target.1 - signatures.1), target.2)) <$>
+          (simulateQ (BLS.LazyAGM.Reduction.privateListOracle (M := Word 16 × Fin 4) (R := Word 16))
+            (Model.LazyAGM.evalTerms (OOPS.LazyAGM.terms 3 value.2.val.1))).run signatures.2) :=
+  WeightedSignatureTail.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    goodExtract goodExtractBuffers (by decide) (fun _ => rfl) rfl rfl uniformSource uniformLaw
+    (Equiv.prodComm (Word 16) (Fin 4)) (OOPS.LazyAGM.terms 3) (OOPSTerms.source 3)
+    uniformPort uniformDraw uniformCorrect tape value admitted before holds
+private theorem tailMemory (tape : RandomTape 16) (value : WeightedSignatureTail.Input extractionLayout)
+    (admitted : WeightedSignatureTail.ready extractionLayout value) (before : State 16)
+    (holds : (WeightedSignatureTail.input extractionLayout).Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (tailCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ tailTime ∧
+      ∃ execution : WordIO.Exec .unit tape (tailCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((tailCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (tailCode.lower uniformPort).memBound) ≤
+              5 * tailWords + 20 + registers + 3 * buffers + before.liveMem buffers + tailTime := by
+  obtain ⟨elapsed, _, _, _, execution, memory⟩ :=
+    WeightedSignatureTail.resources (base := base) (key := .atom false) (val := .atom true)
+      extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+      primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+      goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw uniformCorrect oopsBound
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535)
+      goodBound goodExtractBound oopsNames
+      (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames goodExtractNames
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, fun between visited => (memory between visited).2.2.2⟩
+
+open Lean in
+run_cmd do
+  let samples : List (Word 16) := [2, 5, 7, 11]
+  let moreSamples : List (Word 16) := [3, 7, 11, 13]
+  let moreCache : List (Key × Word 16) := [((3, 43), 13), ((2, 43), 11), ((1, 43), 7), ((0, 43), 3)]
+  let signed := extractionInput [(message.val, 13)] [5] [] (by decide) (by decide) (by decide)
+  let missing := extractionInput [(message.val, 13)] [] [] (by decide) (by decide) (by decide)
+  let explicitZero := extractionInput [(message.val, 13)] [0] [] (by decide) (by decide) (by decide)
+  let surplus := extractionInput [(message.val, 13)] [5, 99] [] (by decide) (by decide) (by decide)
+  let empty := extractionInput [] [5] [] (by decide) (by decide) (by decide)
+  let cached := extractionInput [] [5] entries (by decide) (by decide) (by decide)
+  let cases : List (WeightedSignatureTail.Input extractionLayout × List (Word 16) × Word 16 × List (Key × Word 16)) :=
+    [(tailInput signed message.val 64028, samples, 1, entries),
+     (tailInput signed (2, 43) 63816, samples ++ moreSamples, 1, moreCache ++ entries),
+     (tailInput missing message.val 754, samples, 2, entries),
+     (tailInput explicitZero message.val 754, samples, 2, entries),
+     (tailInput surplus message.val 64028, samples, 1, entries),
+     (tailInput empty message.val 754, samples, 2, entries),
+     (tailInput cached message.val 754, [], 2, entries)]
+  for (value, draws, expected, cache) in cases do
+    unless decide (WeightedSignatureTail.ready extractionLayout value) do
+      throwError "signature tail admission used padded transcript capacity"
+    match executeUniform (WeightedSignatureTail.input extractionLayout) (WeightedSignatureTail.output extractionLayout)
+        tailCode value (draws.flatMap (fun sample => [65535, sample]) ++ [88]) with
+    | none => throwError "composed signature/target execution failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      let trace := draws.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+      unless answer == (expected, cache) && framed == #[77] && capacity == 4 && register == 91 &&
+          tape == 9 && scratch && events == trace && remaining == [88] && elapsed ≤ tailTime do
+        throwError "signature tail lost shared cache, coefficient/default behavior, forgery context, frame or budget"
+  let noRoom := tailInput (extractionInput [(message.val, 13)] [5] entries
+    (by decide) (by decide) (by decide)) message.val 64028
+  unless !(decide (WeightedSignatureTail.ready extractionLayout noRoom)) do
+    throwError "signature tail did not reserve target terms"
+  let psigning : extractionProximityLayout.input.Value :=
+    ⟨(([( (vector 3 9 27).val, 13)], [5]), []),
+      ⟨⟨by decide, fun _ _ => ⟨⟨(fun _ => trivial), trivial⟩, trivial⟩⟩, by decide, fun _ _ => trivial⟩,
+      by decide, by simp⟩
+  let pvalue : WeightedSignatureTail.Input extractionProximityLayout :=
+    (psigning, ⟨(((vector 2 4 8).val.1, 43), 63816), ⟨(fun _ => trivial), trivial⟩, trivial⟩)
+  let allSamples := samples ++ moreSamples
+  match executeUniform (WeightedSignatureTail.input extractionProximityLayout) (WeightedSignatureTail.output extractionProximityLayout)
+      tailProximityCode pvalue (allSamples.flatMap (fun sample => [65535, sample]) ++ [88]) with
+  | none => throwError "composed Proximity signature/target execution failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+    let trace := allSamples.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+    unless answer == (1, moreCache ++ entries) && framed == #[77] && capacity == 4 && register == 91 &&
+        tape == 9 && scratch && events == trace && remaining == [88] do
+      throwError "Proximity signature tail changed vector evaluation, cache order or retained context"
+  let pairSamples : List (Word 16) := [2, 3, 5, 7, 11, 13, 17, 19]
+  let pairCache : List (Key × (Word 16 × Word 16)) :=
+    [((3, 42), (17, 19)), ((2, 42), (11, 13)), ((1, 42), (5, 7)), ((0, 42), (2, 3))]
+  let pairSigning : extractionPairLayout.input.Value :=
+    ⟨(([(message.val, 13)], [1]), []),
+      ⟨⟨by decide, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩, by decide, fun _ _ => trivial⟩, by decide, by simp⟩
+  let pairCases : List ((Word 16 × Word 16) × List (Word 16) × Word 16 × List (Key × (Word 16 × Word 16))) :=
+    [(message.val, pairSamples, 0, pairCache),
+     ((0, 43), pairSamples ++ [577, 700, 5, 7, 11, 13, 17, 19], 32745,
+       [((3, 43), (17, 19)), ((2, 43), (11, 13)), ((1, 43), (5, 7)), ((0, 43), (577, 700))] ++ pairCache)]
+  for (forged, draws, expected, cache) in pairCases do
+    let value : WeightedSignatureTail.Input extractionPairLayout :=
+      (pairSigning, ⟨(forged, 999), ⟨trivial, trivial⟩, trivial⟩)
+    match executeUniform (WeightedSignatureTail.input extractionPairLayout) (WeightedSignatureTail.output extractionPairLayout)
+        tailPairCode value (draws.flatMap (fun sample => [65535, sample]) ++ [88]) with
+    | none => throwError "composed pair signature/target execution failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      let trace := draws.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+      unless answer == (expected, cache) && framed == #[77] && capacity == 4 && register == 91 &&
+          tape == 9 && scratch && events == trace && remaining == [88] && elapsed ≤ tailPairTime do
+        throwError "pair signature tail changed cache sharing, scalar result, ignored beta, frame or time"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``WeightedSignatureTail.refines, ``WeightedSignatureTail.preserves, ``WeightedSignatureTail.denote_source,
+      ``WeightedSignatureTail.denote_encoded, ``WeightedSignatureTail.denote_equiv, ``WeightedSignatureTail.observe_equiv,
+      ``WeightedExtraction.buffers, ``WeightedExtraction.savedNameFits,
+      ``WeightedSignatureTail.time_bound, ``WeightedSignatureTail.code_bound, ``WeightedSignatureTail.names,
+      ``WeightedSignatureTail.buffers, ``WeightedSignatureTail.descriptionFits, ``WeightedSignatureTail.resources,
+      ``tailBound, ``tailPairBound, ``tailFits, ``tailBufferBound, ``tailOracle, ``tailMemory] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 
