@@ -3114,9 +3114,35 @@ Implemented and checked:
   The adaptive regression checks distinct replayed samples, repeated families,
   a second-call miss, four fresh internal queries, missing second-call replies,
   cutoff and invalid capacity. It checks exact scalar/tape output, query traces,
-  external state and the time bound. Remaining signing work is the concrete
-  local sampler witness and commitment/managed-cache composition; LIVE remains
-  separate. Full pass, replay, extraction and public ROM migration remain open.
+  external state and the time bound. The surrounding signing handler still
+  needs to join these calls to its deterministic suffix while preserving LIVE
+  and the returned tapes. Full pass, replay, extraction and public ROM migration
+  remain open.
+
+- The [deterministic ROM signing core](../Signatures/Runtime/Caliper/SchnorrROMSigningCore.lean)
+  now computes `response • g - challenge • pk`, programs the managed cache,
+  and returns the signature, original public configuration and updated table.
+  Its only arithmetic parameters are local scalar-multiplication and subtraction
+  implementations with their own resource/name bounds. The source's cache
+  programmer is compiled using the existing finite-list implementation and
+  encoded key comparison; no completed signing or cache routine is assumed.
+  [Argument routing](../Signatures/Runtime/Caliper/SchnorrROMSigningArguments.lean),
+  [cache-frame routing](../Signatures/Runtime/Caliper/SchnorrROMSigningPrepareCache.lean)
+  and [retention/restoration](../Signatures/Runtime/Caliper/SchnorrROMSigningCache.lean)
+  execute charged copies. The input reserves one managed-cache insertion slot;
+  the output has the same capacity and adds at most one entry. Existing cached
+  answers, including zero and duplicate-key tables, remain unchanged on hits.
+  The full resource theorem includes the same execution's output and every
+  visited state, stored program, register/descriptor extents and caller capacity.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrROMSigningSource.lean)
+  rewrites `Shared.signing_run` as its two original tape draws followed by exactly
+  this implemented deterministic function. This is not yet the executed wrapper:
+  connecting the pair sampler and retaining LIVE/tapes still needs code and bounds.
+  The [regression](../SignaturesTest/CaliperSchnorrROMSigning.lean) executes changed
+  runtime inputs, misses, a cached zero with duplicate keys, zero scalars and a
+  final-slot insertion. It checks literal output words, external state, scratch
+  release, time, accepted descriptions and theorem axiom footprints. The concrete
+  local sampler witness and full hash/final-hash/pass/fork integration remain.
 
 Remaining integration sequence:
 

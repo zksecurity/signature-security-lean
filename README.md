@@ -603,6 +603,11 @@ Pinned upstreams:
   They match signing's two ordered source draws under the local sampler contract,
   with complete time, code and memory bounds. Scratch-buffer names depend on
   the local caller code rather than the query allowance.
+  The [deterministic signing core](Signatures/Runtime/Caliper/SchnorrROMSigningSource.lean)
+  computes the commitment and programs the managed cache using executed local
+  code, preserving existing cached answers. Its resource bounds include all
+  copies and cache work. Joining it to the shared-tape draws while retaining
+  LIVE and the returned tapes remains handler integration work.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
