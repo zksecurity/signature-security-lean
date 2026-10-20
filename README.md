@@ -369,8 +369,13 @@ Pinned upstreams:
   answers and explanations; reachable query reservations admit misses. Its
   [complete resource bounds](Signatures/Runtime/Caliper/SchnorrAGMProgrammingBounds.lean)
   cover the same source-correct execution.
-  Composition of the signing stages, sampling, dispatch, extraction, caller and
-  public theorem integration remain pending.
+  [Complete accepted signing](Signatures/Runtime/Caliper/SchnorrAGMSampling.lean)
+  now draws the challenge and response in order and executes all three signing
+  stages. Its [source theorem](Signatures/Runtime/Caliper/SchnorrAGMSamplingSource.lean)
+  matches the original signing oracle, including collisions, and its complete
+  resource bounds include both sampler calls and all retained state.
+  Signing request dispatch, the full handler, extraction, caller and public
+  theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

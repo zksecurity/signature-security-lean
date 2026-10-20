@@ -1852,9 +1852,9 @@ Implemented and checked:
   external buffers/registers/tape preservation, scratch release and time limits.
   Kernel checks reject message and list-capacity overflows; central theorems and
   concrete resource instances are axiom-audited. Chronological history appends
-  and cache programming are constructed below. Composing these stages, the two
-  scalar draws, signing dispatch and subsequent full handler/extractor/caller/public
-  integration remain pending.
+  and cache programming are constructed below, followed by their composition
+  and both scalar draws. Signing dispatch and subsequent full handler/extractor/
+  caller/public integration remain pending.
 
 - [Schnorr signing histories](../Signatures/Runtime/Caliper/SchnorrAGMHistories.lean)
   now execute the original `Native.Signing.historiesValue` directly. The new
@@ -1888,9 +1888,8 @@ Implemented and checked:
   and time bounds. Kernel checks reject full histories and invalid messages;
   zero-allowance and zero-word-entry instances are checked, including execution
   of a zero-word append. Central proofs and resource instances are axiom-audited.
-  Cache programming is constructed below. Stage composition, sampling, signing
-  dispatch and full reduction/public integration remain pending.
-
+  Cache programming, executable composition and sampling are constructed below.
+  Signing dispatch and full reduction/public integration remain pending.
 
 - [Schnorr signing cache programming](../Signatures/Runtime/Caliper/SchnorrAGMProgramming.lean)
   now reuses the actual `EncodedCache.implementation` with encoded message/point
@@ -1912,7 +1911,7 @@ Implemented and checked:
   The cache guard follows from the existing remaining-query reservation whenever
   a signing query remains. The result composed mathematically with the arithmetic
   and history functions is exactly `Native.Signing.signedValue`; executable
-  composition of these three stages is the next integration step.
+  composition of these three stages is constructed below.
   [Execution regressions](../SignaturesTest/CaliperSchnorrAGMProgramming.lean)
   check fresh insertion, full-table hits, cached zero, duplicate keys, a final-slot
   miss with an equal message but different point, changed affine data, reordered
@@ -1920,8 +1919,54 @@ Implemented and checked:
   buffers/registers/tape, scratch release and time bounds; kernel checks reject
   full-table misses, invalid messages and overflowing cache/history lists.
   The source, resource and concrete-instance theorems are axiom-audited.
-  Signing-stage composition, both scalar draws, signing dispatch and complete
-  handler/extractor/caller/public integration remain pending.
+  Signing-stage composition and both scalar draws are constructed below.
+  Signing dispatch and complete handler/extractor/caller/public integration remain pending.
+
+
+- [Complete deterministic signing](../Signatures/Runtime/Caliper/SchnorrAGMSampled.lean)
+  now executes arithmetic, chronological histories and cache programming in
+  sequence. Guards carry history room and cache admission across the stages
+  without changing bytes. The resulting function is exactly
+  `Native.Signing.signedValue`, hence the original `signedState` update.
+  [Whole-stage bounds](../Signatures/Runtime/Caliper/SchnorrAGMSampledBounds.lean)
+  sum the three time/code budgets and charge both stored sequencing nodes.
+  Buffer extent is bounded by `max 9 (max 3 primitiveSlots + 3)`; stored code,
+  dense registers/descriptors, initial caller memory and every reached state
+  belong to the same source-correct execution. Full-cache hits remain admitted
+  whenever both histories have room.
+  [Accepted signing with sampling](../Signatures/Runtime/Caliper/SchnorrAGMSampling.lean)
+  draws the challenge first and the response second, then executes that program.
+  Both draws occur even on cache collisions. The input reserves cache and history
+  slots independently of the draw values. The request/state is retained in a
+  buffer outside the pair sampler's footprint, and the challenge is separately
+  retained while drawing the response. All retention and restoration are actual
+  charged instructions. The only supplied code is for scalar sampling, scaling,
+  group subtraction and scalar negation.
+  [The source law](../Signatures/Runtime/Caliper/SchnorrAGMSamplingSource.lean)
+  equates the uniform computation with the original accepted signing handler,
+  including arbitrary coefficient lists (ignored by that handler), signature,
+  cache, chronological histories and flags. Reachable remaining-query reservation
+  implies the sampling input guard; represented scalars/points and the encountered
+  message imply full input validity. No message-space enumeration is used.
+  [Sampling bounds](../Signatures/Runtime/Caliper/SchnorrAGMSamplingBounds.lean)
+  add `2*sampleTime + 52*scalarWords + 12*inputWords` time and
+  `2*sampleCode + 169*scalarWords + 39*inputWords + 128` code words to the
+  deterministic budgets. Nested saved-buffer names and the complete description
+  fit are proved from the sampler reservation. [Complete memory](../Signatures/Runtime/Caliper/SchnorrAGMSamplingMemory.lean)
+  links source output, actual execution, time and every visited memory state;
+  it includes both sampler bodies, initial caller storage and all temporary data.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMSigning.lean)
+  check both the composed deterministic program and the full interactive code
+  against literal expected bytes. Cases cover misses, collisions with cached
+  zero and shadowed entries, final free slots, modular wraparound, empty stores,
+  full-cache deterministic hits and all flag combinations. Traces show exactly
+  two ordered draws on misses and collisions, preserve extra replies, and reject
+  a missing response draw. External buffers/registers/tape, scratch release and
+  time are checked. Input tests reject missing capacity and invalid messages;
+  zero signing allowance admits no signing. Central source/resource theorems and
+  concrete instances are axiom-audited.
+  Signing request-shape dispatch and external reply encoding, the full handler,
+  extraction, caller, cyclic DLog and public concrete/family integration remain.
 
 Remaining integration sequence:
 
