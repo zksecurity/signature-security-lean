@@ -3069,8 +3069,8 @@ Implemented and checked:
   two-query adaptive caller, including repeated families, oversized payloads,
   mixed hits/misses, two fresh draws, zero-range follow-up, unchanged challenge
   cells, cutoff, absent replies, invalid input capacity and external frames.
-  The concrete local sampler witness used by signing and full managed/LIVE
-  cache, pass and fork composition remain integration work.
+  The canonical finite-index sampler below supplies a concrete local witness.
+  Full managed/LIVE cache, pass and fork composition remain integration work.
 
 - The [private sampling service](../Signatures/Runtime/Caliper/SchnorrROMPrivateService.lean)
   now accepts only the shared tapes and returns the scalar and updated tapes.
@@ -3140,8 +3140,8 @@ Implemented and checked:
   The [regression](../SignaturesTest/CaliperSchnorrROMSigning.lean) executes changed
   runtime inputs, misses, a cached zero with duplicate keys, zero scalars and a
   final-slot insertion. It checks literal output words, external state, scratch
-  release, time, accepted descriptions and theorem axiom footprints. The concrete
-  local sampler witness and full hash/final-hash/pass/fork integration remain.
+  release, time, accepted descriptions and theorem axiom footprints. The canonical
+  sampler is constructed below; full hash/final-hash/pass/fork integration remains.
 
 - The [complete ROM signing wrapper](../Signatures/Runtime/Caliper/SchnorrROMSigningHandler.lean)
   now executes the two private draws followed by the commitment and managed-cache
@@ -3168,9 +3168,39 @@ Implemented and checked:
   zero with duplicate keys, zero scalars, missing replies and invalid input bounds.
   LIVE deliberately contains a conflicting answer, checking that signing programs
   only managed. Exact outputs, traces, remaining replies, external state, scratch
-  release, time and theorem axiom footprints are checked. The generic local
-  scalar-sampler witness, hash/final-hash handlers, pass/fork composition and public
-  ROM migration are still outstanding.
+  release, time and theorem axiom footprints are checked. The canonical scalar
+  witness below discharges the sampler contracts for finite-index encodings.
+  Hash/final-hash handlers, pass/fork composition and public ROM migration remain.
+
+- The [concrete scalar caller](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedSampler.lean)
+  represents a scalar by its finite index, initializes one uniform query, executes
+  word modulo on its reply, and emits the scalar result tag. It never constructs
+  a list of the scalar domain. Modulo makes the local transition correct for
+  every represented reply; on the requested range it preserves the sampled index.
+  The [source theorem](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedSource.lean)
+  proves termination after one query and equality of the complete query program.
+  The [FinEnum factory](../Signatures/Runtime/Caliper/SchnorrROMFinEnumSampler.lean)
+  uses VCVio's existing enumeration equivalence and proves that its sampler is
+  the existing `FinEnum.SampleableType`, not just distributionally equivalent.
+  An enumeration equivalence specifies encoded bytes; the executable caller
+  uses only literal stores, indexed reads and word arithmetic.
+  [Local bounds](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedBounds.lean)
+  are at most 16 steps / 66 stored words for initialization and 38 steps / 161
+  stored words for the transition, with three registers and two scratch buffers.
+  They are independent of the field cardinality. The range and tape capacities
+  must fit the declared word width, including private-family tag headroom.
+  [Constructed signing](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedSigning.lean)
+  supplies the caller, its termination, exact source equality, local time/name
+  bounds and saved-buffer headroom. Only local group arithmetic implementations
+  remain parameters. The general adaptive-sampler interface remains available
+  for other scalar encodings or canonical query programs.
+  The [regression](../SignaturesTest/CaliperSchnorrROMEnumeratedSampler.lean)
+  executes `ZMod 7` replayed/fresh/mixed draws, mismatched private families, zero,
+  missing replies and capacity rejection. It executes normalization on a reply
+  outside the requested range and a domain of more than sixteen million scalars
+  with the same local bounds. It also runs complete signing with the constructed
+  field sampler and checks the commitment, separate managed/LIVE tables, tapes,
+  traces, scratch release and elapsed bound. Theorem axiom footprints are checked.
 
 Remaining integration sequence:
 

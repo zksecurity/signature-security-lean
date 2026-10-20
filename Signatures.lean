@@ -79,6 +79,7 @@ import Signatures.Runtime.Caliper.SchnorrROMTapeCallerSource
 import Signatures.Runtime.Caliper.SchnorrROMPrivatePairBounds
 import Signatures.Runtime.Caliper.SchnorrROMSigningSource
 import Signatures.Runtime.Caliper.SchnorrROMSigningHandlerMemory
+import Signatures.Runtime.Caliper.SchnorrROMEnumeratedSigning
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement

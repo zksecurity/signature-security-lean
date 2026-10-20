@@ -610,8 +610,13 @@ Pinned upstreams:
   connects both draws to that core and preserves LIVE and the updated tapes
   through charged copies. It matches the original shared-tape signing oracle
   under the local sampler contract, with bounds for the same execution's time,
-  stored code, names and every visited memory state. A concrete scalar-sampler
-  witness remains to be supplied.
+  stored code, names and every visited memory state.
+  [Canonical scalar sampling](Signatures/Runtime/Caliper/SchnorrROMFinEnumSampler.lean)
+  now has a constructed caller for scalars encoded by finite indices. It matches
+  VCVio's existing `FinEnum` sampler as a query program, with 16 initialization
+  steps and 38 reply-transition steps independent of the field size. The
+  [signing construction](Signatures/Runtime/Caliper/SchnorrROMEnumeratedSigning.lean)
+  supplies its sampler code, termination and resource proofs internally.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
