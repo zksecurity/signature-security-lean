@@ -2964,9 +2964,33 @@ Implemented and checked:
   [Pop](../SignaturesTest/CaliperSchnorrROMTapePop.lean) and
   [read](../SignaturesTest/CaliperSchnorrROMTapeRead.lean) regressions execute
   interleaved private families, repeated challenges, zero replies, empty tapes,
-  missing replies, external frames and scratch release. Fresh-draw packet
-  construction, actual caller reply routing, reset packet preparation and the
+  missing replies, external frames and scratch release. Actual caller query/reply
+  routing, reset packet preparation and the
   complete two-pass solver/public/family composition remain.
+
+- [Runtime uniform draws](../Signatures/Runtime/Caliper/UniformQueryDraw.lean)
+  now forward the requested range and execute the dependent reply projection.
+  Their bounds are 18 unit-cost steps, 85 stored code words and a complete
+  visited-memory account, independent of the range. Their interface is the
+  existing source uniform oracle, with accounted word I/O.
+  [Fresh replay cells](../Signatures/Runtime/Caliper/SchnorrROMTapeFresh.lean)
+  execute family selection, private range subtraction, retained-tag sampling
+  and cell construction. A challenge uses the supplied scalar sampler; a
+  private draw uses the constructed runtime adapter. Tags, zero payloads and
+  replies are assembled by actual instructions.
+  [Source equality](../Signatures/Runtime/Caliper/SchnorrROMTapeFreshSource.lean)
+  identifies those cells with the original raw oracle's encoded replies.
+  [Bounds](../Signatures/Runtime/Caliper/SchnorrROMTapeFreshBounds.lean) and
+  [memory](../Signatures/Runtime/Caliper/SchnorrROMTapeFreshMemory.lean) derive
+  the overhead from only the scalar sampler's local contract.
+  [Complete replay-cell queries](../Signatures/Runtime/Caliper/SchnorrROMTapeQuery.lean)
+  compose this draw with lookup/consumption/recording and prove actual-execution
+  correspondence and complete resources. No completed fresh-cell or full-query
+  budget is assumed. Word acceptance uses actual scratch-buffer extents.
+  The [regression](../SignaturesTest/CaliperSchnorrROMTapeQuery.lean) executes
+  private zero/maximum ranges, challenges with nonzero/zero replies, replay
+  hits/misses and caller frames. Query input formation, typed caller reply
+  routing, restart packet construction and full ROM composition remain.
 
 Remaining integration sequence:
 
@@ -3030,7 +3054,7 @@ the source/output conversion for both complete BLS AGM reductions.
    carrying reservations through the generated controller. The caller and terminal
    execution now compose with derived extraction room and complete resource bounds.
    Both BLS AGM setups and source/output conversions are now joined in `BLSFull`.
-   Repeat the full construction for the other signature reductions. The complete
+   Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and
    final lookup/arithmetic. The service bridge connects the caller's proved

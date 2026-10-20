@@ -568,14 +568,16 @@ Pinned upstreams:
   It preserves every private family, retains the selected challenge prefix and
   charges both copies of the installed replay tape. Preparing its input packet
   and composing the complete two-pass reduction remain part of the ROM migration.
-  Its [replay-cell handler](Signatures/Runtime/Caliper/SchnorrROMTapeReadMemory.lean)
-  now executes first-family lookup, hit consumption and chronological miss
-  recording, with derived time, stored-code and visited-state memory bounds.
-  [Source equality](Signatures/Runtime/Caliper/SchnorrROMTapeReadSource.lean)
-  recovers the original raw oracle's answer and both tapes. Only the local fresh
-  draw has an implementation contract; the tape manipulation is constructed code.
-  The handler requires one reserved saved-tape slot. Instantiating fresh-draw
-  packets and composing caller reply routing remain part of the ROM migration.
+  Its [constructed replay-cell handler](Signatures/Runtime/Caliper/SchnorrROMTapeQuery.lean)
+  executes first-family lookup, hit consumption and chronological miss recording.
+  Private draws forward a runtime range through the uniform word interface;
+  [fresh-cell construction](Signatures/Runtime/Caliper/SchnorrROMTapeFresh.lean)
+  executes family routing, range subtraction and reply-packet assembly.
+  Only the local scalar sampler supplies an implementation contract.
+  Source equality recovers the original raw oracle's answer and both tapes,
+  with derived time, stored-code and visited-state memory bounds.
+  The handler requires one reserved saved-tape slot. Caller query/reply routing
+  and the complete two-pass composition remain part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific

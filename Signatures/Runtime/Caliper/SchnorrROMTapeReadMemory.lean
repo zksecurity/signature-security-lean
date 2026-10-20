@@ -22,11 +22,10 @@ theorem names {slots : Nat} (drawNames : WordIO.NamesBound (draw.lower port) slo
     (frame layout).representation.encoding.words (frame layout).representation.encoding.words
   exact (WordIO.NamesAccounted.compute ((choose layout).names slots)).seq branch
 
-theorem descriptionFits (drawFits : (draw.lower port).DescriptionFits) {slots : Nat}
-    (drawNames : WordIO.NamesBound (draw.lower port) slots) (slotsFit : slots < 2 ^ w) :
+theorem descriptionFits_of_buffers (drawFits : (draw.lower port).DescriptionFits)
+    (bufferFits : (draw.lower port).memBound < 2 ^ w) :
     ((code layout port draw).lower port).DescriptionFits := by
   have nameFits : Interactive.savedBuffer port draw < 2 ^ w := by
-    have bound := drawNames.buffers
     have width := layout.wordFits
     dsimp only [Interactive.savedBuffer]
     omega
@@ -42,6 +41,11 @@ theorem descriptionFits (drawFits : (draw.lower port).DescriptionFits) {slots : 
     (.compute (hit layout).implementation.program.description_fits) miss
     (frame layout).representation.fits (frame layout).representation.fits
   exact .seq layout.wordFits (.compute (choose layout).implementation.program.description_fits) branch
+
+theorem descriptionFits (drawFits : (draw.lower port).DescriptionFits) {slots : Nat}
+    (drawNames : WordIO.NamesBound (draw.lower port) slots) (slotsFit : slots < 2 ^ w) :
+    ((code layout port draw).lower port).DescriptionFits :=
+  descriptionFits_of_buffers layout port draw drawFits (drawNames.buffers.trans_lt slotsFit)
 
 theorem buffers : ((code layout port draw).lower port).memBound ≤ max 7 ((draw.lower port).memBound + 1) := by
   have retained := Interactive.retain_buffers port draw layout.counter.representation.encoding.words
