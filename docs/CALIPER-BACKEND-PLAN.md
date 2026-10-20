@@ -2882,8 +2882,30 @@ Implemented and checked:
   source proofs and executes setup through extraction, checking hash/sign calls,
   cache reuse, cutoff, sample traces, framing, scratch release and elapsed bounds.
   It is an execution fixture, not a field or curve implementation.
-  Remaining for weighted schemes: the bad branch's outer scalar sampling and
-  computed public key, both public concrete/family models, and caller coverage.
+  The bad branch's outer sampling and computed key are now joined below.
+
+- [Sampled weighted setup](../Signatures/Runtime/Caliper/WeightedBadSetup.lean)
+  executes the outer scalar draw, copies the runtime DLog challenge, and computes
+  the fresh public key using the supplied scalar multiplication implementation.
+  [Its bounds](../Signatures/Runtime/Caliper/WeightedBadSetupBounds.lean) charge
+  the sampling, copying and local arithmetic. Sampling includes zero.
+  [The complete bad program](../Signatures/Runtime/Caliper/WeightedBadProgram.lean)
+  composes this setup with initialized pair-cache execution and extraction.
+  [Complete bounds](../Signatures/Runtime/Caliper/WeightedBadBounds.lean) derive
+  runtime, stored code, operand acceptance, names and every visited memory bound
+  from individual routines and caller code.
+  [The source theorem](../Signatures/Runtime/Caliper/WeightedBad.lean) identifies
+  the resulting probability tree with `WeightedReduction.badReductionList` and
+  constructs its `dlogWithin` certificate. No completed solver implementation
+  or completed solver resource bound is assumed.
+  The concrete regression instantiates full refinement and resource proofs with
+  executed pair sampling, word arithmetic and a signing caller. It checks changed
+  runtime challenges and public keys, zero and nonzero sampled scalars, shared
+  pair-cache reuse, cutoff, exact sample traces, external frames, scratch release
+  and elapsed bounds. Word arithmetic is an execution fixture, not a field claim.
+  Remaining for weighted schemes: public OOPS/Proximity parameter constructors
+  deriving challenge coverage, concrete and polynomial-family statements, and
+  broader caller coverage. Schnorr ROM replay/composition remains separate work.
 
 Remaining integration sequence:
 

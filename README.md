@@ -11,8 +11,9 @@ linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
-The concrete and nonuniform asymptotic BLS AGM and co-CDH statements now use Caliper. The
-other routes retain abstract-backend family corollaries during migration. The
+The concrete and nonuniform asymptotic BLS AGM, BLS co-CDH and Schnorr AGM statements
+now use Caliper. OOPS, Proximity and Schnorr ROM retain abstract-backend statements
+and family corollaries during migration. The
 superseded eager-table AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
 Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
 implementation models. Schnorr also has a bit-heap theorem charging replay,
@@ -543,8 +544,12 @@ Pinned upstreams:
   [The good reduction](Signatures/Runtime/Caliper/WeightedGood.lean) has exact
   source equality and a complete Caliper DLog resource certificate, conditional
   on the stated local routines, caller correspondence and challenge coverage.
-  The bad branch's outer sampling/key generation and public OOPS/Proximity
-  Caliper models remain.
+  [The bad reduction](Signatures/Runtime/Caliper/WeightedBad.lean) now also has
+  exact source equality and a complete Caliper DLog resource certificate.
+  Its executed setup samples the scalar, computes the public key, and initializes
+  the pair-valued cache before running the caller and extractor. Both certificates
+  derive complete costs from local implementations; public OOPS/Proximity parameter
+  constructors, challenge coverage and concrete/family statements remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

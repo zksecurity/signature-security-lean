@@ -2,6 +2,7 @@ import Signatures.Runtime.Caliper.WeightedCallerProgramResources
 import Signatures.Runtime.Caliper.WeightedCallerReduction
 import Signatures.Runtime.Caliper.WeightedInitialization
 import Signatures.Runtime.Caliper.WeightedGood
+import Signatures.Runtime.Caliper.WeightedBad
 import Signatures.Runtime.Caliper.OOPSTermsBounds
 import Signatures.Runtime.Caliper.BLSExtractArithmeticNames
 import Signatures.Runtime.Caliper.BLSResponseNames
@@ -446,6 +447,158 @@ private theorem initialized_source (hashes : Bool) (value : setup.challenge.Valu
     uniformSource rfl (fun _ => rfl) rfl uniformLaw (by decide) (by decide) (by decide)
     sourceTerms terms_source fullCorrespondence value
 
+-- The sampled bad program uses two independent scalar draws per cached key.
+private abbrev pairTy : Ty Bool := .pair (.atom true) (.atom true)
+private instance : SampleableType (Ty.Value base pairTy) := inferInstanceAs (SampleableType (Word 32 × Word 32))
+private instance : AddCommMonoid (Ty.Value base pairTy) := inferInstanceAs (AddCommMonoid (Word 32 × Word 32))
+private instance : SMul (Word 32) (Ty.Value base pairTy) := inferInstanceAs (SMul (Word 32) (Word 32 × Word 32))
+private def groupLayout : BLSResponse.Layouts 32 (Word 32) (Word 32) := ⟨scalar, scalar, by decide, by decide⟩
+private def scale : Implementation .unit groupLayout.scaleArgs scalar (fun value => value.1 • value.2) := mul
+private def badSigning : WeightedExtraction.Layouts 32 Key (Word 32 × Word 32) (Word 32) (Word 32) (Word 32 × Word 32) :=
+  ⟨⟨⟨accumulation.bad, oops.input, by decide⟩, scalar, by decide⟩,
+    3, 4, 2, by decide, by decide, by decide, by decide, by decide⟩
+private def badExtraction : WeightedExtractor.Layouts 32 Key (Word 32 × Word 32) (Word 32) (Word 32) (Word 32 × Word 32) :=
+  ⟨badSigning, 2, 3, by decide, by decide, by decide⟩
+private def badLayout : WeightedCallerExtraction.Layouts 32 Key (Word 32 × Word 32) (Word 32) (Word 32) (Word 32 × Word 32)
+    (Word 32 × (Word 32 × Word 32)) extraction.forgery.Value where
+  extraction := badExtraction
+  config := groupLayout.config
+  zero := ⟨(0, 0), trivial, trivial⟩
+  default := ⟨(99, 98), trivial, trivial⟩
+  hashPositive := by decide
+  signPositive := by decide
+  serviceFits := by decide
+  randomBound := 4294967295
+  randomFits := by decide
+  state := extraction.forgery.representation
+  callerFits := by decide
+private def badSetup : WeightedSetup.Layouts badLayout.service (Word 32) := ⟨scalar, by decide⟩
+private def preparation : WeightedBadSetup.Layouts 32 (Word 32) (Word 32) (Word 32) :=
+  ⟨scalar, groupLayout.points, scalar, by decide, by decide⟩
+private def resampling : WeightedFull.Resampling (base := base) (key := .atom false) (val := pairTy) badLayout badSetup where
+  preparation := preparation
+  compatible := rfl
+  scale := scale
+  slots := 3
+  reserve := by decide
+  names := mulNames
+  budget := ⟨6, 27⟩
+  bounded := mulBound
+private def pairDraw := PairSampling.code scalar scalar (by decide) (by decide) uniformPort uniformDraw uniformDraw
+private def pairSource := PairSampling.denote scalar scalar (by decide) uniformSource uniformSource
+private theorem pairCorrect : Interactive.Refines badLayout.port .unit badLayout.service.evaluation.cache.lookup.unit.representation
+    badLayout.service.evaluation.cache.value.representation (fun _ => pairSource) pairDraw :=
+  PairSampling.refines (hw := by decide) (fits := by decide) uniformCorrect uniformCorrect
+private theorem pairLaw : Subtype.val <$> pairSource = ($ᵗ (Ty.Value base pairTy) : ProbComp _) :=
+  PairSampling.uniform scalar scalar (by decide) uniformSource uniformSource uniformLaw uniformLaw
+private def badResponse := BLSResponse.bad groupLayout scale add mulNames.buffers (by decide) addNames.buffers
+private theorem badUpdateBound : badUpdate.BoundedBy
+    (BLSAccumulate.badTime accumulation.arithmetic 6 6) (BLSAccumulate.badCode accumulation.arithmetic 27 27) :=
+  BLSAccumulate.bad_bounded accumulation.arithmetic mul add mulBound addBound mulNames.buffers (by decide) addNames.buffers
+private theorem badUpdateNames : NamesAccounted badUpdate.program.code 3 :=
+  BLSAccumulate.bad_names accumulation.arithmetic 3 mul add mulNames.accounted addNames.accounted mulNames.buffers (by decide) addNames.buffers
+private theorem badExtractorNames : NamesAccounted badExtract.program.code 3 :=
+  BLSExtractArithmetic.bad_names accumulation.arithmetic 3 sub subNames.accounted subNames.buffers (by decide)
+    negate negNames.accounted negNames.buffers divide divNames.accounted
+private def unusedSum : Implementation .unit badExtraction.numeratorInput scalar (fun value => value.1) :=
+  Implementation.first (by decide) scalar accumulation.bad.cache.value (by decide) (by decide)
+private def badRoutines : WeightedFull.Routines (base := base) (key := .atom false) (val := pairTy) badLayout where
+  generate := OOPSTerms.value (degree := 1)
+  generator := oopsGenerator
+  combine := fun (value : Word 32 × ((Word 32 × Word 32) × (Word 32 × Word 32))) =>
+    (value.2.2.1 + value.1 * value.2.1.1, value.2.2.2 + value.1 * value.2.1.2)
+  update := badUpdate
+  respond := fun signing (value : (Word 32 × Word 32) × (Word 32 × (Word 32 × Word 32))) =>
+    if signing then value.2.1 • (value.1.1 • value.2.2.2 + value.1.2 • value.2.2.1)
+    else value.1.1 • value.2.2.2 + value.1.2 • value.2.2.1
+  response := badResponse
+  calculate := fun (value : Word 32 × ((Word 32 × Word 32) × (Word 32 × Word 32))) =>
+    -(value.2.1.2 - value.2.2.2) / (value.2.1.1 - value.2.2.1)
+  extract := badExtract
+  numerator := fun value => value.1
+  sum := unusedSum
+  coefficientDefault := ⟨0, trivial⟩
+  slots := 65536
+  reserve := by decide
+  generatorNames := routineNames oopsNames oopsBound.code_le (by decide)
+  updateNames := routineNames badUpdateNames badUpdateBound.code_le (by decide)
+  responseNames signing := routineNames
+    (BLSResponse.bad_names groupLayout 3 scale add mulNames.accounted addNames.accounted mulNames.buffers (by decide) addNames.buffers signing)
+    (BLSResponse.bad_bounded groupLayout scale add mulBound addBound mulNames.buffers (by decide) addNames.buffers signing).code_le
+    (by cases signing <;> decide)
+  extractNames := routineNames badExtractorNames badExtractBound.code_le (by decide)
+  sumNames := routineNames (Implementation.first_names _ _ _ _ 3) (Implementation.first_boundedBy _ _ _ _).code_le (by decide)
+private def badHead : badLayout.forgery.Value ⊕ (badLayout.Request × extraction.forgery.Value) :=
+  .inr (.inr (.inr ⟨(2, 42), trivial, trivial⟩), forgery (3, 42) 0 [] [1] (by decide) (by decide))
+private def badInitial := Implementation.constant scalar (Layout.all (CallerStep.next badLayout.control)) ⟨badHead, trivial⟩ (by decide)
+private def badCaller : WeightedFull.Caller (base := base) (key := .atom false) (val := pairTy) badLayout badSetup.key.representation where
+  advance := advance
+  continuation := continuation
+  localNameFits := continuationNameFits
+  initial := fun _ => badHead
+  initialCode := badInitial.program.viewOutput (CallerStep.next badLayout.control) (fun _ => badHead) (fun _ => rfl)
+  initialNameFits := by
+    have buffers := Implementation.constant_buffers scalar (Layout.all (CallerStep.next badLayout.control)) ⟨badHead, trivial⟩ (by decide)
+    change max 2 badInitial.program.code.memBound < 2 ^ 32
+    dsimp only [badInitial]
+    omega
+private def badInvariant : WeightedFull.Invariant (base := base) (key := .atom false) (val := pairTy) badLayout badSetup badCaller 1 where
+  domain := fun _ _ => True
+  advanceValid := fun _ _ _ _ _ _ _ => trivial
+  initialValid := fun _ => trivial
+private def badRoutineBounds : WeightedFull.Routines.Bounds (base := base) (key := .atom false) (val := pairTy) badLayout badRoutines where
+  generator := ⟨OOPSTerms.timeBudget oops 6, OOPSTerms.codeBudget oops 27⟩
+  update := ⟨BLSAccumulate.badTime accumulation.arithmetic 6 6, BLSAccumulate.badCode accumulation.arithmetic 27 27⟩
+  response := fun signing => ⟨BLSResponse.badTime groupLayout signing 6 6, BLSResponse.badWords groupLayout signing 27 27⟩
+  extract := ⟨BLSExtractArithmetic.badTime accumulation.arithmetic 6 118 6, BLSExtractArithmetic.badCode accumulation.arithmetic 27 631 27⟩
+  sum := ⟨8, 40⟩
+  generatorBound := oopsBound
+  updateBound := badUpdateBound
+  responseBound := BLSResponse.bad_bounded groupLayout scale add mulBound addBound mulNames.buffers (by decide) addNames.buffers
+  extractBound := badExtractBound
+  sumBound := Implementation.first_boundedBy _ _ _ _
+private def badCallerBounds : WeightedFull.Caller.Bounds (base := base) (key := .atom false) (val := pairTy) badLayout badSetup badCaller where
+  step := ⟨400, 1000⟩
+  initial := ⟨400, 1000⟩
+  localTime := callerBounds.localTime
+  initialTime value := ((Implementation.constant_bounded scalar (Layout.all (CallerStep.next badLayout.control))
+    ⟨badHead, trivial⟩ (by decide)).time_le value).trans (by decide)
+  localWords := callerBounds.localWords
+  initialWords := (Implementation.constant_bounded scalar (Layout.all (CallerStep.next badLayout.control))
+    ⟨badHead, trivial⟩ (by decide)).code_le.trans (by decide)
+  slots := 3
+  localNames := callerBounds.localNames
+  initialNames := Implementation.constant_names scalar
+    (Layout.all (CallerStep.next badLayout.control)) ⟨badHead, trivial⟩ (by decide) 3
+private def badProgram (fuel : Nat) := WeightedFull.badCode (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines
+  primitives comparison comparison_correct badCaller pairDraw uniformDraw fuel
+private theorem sampled_bad_refines : Interactive.Refines badLayout.port .unit preparation.challenge.representation scalar.representation
+    (WeightedFull.badSource (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines primitives comparison comparison_correct badCaller 1 pairSource uniformSource)
+    (badProgram 1) :=
+  WeightedFull.bad_refines (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines primitives comparison comparison_correct badCaller
+    pairDraw uniformDraw 1 pairSource uniformSource uniformCorrect pairCorrect (fun _ => rfl) rfl pairLaw badInvariant
+    (by decide) (by decide) (by decide)
+private theorem sampled_bad_within : Interactive.Within badLayout.port preparation.challenge scalar
+    (WeightedFull.badCodeBudget (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines badCaller badRoutineBounds badCallerBounds
+      (PairSampling.codeBudget scalar scalar 125 125) 125 1)
+    (WeightedFull.badMemoryBudget (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines badCaller badRoutineBounds badCallerBounds
+      (PairSampling.timeBudget scalar scalar 26 26) 26 (PairSampling.codeBudget scalar scalar 125 125) 125 (PairSampling.slots 3 3) 3 1)
+    (WeightedFull.badTimeBudget (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines badCaller badRoutineBounds badCallerBounds
+      (PairSampling.timeBudget scalar scalar 26 26) 26 1)
+    (fun value => Subtype.val <$> WeightedFull.badSource (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines primitives comparison comparison_correct badCaller 1 pairSource uniformSource value) := by
+  have drawTime := UniformSampling.time_bound (w := 32) 4294967295 (by decide) (by decide) 4294967295
+  have drawWords := UniformSampling.code_words (w := 32) 4294967295 (by decide) (by decide) 4294967295
+  have drawNames := UniformSampling.names (w := 32) 4294967295 (by decide) (by decide) 4294967295
+  have drawFits := UniformSampling.descriptionFits (w := 32) 4294967295 (by decide) (by decide) 4294967295
+  exact WeightedFull.bad_within (base := base) (key := .atom false) (val := pairTy) badLayout badSetup resampling badRoutines badCaller badRoutineBounds badCallerBounds
+    primitives comparison comparison_correct pairDraw uniformDraw 1 pairSource uniformSource pairCorrect uniformCorrect
+    (PairSampling.time_bound (hw := by decide) (fits := by decide) uniformCorrect uniformCorrect drawTime drawTime) drawTime
+    (PairSampling.code_bound scalar scalar (by decide) (by decide) uniformPort uniformDraw uniformDraw drawWords drawWords) drawWords
+    (PairSampling.names scalar scalar (by decide) (by decide) uniformPort uniformDraw uniformDraw drawNames drawNames) drawNames
+    badInvariant (by decide) (by decide) (by decide) (fun _ => rfl) rfl pairLaw
+    (PairSampling.descriptionFits scalar scalar (by decide) (by decide) uniformPort uniformDraw uniformDraw drawFits drawFits drawNames (by decide))
+    drawFits (by decide) (by decide) (by decide)
+
 open Lean in
 run_cmd do
   -- The hash queried by the caller is reused by hash correction and target evaluation.
@@ -506,6 +659,32 @@ run_cmd do
           framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch && trace == [] &&
           remaining == [88] && elapsed ≤ 8 * fullInput.encoding.words do
         throwError "weighted initializer changed runtime input, configuration, padding, frame, or time"
+  for (g, x, generator, pk, sampled) in ([(3, 5, 7, 11, 2), (13, 17, 19, 23, 3), (3, 5, 7, 11, 0)] :
+      List (Word 32 × Word 32 × Word 32 × Word 32 × Word 32)) do
+    let challenge : preparation.challenge.Value := ⟨((g, x), (generator, pk)), ⟨trivial, trivial⟩, trivial, trivial⟩
+    match executeUniform preparation.challenge.representation preparation.output
+        (WeightedBadSetup.code preparation scale mulNames.buffers (by decide) uniformPort uniformDraw)
+        challenge [4294967295, sampled, 88] with
+    | none => throwError "sampled weighted key preparation failed"
+    | some (answer, framed, capacity, register, tape, scratch, trace, remaining, elapsed) =>
+      unless answer == ((sampled, (g, x)), (generator, sampled * generator)) && framed == #[77] && capacity == 4 &&
+          register == 91 && tape == 9 && scratch && remaining == [88] &&
+          trace == [WordIO.Event.output 4294967295, .invoke, .input 4294967295, .input sampled] &&
+          elapsed ≤ WeightedBadSetup.timeBudget preparation 26 6 do
+        throwError "sampled preparation changed runtime points/key, uniform draw, frame, scratch or time"
+    for fuel in [0, 1] do
+      let draws := if fuel == 0 then [sampled] else [sampled, 2, 5, 3, 4294967293]
+      let replies := draws.flatMap (fun sample => [4294967295, sample]) ++ [88]
+      match executeUniform preparation.challenge.representation scalar (badProgram fuel) challenge replies with
+      | none => throwError "complete sampled weighted bad program failed"
+      | some (answer, framed, capacity, register, tape, scratch, trace, remaining, elapsed) =>
+        let expectedTrace := draws.flatMap (fun sample => [WordIO.Event.output 4294967295, .invoke, .input 4294967295, .input sample])
+        unless answer == (if fuel == 0 then 0 else 1) && framed == #[77] && capacity == 4 && register == 91 &&
+            tape == 9 && scratch && trace == expectedTrace && remaining == [88] &&
+            elapsed ≤ WeightedFull.badTimeBudget (base := base) (key := .atom false) (val := pairTy)
+              badLayout badSetup resampling badRoutines badCaller badRoutineBounds badCallerBounds
+              (PairSampling.timeBudget scalar scalar 26 26) 26 fuel do
+          throwError "sampled bad program changed paired cache reuse, cutoff, scalar result, trace, frame, scratch or time"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``WeightedCallerFinish.refines, ``WeightedCallerFinish.time_bound, ``WeightedCallerFinish.resources,
       ``WeightedCallerFinish.extraction_ready, ``WeightedCallerExtraction.called_postcondition, ``WeightedCallerExtraction.called_ready,
@@ -529,7 +708,12 @@ run_cmd do
       ``WeightedSetup.implementation, ``WeightedSetup.bounded, ``WeightedSetup.names, ``WeightedSetup.buffers,
       ``WeightedFull.refines, ``WeightedFull.denote_source, ``WeightedFull.observe_source,
       ``WeightedFull.time, ``WeightedFull.words, ``WeightedFull.names, ``WeightedFull.descriptionFits, ``WeightedFull.within,
-      ``WeightedFull.good_source, ``WeightedFull.good_dlogWithin, ``full_refines, ``full_within, ``initialized_source] do
+      ``WeightedFull.good_source, ``WeightedFull.good_dlogWithin, ``full_refines, ``full_within, ``initialized_source,
+      ``WeightedBadSetup.refines, ``WeightedBadSetup.denote_uniform, ``WeightedBadSetup.bounded,
+      ``WeightedBadSetup.time, ``WeightedBadSetup.words, ``WeightedBadSetup.names, ``WeightedBadSetup.descriptionFits,
+      ``WeightedFull.bad_refines, ``WeightedFull.bad_time, ``WeightedFull.bad_words, ``WeightedFull.bad_names,
+      ``WeightedFull.bad_descriptionFits, ``WeightedFull.bad_within, ``WeightedFull.bad_fixed_source,
+      ``WeightedFull.bad_source, ``WeightedFull.bad_dlogWithin, ``sampled_bad_refines, ``sampled_bad_within] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 end SignaturesTest.CaliperWeightedCaller
