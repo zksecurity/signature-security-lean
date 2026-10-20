@@ -508,7 +508,13 @@ Pinned upstreams:
   Its [source correspondence](Signatures/Runtime/Caliper/WeightedExtractionSource.lean)
   matches the original scaled signing terms and complete cache, including under
   index encoding. [Resources](Signatures/Runtime/Caliper/WeightedExtractionMemory.lean)
-  include the full traversal and retained tails. Full-solver integration remains.
+  include the full traversal and retained tails.
+  [Final-target extraction](Signatures/Runtime/Caliper/WeightedTarget.lean)
+  evaluates the forged message using the shared cache, then executes the scalar
+  extraction arithmetic with the retained numerator and signing contribution.
+  [Source equality](Signatures/Runtime/Caliper/WeightedTargetSource.lean) preserves
+  the complete cache; [resources](Signatures/Runtime/Caliper/WeightedTargetBounds.lean)
+  include the actual copying and local arithmetic. Full-solver integration remains.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

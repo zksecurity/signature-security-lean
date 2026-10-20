@@ -18,6 +18,9 @@ import Signatures.Runtime.Caliper.WeightedCallerPostcondition
 import Signatures.Runtime.Caliper.WeightedCallerResources
 import Signatures.Runtime.Caliper.WeightedCoefficientBounds
 import Signatures.Runtime.Caliper.WeightedExtractionMemory
+import Signatures.Runtime.Caliper.WeightedTargetSource
+import Signatures.Runtime.Caliper.WeightedTargetBounds
+import Signatures.Runtime.Caliper.BLSExtractArithmeticNames
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
 import Mathlib.Data.BitVec
@@ -1679,6 +1682,215 @@ run_cmd do
       ``WeightedExtraction.denote_equiv, ``WeightedExtraction.observe_equiv, ``WeightedExtraction.cache_growth,
       ``WeightedExtraction.remaining_room, ``WeightedExtraction.descriptionFits, ``WeightedExtraction.resources,
       ``extractionBound, ``extractionFits, ``extractionOracle, ``extractionMemory] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+-- The target stage uses the constructed subtraction/negation/division routines.
+-- These word fixtures test execution, without claiming field laws for Word 16.
+private def sub := binary .sub
+private def divide := binary .udiv
+private def scalarZero : Implementation .unit scalar scalar (fun _ => 0) :=
+  Implementation.constant scalar scalar ⟨0, trivial⟩ accumulation.cache.wordFits
+private def negArgs : Implementation .unit scalar accumulation.arithmetic.pair (fun value => (0, value)) :=
+  scalarZero.pair (Implementation.identity scalar (by decide)) (by decide) accumulation.cache.wordFits
+    (by decide) (by decide) (by decide) (by decide) accumulation.arithmetic.pair.representation.fits
+private def negate : Implementation .unit scalar scalar Neg.neg :=
+  (negArgs.then sub).castFunction (by funext value; exact BitVec.zero_sub value)
+private theorem subBound : sub.BoundedBy 6 27 := ⟨fun _ => le_rfl, by decide⟩
+private theorem divBound : divide.BoundedBy 6 27 := ⟨fun _ => le_rfl, by decide⟩
+private theorem negBound : negate.BoundedBy 118 631 := by
+  have zeroBound := Implementation.constant_bounded scalar scalar ⟨0, trivial⟩ accumulation.cache.wordFits
+  have paired : negArgs.BoundedBy 112 603 := by
+    apply (Implementation.pair_boundedBy scalarZero (Implementation.identity scalar (by decide))
+      accumulation.cache.wordFits (by decide) (by decide) (by decide) (by decide)
+      accumulation.arithmetic.pair.representation.fits
+      zeroBound (Implementation.identity_boundedBy scalar (by decide))).mono <;> decide
+  apply ((paired.then subBound).castFunction _).mono <;> decide
+private theorem subNames : NamesBound sub.program.code 3 := ⟨by decide, by decide⟩
+private theorem divNames : NamesBound divide.program.code 3 := ⟨by decide, by decide⟩
+private theorem negNames : NamesBound negate.program.code 3 := ⟨by decide, by decide⟩
+private def goodExtract := BLSExtractArithmetic.good accumulation.arithmetic sub subNames.buffers (by decide) divide
+private def badExtract := BLSExtractArithmetic.bad accumulation.arithmetic sub subNames.buffers (by decide)
+  negate negNames.buffers divide
+private theorem goodExtractBuffers : goodExtract.program.code.memBound ≤ 4 :=
+  BLSExtractArithmetic.good_buffers accumulation.arithmetic sub subNames.buffers (by decide) divide divNames.buffers
+private theorem badExtractBuffers : badExtract.program.code.memBound ≤ 4 :=
+  BLSExtractArithmetic.bad_buffers accumulation.arithmetic sub subNames.buffers (by decide)
+    negate negNames.buffers divide divNames.buffers
+private theorem goodExtractBound : goodExtract.BoundedBy
+    (BLSExtractArithmetic.goodTime accumulation.arithmetic 6 6)
+    (BLSExtractArithmetic.goodCode accumulation.arithmetic 27 27) :=
+  BLSExtractArithmetic.good_bounded accumulation.arithmetic sub subBound subNames.buffers (by decide) divide divBound
+private theorem badExtractBound : badExtract.BoundedBy
+    (BLSExtractArithmetic.badTime accumulation.arithmetic 6 118 6)
+    (BLSExtractArithmetic.badCode accumulation.arithmetic 27 631 27) :=
+  BLSExtractArithmetic.bad_bounded accumulation.arithmetic sub subBound subNames.buffers (by decide)
+    negate negBound negNames.buffers divide divBound
+private theorem goodExtractNames : NamesAccounted goodExtract.program.code 3 :=
+  BLSExtractArithmetic.good_names accumulation.arithmetic 3 sub subNames.accounted subNames.buffers
+    (by decide) divide divNames.accounted
+private def targetCode := WeightedTarget.code (base := base) (key := .atom false) (val := .atom true)
+  coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+  goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw
+private def targetProximityCode := WeightedTarget.code (base := base) (key := .atom false) (val := .atom true)
+  coefficientProximityLayout ⟨0, trivial⟩ 4 (by decide) (by decide) proximityGenerator ⟨99, trivial⟩
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+  goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw
+private def targetPairCode := WeightedTarget.code (base := base) (key := .atom false)
+  (val := .pair (.atom true) (.atom true)) coefficientPairLayout ⟨(0, 0), trivial, trivial⟩
+  4 (by decide) (by decide) oopsGenerator ⟨(99, 98), trivial, trivial⟩
+  primitives comparison comparison_correct badUpdate badBuffers (by decide)
+  badExtract badExtractBuffers (by decide) uniformPort uniformPairDraw
+private def targetTime := WeightedTarget.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  coefficientLayout 4 (by decide) (by decide) (OOPSTerms.timeBudget oops 6) 26
+    (BLSAccumulate.goodTime accumulation.arithmetic 6 6)
+    (BLSExtractArithmetic.goodTime accumulation.arithmetic 6 6)
+private def targetWords := WeightedTarget.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  coefficientLayout 4 (by decide) (by decide) (OOPSTerms.codeBudget oops 27) 125
+    (BLSAccumulate.goodCode accumulation.arithmetic 27 27)
+    (BLSExtractArithmetic.goodCode accumulation.arithmetic 27 27)
+private def targetPairTime := WeightedTarget.timeBudget (base := base) (key := .atom false)
+  (val := .pair (.atom true) (.atom true)) coefficientPairLayout 4 (by decide) (by decide)
+    (OOPSTerms.timeBudget oops 6) (PairSampling.timeBudget scalar scalar 26 26)
+    (BLSAccumulate.badTime accumulation.arithmetic 6 6)
+    (BLSExtractArithmetic.badTime accumulation.arithmetic 6 118 6)
+private theorem targetBound : Interactive.TimeBoundOn
+    (WeightedCoefficient.valid (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout (generate := OOPSTerms.value))
+    uniformPort .unit coefficientLayout.input.representation targetCode targetTime :=
+  WeightedTarget.time_bound (base := base) (key := .atom false) (val := .atom true)
+    coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw uniformCorrect
+    oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) goodBound goodExtractBound
+private theorem targetPairBound : Interactive.TimeBoundOn
+    (WeightedCoefficient.valid (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+      coefficientPairLayout (generate := OOPSTerms.value))
+    uniformPort .unit coefficientPairLayout.input.representation targetPairCode targetPairTime :=
+  WeightedTarget.time_bound (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+    coefficientPairLayout ⟨(0, 0), trivial, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨(99, 98), trivial, trivial⟩
+    primitives comparison comparison_correct badUpdate badBuffers (by decide)
+    badExtract badExtractBuffers (by decide) uniformPort uniformPairDraw uniformPairCorrect oopsBound
+    (PairSampling.time_bound uniformCorrect uniformCorrect
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535))
+    (BLSAccumulate.bad_bounded accumulation.arithmetic mul add mulBound addBound mulNames.buffers (by decide) addNames.buffers)
+    badExtractBound
+private theorem targetFits : (targetCode.lower uniformPort).DescriptionFits :=
+  WeightedTarget.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide)
+private theorem targetOracle (tape : RandomTape 16) (value : coefficientLayout.input.Value)
+    (admitted : WeightedCoefficient.valid (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout (generate := OOPSTerms.value) value)
+    (before : State 16) (holds : coefficientLayout.input.representation.Holds value before) :
+    (fun result => (fun answer => (answer.val.1, answer.val.2.map (Prod.map Prod.swap id))) <$>
+        Interactive.observe (WeightedTarget.output coefficientLayout).representation result) <$>
+      targetCode.execute uniformPort .unit tape before =
+      some <$> ((fun answer => (value.val.2.1 / (answer.1 - value.val.2.2.1), answer.2)) <$>
+        (simulateQ (BLS.LazyAGM.Reduction.privateListOracle (M := Word 16 × Fin 4) (R := Word 16))
+          (Model.LazyAGM.evalTerms (OOPS.LazyAGM.terms 3 value.val.1))).run
+            (value.val.2.2.2.map (Prod.map Prod.swap id))) :=
+  WeightedTarget.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    goodExtract goodExtractBuffers (by decide) (fun _ => rfl) rfl uniformSource uniformLaw
+    (Equiv.prodComm (Word 16) (Fin 4)) (OOPS.LazyAGM.terms 3) (OOPSTerms.source 3)
+    uniformPort uniformDraw uniformCorrect tape value admitted before holds
+private theorem targetMemory (tape : RandomTape 16) (value : coefficientLayout.input.Value)
+    (admitted : WeightedCoefficient.valid (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout (generate := OOPSTerms.value) value)
+    (before : State 16) (holds : coefficientLayout.input.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers)
+    (initialBuffers : before.SupportBound buffers) (finished : WordIO.Result 16)
+    (reached : some finished ∈ support (targetCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ targetTime ∧
+      ∃ execution : WordIO.Exec .unit tape (targetCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((targetCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (targetCode.lower uniformPort).memBound) ≤
+              5 * targetWords + 20 + registers + 3 * buffers + before.liveMem buffers + targetTime := by
+  obtain ⟨elapsed, _, _, _, execution, memory⟩ :=
+    WeightedTarget.resources (base := base) (key := .atom false) (val := .atom true)
+      coefficientLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+      primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+      goodExtract goodExtractBuffers (by decide) uniformPort uniformDraw uniformCorrect oopsBound
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535)
+      goodBound goodExtractBound oopsNames
+      (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames goodExtractNames
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, memory⟩
+
+open Lean in
+run_cmd do
+  let samples : List (Word 16) := [2, 5, 7, 11]
+  for (numerator, signatures, expected) in
+      ([(740, 7, 2), (0, 7, 0), (740, 377, 0)] : List (Word 16 × Word 16 × Word 16)) do
+    for cache in ([⟨[], by decide⟩, ⟨entries, by decide⟩] : List {cache : List (Key × Word 16) // cache.length ≤ 8}) do
+      let value := coefficientInput numerator signatures cache.val cache.property
+      let needed := if cache.val.isEmpty then samples else []
+      let trace := needed.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+      match executeUniform coefficientLayout.input.representation (WeightedTarget.output coefficientLayout)
+          targetCode value (needed.flatMap (fun sample => [65535, sample]) ++ [88]) with
+      | none => throwError "weighted final target execution failed"
+      | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+        unless answer == (expected, entries) && framed == #[77] && capacity == 4 && register == 91 &&
+            tape == 9 && scratch && events == trace && remaining == [88] && elapsed ≤ targetTime do
+          throwError "weighted final target changed arithmetic, cache, sampling, framing or cost: numerator={numerator.toNat}, signatures={signatures.toNat}, expected={expected.toNat}, actual={answer.1.toNat}"
+  let unrelated : List (Key × Word 16) := [((0, 77), 123)]
+  let mixed := coefficientInput 740 7 (⟨(0, 42), 2⟩ :: unrelated) (by decide)
+  let needed : List (Word 16) := [5, 7, 11]
+  match executeUniform coefficientLayout.input.representation (WeightedTarget.output coefficientLayout)
+      targetCode mixed (needed.flatMap (fun sample => [65535, sample]) ++ [88]) with
+  | none => throwError "partly cached final target failed"
+  | some (answer, _, _, _, _, scratch, events, remaining, elapsed) =>
+    let trace := needed.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+    unless answer == (2, entries ++ unrelated) && scratch && events == trace && remaining == [88] &&
+        elapsed ≤ targetTime do
+      throwError "final target lost unrelated cache entries or resampled a hit"
+  for (message, expected) in [(vector 3 9 27, (2 : Word 16)), (vector 0 0 0, 370)] do
+    let value : coefficientProximityLayout.input.Value :=
+      ⟨(message.val, 740, (if expected == 2 then 7 else 0), []),
+        message.property, trivial, trivial, by change (0 : Nat) ≤ 8; decide, by simp⟩
+    match executeUniform coefficientProximityLayout.input.representation (WeightedTarget.output coefficientProximityLayout)
+        targetProximityCode value (samples.flatMap (fun sample => [65535, sample]) ++ [88]) with
+    | none => throwError "Proximity final target failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+      let trace := samples.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+      unless answer == (expected, entries) && framed == #[77] && capacity == 4 && register == 91 &&
+          tape == 9 && scratch && events == trace && remaining == [88] do
+        throwError "Proximity target dropped zero-coefficient reads or changed the scalar result"
+  let pairSamples : List (Word 16) := [2, 3, 5, 7, 11, 13, 17, 19]
+  let pairEntries : List (Key × (Word 16 × Word 16)) :=
+    [((3, 42), (17, 19)), ((2, 42), (11, 13)), ((1, 42), (5, 7)), ((0, 42), (2, 3))]
+  for beta in ([0, 999] : List (Word 16)) do
+    for cache in ([⟨[], by decide⟩, ⟨pairEntries, by decide⟩] :
+        List {cache : List (Key × (Word 16 × Word 16)) // cache.length ≤ 8}) do
+      let value : coefficientPairLayout.input.Value :=
+        ⟨(message.val, beta, (573, 700), cache.val), message.property, trivial, ⟨trivial, trivial⟩,
+          cache.property, fun _ _ => ⟨⟨trivial, trivial⟩, trivial, trivial⟩⟩
+      let needed := if cache.val.isEmpty then pairSamples else []
+      let trace := needed.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+      match executeUniform coefficientPairLayout.input.representation (WeightedTarget.output coefficientPairLayout)
+          targetPairCode value (needed.flatMap (fun sample => [65535, sample]) ++ [88]) with
+      | none => throwError "pair final target failed"
+      | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+        unless answer == (23, pairEntries) && framed == #[77] && capacity == 4 && register == 91 &&
+            tape == 9 && scratch && events == trace && remaining == [88] && elapsed ≤ targetPairTime do
+          throwError "pair final target changed scalar extraction, ignored beta, shared cache, frame or cost"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``WeightedTarget.refines, ``WeightedTarget.cache_growth, ``WeightedTarget.denote_source,
+      ``WeightedTarget.denote_encoded, ``WeightedTarget.denote_equiv, ``WeightedTarget.observe_equiv,
+      ``WeightedTarget.time_bound, ``WeightedTarget.code_bound, ``WeightedTarget.names,
+      ``WeightedTarget.buffers, ``WeightedTarget.descriptionFits, ``WeightedTarget.resources,
+      ``targetBound, ``targetPairBound, ``targetFits, ``targetOracle, ``targetMemory] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

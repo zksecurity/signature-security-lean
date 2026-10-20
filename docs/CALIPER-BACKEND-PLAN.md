@@ -2726,7 +2726,30 @@ Implemented and checked:
   rather than twelve; insufficient cache reservation is outside the admitted
   proof domain. Concrete original-game observation and memory instances are
   axiom-audited.
-  Remaining: combine hash/sign/final-target extraction, terminal/setup/caller
+- [Final-target extraction](../Signatures/Runtime/Caliper/WeightedTarget.lean)
+  uses the existing generated weighted evaluator from zero, physically retaining
+  the numerator and accumulated signing contribution. The scalar finisher
+  executes local arithmetic and returns the complete cache, including when the
+  private oracle has pair-valued answers. It reuses the checked message routing
+  and scalar finisher; no full extractor implementation is supplied as a premise.
+  [Source identities](../Signatures/Runtime/Caliper/WeightedTargetSource.lean)
+  identify evaluation with the source private oracle followed by local arithmetic,
+  transport injectively encoded keys, and identify actual execution observations
+  in the original key domain. Only additive/scalar-action laws are needed for
+  target evaluation; division remains an explicitly implemented local routine.
+  [Resource bounds](../Signatures/Runtime/Caliper/WeightedTargetBounds.lean)
+  derive time, stored code, buffer names, address acceptance and every visited
+  memory state from generator, sampler, accumulation and scalar-routine budgets.
+  [Regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) instantiate the
+  constructed good/bad arithmetic from subtraction, negation and division.
+  They exercise fresh, cached and mixed target terms, preserve unrelated entries,
+  retain reads with zero numerators or coefficients, and check pair-to-scalar
+  extraction independently of its ignored beta input. Exact sampling traces,
+  retained external frames, released scratch and elapsed bounds are checked.
+  The finite word fixture tests total word division, including a zero denominator;
+  it does not assert field laws. Source observation, resource instances and
+  generic theorems are audited for unexpected axioms.
+  Remaining: compose the constructed hash/sign/final-target phases, terminal/setup/caller
   composition, OOPS/Proximity public concrete/family models and Schnorr ROM
   replay/composition. Conventional CPU/flat-memory adequacy stays outside this
   migration.
