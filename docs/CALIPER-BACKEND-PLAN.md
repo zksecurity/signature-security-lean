@@ -1851,9 +1851,44 @@ Implemented and checked:
   duplicate entries, scalar wraparound, zero scalars, both source flags,
   external buffers/registers/tape preservation, scratch release and time limits.
   Kernel checks reject message and list-capacity overflows; central theorems and
-  concrete resource instances are axiom-audited. The two scalar draws,
-  chronological history appends, cache programming, signing dispatch and
-  subsequent full handler/extractor/caller/public integration remain pending.
+  concrete resource instances are axiom-audited. Chronological history appends
+  are constructed below. The two scalar draws, cache programming, signing
+  dispatch and subsequent full handler/extractor/caller/public integration remain pending.
+
+- [Schnorr signing histories](../Signatures/Runtime/Caliper/SchnorrAGMHistories.lean)
+  now execute the original `Native.Signing.historiesValue` directly. The new
+  affine pair and signed message are appended in chronological order; cache
+  arguments, signature and both source flags are preserved. The
+  [bounded append](../Signatures/Runtime/Caliper/ListSnoc.lean) executes reversal,
+  prepend with a temporary extra slot, reversal and a charged copy back to the
+  original capacity. Its [uniform bounds](../Signatures/Runtime/Caliper/ListSnocBounds.lean)
+  include both reversal programs and all padding/copying. No entry-type
+  enumeration or uncharged list append is used.
+  [History layouts](../Signatures/Runtime/Caliper/SchnorrAGMHistoriesLayout.lean)
+  retain the arithmetic work frame and reserve one slot in each history. The
+  temporary slot has the explicit counter bound `qS + 3 < 2^w`. Capacity zero
+  remains supported with an empty admitted signing-update domain. The original
+  reachable query reservation proves admission whenever a signing query remains.
+  [Selections](../Signatures/Runtime/Caliper/SchnorrAGMHistoriesSelect.lean),
+  [pair construction](../Signatures/Runtime/Caliper/SchnorrAGMHistoriesPair.lean)
+  and [both appends](../Signatures/Runtime/Caliper/SchnorrAGMHistoriesAppend.lean)
+  use existing verified structural routines; every retained input and copied
+  component is charged.
+  [Complete bounds](../Signatures/Runtime/Caliper/SchnorrAGMHistoriesBounds.lean)
+  add at most `3072*W` time and `10240*W + 2048` code words to the sum of the
+  two append budgets, where `W` is the signing arithmetic width. Buffer extent
+  is at most eight. Complete memory includes stored code, dense registers,
+  descriptors, initial caller memory and every reached intermediate state of
+  the same source-correct execution.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMHistories.lean)
+  cover chronological order, changed entries, duplicate signed messages,
+  empty histories, final-slot appends, full caches with shadowed duplicates,
+  all flag combinations, external framing, tape preservation, scratch cleanup
+  and time bounds. Kernel checks reject full histories and invalid messages;
+  zero-allowance and zero-word-entry instances are checked, including execution
+  of a zero-word append. Central proofs and resource instances are axiom-audited.
+  Sampling, cache programming, signing dispatch and full reduction/public
+  integration remain pending.
 
 Remaining integration sequence:
 

@@ -359,8 +359,12 @@ Pinned upstreams:
   now computes the commitment and affine explanation from the runtime scalars
   and points, retaining the original state and constructing the source work
   frame. Its time, stored-code and complete memory bounds include every copy.
-  Signing sampling/history/cache updates, extraction, caller and public theorem
-  integration remain pending.
+  [Signing histories](Signatures/Runtime/Caliper/SchnorrAGMHistories.lean) now
+  append both the affine explanation and signed message in chronological order,
+  with the original source function as their specification and complete resource
+  bounds. The existing query reservation supplies the required free slots.
+  Signing sampling/cache updates, extraction, caller and public theorem integration
+  remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
