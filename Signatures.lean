@@ -74,6 +74,8 @@ import Signatures.Runtime.Caliper.WeightedParameters
 import Signatures.Runtime.Caliper.WeightedSecurity
 import Signatures.Runtime.Caliper.WeightedFamilyResources
 import Signatures.Runtime.Caliper.SchnorrROMTapeResetBounds
+import Signatures.Runtime.Caliper.SchnorrROMTapeReadMemory
+import Signatures.Runtime.Caliper.SchnorrROMTapeReadSource
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement

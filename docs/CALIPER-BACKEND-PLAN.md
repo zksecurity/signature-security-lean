@@ -2939,8 +2939,34 @@ Implemented and checked:
   interleaved private families, zero/middle/past-end slots, zero challenges,
   early-return padding, zero tape capacity, invalid bounds, external frames and
   standard axiom footprints. This component takes an already represented reset
-  packet; constructing that packet, raw-tape replay queries, both pass executions
-  and public ROM security/family integration remain to be composed.
+  packet; constructing that packet, composing both pass executions and public
+  ROM security/family integration remain.
+
+- [Constructed local code](../Signatures/Runtime/Caliper/Constructed.lean) packages
+  existing instruction implementations with derived budgets and scratch/name
+  proofs. Composition reuses those proofs and introduces no new interpreter or
+  assumed whole-program resource bound.
+  [Replay lookup](../Signatures/Runtime/Caliper/SchnorrROMTapePop.lean) executes
+  removal of the first matching family cell, preserving the other cells' order.
+  The [interactive handler](../Signatures/Runtime/Caliper/SchnorrROMTapeRead.lean)
+  consumes that reply on a hit without a fresh query. A miss retains its frame,
+  draws one fresh cell and appends it chronologically to the saved tape.
+  [Time/code](../Signatures/Runtime/Caliper/SchnorrROMTapeReadBounds.lean) and
+  [complete memory](../Signatures/Runtime/Caliper/SchnorrROMTapeReadMemory.lean)
+  derive the handler overhead from the actual scan, copies, dispatch and append.
+  They assume only the local draw's implementation and bounds.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrROMTapeReadSource.lean)
+  identifies its decoded answer and both tapes with `RawTape.oracle`, for every
+  represented raw query and state satisfying the stated local draw equation.
+  Output decoding is a mathematical observation, not an uncharged instruction.
+  The handler reserves a saved-tape slot even on hits; caller integration must
+  derive sufficient capacity from the complete query allowance.
+  [Pop](../SignaturesTest/CaliperSchnorrROMTapePop.lean) and
+  [read](../SignaturesTest/CaliperSchnorrROMTapeRead.lean) regressions execute
+  interleaved private families, repeated challenges, zero replies, empty tapes,
+  missing replies, external frames and scratch release. Fresh-draw packet
+  construction, actual caller reply routing, reset packet preparation and the
+  complete two-pass solver/public/family composition remain.
 
 Remaining integration sequence:
 
