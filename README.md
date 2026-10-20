@@ -396,9 +396,14 @@ Pinned upstreams:
   bounds. The [common-store signing wrapper](Signatures/Runtime/Caliper/SchnorrAGMHandlerSigning.lean)
   now uses and preserves that configuration across both scalar draws and all
   state updates. It has the original joint reply/state law and complete time,
-  code-size and total-memory bounds. All three common-store components are
-  implemented; full handler composition, extraction, caller and public theorem
-  integration remain pending.
+  code-size and total-memory bounds. The
+  [complete handler](Signatures/Runtime/Caliper/SchnorrAGMHandler.lean) now assembles
+  all three components with executed request copying and stored-tag dispatch.
+  Its replies retain the original request, including coefficient rows, and its
+  [source theorem](Signatures/Runtime/Caliper/SchnorrAGMHandlerSource.lean) proves
+  the original dependent handler's joint reply/state law. Complete resource
+  bounds include those copies and all stored branches. Caller packet conversion,
+  extraction, caller composition and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

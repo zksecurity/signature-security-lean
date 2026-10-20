@@ -2080,8 +2080,8 @@ Implemented and checked:
   full stores with zero signing/hash allowances. They also check missing and
   surplus oracle replies, external buffers/registers/tape, scratch release and
   elapsed time. Central results and concrete instances are axiom-audited.
-  Dependent request/reply dispatch,
-  extraction, caller/cyclic DLog and public concrete/family integration remain.
+  Dependent request/reply dispatch is assembled below; extraction, caller/cyclic
+  DLog and public concrete/family integration remain.
 
 - [Common-store Schnorr hashing](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHash.lean)
   now preserves the represented generator/public key while the existing hash
@@ -2113,7 +2113,7 @@ Implemented and checked:
   full stores. They check literal bytes, exact sampling traces, surplus/missing
   replies, preserved histories/flags, caller frames, scratch release and time;
   the central and instantiated theorems are axiom-audited. Dependent dispatch
-  and the complete Schnorr reduction/public integration remain.
+  is assembled below; complete Schnorr reduction/public integration remains.
 
 - [Common-store Schnorr signing](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigning.lean)
   now uses and preserves the runtime generator/public key across both scalar
@@ -2139,9 +2139,40 @@ Implemented and checked:
   signatures, zero list capacities and malformed requests with full stores.
   Literal bytes, exact two-draw/no-draw traces, missing/surplus replies, caller
   frames, scratch release, time and theorem axiom footprints are checked.
-  All three common-store components are implemented. Dependent request/reply
-  dispatch, extraction, caller/cyclic DLog and public concrete/family integration
-  remain pending.
+  All three common-store components are implemented and composed below.
+
+- [The complete Schnorr handler](../Signatures/Runtime/Caliper/SchnorrAGMHandler.lean)
+  assembles random, hash and signing code from five arithmetic implementations
+  (scalar multiply/add/negate, group scalar multiplication and subtraction)
+  and a scalar sampler. Their correctness and primitive budgets remain explicit;
+  no whole-handler implementation or cost certificate is assumed.
+  [Prefix retention](../Signatures/Runtime/Caliper/InteractivePrefix.lean) copies
+  the original request into a suffix and saves it in an actual buffer beyond
+  the callee's footprint. [Packet layouts](../Signatures/Runtime/Caliper/SchnorrAGMHandlerDispatchLayout.lean)
+  represent the complete request, including randomness range, message, groups
+  and coefficient rows. [Dispatch](../Signatures/Runtime/Caliper/SchnorrAGMHandlerDispatch.lean)
+  executes both levels of input-tag selection and constructs the output tags.
+  Each reply contains the updated common store and its original request.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSource.lean)
+  proves the exact original dependent request/reply and joint-state query-tree
+  law under uniform scalar sampling. Its erasure interprets stored bytes; it
+  does not supply a free machine conversion to the caller's packet format.
+  [Dispatch bounds](../Signatures/Runtime/Caliper/SchnorrAGMHandlerDispatchBounds.lean)
+  add at most `400*W+10` time to the largest component time, and `3000*W+400`
+  code words to the sum of all three component code bounds, where `W` is the
+  common layout width. Saved buffer addresses fit under the proved primitive
+  and sampler name bounds with `max(primitiveSlots,sampleSlots)+5 < 2^w`.
+  [Total memory](../Signatures/Runtime/Caliper/SchnorrAGMHandlerMemory.lean)
+  covers every visited state of the same source-correct execution: stored code,
+  descriptors, original-request copies, configuration and initial caller memory.
+  [Execution tests](../SignaturesTest/CaliperSchnorrAGMHandler.lean) run the assembled
+  service with an actual uniform word-query sampler. They compare literal bytes
+  for three signing configurations, fresh hashing, a zero-valued cache hit,
+  randomness ranges including the maximum word, and malformed hash/sign calls
+  on full stores. Exact query traces, missing/surplus replies, distinct original
+  coefficient rows, caller frames, scratch release, time and theorem axioms
+  are checked. Caller packet conversion, extraction, caller/cyclic DLog and
+  public concrete/family integration remain pending.
 
 Remaining integration sequence:
 
