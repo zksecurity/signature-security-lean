@@ -10,6 +10,12 @@ import Signatures.Runtime.Caliper.WeightedCapacity
 import Signatures.Runtime.Caliper.WeightedOracleMemory
 import Signatures.Runtime.Caliper.WeightedOracleInvariant
 import Signatures.Runtime.Caliper.WeightedOracleOriginal
+import Signatures.Runtime.Caliper.WeightedCallerBounds
+import Signatures.Runtime.Caliper.WeightedCallerInvariant
+import Signatures.Runtime.Caliper.WeightedCallerOriginal
+import Signatures.Runtime.Caliper.WeightedCaller
+import Signatures.Runtime.Caliper.WeightedCallerPostcondition
+import Signatures.Runtime.Caliper.WeightedCallerResources
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
 import Mathlib.Data.BitVec
@@ -901,6 +907,98 @@ private theorem serviceReservation (value : WeightedOracle.Input serviceLayout 6
     serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 primitives comparison comparison_correct
     goodUpdate goodBuffers (by decide) serviceResponse uniformSource value reserved answer reached).1
 
+private def callerCode := WeightedCallerHandler.code (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+private def callerTime := WeightedCallerHandler.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) 65535 (by decide) (OOPSTerms.timeBudget oops 6) 26
+    (BLSAccumulate.goodTime accumulation.arithmetic 6 6) (fun _ => BLSResponse.goodTime groupLayout 6)
+private def callerWords := WeightedCallerHandler.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) 65535 (by decide) (OOPSTerms.codeBudget oops 27) 125
+    (BLSAccumulate.goodCode accumulation.arithmetic 27 27) (fun _ => BLSResponse.goodWords groupLayout 27)
+private theorem callerBound : Interactive.TimeBoundOn
+    (WeightedCallerPackets.ready serviceLayout 65535 (OOPSTerms.value (degree := 3)))
+    uniformPort .unit (WeightedCallerPackets.input serviceLayout 65535 (by decide)) callerCode callerTime :=
+  WeightedCallerHandler.time_bound (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide) uniformCorrect
+    oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) goodBound serviceResponseBound
+private theorem callerFits : (callerCode.lower uniformPort).DescriptionFits :=
+  WeightedCallerHandler.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide)
+
+private theorem callerMemory (tape : RandomTape 16) (value : WeightedCallerPackets.Packet serviceLayout 65535)
+    (admitted : WeightedCallerPackets.ready serviceLayout 65535 (OOPSTerms.value (degree := 3)) value)
+    (before : State 16) (holds : (WeightedCallerPackets.input serviceLayout 65535 (by decide)).Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (callerCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ callerTime ∧
+      ∃ execution : WordIO.Exec .unit tape (callerCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((callerCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (callerCode.lower uniformPort).memBound) ≤
+              5 * callerWords + 20 + registers + 3 * buffers + before.liveMem buffers + callerTime := by
+  obtain ⟨elapsed, answer, supported, represented, execution, memory⟩ :=
+    WeightedCallerHandler.resources (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+      goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide) uniformCorrect
+      oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535) goodBound serviceResponseBound
+      oopsNames (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames serviceResponseNames
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, memory⟩
+
+private theorem callerReady (value : WeightedCallerPackets.Packet serviceLayout 65535) {remaining : Nat}
+    (reserved : WeightedOracle.Reserved serviceLayout 4 (remaining + 1) value.2.val) :
+    WeightedCallerPackets.ready serviceLayout 65535 (OOPSTerms.value (degree := 3)) value :=
+  WeightedCallerHandler.ready_of_reserved (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 value reserved
+private theorem callerReservation (value : WeightedCallerPackets.Packet serviceLayout 65535) {remaining : Nat}
+    (reserved : WeightedOracle.Reserved serviceLayout 4 (remaining + 1) value.2.val)
+    (answer : WeightedCallerPackets.Reply serviceLayout 65535 × serviceLayout.store.Value)
+    (reached : answer ∈ support (WeightedCallerHandler.denote (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 primitives comparison comparison_correct
+      goodUpdate goodBuffers (by decide) serviceResponse uniformSource value)) :
+    WeightedOracle.Reserved serviceLayout 4 remaining answer.2.val :=
+  (WeightedCallerHandler.step (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) serviceResponse uniformSource value reserved answer reached).1
+
+
+private theorem callerOracle (tape : RandomTape 16) (value : WeightedCallerPackets.Packet serviceLayout 65535)
+    (accepted : WeightedCallerPackets.ready serviceLayout 65535 (OOPSTerms.value (degree := 3)) value)
+    (before : State 16) (holds : (WeightedCallerPackets.input serviceLayout 65535 (by decide)).Holds value before) :
+    (fun result => WeightedCallerHandler.observedIn serviceLayout 65535 Prod.swap <$>
+        Interactive.observe (WeightedCallerPackets.output serviceLayout 65535 (by decide)) result) <$>
+      callerCode.execute uniformPort .unit tape before =
+      some <$> ((fun result => (WeightedCallerHandler.answerIn serviceLayout 65535 Prod.swap value.1 result.1, result.2)) <$>
+        ((WeightedCallerHandler.original (OOPS.LazyAGM.terms 3) serviceRespond)
+          (WeightedCallerHandler.queryIn serviceLayout 65535 Prod.swap value.1)).run
+            (WeightedOracle.decodeStore Prod.swap value.2.val)) :=
+  WeightedCallerHandler.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+    (fun _ => rfl) rfl uniformSource uniformLaw (Equiv.prodComm (Word 16) (Fin 4)) (OOPS.LazyAGM.terms 3)
+    (OOPSTerms.source 3) uniformCorrect tape value accepted before holds
+
+private def callerPacket {w : Nat} {K M F R C G : Type} [DecidableEq K]
+    (layout : WeightedOracle.Layouts w K M F R C G) (randomBound : Nat) :
+    WeightedOracle.Input layout randomBound → WeightedCallerPackets.Packet layout randomBound
+  | .inl value => (.inl value.1, value.2)
+  | .inr (.inl value) => (.inr (.inl ⟨value.val.1, value.property.1.1⟩), ⟨value.val.2, value.property.1.2⟩)
+  | .inr (.inr value) => (.inr (.inr ⟨value.val.1, value.property.1.1⟩), ⟨value.val.2, value.property.1.2⟩)
+
+private def callerDecoded {w : Nat} {K M F R C G : Type}
+    (layout : WeightedOracle.Layouts w K M F R C G) (randomBound : Nat)
+    (value : WeightedCallerPackets.Reply layout randomBound × layout.store.Value) :
+    (Nat ⊕ G) × WeightedHash.Store K M R C G :=
+  ((match value.1 with | .inl packet => .inl packet.2.val | .inr point => .inr point.val), value.2.val)
+
 private def serviceInitial : serviceLayout.store.Value :=
   ⟨((3, 13), [], [], []), ⟨trivial, trivial⟩,
     ⟨by decide, by simp⟩, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩⟩
@@ -926,9 +1024,175 @@ private def proximityService : WeightedOracle.Layouts 16 Key ((Fin 3 → Word 16
 private def proximityServiceCode := WeightedOracle.code (base := base) (key := .atom false) (val := .atom true)
   proximityService 4 (by decide) (by decide) proximityGenerator 65535 (by decide) primitives comparison comparison_correct
   goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+private def proximityCallerCode := WeightedCallerHandler.code (base := base) (key := .atom false) (val := .atom true)
+  proximityService 4 (by decide) (by decide) proximityGenerator 65535 (by decide) primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
 private def proximityServiceSign : proximityService.signing.input.Value :=
   ⟨((vector 3 9 27).val, (3, 13), [], [], []), ⟨⟨(fun _ => trivial), trivial⟩,
     ⟨trivial, trivial⟩, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩⟩, by decide⟩
+
+private def adaptiveRequest := WeightedCallerPackets.request serviceLayout 65535 (by decide)
+private def adaptiveReply := WeightedCallerPackets.reply serviceLayout 65535 (by decide)
+private def adaptiveLayout := WeightedCaller.layout serviceLayout 65535 (by decide) adaptiveRequest scalar.representation (by decide)
+private def adaptiveInitial (q : WeightedCallerPackets.Request serviceLayout 65535) :
+    scalar.Value ⊕ (WeightedCallerPackets.Request serviceLayout 65535 × WeightedCallerPackets.Request serviceLayout 65535) := .inr (q, q)
+private def adaptiveInitialCode : Realizer .unit adaptiveRequest (CallerStep.next adaptiveLayout) adaptiveInitial :=
+  ((duplicateRealizer .unit (by decide) adaptiveRequest (by decide) (by decide)).then
+    (inrRealizer .unit (by decide) scalar.representation (CallerStep.pending adaptiveLayout)
+      (by decide) (by decide))).viewOutput (CallerStep.next adaptiveLayout) adaptiveInitial (fun _ => rfl)
+private def randomIndex (value : UniformQuery.Reply 65535) : accumulation.cache.key.Value :=
+  ⟨(0, BitVec.ofNat 16 value.2.val), trivial, trivial⟩
+private def randomIndexCode : Realizer .unit uniformPort.reply accumulation.cache.key.representation randomIndex :=
+  ByteRoute.realizer uniformPort.reply accumulation.cache.key.representation randomIndex
+    [.literal [0], .slice 1 1] (by decide) (by exact ⟨by decide, trivial⟩) (by decide) (fun _ => rfl)
+private def randomHashCode : Realizer .unit uniformPort.reply adaptiveRequest
+    (fun value => .inr (.inl (randomIndex value))) := (randomIndexCode.then
+  (inlRealizer .unit (by decide) accumulation.cache.key.representation oops.input.representation (by decide) (by decide))).then
+    (inrRealizer .unit (by decide) uniformPort.request (WeightedCallerPackets.groupRequest serviceLayout) (by decide) (by decide))
+private def adaptiveAdvance (value : WeightedCallerPackets.Request serviceLayout 65535 × WeightedCallerPackets.Reply serviceLayout 65535) :=
+  match value.2 with
+  | .inl random => adaptiveInitial (.inr (.inl (randomIndex random)))
+  | .inr point => .inl point
+private def adaptiveContinuation : Realizer .unit (CallerStep.resume adaptiveLayout) (CallerStep.next adaptiveLayout) adaptiveAdvance :=
+  ((secondRealizer .unit (by decide) adaptiveRequest adaptiveReply (by decide) (by decide)).then
+    (branchRealizer .unit (by decide) uniformPort.reply scalar.representation (CallerStep.next adaptiveLayout)
+      (randomHashCode.then adaptiveInitialCode)
+      (inlRealizer .unit (by decide) scalar.representation (CallerStep.pending adaptiveLayout) (by decide) (by decide))
+      (by decide) (by decide))).viewOutput (CallerStep.next adaptiveLayout) adaptiveAdvance (by
+        rintro ⟨pending, random | point⟩ <;> rfl)
+private def adaptiveDomain (_ : Nat) (value : WeightedCallerPackets.Request serviceLayout 65535 × WeightedCallerPackets.Request serviceLayout 65535) :=
+  value.1 = value.2
+private theorem adaptiveValid (remaining : Nat) (q c) (_ : adaptiveDomain (remaining + 1) (q, c))
+    (represented original) (_ : WeightedCallerHandler.replyMatches serviceLayout 65535 q represented original) :
+    WeightedCaller.HeadValid serviceLayout 65535 adaptiveDomain remaining (adaptiveAdvance (c, represented)) := by
+  cases represented with
+  | inl random => rfl
+  | inr point => trivial
+private def adaptiveInput := adaptiveRequest.prod serviceLayout.store.representation (by decide)
+private def adaptiveAdmitted (value : WeightedCallerPackets.Request serviceLayout 65535 × serviceLayout.store.Value) :=
+  WeightedOracle.Reserved serviceLayout 4 2 value.2.val
+private theorem adaptiveInitialValid (value) (_ : adaptiveAdmitted value) :
+    WeightedCaller.HeadValid serviceLayout 65535 adaptiveDomain 2 (adaptiveInitial value.1) := rfl
+private def adaptiveSource := WeightedCallerHandler.denote (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) serviceResponse uniformSource
+private def adaptive (fuel : Nat) := WeightedCaller.program (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide) adaptiveAdvance
+  adaptiveRequest scalar.representation (by decide) adaptiveContinuation (by decide)
+  adaptiveRequest adaptiveInitial adaptiveInitialCode (by decide) (by decide) fuel
+private theorem adaptiveRefines : Interactive.RefinesOn adaptiveAdmitted uniformPort .unit adaptiveInput (CallerStep.output adaptiveLayout)
+    (fun value => CallerControl.start adaptiveAdvance adaptiveSource 2 (adaptiveInitial value.1, value.2)) (adaptive 2) :=
+  WeightedCaller.refines (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+    (fun _ => rfl) rfl uniformSource uniformLaw uniformCorrect adaptiveDomain adaptiveAdvance adaptiveValid
+    adaptiveRequest scalar.representation (by decide) adaptiveContinuation (by decide)
+    adaptiveRequest adaptiveInitial adaptiveInitialCode (by decide) (by decide) 2 adaptiveAdmitted adaptiveInitialValid (fun _ valid => valid)
+private theorem adaptivePostcondition (fuel : Nat) (value : WeightedCallerPackets.Request serviceLayout 65535 × serviceLayout.store.Value)
+    (reserved : WeightedOracle.Reserved serviceLayout 4 fuel value.2.val)
+    (answer) (reached : answer ∈ support (CallerControl.start adaptiveAdvance adaptiveSource fuel (adaptiveInitial value.1, value.2))) :
+    WeightedCaller.Postcondition serviceLayout 4 fuel value.2 answer.2 :=
+  WeightedCaller.start_postcondition (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) serviceResponse uniformSource adaptiveAdvance fuel (adaptiveInitial value.1, value.2) reserved answer reached
+
+private theorem adaptiveLocalTime (value) : adaptiveContinuation.time value ≤ 1000 := by
+  rcases value with ⟨pending, random | point⟩
+  · change adaptiveContinuation.time (.inl ⟨0, Nat.zero_lt_succ _⟩, .inl ⟨⟨0, Nat.zero_lt_succ _⟩, ⟨0, Nat.zero_lt_succ _⟩⟩) ≤ 1000
+    decide
+  · change adaptiveContinuation.time (.inl ⟨0, Nat.zero_lt_succ _⟩, .inr ⟨0, trivial⟩) ≤ 1000
+    decide
+private theorem adaptiveInitialTime (value) : adaptiveInitialCode.time value ≤ 1000 := by
+  change adaptiveInitialCode.time (.inl ⟨0, Nat.zero_lt_succ _⟩) ≤ 1000
+  decide
+private theorem adaptiveLocalWords : descriptionWords adaptiveContinuation.code ≤ 5000 := by decide +kernel
+private theorem adaptiveInitialWords : descriptionWords adaptiveInitialCode.code ≤ 5000 := by decide +kernel
+private theorem adaptiveLocalNames : NamesBound adaptiveContinuation.code 5 := ⟨by decide, by decide⟩
+private theorem adaptiveInitialNames : NamesBound adaptiveInitialCode.code 5 := ⟨by decide, by decide⟩
+private def adaptiveTimeBudget (fuel : Nat) := WeightedCaller.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) 65535 (by decide) adaptiveRequest.encoding.words (CallerStep.width adaptiveLayout)
+  (OOPSTerms.timeBudget oops 6) 26 (BLSAccumulate.goodTime accumulation.arithmetic 6 6)
+  (fun _ => BLSResponse.goodTime groupLayout 6) 1000 1000 fuel
+private def adaptiveWordsBudget (fuel : Nat) := WeightedCaller.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) 65535 (by decide) adaptiveRequest.encoding.words (CallerStep.width adaptiveLayout)
+  (OOPSTerms.codeBudget oops 27) 125 (BLSAccumulate.goodCode accumulation.arithmetic 27 27)
+  (fun _ => BLSResponse.goodWords groupLayout 27) 5000 5000 fuel
+private theorem adaptiveTimeBound (fuel : Nat) : Interactive.TimeBoundOn
+    (fun value : WeightedCallerPackets.Request serviceLayout 65535 × serviceLayout.store.Value =>
+      WeightedOracle.Reserved serviceLayout 4 fuel value.2.val)
+    uniformPort .unit adaptiveInput (adaptive fuel) (adaptiveTimeBudget fuel) :=
+  WeightedCaller.time (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+    (fun _ => rfl) rfl uniformSource uniformLaw uniformCorrect adaptiveDomain adaptiveAdvance adaptiveValid
+    adaptiveRequest scalar.representation (by decide) adaptiveContinuation (by decide)
+    adaptiveRequest adaptiveInitial adaptiveInitialCode (by decide) (by decide)
+    oopsBound goodBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+    serviceResponseBound adaptiveLocalTime adaptiveInitialTime fuel _ (fun _ _ => rfl) (fun _ valid => valid)
+private theorem adaptiveWordsBound (fuel : Nat) : ( (adaptive fuel).lower uniformPort).descriptionWords ≤ adaptiveWordsBudget fuel :=
+  WeightedCaller.words (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide) adaptiveAdvance
+    adaptiveRequest scalar.representation (by decide) adaptiveContinuation (by decide)
+    adaptiveRequest adaptiveInitial adaptiveInitialCode (by decide) (by decide)
+    oopsBound goodBound (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535)
+    serviceResponseBound adaptiveLocalWords adaptiveInitialWords fuel
+private theorem adaptiveFits (fuel : Nat) : ((adaptive fuel).lower uniformPort).DescriptionFits :=
+  WeightedCaller.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide) adaptiveAdvance
+    adaptiveRequest scalar.representation (by decide) adaptiveContinuation (by decide)
+    adaptiveRequest adaptiveInitial adaptiveInitialCode (by decide) (by decide)
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide) (by decide +kernel) fuel
+private theorem adaptiveMemory (tape : RandomTape 16) (value) (valid : adaptiveAdmitted value)
+    (before : State 16) (holds : adaptiveInput.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support ((adaptive 2).execute uniformPort .unit tape before)) :
+    finished.time ≤ adaptiveTimeBudget 2 ∧
+      ∃ execution : WordIO.Exec .unit tape ((adaptive 2).lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          (((adaptive 2).lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers ((adaptive 2).lower uniformPort).memBound) ≤
+              5 * adaptiveWordsBudget 2 + 20 + registers + 3 * buffers + before.liveMem buffers + adaptiveTimeBudget 2 := by
+  obtain ⟨elapsed, answer, supported, represented, execution, memory⟩ :=
+    WeightedCaller.resources (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+      goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+      (fun _ => rfl) rfl uniformSource uniformLaw uniformCorrect adaptiveDomain adaptiveAdvance adaptiveValid
+      adaptiveRequest scalar.representation (by decide) adaptiveContinuation (by decide)
+      adaptiveRequest adaptiveInitial adaptiveInitialCode (by decide) (by decide)
+      oopsBound goodBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535)
+      serviceResponseBound adaptiveLocalTime adaptiveInitialTime adaptiveLocalWords adaptiveInitialWords
+      2 adaptiveAdmitted adaptiveInitialValid (fun _ valid => valid) (callerSlots := 5) (by decide)
+      oopsNames (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames serviceResponseNames
+      (by decide) (by decide) (by decide) (by decide) adaptiveLocalNames.accounted adaptiveInitialNames.accounted
+      tape value valid before holds registers buffers initialRegisters initialBuffers finished reached
+  refine ⟨elapsed, execution, ?_⟩
+  intro between visited
+  have bound := (memory between visited).2.2.2
+  change (((adaptive 2).lower uniformPort).staticWords registers buffers : Int) +
+    between.liveMem (max buffers ((adaptive 2).lower uniformPort).memBound) ≤
+      adaptiveWordsBudget 2 + 4 * (5 + adaptiveWordsBudget 2) + registers + 3 * buffers +
+        before.liveMem buffers + adaptiveTimeBudget 2 at bound
+  omega
+private theorem adaptiveExecutedPostcondition (tape : RandomTape 16) (value) (valid : adaptiveAdmitted value)
+    (before : State 16) (holds : adaptiveInput.Holds value before)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support ((adaptive 2).execute uniformPort .unit tape before)) :
+    ∃ answer, (CallerStep.output adaptiveLayout).Holds answer finished.state ∧
+      WeightedCaller.Postcondition serviceLayout 4 2 value.2 answer.2 ∧
+      WordIO.Exec .unit tape ((adaptive 2).lower uniformPort) before finished.state finished.trace finished.time finished.net finished.peak :=
+  WeightedCaller.execution_postcondition (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+    (fun _ => rfl) rfl uniformSource uniformLaw uniformCorrect adaptiveDomain adaptiveAdvance adaptiveValid
+    adaptiveRequest scalar.representation (by decide) adaptiveContinuation (by decide)
+    adaptiveRequest adaptiveInitial adaptiveInitialCode (by decide) (by decide) 2 adaptiveAdmitted adaptiveInitialValid (fun _ valid => valid)
+    tape value valid before holds finished reached
 
 open Lean in
 run_cmd do
@@ -947,7 +1211,17 @@ run_cmd do
           framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
           events == trace && remaining == [88] && elapsed ≤ serviceTime do
         throwError "combined service changed its reply, state, range, framing, trace or time bound"
-      pure (WeightedOracle.returned serviceLayout 65535 answer)
+      match executeUniform (WeightedCallerPackets.input serviceLayout 65535 (by decide))
+          (Layout.all (WeightedCallerPackets.output serviceLayout 65535 (by decide)))
+          callerCode (callerPacket serviceLayout 65535 value) replies with
+      | none => throwError "caller-facing weighted handler execution failed"
+      | some (reply, callerFrame, callerCapacity, callerRegister, callerTape, callerScratch, callerEvents, callerRemaining, callerElapsed) =>
+        let callerRange := match reply.1 with | .inl value => some value.1.val | .inr _ => none
+        unless callerDecoded serviceLayout 65535 reply == wanted && callerRange == range &&
+            callerFrame == #[77] && callerCapacity == 4 && callerRegister == 91 && callerTape == 9 && callerScratch &&
+            callerEvents == trace && callerRemaining == [88] && callerElapsed ≤ callerTime do
+          throwError "caller packet conversion changed its reply, store, range, framing, trace or charged time"
+        pure reply.2
   let stored ← run (.inl (⟨7, by decide⟩, serviceInitial)) [7, 3, 88] (.inl 3, serviceInitial.val)
     [.output 7, .invoke, .input 7, .input 3] (some 7)
   let hashed ← match serviceHashInput (2, 42) stored with
@@ -974,6 +1248,12 @@ run_cmd do
     [(message.val, 4901), (message.val, 4901)]) [] none
   if (serviceHashInput (2, 42) stored).isSome || (serviceSignInput message stored).isSome then
     throwError "combined service admitted an exhausted selected reply log"
+  let reject (value : WeightedCallerPackets.Packet serviceLayout 65535) : Lean.Elab.Command.CommandElabM Unit := do
+    let bytes := (WeightedCallerPackets.input serviceLayout 65535 (by decide)).encoding.encode value
+    if ((WeightedCallerHandler.admitted serviceLayout 65535 (by decide) (OOPSTerms.value (degree := 3))).encoding.decode bytes).isSome then
+      throwError "caller readiness decoder admitted an exhausted selected reply log"
+  reject (.inr (.inl ⟨(2, 42), trivial, trivial⟩), stored)
+  reject (.inr (.inr message), stored)
   let _ ← run (.inl (⟨0, by decide⟩, stored)) [0, 0, 88] (.inl 0, stored.val)
     [.output 0, .invoke, .input 0, .input 0] (some 0)
   match executeUniform (proximityService.input 65535 (by decide)) (Layout.all (proximityService.output 65535 (by decide)))
@@ -991,13 +1271,72 @@ run_cmd do
             .output 65535, .invoke, .input 65535, .input 7, .output 65535, .invoke, .input 65535, .input 11] &&
           remaining == [88] do
         throwError "combined Proximity service changed vector logs, private cache or caller state"
+      match executeUniform (WeightedCallerPackets.input proximityService 65535 (by decide))
+          (Layout.all (WeightedCallerPackets.output proximityService 65535 (by decide)))
+          proximityCallerCode (callerPacket proximityService 65535 (.inr (.inr proximityServiceSign)))
+          [65535, 2, 65535, 5, 65535, 7, 65535, 11, 88] with
+      | none => throwError "caller-facing Proximity handler failed"
+      | some (reply, callerFrame, callerCapacity, callerRegister, callerTape, callerScratch, callerEvents, callerRemaining, _) =>
+        let signatures := reply.2.val.2.2.2.map (fun entry => (List.ofFn entry.1.1, entry.1.2, entry.2))
+        unless WeightedCallerHandler.replyValue proximityService 65535 reply.1 == .inr 4901 &&
+            reply.2.val.1 == (3, 13) && reply.2.val.2.1 == entries && reply.2.val.2.2.1.isEmpty &&
+            signatures == [([3, 9, 27], 42, 4901)] && callerFrame == #[77] && callerCapacity == 4 &&
+            callerRegister == 91 && callerTape == 9 && callerScratch && callerEvents == events &&
+            callerRemaining == [88] do
+          throwError "Proximity packet conversion changed vector logs, cache, trace or caller state"
+  -- Here the next request is chosen by executed caller code from the reply.
+  for chosen in [3, 5] do
+    for fuel in [0, 1, 2] do
+      let initial : WeightedCallerPackets.Request serviceLayout 65535 := .inl ⟨7, by decide⟩
+      let replies : List (Word 16) := if fuel == 0 then [88] else if fuel == 1 then [7, BitVec.ofNat 16 chosen, 88]
+        else [7, BitVec.ofNat 16 chosen, 65535, 7, 88]
+      match executeUniform adaptiveInput (Layout.all (CallerStep.output adaptiveLayout))
+          (adaptive fuel) (initial, serviceInitial) replies with
+      | none => throwError "generated adaptive weighted caller failed"
+      | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+        let next : WeightedCallerPackets.Request serviceLayout 65535 :=
+          if fuel == 0 then initial else .inr (.inl ⟨(0, BitVec.ofNat 16 chosen), trivial, trivial⟩)
+        let correctHead := match answer.1 with
+          | .inl point => fuel == 2 && point.val == 21
+          | .inr pending => fuel < 2 && pending.1 == next && pending.2 == next
+        let expected : WeightedHash.Store Key (Word 16 × Word 16) (Word 16) (Word 16 × Word 16) (Word 16) :=
+          if fuel < 2 then serviceInitial.val else
+            ((3, 13), [((0, BitVec.ofNat 16 chosen), 7)], [((0, BitVec.ofNat 16 chosen), 21)], [])
+        let trace : List (WordIO.Event 16) := if fuel == 0 then [] else
+          [.output 7, .invoke, .input 7, .input (BitVec.ofNat 16 chosen)] ++
+            (if fuel == 1 then [] else [.output 65535, .invoke, .input 65535, .input 7])
+        unless correctHead && answer.2.val == expected && framed == #[77] && capacity == 4 && register == 91 &&
+            tape == 9 && scratch && events == trace && remaining == [88] && elapsed ≤ adaptiveTimeBudget fuel do
+          throwError "adaptive caller lost its chosen query, cutoff, store, trace or frame"
+  for fuel in [1, 2] do
+    match executeUniform adaptiveInput (Layout.all (CallerStep.output adaptiveLayout))
+        (adaptive fuel) (.inr (.inr message), serviceInitial) [65535, 2, 65535, 5, 65535, 7, 65535, 11, 88] with
+    | none => throwError "generated weighted signing caller failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      let correctHead := match answer.1 with | .inl point => point.val == 4901 | .inr _ => false
+      unless correctHead && answer.2.val == ((3, 13), entries, [], [(message.val, 4901)]) &&
+          framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch && remaining == [88] && elapsed ≤ adaptiveTimeBudget fuel &&
+          events == [.output 65535, .invoke, .input 65535, .input 2, .output 65535, .invoke, .input 65535, .input 5,
+            .output 65535, .invoke, .input 65535, .input 7, .output 65535, .invoke, .input 65535, .input 11] do
+        throwError "weighted caller changed signing or failed to return early"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``WeightedOracle.Layouts.hashStore, ``WeightedOracle.Layouts.hashOutput,
       ``WeightedOracle.refines, ``WeightedOracle.denote_source, ``WeightedOracle.observe,
       ``WeightedOracle.denote_equiv, ``WeightedOracle.observe_equiv, ``WeightedOracle.time_bound,
       ``WeightedOracle.code_bound, ``WeightedOracle.names, ``WeightedOracle.descriptionFits,
       ``WeightedOracle.resources, ``WeightedOracle.valid_of_reserved, ``WeightedOracle.step,
-      ``serviceBound, ``serviceFits, ``serviceOracle, ``serviceMemory, ``serviceReady, ``serviceReservation, ``serviceInitialRoom] do
+      ``serviceBound, ``serviceFits, ``serviceOracle, ``serviceMemory, ``serviceReady, ``serviceReservation, ``serviceInitialRoom,
+      ``WeightedCallerPackets.request_bytes, ``WeightedCallerPackets.prepare_time, ``WeightedCallerPackets.prepare_words,
+      ``WeightedCallerPackets.finish_time, ``WeightedCallerPackets.finish_words, ``WeightedCallerHandler.refines,
+      ``WeightedCallerHandler.denote_source, ``WeightedCallerHandler.synchronizes, ``WeightedCallerHandler.observe_equiv,
+      ``WeightedCallerHandler.time_bound, ``WeightedCallerHandler.code_bound, ``WeightedCallerHandler.names,
+      ``WeightedCallerHandler.descriptionFits, ``WeightedCallerHandler.resources, ``WeightedCallerHandler.ready_of_reserved,
+      ``WeightedCallerHandler.step, ``callerBound, ``callerFits, ``callerMemory, ``callerReady, ``callerReservation, ``callerOracle,
+      ``WeightedCaller.preserves, ``WeightedCaller.refines, ``WeightedCaller.start_postcondition,
+      ``WeightedCaller.Postcondition.extraction_room, ``adaptiveRefines, ``adaptivePostcondition,
+      ``WeightedCaller.execution_postcondition, ``WeightedCaller.observe_source, ``WeightedCaller.words, ``WeightedCaller.time,
+      ``WeightedCaller.names, ``WeightedCaller.descriptionFits, ``WeightedCaller.resources,
+      ``adaptiveTimeBound, ``adaptiveWordsBound, ``adaptiveFits, ``adaptiveMemory, ``adaptiveExecutedPostcondition] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

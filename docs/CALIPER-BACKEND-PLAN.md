@@ -2579,7 +2579,7 @@ Implemented and checked:
   Concrete OOPS signing derives its cache precondition from this reservation and
   the actual generator's output bound. Hash and signing regressions instantiate
   reservation preservation. These supply the combined service's per-query
-  invariant below; the complete caller still needs assembly.
+  invariant and the generated caller below.
 - [Combined weighted service](../Signatures/Runtime/Caliper/WeightedOracle.lean)
   dispatches stored tags to the actual random forwarding, hash and signing
   programs. [Shared layouts](../Signatures/Runtime/Caliper/WeightedOracleLayout.lean)
@@ -2615,9 +2615,57 @@ Implemented and checked:
   and derived time bound. A Proximity instance checks a different message
   width and vector-message logs. Concrete source, time, address, total-memory
   and reservation theorems are instantiated and axiom-audited.
-  These sequences are selected by the test harness. Charged caller packet
-  conversion and the adaptive caller controller's completion invariant still
-  need to be connected to this service.
+  These service sequences are selected by the test harness. The generated
+  adaptive caller below supplies and executes its own continuation.
+- [Weighted caller packets](../Signatures/Runtime/Caliper/WeightedCallerPackets.lean)
+  keep the request and private store separate at the caller boundary. Executed
+  distribution builds the service input; executed merging returns the reply
+  and updated store. Hash indices and signing messages can have different
+  widths. Readiness is a proof domain: the converter does not evaluate a host
+  term generator. The signing program itself executes term generation.
+  [Packet bounds](../Signatures/Runtime/Caliper/WeightedCallerPacketBounds.lean)
+  charge every slice, tag, padding word and private-store copy. For packet width
+  `W`, preparation takes at most `64*W + 6` steps and finishing `44*W + 2`.
+  The [caller-facing handler](../Signatures/Runtime/Caliper/WeightedCallerHandler.lean)
+  constructs these conversions around the complete oracle.
+  [Its resources](../Signatures/Runtime/Caliper/WeightedCallerBounds.lean)
+  add at most `108*W + 8` time and `710*W + 420` stored words to the service
+  budgets, with address and same-execution memory proofs.
+  [Source synchronization](../Signatures/Runtime/Caliper/WeightedCallerSource.lean)
+  preserves the complete reply/state law, including both the requested random
+  range and the sampled value. [Original-key observation](../Signatures/Runtime/Caliper/WeightedCallerOriginal.lean)
+  retains that law under the source key equivalence.
+  [Admission and growth](../Signatures/Runtime/Caliper/WeightedCallerInvariant.lean)
+  follow from reserved capacities and the actual generator's term bound.
+- [The generated weighted caller](../Signatures/Runtime/Caliper/WeightedCaller.lean)
+  composes local initialization and continuation code with the constructed
+  handler and controller. Local caller invariants need only be preserved for
+  replies matching the pending source query. The
+  [execution bridge](../Signatures/Runtime/Caliper/WeightedCallerExecution.lean)
+  identifies this execution with the original oracle machine when its local
+  correspondence and query bound are supplied. It retains the final private
+  store and transfers completion invariants to the actual returned bytes.
+  [Completion](../Signatures/Runtime/Caliper/WeightedCallerPostcondition.lean)
+  preserves configuration and bounds cache growth by `max(1,d)*q` and combined
+  log growth by `q`, including early return and fuel cutoff. From an empty
+  store, cache capacity `max(1,d)*(2*q + 1)` supplies room for at most
+  `max(1,d)` extraction reads per retained reply and one final term list.
+  No extra extraction slots are required in the reply logs. The extractor
+  still must prove that its executed expansion meets this read count.
+  [Complete resources](../Signatures/Runtime/Caliper/WeightedCallerResources.lean)
+  derive time, stored code, names, accepted addresses and every visited memory
+  state from generator, sampler, update, response and local caller budgets.
+  They include initialization, controller routing and every stored iteration;
+  no completed-caller implementation or resource certificate is an input.
+  [Regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) execute mixed
+  requests through both service interfaces, including Proximity's wider vector
+  messages and exhausted-log rejection. An actual adaptive caller uses two
+  different random replies to select different hash requests. Zero and one
+  units of fuel retain the correct pending request; two complete the hash.
+  Signing returns early with the same response, cache and logs at either one
+  or two units of fuel. Exact traces, frames, scratch release and derived
+  elapsed-time bounds are checked. Concrete source, reservation, complete
+  caller resource and execution-postcondition instances are axiom-audited.
   Chronological coefficient expansion/extraction, complete OOPS/Proximity solvers
   and public concrete/family models also remain. Schnorr ROM replay/composition
   remains pending; conventional CPU/flat-memory adequacy stays outside this migration.

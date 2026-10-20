@@ -486,8 +486,17 @@ Pinned upstreams:
   include dispatch, saved-state copies, stored code and every visited memory state.
   [Per-query invariants](Signatures/Runtime/Caliper/WeightedOracleInvariant.lean)
   derive signing readiness and preserve the capacity reservation.
-  Caller packet conversion and complete controller invariants, transcript
-  extraction and full-solver integration remain.
+  The [caller interface](Signatures/Runtime/Caliper/WeightedCallerHandler.lean)
+  executes the request/reply conversions, and the
+  [generated caller](Signatures/Runtime/Caliper/WeightedCaller.lean)
+  composes that service with actual local initialization and continuation code.
+  Its [source correspondence](Signatures/Runtime/Caliper/WeightedCallerExecution.lean)
+  retains the full private store and the random reply's requested range.
+  [Complete caller resources](Signatures/Runtime/Caliper/WeightedCallerResources.lean)
+  include controller overhead and all stored iterations.
+  [Completion bounds](Signatures/Runtime/Caliper/WeightedCallerPostcondition.lean)
+  cover early return and cutoff and provide cache headroom for later extraction.
+  Chronological weighted extraction and full-solver integration remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
