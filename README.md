@@ -627,8 +627,11 @@ Pinned upstreams:
   The [replay-backed hash cache](Signatures/Runtime/Caliper/SchnorrROMHashCacheSource.lean)
   now composes lookup and insertion with that draw, with complete execution
   resource bounds. Hits preserve both tapes; misses may consume the final
-  reserved tape slot. Composing this read with the separate managed/LIVE tables
-  and retained public configuration remains part of the hash-handler work.
+  reserved tape slot. The [complete final-hash handler](Signatures/Runtime/Caliper/SchnorrROMFinalHashSource.lean)
+  retains the public configuration and managed table through executed copies,
+  reads and updates LIVE, and matches the original shared-tape final lookup.
+  Its complete resource bounds include these copies and every visited state.
+  Normal managed/LIVE hash routing remains to be composed.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

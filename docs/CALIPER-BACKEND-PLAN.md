@@ -3220,7 +3220,7 @@ Implemented and checked:
   modulo decoding, the last reserved slot, exhausted capacity, incomplete replies,
   traces, scratch release, external state and axiom footprints. A direct draw
   over more than sixteen million indices executes within the same local bound.
-  Managed/LIVE hash and final-hash composition remain the next integration step.
+  These raw replay queries feed the cache and final-hash constructions below.
 
 - The [stateful cache invariant extension](../Signatures/Runtime/Caliper/StatefulCacheInvariant.lean)
   proves refinement and time bounds when the draw requires an input reservation
@@ -3241,8 +3241,31 @@ Implemented and checked:
   families, and fresh reads that fill both the last cache slot and last saved-tape
   slot. It also checks missing replies, capacity rejection, traces, scratch
   release, external state, elapsed bounds and theorem axiom footprints.
-  Full managed/LIVE hash and final-hash wrappers still need composition with the
-  retained configuration and the other table; this is a single-cache read.
+  The final-hash wrapper below composes this read with the retained configuration
+  and managed table. Normal managed/LIVE hash routing remains to be composed.
+
+- The [complete final-hash handler](../Signatures/Runtime/Caliper/SchnorrROMFinalHash.lean)
+  reads and updates LIVE while retaining the public configuration and managed
+  table through executed copies. Its [layout](../Signatures/Runtime/Caliper/SchnorrROMFinalHashLayout.lean)
+  admits full LIVE tables on hits and reserves insertion room only on misses.
+  The [routes](../Signatures/Runtime/Caliper/SchnorrROMFinalHashRoute.lean) insert
+  the actual encoding of scalar zero and physically restore source-state order;
+  they do not assume that field zero has index zero. The
+  [source and observation theorems](../Signatures/Runtime/Caliper/SchnorrROMFinalHashSource.lean)
+  match `Shared.interpret finalHash` on the complete joint reply and store.
+  Config/managed preservation and LIVE growth by at most one are proved,
+  including preservation of an additional LIVE reservation.
+  [Resource bounds](../Signatures/Runtime/Caliper/SchnorrROMFinalHashBounds.lean)
+  charge all routing and retained copies, stored code, initial data, dense names
+  and every visited memory state of the same run. The handler uses at most ten
+  buffer slots, with no scalar-sampler or finished-handler implementation premise.
+  The [regression](../SignaturesTest/CaliperSchnorrROMFinalHash.lean) executes full
+  LIVE zero hits with a different managed answer, duplicate LIVE entries,
+  replayed and fresh misses, and last-slot insertion. It checks source equality
+  with the existing `FinEnum` sampler, a nonidentity scalar encoding, missing
+  replies, capacity rejection, exact traces, scratch release, external state,
+  elapsed bounds and theorem axiom footprints. Normal hash routing, complete
+  pass/replay/extraction composition and public ROM migration remain.
 
 Remaining integration sequence:
 
