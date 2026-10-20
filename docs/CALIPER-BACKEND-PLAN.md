@@ -2489,11 +2489,40 @@ Implemented and checked:
   both generators, fresh scalar/pair sampling, cached hits, repeated keys,
   zero-weight queries, empty and padded lists, preserved caller state, released
   scratch, actual runtime bounds and the instantiated total-memory theorem.
-  Native finite-index/topic or finite-index/slot keys are retained. Transport
-  to the schemes' original private oracle, signing replies, chronological
-  coefficient extraction and complete public solver models remain separate
-  integration steps. The cache reservation must allow one entry per generated
-  term (degree/dimension plus one), even when some weights are zero.
+  Native finite-index/topic or finite-index/slot keys are retained.
+  The cache reservation must allow one entry per generated term
+  (degree/dimension plus one), even when some weights are zero.
+- [Weighted source oracle bridge](../Signatures/Runtime/Caliper/WeightedRowsOracle.lean)
+  identifies the executed fold with the original `evalTerms`, preserving the
+  initial accumulator and final private cache. The
+  [generated bridge](../Signatures/Runtime/Caliper/GeneratedWeightedOracle.lean)
+  composes this with term generation and injective key encoding. An equivalence
+  handles arbitrary native caches, including duplicates and shadowed entries.
+  Its observation theorem connects actual Caliper execution to the original
+  source computation. Key conversion is a proof relation on stored entries;
+  it adds no runtime traversal or enumeration of the key universe.
+  Regressions instantiate OOPS's topic/index permutation and Proximity's
+  optional-coordinate encoding with actual generators and an executed
+  uniform-word sampler. Word arithmetic tests these identities without claiming
+  that machine words form a field.
+- [Weighted reply recording](../Signatures/Runtime/Caliper/WeightedRecord.lean)
+  constructs both log-update orders from fixed-capacity cons and paid copying.
+  The selected entry/log and saved value may have unrelated types and widths;
+  hash and signing capacities are independent. The source identities match
+  `WeightedAGM.Reply.record`. For entry/log/saved widths `e`, `l`, `s`,
+  updating the first log takes at most `8*e + 32*l + 12*s + 5` steps
+  and `26*e + 104*l + 39*s + 92` code words. Updating the second adds
+  at most `16*(e+l+s)` steps and `52*(e+l+s)+30` code words.
+  Both programs use at most three buffers and need no primitive-operation
+  allowance. Their bounds feed the existing total-memory theorem, including
+  initial capacity and every intermediate state.
+  [Regressions](../SignaturesTest/CaliperWeightedRecord.lean) use infinite request
+  types with bounded encountered encodings, different request widths and log
+  capacities, repeated replies and a full retained log. They reject insufficient
+  selected-log capacity and unrepresentable requests, and check caller framing,
+  scratch release and time bounds.
+  Complete weighted signing-handler composition, chronological coefficient
+  extraction and public solver models remain integration work.
 
 Remaining integration sequence:
 

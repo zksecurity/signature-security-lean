@@ -1,6 +1,9 @@
 import Signatures.Runtime.Caliper.GeneratedWeightedBounds
 import Signatures.Runtime.Caliper.OOPSTermsBounds
 import Signatures.Runtime.Caliper.BLSRows
+import Signatures.Runtime.Caliper.GeneratedWeightedOracle
+import Signatures.Runtime.Caliper.UniformSampling
+import Mathlib.Data.BitVec
 import Lean
 
 /-! Run term generation and lazy evaluation as one actual Caliper program.
@@ -252,6 +255,107 @@ run_cmd do
       ``GeneratedWeighted.cache_growth, ``GeneratedWeighted.code_bound, ``GeneratedWeighted.names,
       ``GeneratedWeighted.descriptionFits, ``GeneratedWeighted.resources, ``goodCorrect, ``badCorrect,
       ``goodTime, ``goodFits, ``goodMemory] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+-- Connect actual uniform-port execution to the original game key types.
+private instance : SampleableType (Word 16) :=
+  SampleableType.ofEquiv BitVec.equivFin.toEquiv.symm
+private instance : SampleableType (Ty.Value base (.atom true)) :=
+  inferInstanceAs (SampleableType (Word 16))
+private instance : AddCommMonoid (Ty.Value base (.atom true)) :=
+  inferInstanceAs (AddCommMonoid (Word 16))
+private instance : SMul (Word 16) (Ty.Value base (.atom true)) :=
+  inferInstanceAs (SMul (Word 16) (Word 16))
+
+private def uniformPort := UniformQuery.port (w := 16) 65535 (by decide) (by decide)
+private def uniformDraw := UniformSampling.code (w := 16) 65535 (by decide) (by decide) 65535
+private def uniformSource : ProbComp scalar.Value :=
+  (fun value => (⟨BitVec.ofFin value.val, trivial⟩ : scalar.Value)) <$>
+    UniformSampling.source (w := 16) 65535 (by decide) (by decide) 65535
+private theorem uniformCorrect : Interactive.Refines uniformPort .unit
+    accumulation.cache.lookup.unit.representation scalar.representation (fun _ => uniformSource) uniformDraw :=
+  (UniformSampling.refines (w := 16) 65535 (by decide) (by decide) 65535).viewOutput
+    scalar.representation (fun value => ⟨BitVec.ofFin value.val, trivial⟩) (by
+      intro value
+      change [BitVec.ofFin value.val] = [BitVec.ofNat 16 value.val.val]
+      congr 1
+      apply BitVec.eq_of_toNat_eq
+      exact (Nat.mod_eq_of_lt value.val.isLt).symm)
+private theorem uniformLaw :
+    Subtype.val <$> uniformSource = ($ᵗ (Ty.Value base (.atom true)) : ProbComp _) := by
+  simp only [uniformSource, UniformSampling.source, Functor.map_map]
+  rfl
+
+private def uniformGood := GeneratedWeighted.code (base := base) (key := .atom false) (val := .atom true)
+  accumulation.good oops.input 4 (by decide) (by decide) oopsGenerator uniformPort
+  ⟨99, trivial⟩ primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformDraw
+private def uniformProximity := GeneratedWeighted.code (base := base) (key := .atom false) (val := .atom true)
+  accumulation.good proximity.input 4 (by decide) (by decide) proximityGenerator uniformPort
+  ⟨99, trivial⟩ primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformDraw
+
+private theorem oopsOracle
+    (tape : RandomTape 16) (value : GeneratedWeighted.Input
+      (base := base) (key := .atom false) (val := .atom true) accumulation.good oops.input)
+    (admitted : GeneratedWeighted.valid (base := base) (key := .atom false) (val := .atom true)
+      accumulation.good oops.input (generate := OOPSTerms.value) value)
+    (before : State 16) (holds : goodInput.Holds value before) :
+    (fun result => (fun answer => (answer.val.1, answer.val.2.map (Prod.map Prod.swap id))) <$>
+        Interactive.observe (WeightedRows.rows accumulation.good).state.representation result) <$>
+      uniformGood.execute uniformPort .unit tape before =
+      some <$> ((fun result => (value.2.val.1 + result.1, result.2)) <$>
+        (simulateQ (BLS.LazyAGM.Reduction.privateListOracle (M := Word 16 × Fin 4) (R := Word 16))
+          (Model.LazyAGM.evalTerms (OOPS.LazyAGM.terms 3 value.1.val))).run
+            (value.2.val.2.map (Prod.map Prod.swap id))) :=
+  GeneratedWeighted.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    accumulation.good oops.input 4 (by decide) (by decide) oopsGenerator
+    ⟨99, trivial⟩ primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    (fun _ => rfl) uniformSource uniformLaw (Equiv.prodComm (Word 16) (Fin 4))
+    (OOPS.LazyAGM.terms 3) (OOPSTerms.source 3)
+    uniformPort uniformDraw uniformCorrect (by decide) tape value admitted before holds
+
+private theorem proximityOracle
+    (tape : RandomTape 16) (value : GeneratedWeighted.Input
+      (base := base) (key := .atom false) (val := .atom true) accumulation.good proximity.input)
+    (admitted : GeneratedWeighted.valid (base := base) (key := .atom false) (val := .atom true)
+      accumulation.good proximity.input (generate := ProximityTerms.value) value)
+    (before : State 16) (holds : proximityInput.Holds value before) :
+    (fun result => (fun answer => (answer.val.1, answer.val.2.map (Prod.map Weights.decodeProximityKey id))) <$>
+        Interactive.observe (WeightedRows.rows accumulation.good).state.representation result) <$>
+      uniformProximity.execute uniformPort .unit tape before =
+      some <$> ((fun result => (value.2.val.1 + result.1, result.2)) <$>
+        (simulateQ (BLS.LazyAGM.Reduction.privateListOracle (M := Option (Fin 3) × Word 16) (R := Word 16))
+          (Model.LazyAGM.evalTerms (Proximity.LazyAGM.terms value.1.val))).run
+            (value.2.val.2.map (Prod.map Weights.decodeProximityKey id))) :=
+  GeneratedWeighted.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    accumulation.good proximity.input 4 (by decide) (by decide) proximityGenerator
+    ⟨99, trivial⟩ primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    (fun _ => rfl) uniformSource uniformLaw (Weights.proximityKeyEquiv 3).symm
+    Proximity.LazyAGM.terms ProximityTerms.source
+    uniformPort uniformDraw uniformCorrect (by decide) tape value admitted before holds
+
+open Lean in
+run_cmd do
+  -- A real uniform request writes its range before receiving the tagged reply.
+  let value := (message, goodState 0 [] (by decide))
+  let before := goodInput.initial value
+  let replies : List (Word 16) := [65535, 2, 65535, 5, 65535, 7, 65535, 11, 88]
+  match WordIO.run .unit RandomTape.zero 1000000 (uniformGood.lower uniformPort) before replies with
+  | none => throwError "weighted uniform-port execution failed"
+  | some result =>
+    match (WeightedRows.rows accumulation.good).state.representation.encoding.decode (result.state.bufs 0).toList with
+    | none => throwError "weighted uniform-port output did not decode"
+    | some answer =>
+      unless answer.val == (377, entries) && result.remaining == [88] &&
+          result.trace == [.output 65535, .invoke, .input 65535, .input 2,
+            .output 65535, .invoke, .input 65535, .input 5,
+            .output 65535, .invoke, .input 65535, .input 7,
+            .output 65535, .invoke, .input 65535, .input 11] do
+        throwError "weighted uniform-port execution changed the range, replies, sum or final cache"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``WeightedRows.sourceStep_evalTerms, ``WeightedRows.evalTerms_source,
+      ``GeneratedWeighted.evalTerms_encoded, ``GeneratedWeighted.evalTerms_equiv,
+      ``GeneratedWeighted.observe_equiv, ``oopsOracle, ``proximityOracle] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

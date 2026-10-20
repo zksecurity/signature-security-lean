@@ -460,7 +460,13 @@ Pinned upstreams:
   or dimension zero. The [generated weighted evaluator](Signatures/Runtime/Caliper/GeneratedWeightedBounds.lean)
   now composes term generation with the executed lazy scalar/pair cache fold.
   It charges saved-state copying and proves exact ordered evaluation, final cache,
-  cache growth, time, stored code and total visited memory. Signing-handler,
+  cache growth, time, stored code and total visited memory.
+  Its [source oracle bridge](Signatures/Runtime/Caliper/GeneratedWeightedOracle.lean)
+  preserves the original games' `evalTerms` computation and complete cache under
+  key conversion, including shadowed entries. The
+  [reply-log updates](Signatures/Runtime/Caliper/WeightedRecord.lean) support
+  different hash-index and signing-message types, widths and capacities,
+  with charged retention of the other log. Complete signing-handler,
   transcript-extraction and full-solver integration remains.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking

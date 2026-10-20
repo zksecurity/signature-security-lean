@@ -45,6 +45,8 @@ import Signatures.Runtime.Caliper.BLSFullSecurity
 import Signatures.Runtime.Caliper.RowFoldPostcondition
 import Signatures.Runtime.Caliper.OOPSTermsBounds
 import Signatures.Runtime.Caliper.GeneratedWeightedBounds
+import Signatures.Runtime.Caliper.GeneratedWeightedOracle
+import Signatures.Runtime.Caliper.WeightedRecord
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics
