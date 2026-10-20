@@ -374,8 +374,13 @@ Pinned upstreams:
   stages. Its [source theorem](Signatures/Runtime/Caliper/SchnorrAGMSamplingSource.lean)
   matches the original signing oracle, including collisions, and its complete
   resource bounds include both sampler calls and all retained state.
-  Signing request dispatch, the full handler, extraction, caller and public
-  theorem integration remain pending.
+  The [complete signing dispatcher](Signatures/Runtime/Caliper/SchnorrAGMSigningDispatch.lean)
+  now accepts empty group lists, allows arbitrary represented coefficient
+  rows, and returns the encoded scalar/singleton-point reply. Malformed requests
+  return a zero/empty reply without sampling, even with full stores. Its source
+  theorem matches the original handler, and its resource bounds charge selection,
+  routing, both stored branches and reply encoding. The full handler, extraction,
+  caller and public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

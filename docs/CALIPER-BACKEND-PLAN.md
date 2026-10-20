@@ -1965,8 +1965,50 @@ Implemented and checked:
   time are checked. Input tests reject missing capacity and invalid messages;
   zero signing allowance admits no signing. Central source/resource theorems and
   concrete instances are axiom-audited.
-  Signing request-shape dispatch and external reply encoding, the full handler,
-  extraction, caller, cyclic DLog and public concrete/family integration remain.
+  Signing request-shape dispatch and external reply encoding are now implemented
+  below. The full handler, extraction, caller, cyclic DLog and public integration remain.
+
+- [Complete Schnorr signing dispatch](../Signatures/Runtime/Caliper/SchnorrAGMSigningDispatch.lean)
+  now handles every represented signing-request shape. The
+  [layout](../Signatures/Runtime/Caliper/SchnorrAGMSigningDispatchLayout.lean)
+  gives independent group-list, coefficient-row and coefficient capacities,
+  including zero. Only accepted requests need the sampling routine's free cache,
+  basis and signing slots; malformed requests may carry full stores.
+  The [executed selector](../Signatures/Runtime/Caliper/SchnorrAGMSigningShape.lean)
+  reads the stored group-list length, compares it with zero and retains the
+  request while writing the branch tag. Bounded lengths make the word test agree
+  with source emptiness without wraparound. Coefficient rows are ignored by both
+  source branches and may have any represented shape.
+  The [accepted branch](../Signatures/Runtime/Caliper/SchnorrAGMSigningAccept.lean)
+  physically projects the request/state, runs both scalar draws and the complete
+  signing routine, then encodes the reply as scalar plus singleton point list.
+  [Rejection](../Signatures/Runtime/Caliper/SchnorrAGMSigningReject.lean)
+  emits zero plus a padded empty point list, copies cache/basis/signing history,
+  sets malformed and preserves bad. It contains no sampling instruction.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMSigningDispatchSource.lean)
+  proves the exact original handler reply and final-state distribution for all
+  input shapes under uniform sampling. A conditional capacity guard allows
+  rejection without signing room; remaining-query reservations supply the guard
+  for reachable accepted requests.
+  [Resource bounds](../Signatures/Runtime/Caliper/SchnorrAGMSigningDispatchBounds.lean)
+  add at most `128*W+100` time and `512*W+512` stored code words to the accepted
+  sampling budgets, where `W` includes request-list and signing layouts. They
+  charge the actual test, selector, branch payload copies, input projection,
+  reply assembly and stored rejection body. Name accounting and complete
+  description fit follow from the executed components and sampler reservation.
+  [Complete memory](../Signatures/Runtime/Caliper/SchnorrAGMSigningDispatchMemory.lean)
+  connects the same source-correct execution to every visited state, including
+  stored code, descriptors, registers, initial caller memory and live buffers.
+  [Execution regressions](../SignaturesTest/CaliperSchnorrAGMSigningDispatch.lean)
+  compare literal output bytes for misses, cached-zero/duplicate collisions,
+  final slots, wraparound, empty stores and full-store rejection. They check two
+  draws on accepted requests, none on rejection, untouched extra replies,
+  external buffers/registers/tape, scratch release and time. Zero group/row/
+  coefficient capacities execute successfully; zero signing allowance still
+  permits malformed rejection while admitting no accepted request. Invalid
+  messages and list/capacity overflow are rejected. Central and concrete
+  source/resource results are axiom-audited. Full handler, extraction, caller,
+  cyclic DLog and public concrete/family integration remain pending.
 
 Remaining integration sequence:
 
