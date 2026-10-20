@@ -3114,10 +3114,9 @@ Implemented and checked:
   The adaptive regression checks distinct replayed samples, repeated families,
   a second-call miss, four fresh internal queries, missing second-call replies,
   cutoff and invalid capacity. It checks exact scalar/tape output, query traces,
-  external state and the time bound. The surrounding signing handler still
-  needs to join these calls to its deterministic suffix while preserving LIVE
-  and the returned tapes. Full pass, replay, extraction and public ROM migration
-  remain open.
+  external state and the time bound. The surrounding signing wrapper below
+  joins these calls to its deterministic suffix while preserving LIVE and the
+  returned tapes. Full pass, replay, extraction and public ROM migration remain open.
 
 - The [deterministic ROM signing core](../Signatures/Runtime/Caliper/SchnorrROMSigningCore.lean)
   now computes `response • g - challenge • pk`, programs the managed cache,
@@ -3136,13 +3135,42 @@ Implemented and checked:
   visited state, stored program, register/descriptor extents and caller capacity.
   [Source correspondence](../Signatures/Runtime/Caliper/SchnorrROMSigningSource.lean)
   rewrites `Shared.signing_run` as its two original tape draws followed by exactly
-  this implemented deterministic function. This is not yet the executed wrapper:
-  connecting the pair sampler and retaining LIVE/tapes still needs code and bounds.
+  this implemented deterministic function. The executed wrapper below connects
+  the pair sampler and retains LIVE/tapes with explicit code and bounds.
   The [regression](../SignaturesTest/CaliperSchnorrROMSigning.lean) executes changed
   runtime inputs, misses, a cached zero with duplicate keys, zero scalars and a
   final-slot insertion. It checks literal output words, external state, scratch
   release, time, accepted descriptions and theorem axiom footprints. The concrete
   local sampler witness and full hash/final-hash/pass/fork integration remain.
+
+- The [complete ROM signing wrapper](../Signatures/Runtime/Caliper/SchnorrROMSigningHandler.lean)
+  now executes the two private draws followed by the commitment and managed-cache
+  update. Its [layout](../Signatures/Runtime/Caliper/SchnorrROMSigningHandlerLayout.lean)
+  derives the core scalar encoding from the sampler and stores managed and LIVE
+  as separate tables. The input reserves one managed insertion and two sampler
+  query allowances; a support theorem preserves additional saved-tape reservation.
+  [Routing](../Signatures/Runtime/Caliper/SchnorrROMSigningHandlerRoute.lean)
+  copies the public configuration, message, both tables and tapes into the two
+  call frames. The context survives sampling in an allocated saved buffer;
+  LIVE and updated tapes survive the deterministic core in another saved buffer.
+  The final tuple view is byte-identical, with no free permutation.
+  [Source equality](../Signatures/Runtime/Caliper/SchnorrROMSigningHandlerSource.lean)
+  and the observed execution equal the original `Shared.interpret (handler (.inr msg))`
+  under local sampler termination and equality to the original scalar query program.
+  This retains every internal query's chronology, rather than merely its distribution.
+  [Resource bounds](../Signatures/Runtime/Caliper/SchnorrROMSigningHandlerBounds.lean)
+  charge both calls, all copies, stored code and addressable scratch names. The
+  outer retained sampler needs two slots above the initializer/continuation buffer
+  extent; the bound is independent of fuel. The [memory theorem](../Signatures/Runtime/Caliper/SchnorrROMSigningHandlerMemory.lean)
+  includes all visited states and the output of the same execution.
+  The [regression](../SignaturesTest/CaliperSchnorrROMSigningHandler.lean)
+  checks two replayed draws, two fresh draws, a replay/fresh boundary, a cached
+  zero with duplicate keys, zero scalars, missing replies and invalid input bounds.
+  LIVE deliberately contains a conflicting answer, checking that signing programs
+  only managed. Exact outputs, traces, remaining replies, external state, scratch
+  release, time and theorem axiom footprints are checked. The generic local
+  scalar-sampler witness, hash/final-hash handlers, pass/fork composition and public
+  ROM migration are still outstanding.
 
 Remaining integration sequence:
 

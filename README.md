@@ -606,8 +606,12 @@ Pinned upstreams:
   The [deterministic signing core](Signatures/Runtime/Caliper/SchnorrROMSigningSource.lean)
   computes the commitment and programs the managed cache using executed local
   code, preserving existing cached answers. Its resource bounds include all
-  copies and cache work. Joining it to the shared-tape draws while retaining
-  LIVE and the returned tapes remains handler integration work.
+  copies and cache work. The [complete signing wrapper](Signatures/Runtime/Caliper/SchnorrROMSigningHandlerSource.lean)
+  connects both draws to that core and preserves LIVE and the updated tapes
+  through charged copies. It matches the original shared-tape signing oracle
+  under the local sampler contract, with bounds for the same execution's time,
+  stored code, names and every visited memory state. A concrete scalar-sampler
+  witness remains to be supplied.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
