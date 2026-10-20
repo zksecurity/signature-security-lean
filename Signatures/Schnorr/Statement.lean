@@ -2,6 +2,7 @@ import Signatures.Schnorr.Proofs.GeneralSecurity
 import Signatures.Schnorr.Proofs.GeneralROMSecurity
 import Signatures.Schnorr.Proofs.GeneralNonzeroROMSecurity
 import Signatures.Schnorr.ArithmeticStatement
+import Signatures.Schnorr.CaliperAGMFamilyStatement
 
 /-! Schnorr security. Fix the curve, security parameter, query allowances and
 execution model, then quantify over the attacker. The independent `Game.lean`
@@ -11,6 +12,8 @@ shows key generation, oracle interaction, verification and freshness.
 is DLog success at that route's complete proved reduction budget, including
 replay for ROM. The local notation expands to the resource-indexed definition;
 a hardness assumption makes it small. ROM requires no algebraic explanations.
+The AGM route uses actual Caliper programs with derived code and total-memory
+bounds. Its polynomial-family theorem is in `CaliperAGMFamilyStatement.lean`.
 Proofs, cost formulas and execution contracts remain in supporting files. -/
 
 namespace Schnorr

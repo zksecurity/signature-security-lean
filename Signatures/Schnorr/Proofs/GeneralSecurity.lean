@@ -1,36 +1,28 @@
 import Signatures.Schnorr.GeneralSecurityModel
-import Signatures.Schnorr.Proofs.GeneralAGM
+import Signatures.Schnorr.Proofs.CaliperAGM
 import Signatures.Schnorr.Proofs.Game
 
-/-! Proofs for the public Schnorr AGM statement. The displayed game is exactly
-the source game, and the constructed solver belongs to the displayed resource
-class by the complete native runtime and stored-code proofs. -/
-
-open OracleComp OracleSpec PFunctor
-open Signatures.Runtime Signatures.Runtime.BackendProgram
-open Signatures.Runtime.SchnorrAGM.Native
-
+/-! Public Schnorr AGM proofs. The displayed game equals the shared-AGM
+source game. The actual Caliper reduction meets its derived code, time and
+total-memory limits. -/
 namespace Schnorr
-
-universe v w x
-
-variable (curve : Model.CyclicCurve) [model : AGMSecurityModel.{v, w, x} curve]
+open OracleComp OracleSpec
+variable (curve : Model.CyclicCurve) [model : AGMSecurityModel curve]
 
 theorem AlgebraicAdversary.query_allowances (securityParameter : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter queries) :
     (∀ pk, IsQueryBoundP (adversary.source.main (AGM.initial (curve.generator securityParameter) pk))
-      (fun q => GeneralAGM.randomRequest q = true) queries.random) ∧
+      (fun q => CaliperAGM.randomRequest q = true) queries.random) ∧
     (∀ pk, IsQueryBoundP (adversary.source.main (AGM.initial (curve.generator securityParameter) pk))
       (fun q => AGM.Reduction.hashRequest q = true) queries.hash) ∧
     (∀ pk, IsQueryBoundP (adversary.source.main (AGM.initial (curve.generator securityParameter) pk))
-      (fun q => AGM.Reduction.signRequest q = true) queries.sign) := by
-  simpa only [AGMSecurityModel.queries_eq, AGMSecurityModel.generator_eq] using
-    And.intro adversary.randomQueries (And.intro adversary.hashQueries adversary.signingQueries)
+      (fun q => AGM.Reduction.signRequest q = true) queries.sign) :=
+  ⟨adversary.randomQueries, adversary.hashQueries, adversary.signingQueries⟩
 
 theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter queries) :
-    agmEufCmaGame curve securityParameter adversary = AGM.game (curve.generator securityParameter) adversary.source := by
-  exact Game.agm_eq_source curve securityParameter adversary.source
+    agmEufCmaGame curve securityParameter adversary = AGM.game (curve.generator securityParameter) adversary.source :=
+  Game.agm_eq_source curve securityParameter adversary.source
 
 theorem Proofs.agm_security
     (curve : Model.CyclicCurve) [model : AGMSecurityModel curve]
@@ -40,26 +32,17 @@ theorem Proofs.agm_security
       dlogSuccessBound curve securityParameter queries (agmReductionTime curve securityParameter queries) +
       (queries.hash + 1 : ENNReal) * (curve.order securityParameter : ENNReal)⁻¹ +
       (queries.sign : ENNReal) * (queries.sign + queries.hash) * (curve.order securityParameter : ENNReal)⁻¹ := by
-  let resources := model.parameters securityParameter queries
-  have probabilityBound := SchnorrAGM.security resources.generator resources.generates.1 adversary.source
-    resources.queries.sign resources.queries.hash adversary.signingQueries adversary.hashQueries
-  have fits := GeneralAGM.reduction_within resources adversary
-  have hdlog : 𝒟[DiffieHellman.dlogExperiment resources.generator (SchnorrAGM.dlogReduction adversary.source)] {true} ≤
-      dlogSuccessBound curve securityParameter queries resources.solverTime :=
-    le_iSup_of_le _ (le_iSup_of_le fits le_rfl)
-  simpa only [resources, agmEufCmaGame_eq, AGMSecurityModel.generator_eq, AGMSecurityModel.queries_eq,
+  simpa only [agmEufCmaGame_eq, dlogSuccessBound, CaliperAGM.Parameters.dlogBound,
+    Signatures.Runtime.CaliperBackend.cyclicDLogSuccessBound, Model.advantageBound,
     Model.CyclicCurve.order, agmReductionTime] using
-    probabilityBound.trans (add_le_add (add_le_add hdlog le_rfl) le_rfl)
+    CaliperAGM.security (model.parameters securityParameter queries) adversary (curve.generates securityParameter).1
 
 theorem dlogSuccessBound_mono (securityParameter : Nat) (queries : QueryAllowance) :
-    Monotone (dlogSuccessBound curve securityParameter queries) := by
-  intro time largerTime ht
-  let resources := model.parameters securityParameter queries
-  refine iSup_le fun solver => iSup_le fun fits => ?_
-  have largerFits : Solver.dlogWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.inputWidth resources.solverCode largerTime solver :=
-    ⟨fits.1, Within.mono resources.backend resources.descriptionSizes resources.factor resources.description fits.2 le_rfl ht⟩
-  exact le_iSup_of_le solver (le_iSup_of_le largerFits le_rfl)
+    Monotone (dlogSuccessBound curve securityParameter queries) :=
+  fun _ _ elapsed => Signatures.Runtime.CaliperBackend.cyclicDLogSuccessBound_mono
+    (model.parameters securityParameter queries).layout.service.random.port
+    (model.parameters securityParameter queries).layout.service.scheme.config
+    (model.parameters securityParameter queries).layout.service.scheme.scalar
+    (curve.generator securityParameter) le_rfl le_rfl elapsed
 
 end Schnorr

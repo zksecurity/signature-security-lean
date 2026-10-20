@@ -33,7 +33,7 @@ private partial def polynomialProof (parameter : Expr) (hypotheses : Array Expr)
   if let some proof := (← get)[body]? then return proof
   let function ← mkLambdaFVars #[parameter] body
   for hypothesis in hypotheses do
-    let type ← inferType hypothesis
+    let type ← instantiateMVars (← inferType hypothesis)
     let candidate := type.getAppArgs[0]!
     let candidateBody := (mkApp candidate parameter).headBeta.consumeMData
     if candidateBody == body ||
@@ -79,7 +79,7 @@ private partial def polynomialProof (parameter : Expr) (hypotheses : Array Expr)
       else
         let mut found := none
         for hypothesis in hypotheses do
-          let type ← inferType hypothesis
+          let type ← instantiateMVars (← inferType hypothesis)
           if ← withTransparency .default (isDefEq type.getAppArgs[0]! function) then
             found := some hypothesis
             break
@@ -98,7 +98,8 @@ elab "caliper_polynomial" : tactic => withMainContext do
   let resource := target.getAppArgs[0]!
   let mut hypotheses := #[]
   for declaration in ← getLCtx do
-    if !declaration.isImplementationDetail && declaration.type.consumeMData.isAppOf ``PolynomiallyBounded then
+    let type ← instantiateMVars declaration.type
+    if !declaration.isImplementationDetail && type.consumeMData.isAppOf ``PolynomiallyBounded then
       hypotheses := hypotheses.push declaration.toExpr
   let proof ← withLocalDeclD `parameter (mkConst ``Nat) fun parameter => do
     (polynomialProof parameter hypotheses (mkApp resource parameter).headBeta).run' {}

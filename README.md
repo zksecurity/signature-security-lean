@@ -53,14 +53,19 @@ remains a separate result.
 OOPS and Proximity also have general-caller concrete statements and nonuniform
 family corollaries, with derived solver time/code bounds. Their degree/dimension
 must grow polynomially; OOPS retains admissibility and Proximity retains its
-fresh-collision probability. Schnorr AGM now has complete native runtime/code
-certificates and a [short public theorem](Signatures/Schnorr/Statement.lean),
-with exact finite-list execution, arbitrary messages and query-dependent storage.
+fresh-collision probability. Schnorr AGM now has complete Caliper runtime,
+stored-code and total-memory certificates and a
+[short public theorem](Signatures/Schnorr/Statement.lean), with exact finite-list
+execution, arbitrary message types and query-dependent storage.
 It takes a single-group curve, security parameter, query allowances and algebraic
 adversary, and displays DLog success plus the original query losses.
-Its [polynomial-family corollary](Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
-derives negligible forgery from polynomial component resources, DLog hardness
-and negligible inverse field size in one fixed backend. The same public file now
+Its [polynomial-family corollary](Signatures/Schnorr/CaliperAGMFamilyStatement.lean)
+derives negligible forgery from polynomial component resources, Caliper DLog
+hardness and negligible inverse field size. The
+[parameters](Signatures/Schnorr/CaliperAGMParameters.lean) fix the layouts,
+implemented primitives, sampler and caller limits before choosing the attacker.
+The earlier [abstract-backend family theorem](Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
+remains separate. The same public file
 also exposes `Schnorr.rom_security` for unrestricted attackers, with the full-field
 nonce signing/forking losses and a square-root DLog bound. Its complete replaying
 solver has derived runtime/code bounds, and its
@@ -427,11 +432,15 @@ Pinned upstreams:
   its resource witness includes stored code, initial input and every visited
   memory state. The [concrete security bridge](Signatures/Runtime/Caliper/SchnorrAGMFullSecurity.lean)
   applies the original Schnorr probability bound to this constructed Caliper
-  witness. Public statement and polynomial-family integration remain pending.
+  witness. The public [Schnorr AGM model](Signatures/Schnorr/GeneralSecurityModel.lean)
+  and [family theorem](Signatures/Schnorr/CaliperAGMFamilyStatement.lean) now use
+  those witnesses. Complete solver time, code and total memory are polynomial
+  consequences of component bounds; numerical field size and sampling arity
+  need not be polynomial.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
-  still use their explicit abstract-backend contracts pending migration.
+  ROM still use their explicit abstract-backend contracts pending migration.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.
 - The original pairing-based AGM reductions sample private finite tables. BLS additionally has
   lazy reductions with sparse extraction, finite-list cache refinement, and the same probability

@@ -2375,8 +2375,28 @@ Implemented and checked:
   cache-hit/miss behavior. Expected scalars and traces are literal; caller
   memory, scratch release, time and incomplete randomness are checked.
   Generic field proofs remain separate from the modular-word execution fixture.
-  Next: migrate the public Schnorr concrete and polynomial-family models to
-  these constructed witnesses and derive their polynomial resource bounds.
+  The public model and family migration are completed below.
+- [Public Schnorr AGM parameters](../Signatures/Schnorr/CaliperAGMParameters.lean)
+  now fix actual Caliper layouts, named primitive implementations and their
+  bounds, a represented uniform sampler and numeric caller limits. An attacker
+  supplies shared-AGM source behavior, local initialization/continuation code,
+  local source correspondence, query allowances and its local resource proofs.
+  The complete solver witness follows from the constructed full program.
+  The public theorem keeps the curve, security parameter, query allowance and
+  adversary inputs, the independent EUF-CMA game, and both original collision
+  terms. Its inspectable DLog supremum now includes Caliper code, time and
+  derived total memory. The earlier abstract backend remains separate.
+  [Polynomial resources](../Signatures/Schnorr/CaliperAGMFamilyResources.lean)
+  derive full solver time, code and memory from query counts, word/encoding
+  widths, capacities, names and local primitive/caller costs. Neither finished
+  solver polynomiality nor polynomial field size or numerical sampling arity
+  is an assumption. The [family theorem](../Signatures/Schnorr/CaliperAGMFamilyStatement.lean)
+  uses the actual reduction in the fixed nonuniform Caliper DLog family.
+  Interface and axiom tests guard the public shape, unchanged game, explicit
+  memory, separation of proofs, constructed witnesses and component-only
+  assumptions. The polynomial helper now resolves inferred hypothesis types
+  before matching them; a regression keeps an inferred bound after clearing
+  its premises. It still rejects unknown costs and emits kernel-checked proofs.
 
 Remaining integration sequence:
 
@@ -2429,8 +2449,8 @@ the source/output conversion for both complete BLS AGM reductions.
    Checked emission proves generated-word acceptance and intermediate
    descriptor bounds. Complete machine-memory bounds include
    static storage and every intermediate buffer state. These finite-program
-   bounds have polynomial-family proofs for BLS AGM and co-CDH; the other schemes still
-   need their corresponding proofs.
+   bounds have polynomial-family proofs for BLS AGM, BLS co-CDH and Schnorr AGM;
+   OOPS, Proximity and the Schnorr ROM routes still need corresponding migrations.
 3. Link the proved word oracle adapter and replay primitives into complete signature
    callers and rewinding. Ordinary saved-state query composition, generated
    caller steps and decreasing-domain loop composition are proved.
@@ -2456,8 +2476,9 @@ the source/output conversion for both complete BLS AGM reductions.
    contracts as explicit assumptions. Pairing/verification routines, if executed
    by the target program, also need implementations; they are not free consequences
    of the field/G₁/G₂ interface.
-5. Migrate the remaining signature security models after the concrete BLS AGM
-   wrapper and its polynomial-family theorem. Establish the other schemes'
+5. Migrate the remaining OOPS, Proximity and Schnorr ROM security models.
+   BLS AGM, BLS co-CDH and Schnorr AGM now use Caliper in their public concrete
+   and polynomial-family statements. Establish the remaining schemes'
    parameter-indexed bounds using polynomial word widths and routine bounds.
    Prove coverage for the intended Caliper adversary class. A claim about every
    conventional efficient attacker needs a further machine-adequacy result.

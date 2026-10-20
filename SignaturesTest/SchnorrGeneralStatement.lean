@@ -1,4 +1,6 @@
 import Signatures.Schnorr.Statement
+import Signatures.Schnorr.GeneralExecutionModel
+import Signatures.Schnorr.Proofs.GeneralAGM
 import Lean.Util.CollectAxioms
 
 /-! Guard the public Schnorr AGM interface, source-game correspondence and
@@ -34,6 +36,7 @@ run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``Schnorr.agm_security, ``Schnorr.GeneralAGM.reduction_within,
       ``Schnorr.GeneralAGM.security, ``Schnorr.agmEufCmaGame_eq,
+      ``Schnorr.CaliperAGM.reduction_within, ``Schnorr.CaliperAGM.security,
       ``Schnorr.dlogSuccessBound_mono, ``Schnorr.AlgebraicAdversary.query_allowances] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
@@ -43,6 +46,8 @@ run_meta do
   for name in #[``Schnorr.agm_security, ``Schnorr.GeneralAGM.Parameters.mk,
       ``Schnorr.GeneralAGM.AlgebraicAdversary.mk, ``Schnorr.ExecutionModel.mk,
       ``Schnorr.AGMSecurityModel.mk, ``Schnorr.GeneralAGM.reduction_within,
+      ``Schnorr.CaliperAGM.Parameters.mk, ``Schnorr.CaliperAGM.AlgebraicAdversary.mk,
+      ``Schnorr.CaliperAGM.reduction_within, ``Schnorr.CaliperAGM.security,
       ``Schnorr.GeneralAGM.security, ``Model.CyclicCurve.mk] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
@@ -71,9 +76,31 @@ run_meta do
   if (type.find? (fun e => match e with | .letE .. => true | _ => false)).isSome then
     throwError "Resource records must stay out of the main public statement"
   for name in #[``Schnorr.dlogSuccessBound, ``Schnorr.agmEufCmaGame,
-      ``Schnorr.GeneralAGM.Parameters.solverTime, ``Schnorr.GeneralAGM.Parameters.solverCode] do
+      ``Schnorr.CaliperAGM.Parameters.solverTime, ``Schnorr.CaliperAGM.Parameters.solverCode,
+      ``Schnorr.CaliperAGM.Parameters.solverMemory] do
     unless (← getConstInfo name).value?.isSome do
       throwError "{name}: definition must remain inspectable"
+
+run_meta do
+  let bounded := (← getConstInfo ``Schnorr.dlogSuccessBound).value?.get!
+  unless (bounded.find? (fun e => e.isConstOf ``Signatures.Runtime.CaliperBackend.cyclicDLogWithin)).isSome do
+    throwError "public Schnorr hardness must quantify over actual Caliper solvers"
+  unless (bounded.find? (fun e => e.isConstOf ``Schnorr.CaliperAGM.Parameters.solverMemory)).isSome do
+    throwError "public Schnorr hardness must include derived total memory"
+  let reductionInfo ← getConstInfo ``Schnorr.CaliperAGM.reduction_within
+  let reduction := (reductionInfo.value? true).getD reductionInfo.type
+  unless (reduction.find? (fun e => e.isConstOf ``Signatures.Runtime.CaliperBackend.SchnorrAGM.Full.dlogWithin)).isSome do
+    throwError "public reduction witness must come from the constructed Caliper program"
+  for name in #[``Schnorr.CaliperAGM.Parameters.mk, ``Schnorr.CaliperAGM.AlgebraicAdversary.mk,
+      ``Schnorr.AGMSecurityModel.mk] do
+    let type := (← getConstInfo name).type
+    for forbidden in #[``Signatures.Runtime.CaliperBackend.Interactive.Within,
+        ``Signatures.Runtime.CaliperBackend.cyclicDLogWithin,
+        ``Schnorr.CaliperAGM.Parameters.solverTime, ``Schnorr.CaliperAGM.Parameters.solverCode,
+        ``Schnorr.CaliperAGM.Parameters.solverMemory, `PFunctor.StepClass,
+        `Signatures.Runtime.BackendProgram.Backend] do
+      if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+        throwError "{name}: completed-solver or abstract-backend premise {forbidden}"
 
 example (curve : Model.CyclicCurve) [Schnorr.AGMSecurityModel curve]
     (securityParameter : Nat) (queries : Schnorr.QueryAllowance)

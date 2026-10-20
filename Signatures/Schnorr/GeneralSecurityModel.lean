@@ -1,88 +1,59 @@
 import Signatures.Schnorr.Game
 import Signatures.Model.CyclicCurve
-import Signatures.Schnorr.GeneralAGMParameters
+import Signatures.Schnorr.CaliperAGMParameters
 
-/-! Inspectable execution contracts, EUF-CMA game and resource-indexed DLog
-success bound for the public Schnorr AGM theorem. The mathematical curve has a
-single group. The execution model is fixed before choosing the attacker. -/
-
-open OracleComp OracleSpec PFunctor
-open Signatures.Runtime Signatures.Runtime.BackendProgram
-open Signatures.Runtime.SchnorrAGM.Native
-
+/-! Inspectable game and Caliper resource model for the public Schnorr AGM
+statement. Implemented primitives, layouts, sampler and caller allowances are
+fixed before choosing the attacker. The game remains independent of this model.
+The separate abstract backend lives in `GeneralExecutionModel.lean`. -/
 namespace Schnorr
+open OracleComp OracleSpec
 
-universe v w x
-
-/-- General local computation with measured costs and sizes. Messages need
-decidable equality, with no finite-domain requirement. Request equality is used
-by the dependent interaction interface; executed comparisons are priced separately. -/
-class ExecutionModel (curve : Model.CyclicCurve) where
-  steps : StepClass.{0, v}
-  [products : steps.HasProd]
-  [sums : steps.HasSum]
-  [options : steps.HasOption]
-  quantitative : QuantitativeStepClass.{0, v, w} steps
-  [category : quantitative.HasCategory]
-  [quantitativeProducts : quantitative.HasProd]
-  [quantitativeSums : quantitative.HasSum]
-  [quantitativeOptions : quantitative.HasOption]
-  [distributive : quantitative.IsDistributive]
-  [optionCode : OptionCode (Q := quantitative)]
+/-- Fixed Caliper components, with no completed-reduction certificate.
+The fields are in `CaliperAGMParameters.lean`; actual initialization, caller
+control, lazy service and extraction are constructed and proved separately. -/
+class AGMSecurityModel (curve : Model.CyclicCurve) where
   Message : Nat → Type
   [messageEquality : ∀ n, DecidableEq (Message n)]
-  [requestEquality : ∀ n, DecidableEq (Interface.SourceRequest (curve.Scalar n) (curve.Group n) (Message n))]
+  parameters : ∀ n q, CaliperAGM.Parameters (curve.Scalar n) (curve.Group n) (Message n) q (curve.generator n)
 
-attribute [instance_reducible, instance] ExecutionModel.products ExecutionModel.sums ExecutionModel.options
-  ExecutionModel.category ExecutionModel.quantitativeProducts ExecutionModel.quantitativeSums
-  ExecutionModel.quantitativeOptions ExecutionModel.distributive ExecutionModel.optionCode
-  ExecutionModel.messageEquality ExecutionModel.requestEquality
+attribute [instance_reducible, instance] AGMSecurityModel.messageEquality
 
-/-- Component implementations, resource allowances and their local contracts.
-The detailed fields are in `GeneralAGMParameters.lean`. This record supplies
-neither a completed-reduction runtime bound nor a cryptographic hardness assumption. -/
-class AGMSecurityModel (curve : Model.CyclicCurve) extends ExecutionModel.{v, w} curve where
-  parameters : ∀ n, QueryAllowance → GeneralAGM.Parameters.{v, w, x}
-    (Q := quantitative) (F := curve.Scalar n) (G := curve.Group n) (M := Message n)
-  queries_eq : ∀ n q, (parameters n q).queries = q
-  generator_eq : ∀ n q, (parameters n q).generator = curve.generator n
+variable (curve : Model.CyclicCurve) [model : AGMSecurityModel curve]
 
-variable (curve : Model.CyclicCurve) [model : AGMSecurityModel.{v, w, x} curve]
-
-/-- Any implemented algebraic attacker within the model's own execution,
-code/advice and query allowances. Its local code need not use our arithmetic
-language. Group requests and the final commitment carry valid representations
-in the chronological group inputs received on that path. -/
+/-- An algebraic source attacker with actual local Caliper code and its own
+query/resource bounds and source correspondence. Internal code is general
+Caliper code; requests and output carry the shared AGM's algebraic explanations.
+Coverage of conventional machines is a separate adequacy theorem. -/
 abbrev AlgebraicAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
-  GeneralAGM.AlgebraicAdversary (model.parameters securityParameter queries)
+  CaliperAGM.AlgebraicAdversary (model.parameters securityParameter queries)
 
-/-- The proved complete native solver time: setup, attacker execution, lazy
-oracle simulation, conversions, extraction and cutoff handling are included. -/
+/-- Derived complete runtime, including initialization, local caller execution,
+lazy queries, extraction and cutoff. No finished-solver time is assumed. -/
 def agmReductionTime (securityParameter : Nat) (queries : QueryAllowance) : Nat :=
   (model.parameters securityParameter queries).solverTime
 
-/-- The full-field-nonce Schnorr EUF-CMA game. A signature is `(R,z)` with
-`z • g = R + H(m,R) • pk`. Hashing, signing and final verification share a lazy
-oracle. Signing records messages; malformed requests permanently prevent a win.
-The source handler samples a fresh nonce and returns its commitment on signing. -/
+/-- Full-field-nonce Schnorr EUF-CMA. Key generation, hashing, signing,
+verification and freshness are displayed independently in `Game.lean`. -/
 noncomputable def agmEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter queries) : ProbComp Bool :=
-  Schnorr.Game.agm curve securityParameter adversary.source
+  Game.agm curve securityParameter adversary.source
 
-/-- Supremum of DLog success in the same fixed backend: draw uniform x, give
-the solver `(g, x • g)`, and test whether it returns x. Every challenge fits the
-input bound; stored code/data meets the derived code bound and runtime is at
-most `time` on every supported execution. No optimal solver need exist.
+/-- Supremum of success for ordinary DLog: sample uniform x, supply `(g,x • g)`
+and check the returned scalar. Solvers use the fixed Caliper port and layouts,
+with the derived code and total-memory limits and the displayed runtime limit.
+Memory includes stored code, initial data and all visited buffers. Every
+sampled challenge must be represented. No optimal solver need exist.
 
-The time/code formulas are `GeneralAGM.Parameters.solverTime` and `solverCode`;
-`GeneralAGM.reduction_within` proves that the constructed reduction satisfies them.
-A DLog hardness assumption is needed to make this quantity small. -/
+The budgets are in `CaliperAGM.Parameters`; `CaliperAGM.reduction_within`
+constructs the actual reduction witness. A hardness assumption makes this
+quantity small. Polynomial families are handled in separate statements. -/
 noncomputable def dlogSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
     (time : Nat) : ENNReal :=
   let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Solver.dlogWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.inputWidth resources.solverCode time solver),
-    𝒟[DiffieHellman.dlogExperiment resources.generator solver] {true}
+  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.cyclicDLogWithin
+      resources.layout.service.random.port resources.layout.service.scheme.config resources.layout.service.scheme.scalar
+      (curve.generator securityParameter) resources.solverCode resources.solverMemory time solver),
+    𝒟[DiffieHellman.dlogExperiment (curve.generator securityParameter) solver] {true}
 
 end Schnorr

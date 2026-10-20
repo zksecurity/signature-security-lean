@@ -1,4 +1,5 @@
 import Signatures.BLS.Statement
+import Signatures.Schnorr.Statement
 import Lean.Util.CollectAxioms
 
 /-! Polynomial Caliper families derive full reduction resources from original
@@ -20,6 +21,14 @@ example (_unknownCost : Nat → Nat) : True := by
     have : PolynomiallyBounded _unknownCost := by caliper_polynomial
   trivial
 
+-- Inferred intermediate bounds can retain assigned type metavariables.
+-- The tactic must use those proofs after the original component facts leave scope.
+example (f g : Nat → Nat) (hf : PolynomiallyBounded f) (hg : PolynomiallyBounded g) :
+    PolynomiallyBounded (fun n => (f n + g n) * (f n + g n)) := by
+  have combined := hf.add hg
+  clear hf hg
+  caliper_polynomial
+
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``Interactive.NonuniformWithin.of_pointwise, ``dlogNonuniformWithin.of_pointwise,
@@ -27,7 +36,12 @@ run_meta do
       ``BLS.CaliperAGM.Family.PolynomialResources.badTime,
       ``BLS.CaliperAGM.Family.PolynomialResources.solverCode,
       ``BLS.CaliperAGM.Family.PolynomialResources.solverMemory,
-      ``BLS.CaliperAGM.Family.reductions_nonuniform, ``BLS.agm_security_asymptotic] do
+      ``BLS.CaliperAGM.Family.reductions_nonuniform, ``BLS.agm_security_asymptotic,
+      ``cyclicDLogNonuniformWithin.of_pointwise,
+      ``Schnorr.CaliperAGM.Family.PolynomialResources.solverTime,
+      ``Schnorr.CaliperAGM.Family.PolynomialResources.solverCode,
+      ``Schnorr.CaliperAGM.Family.PolynomialResources.solverMemory,
+      ``Schnorr.CaliperAGM.Family.reduction_nonuniform, ``Schnorr.agm_security_asymptotic] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -67,6 +81,39 @@ run_meta do
   unless (definition.find? (fun e => e.isConstOf ``PolynomiallyBounded)).isSome do
     throwError "family class must require one polynomial across parameters"
 
+run_meta do
+  let type := (← getConstInfo ``Schnorr.CaliperAGM.Family.PolynomialResources.mk).type
+  for forbidden in #[``Schnorr.CaliperAGM.Parameters.solverTime, ``Schnorr.CaliperAGM.Parameters.solverCode,
+      ``Schnorr.CaliperAGM.Parameters.solverMemory,
+      ``Fintype.card, ``Interactive.Within, ``Interactive.NonuniformWithin,
+      ``cyclicDLogNonuniformWithin, ``cyclicDLogNonuniformHardness] do
+    if (type.find? (fun e => e.isConstOf forbidden)).isSome then
+      throwError "Schnorr polynomial assumptions contain a solver or domain-size bound: {forbidden}"
+  -- The arity also indexes layout types, so inspect the bounded function itself.
+  forallTelescope type fun params _ => do
+    for param in params do
+      let premise ← inferType param
+      if premise.isAppOf ``PolynomiallyBounded then
+        lambdaTelescope premise.getAppArgs[0]! fun _ body => do
+          if body.getAppFn.isConstOf ``Schnorr.CaliperAGM.Parameters.randomBound then
+            throwError "numerical sampling arity must not be required polynomial"
+  for required in #[``Schnorr.CaliperAGM.Parameters.wordBits, ``Schnorr.CaliperAGM.Parameters.callerLimits,
+      ``Schnorr.CaliperAGM.Parameters.primitiveBounds,
+      ``Signatures.Runtime.CaliperBackend.SchnorrAGM.CallerExtraction.Layouts.state] do
+    unless (type.find? (fun e => e.isConstOf required)).isSome do
+      throwError "Schnorr polynomial components omit {required}"
+  unless (← findModuleOf? ``Schnorr.agm_security_asymptotic) == some `Signatures.Schnorr.CaliperAGMFamilyStatement do
+    throwError "keep the Schnorr family statement separate"
+  unless (← findModuleOf? ``Schnorr.CaliperAGM.Family.Proofs.security) == some `Signatures.Schnorr.Proofs.CaliperAGMFamily do
+    throwError "keep the Schnorr family proof separate"
+  let info ← getConstInfo ``Schnorr.CaliperAGM.Family.Proofs.security
+  let proof := (info.value? true).getD info.type
+  unless (proof.find? (fun e => e.isConstOf ``Schnorr.CaliperAGM.Family.reduction_nonuniform)).isSome do
+    throwError "Schnorr family security must use the actual polynomial Caliper reduction"
+  for forbidden in #[`Schnorr.GeneralAGM.Family.reduction_nonuniform, `Signatures.Runtime.BackendProgram.NonuniformWithin] do
+    if (proof.find? (fun e => e.isConstOf forbidden)).isSome then
+      throwError "old abstract backend in Schnorr family proof: {forbidden}"
+
 open OracleComp in
 example (curve : Model.PairingCurve) [model : BLS.AGMSecurityModel curve]
     (queries : Nat → BLS.QueryAllowance)
@@ -76,5 +123,15 @@ example (curve : Model.PairingCurve) [model : BLS.AGMSecurityModel curve]
     (fieldGrowth : negligible (fun n => 1 / (curve.order n : ENNReal))) :
     negligible (fun n => 𝒟[BLS.Game.agm curve n (adversary n).source] {true}) :=
   BLS.agm_security_asymptotic curve queries adversary resources hardness fieldGrowth
+
+open OracleComp in
+example (curve : Model.CyclicCurve) [model : Schnorr.AGMSecurityModel curve]
+    (queries : Nat → Schnorr.QueryAllowance)
+    (adversary : ∀ n, Schnorr.AlgebraicAdversary curve n (queries n))
+    (resources : Schnorr.CaliperAGM.Family.PolynomialResources (fun n => model.parameters n (queries n)))
+    (hardness : Schnorr.CaliperAGM.Family.dlogHardness (fun n => model.parameters n (queries n)))
+    (fieldGrowth : negligible (fun n => (curve.order n : ENNReal)⁻¹)) :
+    negligible (fun n => 𝒟[Schnorr.Game.agm curve n (adversary n).source] {true}) :=
+  Schnorr.agm_security_asymptotic curve queries adversary resources hardness fieldGrowth
 
 end SignaturesTest.CaliperFamilies
