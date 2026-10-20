@@ -3,6 +3,10 @@ import Signatures.Runtime.Caliper.OOPSTermsBounds
 import Signatures.Runtime.Caliper.BLSRows
 import Signatures.Runtime.Caliper.GeneratedWeightedOracle
 import Signatures.Runtime.Caliper.UniformSampling
+import Signatures.Runtime.Caliper.UniformSamplingBounds
+import Signatures.Runtime.Caliper.WeightedSignBounds
+import Signatures.Runtime.Caliper.BLSResponseBounds
+import Signatures.Runtime.Caliper.BLSResponseNames
 import Mathlib.Data.BitVec
 import Lean
 
@@ -356,6 +360,239 @@ run_cmd do
   for name in [``WeightedRows.sourceStep_evalTerms, ``WeightedRows.evalTerms_source,
       ``GeneratedWeighted.evalTerms_encoded, ``GeneratedWeighted.evalTerms_equiv,
       ``GeneratedWeighted.observe_equiv, ``oopsOracle, ``proximityOracle] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+private def groupLayout : BLSResponse.Layouts 16 (Word 16) (Word 16) :=
+  ⟨scalar, scalar, by decide, by decide⟩
+private def scale : Implementation .unit groupLayout.scaleArgs scalar (fun value => value.1 • value.2) := mul
+private def signingResponse := BLSResponse.good groupLayout scale true
+private theorem signingResponseBound : signingResponse.BoundedBy
+    (BLSResponse.goodTime groupLayout 6) (BLSResponse.goodWords groupLayout 27) :=
+  BLSResponse.good_bounded groupLayout scale mulBound true
+private theorem signingResponseBuffers : signingResponse.program.code.memBound ≤ 3 :=
+  BLSResponse.good_buffers groupLayout scale mulNames.buffers true
+private theorem signingResponseNames : NamesAccounted signingResponse.program.code 3 :=
+  BLSResponse.good_names groupLayout 3 scale mulNames.accounted true
+
+private def signLayout {M : Type} (domain : Layout 16 M) (small : domain.representation.encoding.words ≤ 4) :
+    WeightedSign.Layouts 16 Key M (Word 16) (Word 16) (Word 16 × Word 16) (Word 16) where
+  evaluation := accumulation.good
+  message := domain
+  config := groupLayout.points
+  point := scalar
+  hashCapacity := 1
+  signCapacityPred := 1
+  hashCountFits := by decide
+  signCountFits := by decide
+  storageFits := by
+    change 32 * (2 + domain.representation.encoding.words + 2 + 1 + 1 + 25 +
+      (1 + 1 * (2 + 1)) + (1 + (1 + 1) * (domain.representation.encoding.words + 1))) < 65536
+    omega
+private def fullLayout := signLayout oops.input (by decide)
+private def fullProximityLayout := signLayout proximity.input (by decide)
+private def signingInput {M : Type} (domain : Layout 16 M) (small : domain.representation.encoding.words ≤ 4)
+    (message : domain.Value) (cache : List (Key × Word 16)) (bounded : cache.length ≤ 4) :
+    (signLayout domain small).input.Value :=
+  ⟨(message.val, (3, 13), cache, [((0, 42), 9)], [(message.val, 10)]),
+    ⟨message.property, ⟨trivial, trivial⟩,
+      ⟨bounded.trans (by change 4 ≤ 8; decide), fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+      ⟨by change 1 ≤ 1; decide, by intro entry member; simp only [List.mem_singleton] at member; subst entry; exact ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+      ⟨by change 1 ≤ 2; decide, by intro entry member; simp only [List.mem_singleton] at member; subst entry; exact ⟨message.property, trivial⟩⟩⟩,
+    by change 1 ≤ 1; decide⟩
+private def fullCode := WeightedSign.code (base := base) (key := .atom false) (val := .atom true)
+  fullLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+  signingResponse signingResponseBuffers (by decide)
+private def fullProximityCode := WeightedSign.code (base := base) (key := .atom false) (val := .atom true)
+  fullProximityLayout ⟨0, trivial⟩ 4 (by decide) (by decide) proximityGenerator ⟨99, trivial⟩
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+  signingResponse signingResponseBuffers (by decide)
+private def fullTime := WeightedSign.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  fullLayout 4 (by decide) (by decide) (OOPSTerms.timeBudget oops 6) 26
+    (BLSAccumulate.goodTime accumulation.arithmetic 6 6) (BLSResponse.goodTime groupLayout 6)
+private def fullWords := WeightedSign.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  fullLayout 4 (by decide) (by decide) (OOPSTerms.codeBudget oops 27) 125
+    (BLSAccumulate.goodCode accumulation.arithmetic 27 27) (BLSResponse.goodWords groupLayout 27)
+private theorem fullBound : Interactive.TimeBoundOn
+    (WeightedSign.valid (base := base) (key := .atom false) (val := .atom true) fullLayout (generate := OOPSTerms.value))
+    uniformPort .unit fullLayout.input.representation fullCode fullTime :=
+  WeightedSign.time_bound (base := base) (key := .atom false) (val := .atom true)
+    fullLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+    signingResponse signingResponseBuffers (by decide) uniformCorrect oopsBound
+    (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) goodBound signingResponseBound
+private theorem fullFits : (fullCode.lower uniformPort).DescriptionFits :=
+  WeightedSign.descriptionFits_of_components (base := base) (key := .atom false) (val := .atom true)
+    fullLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+    signingResponse signingResponseBuffers (by decide)
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide)
+
+private theorem fullOracle
+    (tape : RandomTape 16) (value : fullLayout.input.Value)
+    (admitted : WeightedSign.valid (base := base) (key := .atom false) (val := .atom true)
+      fullLayout (generate := OOPSTerms.value) value)
+    (before : State 16) (holds : fullLayout.input.representation.Holds value before) :
+    (fun result => (fun answer => WeightedSign.decodeOutput Prod.swap answer.val) <$>
+        Interactive.observe fullLayout.output.representation result) <$>
+      fullCode.execute uniformPort .unit tape before =
+      some <$> ((fun answer => (answer.1, value.val.2.1, answer.2)) <$>
+        ((WeightedAGM.listOracle (OOPS.LazyAGM.terms 3)
+          (fun scalar => scalar • value.val.2.1.1)
+          (fun scalar => scalar • value.val.2.1.2)) (.inr value.val.1)).run
+            (value.val.2.2.1.map (Prod.map Prod.swap id),
+              value.val.2.2.2.1.map (Prod.map Prod.swap id), value.val.2.2.2.2)) :=
+  WeightedSign.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    fullLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide)
+    signingResponse signingResponseBuffers (by decide) (fun _ => rfl) rfl
+    (Equiv.prodComm (Word 16) (Fin 4)) (OOPS.LazyAGM.terms 3) (OOPSTerms.source 3)
+    uniformPort uniformDraw uniformSource uniformCorrect uniformLaw
+    (fun scalar : Word 16 => scalar • value.val.2.1.1) tape value admitted before holds
+
+private theorem fullMemory (tape : RandomTape 16) (value : fullLayout.input.Value)
+    (admitted : WeightedSign.valid (base := base) (key := .atom false) (val := .atom true) fullLayout
+      (generate := OOPSTerms.value) value)
+    (before : State 16) (holds : fullLayout.input.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (fullCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ fullTime ∧
+      ∃ execution : WordIO.Exec .unit tape (fullCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((fullCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (fullCode.lower uniformPort).memBound) ≤
+              5 * fullWords + 20 + registers + 3 * buffers + before.liveMem buffers + fullTime := by
+  obtain ⟨elapsed, answer, supported, represented, execution, memory⟩ :=
+    WeightedSign.resources (base := base) (key := .atom false) (val := .atom true)
+      fullLayout ⟨0, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨99, trivial⟩
+      primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+      signingResponse signingResponseBuffers (by decide) uniformCorrect oopsBound
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535)
+      goodBound signingResponseBound oopsNames
+      (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames signingResponseNames
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, memory⟩
+
+private def badSigningResponse := BLSResponse.bad groupLayout scale add mulNames.buffers (by decide) addNames.buffers true
+private theorem badSigningBuffers : badSigningResponse.program.code.memBound ≤ 5 :=
+  BLSResponse.bad_buffers groupLayout scale add mulNames.buffers (by decide) addNames.buffers true
+private theorem badSigningBound : badSigningResponse.BoundedBy
+    (BLSResponse.badTime groupLayout true 6 6) (BLSResponse.badWords groupLayout true 27 27) :=
+  BLSResponse.bad_bounded groupLayout scale add mulBound addBound mulNames.buffers (by decide) addNames.buffers true
+private def fullBadLayout :
+    WeightedSign.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16 × Word 16)
+      (Word 16 × Word 16 × Word 16) (Word 16) where
+  evaluation := accumulation.bad
+  message := oops.input
+  config := groupLayout.config
+  point := scalar
+  hashCapacity := 1
+  signCapacityPred := 1
+  hashCountFits := by decide
+  signCountFits := by decide
+  storageFits := by decide
+private def uniformPairDraw := BLSPrivateAccumulate.pairSampler (base := base) (key := .atom false) (val := .atom true)
+  accumulation uniformPort uniformDraw
+private def uniformPairSource := BLSPrivateAccumulate.pairSource (base := base) (key := .atom false) (val := .atom true)
+  accumulation uniformSource
+private theorem uniformPairCorrect : Interactive.Refines uniformPort .unit accumulation.bad.cache.lookup.unit.representation
+    accumulation.bad.cache.value.representation (fun _ => uniformPairSource) uniformPairDraw :=
+  PairSampling.refines (hw := accumulation.cache.wordFits) (fits := accumulation.cache.pairValueFits) uniformCorrect uniformCorrect
+private def fullBadInput : fullBadLayout.input.Value :=
+  ⟨(message.val, (5, 3, 13), [], [((0, 42), 9)], [(message.val, 10)]),
+    ⟨message.property, ⟨trivial, trivial, trivial⟩,
+      ⟨by decide, by simp⟩,
+      ⟨by decide, by intro entry member; simp only [List.mem_singleton] at member; subst entry; exact ⟨⟨trivial, trivial⟩, trivial⟩⟩,
+      ⟨by decide, by intro entry member; simp only [List.mem_singleton] at member; subst entry; exact ⟨message.property, trivial⟩⟩⟩,
+    by decide⟩
+private def fullBadCode := WeightedSign.code (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+  fullBadLayout ⟨(0, 0), trivial, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨(99, 98), trivial, trivial⟩
+  primitives comparison comparison_correct badUpdate badBuffers (by decide) uniformPort uniformPairDraw
+  badSigningResponse badSigningBuffers (by decide)
+private def fullBadTime := WeightedSign.timeBudget (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+  fullBadLayout 4 (by decide) (by decide) (OOPSTerms.timeBudget oops 6) (PairSampling.timeBudget scalar scalar 26 26)
+    (BLSAccumulate.badTime accumulation.arithmetic 6 6) (BLSResponse.badTime groupLayout true 6 6)
+private theorem fullBadBound : Interactive.TimeBoundOn
+    (WeightedSign.valid (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+      fullBadLayout (generate := OOPSTerms.value))
+    uniformPort .unit fullBadLayout.input.representation fullBadCode fullBadTime :=
+  WeightedSign.time_bound (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+    fullBadLayout ⟨(0, 0), trivial, trivial⟩ 4 (by decide) (by decide) oopsGenerator ⟨(99, 98), trivial, trivial⟩
+    primitives comparison comparison_correct badUpdate badBuffers (by decide) uniformPort uniformPairDraw
+    badSigningResponse badSigningBuffers (by decide) uniformPairCorrect oopsBound
+    (PairSampling.time_bound uniformCorrect uniformCorrect
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535))
+    (BLSAccumulate.bad_bounded accumulation.arithmetic mul add mulBound addBound mulNames.buffers (by decide) addNames.buffers)
+    badSigningBound
+
+private def executeSigning {M : Type} {R C : Type} (layout : WeightedSign.Layouts 16 Key M (Word 16) R C (Word 16))
+    (code : Interactive.Code 16) (value : layout.input.Value) (replies : List (Word 16)) := do
+  let initial := layout.input.representation.initial value
+  let before := { initial with
+    bufs := fun buffer => if buffer = 200 then #[77] else initial.bufs buffer
+    caps := fun buffer => if buffer = 200 then 4 else initial.caps buffer
+    regs := fun register => if register = 99 then 91 else initial.regs register
+    tapePos := 9 }
+  let result ← WordIO.run .unit RandomTape.zero 1000000 (code.lower uniformPort) before replies
+  let answer ← layout.output.representation.encoding.decode (result.state.bufs 0).toList
+  pure (answer.val, result.state.bufs 200, result.state.caps 200, result.state.regs 99, result.state.tapePos,
+    (List.range 40).all (fun i => result.state.caps (i + 1) == 0), result.trace, result.remaining, result.time)
+
+open Lean in
+run_cmd do
+  let fresh : List (Word 16) := [65535, 2, 65535, 5, 65535, 7, 65535, 11, 88]
+  let trace := [WordIO.Event.output 65535, .invoke, .input 65535, .input 2,
+    .output 65535, .invoke, .input 65535, .input 5, .output 65535, .invoke, .input 65535, .input 7,
+    .output 65535, .invoke, .input 65535, .input 11]
+  let caches : List {cache : List (Key × Word 16) // cache.length ≤ 4} :=
+    [⟨[], by decide⟩, ⟨entries, by decide⟩]
+  for cache in caches do
+    let replies := if cache.val.isEmpty then fresh else [88]
+    let expectedTrace := if cache.val.isEmpty then trace else []
+    let value := signingInput oops.input (by decide) message cache.val cache.property
+    match executeSigning fullLayout fullCode value replies with
+    | none => throwError "complete weighted signing failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      unless answer == (4901, (3, 13), entries, [((0, 42), 9)], [(message.val, 4901), (message.val, 10)]) &&
+          framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+          events == expectedTrace && remaining == [88] && elapsed ≤ fullTime do
+        throwError "signing lost response, configuration, cache, delivered logs, framing, or resource bound"
+  let vectorMessage := vector 3 9 27
+  let value := signingInput proximity.input (by decide) vectorMessage [] (by decide)
+  match executeSigning fullProximityLayout fullProximityCode value fresh with
+  | none => throwError "complete Proximity signing failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+    let signatures := answer.2.2.2.2.map (fun entry => (List.ofFn entry.1.1, entry.1.2, entry.2))
+    unless answer.1 == 4901 && answer.2.1 == (3, 13) && answer.2.2.1 == entries &&
+        answer.2.2.2.1 == [((0, 42), 9)] && signatures == [([3, 9, 27], 42, 4901), ([3, 9, 27], 42, 10)] &&
+        framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+        events == trace && remaining == [88] do
+      throwError "Proximity signing changed its vector message, weighted response, log or cache"
+  let pairSamples : List (Word 16) := [2, 3, 5, 7, 11, 13, 17, 19]
+  let pairReplies := pairSamples.flatMap (fun value => [65535, value]) ++ [88]
+  let pairTrace := pairSamples.flatMap (fun value =>
+    [WordIO.Event.output 65535, .invoke, .input 65535, .input value])
+  match executeSigning fullBadLayout fullBadCode fullBadInput pairReplies with
+  | none => throwError "complete pair signing failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+    unless answer == (47185, (5, 3, 13),
+        [((3, 42), (17, 19)), ((2, 42), (11, 13)), ((1, 42), (5, 7)), ((0, 42), (2, 3))],
+        [((0, 42), 9)], [(message.val, 47185), (message.val, 10)]) &&
+        framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+        events == pairTrace && remaining == [88] && elapsed ≤ fullBadTime do
+      throwError "pair signing changed samples, coordinate sums, delivered response, framing or time bound"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``ByteRoute.realizer, ``ByteRoute.time, ``ByteRoute.codeWords, ``GeneratedWeighted.savedNameFits,
+      ``WeightedSign.refines, ``WeightedSign.denote_source, ``WeightedSign.observe,
+      ``WeightedSign.denote_equiv, ``WeightedSign.observe_equiv, ``fullOracle,
+      ``WeightedSign.time_bound, ``WeightedSign.code_bound, ``WeightedSign.resources,
+      ``WeightedSign.descriptionFits_of_components, ``fullBound, ``fullFits, ``fullMemory, ``fullBadBound] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

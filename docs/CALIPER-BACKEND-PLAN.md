@@ -2461,7 +2461,8 @@ Implemented and checked:
   released scratch buffers and time bounds. Coordinate validity excludes
   unrepresentable inputs. No term-generator implementation or completed-generator resource
   contract is an input: only local scalar multiplication is supplied for OOPS.
-  Weighted lazy signing, extraction, full solver assembly and the
+  The generated evaluator and complete signing handler below connect these
+  generators to lazy signing. Extraction, full solver assembly and the
   OOPS/Proximity public concrete/family model migrations remain to be connected.
 - [Weighted row layouts](../Signatures/Runtime/Caliper/WeightedRowsLayout.lean)
   prove that a key/weight list has exactly the existing row fold's stored bytes
@@ -2521,8 +2522,35 @@ Implemented and checked:
   capacities, repeated replies and a full retained log. They reject insufficient
   selected-log capacity and unrepresentable requests, and check caller framing,
   scratch release and time bounds.
-  Complete weighted signing-handler composition, chronological coefficient
-  extraction and public solver models remain integration work.
+- [Complete weighted signing](../Signatures/Runtime/Caliper/WeightedSign.lean)
+  constructs the handler from the actual term generator, lazy cache arithmetic,
+  primitive sampler and local group response. The request and configuration are
+  physically retained while evaluation runs once. The response is computed once,
+  then that stored point is both returned and added to the signing log. The hash
+  log is retained, and the result includes the updated private cache.
+  [Byte routing](../Signatures/Runtime/Caliper/ByteRoute.lean) proves the emitted
+  slices and literal copies correct and charges every stored word and instruction.
+  The input reserves signing-log room; evaluation additionally reserves one cache
+  entry per generated term. No complete handler or host-side snapshot is an input.
+  The observation theorem identifies this actual execution with
+  `WeightedAGM.listOracle`'s signing branch, including the returned point,
+  configuration, cache and both logs. Key equivalences recover the original
+  scheme key types without runtime enumeration or conversion.
+  [Resource bounds](../Signatures/Runtime/Caliper/WeightedSignBounds.lean) derive
+  time, stored code, names, accepted addresses and total visited memory from the
+  component budgets. The evaluator's saved-buffer address is derived from
+  [component footprints](../Signatures/Runtime/Caliper/GeneratedWeightedBuffers.lean).
+  [Executed regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) cover
+  scalar OOPS and Proximity signing, fresh entries, cache hits and a full retained
+  hash log. Pair signing additionally checks independent samples, both weighted
+  sums and the final scaled group response. Checks include exact delivered logs,
+  caller state preservation, released scratch and derived runtime bounds; OOPS
+  instantiates the full observation theorem in its original topic/index types
+  and the same-execution total-memory theorem.
+  Hash/random dispatch, caller capacity invariants, chronological coefficient
+  expansion/extraction, complete OOPS/Proximity solvers and public concrete/family
+  models remain integration work. Schnorr ROM replay/composition remains separate
+  pending work; conventional CPU/flat-memory adequacy stays outside this migration.
 
 Remaining integration sequence:
 

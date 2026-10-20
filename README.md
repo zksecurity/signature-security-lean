@@ -466,8 +466,15 @@ Pinned upstreams:
   key conversion, including shadowed entries. The
   [reply-log updates](Signatures/Runtime/Caliper/WeightedRecord.lean) support
   different hash-index and signing-message types, widths and capacities,
-  with charged retention of the other log. Complete signing-handler,
-  transcript-extraction and full-solver integration remains.
+  with charged retention of the other log. The
+  [complete weighted signing handler](Signatures/Runtime/Caliper/WeightedSign.lean)
+  now executes term generation, lazy evaluation, the group response and recording
+  of that same response. Its source theorem preserves the configuration, complete
+  cache and both logs in the original key types.
+  [Derived resource bounds](Signatures/Runtime/Caliper/WeightedSignBounds.lean)
+  charge all routing and saved-state copies, stored code and every visited
+  memory state. Hash/random dispatch, caller capacity invariants,
+  transcript extraction and full-solver integration remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
