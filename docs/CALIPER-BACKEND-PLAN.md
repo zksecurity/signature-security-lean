@@ -2578,8 +2578,46 @@ Implemented and checked:
   using the actual handler growth; weakening covers early termination.
   Concrete OOPS signing derives its cache precondition from this reservation and
   the actual generator's output bound. Hash and signing regressions instantiate
-  reservation preservation. These are the per-query steps; the complete caller
-  invariant and combined random/hash/sign service still need assembly.
+  reservation preservation. These supply the combined service's per-query
+  invariant below; the complete caller still needs assembly.
+- [Combined weighted service](../Signatures/Runtime/Caliper/WeightedOracle.lean)
+  dispatches stored tags to the actual random forwarding, hash and signing
+  programs. [Shared layouts](../Signatures/Runtime/Caliper/WeightedOracleLayout.lean)
+  give both group handlers exactly the same store and reply bytes, with
+  independently sized hash indices and signed messages. Random forwarding
+  retains the store through charged copying and preserves the reply's actual
+  requested range. Tags, padding and branch payload copies are executed.
+  [Source refinement](../Signatures/Runtime/Caliper/WeightedOracleSource.lean)
+  identifies the full result with `WeightedAGM.listOracle`, including point,
+  configuration, ordered private cache and both reply logs.
+  [Original-key refinement](../Signatures/Runtime/Caliper/WeightedOracleOriginal.lean)
+  gives the same equality for the original source keys through an equivalence;
+  this proof conversion neither enumerates the key domain nor inserts an
+  uncharged runtime conversion.
+  [Time and code bounds](../Signatures/Runtime/Caliper/WeightedOracleBounds.lean)
+  derive the complete service budgets from the term generator, scalar update,
+  primitive sampler and local group responses. Time takes the maximum of the
+  dispatched branch budgets; stored code includes every branch.
+  [Memory and address bounds](../Signatures/Runtime/Caliper/WeightedOracleMemory.lean)
+  include all generated names, stored program, initial caller capacity and
+  every visited state of that same execution. No completed-service correctness
+  or resource certificate is an input.
+  [The query step](../Signatures/Runtime/Caliper/WeightedOracleInvariant.lean)
+  derives signing cache readiness from the actual generator's output bound,
+  preserves configuration and consumes one reservation for any selected branch.
+  Cache growth is at most `max(1,d)` and combined log growth at most one.
+  Random calls leave the complete store unchanged.
+  [Executed regressions](../SignaturesTest/CaliperGeneratedWeighted.lean)
+  alternate random, hash and signing requests, reuse private entries across
+  handlers, perform cached calls without sampling, fill both reply logs and
+  still forward random queries. They check the complete reply/store, random
+  range, exact trace, retained caller buffers/registers/tape, scratch release
+  and derived time bound. A Proximity instance checks a different message
+  width and vector-message logs. Concrete source, time, address, total-memory
+  and reservation theorems are instantiated and axiom-audited.
+  These sequences are selected by the test harness. Charged caller packet
+  conversion and the adaptive caller controller's completion invariant still
+  need to be connected to this service.
   Chronological coefficient expansion/extraction, complete OOPS/Proximity solvers
   and public concrete/family models also remain. Schnorr ROM replay/composition
   remains pending; conventional CPU/flat-memory adequacy stays outside this migration.

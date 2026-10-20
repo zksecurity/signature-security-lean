@@ -7,6 +7,9 @@ import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.WeightedSignBounds
 import Signatures.Runtime.Caliper.WeightedHashBounds
 import Signatures.Runtime.Caliper.WeightedCapacity
+import Signatures.Runtime.Caliper.WeightedOracleMemory
+import Signatures.Runtime.Caliper.WeightedOracleInvariant
+import Signatures.Runtime.Caliper.WeightedOracleOriginal
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
 import Mathlib.Data.BitVec
@@ -795,6 +798,206 @@ run_cmd do
       ``WeightedState.Reserved.empty, ``WeightedState.Reserved.weaken, ``WeightedState.Reserved.hash_room,
       ``WeightedState.Reserved.sign_room, ``hashReservation, ``signingReservation,
       ``fullHashBound, ``fullHashFits, ``fullHashOracle, ``fullHashMemory, ``fullBadHashBound] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+private def serviceLayout : WeightedOracle.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16)
+    (Word 16 × Word 16) (Word 16) :=
+  ⟨accumulation.good, ⟨0, trivial⟩, ⟨99, trivial⟩, oops.input, groupLayout.points, scalar,
+    1, 1, by decide, by decide, by decide⟩
+private def serviceRespond (signing : Bool) (value : Word 16 × (Word 16 × Word 16)) : Word 16 :=
+  value.1 • (if signing then value.2.2 else value.2.1)
+private def serviceResponse (signing : Bool) :
+    Implementation .unit serviceLayout.responseInput serviceLayout.point (serviceRespond signing) :=
+  BLSResponse.good groupLayout scale signing
+private theorem serviceResponseBuffers (signing : Bool) : (serviceResponse signing).program.code.memBound ≤ 3 :=
+  BLSResponse.good_buffers groupLayout scale mulNames.buffers signing
+private theorem serviceResponseBound (signing : Bool) : (serviceResponse signing).BoundedBy
+    (BLSResponse.goodTime groupLayout 6) (BLSResponse.goodWords groupLayout 27) :=
+  BLSResponse.good_bounded groupLayout scale mulBound signing
+private theorem serviceResponseNames (signing : Bool) : NamesAccounted (serviceResponse signing).program.code 3 :=
+  BLSResponse.good_names groupLayout 3 scale mulNames.accounted signing
+private def serviceCode := WeightedOracle.code (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+private def serviceTime := WeightedOracle.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) 65535 (by decide) (OOPSTerms.timeBudget oops 6) 26
+    (BLSAccumulate.goodTime accumulation.arithmetic 6 6) (fun _ => BLSResponse.goodTime groupLayout 6)
+private def serviceWords := WeightedOracle.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  serviceLayout 4 (by decide) (by decide) 65535 (by decide) (OOPSTerms.codeBudget oops 27) 125
+    (BLSAccumulate.goodCode accumulation.arithmetic 27 27) (fun _ => BLSResponse.goodWords groupLayout 27)
+private theorem serviceBound : Interactive.TimeBoundOn
+    (WeightedOracle.valid (base := base) (key := .atom false) (val := .atom true) serviceLayout (generate := OOPSTerms.value) 65535)
+    uniformPort .unit (serviceLayout.input 65535 (by decide)) serviceCode serviceTime :=
+  WeightedOracle.time_bound (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide) uniformCorrect
+    oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) goodBound serviceResponseBound
+private theorem serviceFits : (serviceCode.lower uniformPort).DescriptionFits :=
+  WeightedOracle.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide)
+
+private theorem serviceOracle (tape : RandomTape 16) (value : WeightedOracle.Input serviceLayout 65535)
+    (admitted : WeightedOracle.valid (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout (generate := OOPSTerms.value) 65535 value)
+    (before : State 16) (holds : (serviceLayout.input 65535 (by decide)).Holds value before) :
+    (fun result => WeightedOracle.decodedIn serviceLayout 65535 Prod.swap <$>
+        Interactive.observe (serviceLayout.output 65535 (by decide)) result) <$>
+      serviceCode.execute uniformPort .unit tape before =
+      some <$> ((fun answer => (WeightedOracle.answer (WeightedOracle.queryIn serviceLayout 65535 Prod.swap value) answer.1,
+        (WeightedOracle.saved serviceLayout 65535 value).1, answer.2)) <$>
+          ((WeightedAGM.listOracle (OOPS.LazyAGM.terms 3)
+            (fun scalar => serviceRespond false (scalar, (WeightedOracle.saved serviceLayout 65535 value).1))
+            (fun scalar => serviceRespond true (scalar, (WeightedOracle.saved serviceLayout 65535 value).1)))
+            (WeightedOracle.queryIn serviceLayout 65535 Prod.swap value)).run
+              (WeightedOracle.decodeStore Prod.swap (WeightedOracle.saved serviceLayout 65535 value)).2) :=
+  WeightedOracle.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+    (fun _ => rfl) rfl uniformSource uniformLaw (Equiv.prodComm (Word 16) (Fin 4)) (OOPS.LazyAGM.terms 3)
+    (OOPSTerms.source 3) uniformCorrect tape value admitted before holds
+
+private theorem serviceMemory (tape : RandomTape 16) (value : WeightedOracle.Input serviceLayout 65535)
+    (admitted : WeightedOracle.valid (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout (generate := OOPSTerms.value) 65535 value)
+    (before : State 16) (holds : (serviceLayout.input 65535 (by decide)).Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (serviceCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ serviceTime ∧
+      ∃ execution : WordIO.Exec .unit tape (serviceCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((serviceCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (serviceCode.lower uniformPort).memBound) ≤
+              5 * serviceWords + 20 + registers + 3 * buffers + before.liveMem buffers + serviceTime := by
+  obtain ⟨elapsed, answer, supported, represented, execution, memory⟩ :=
+    WeightedOracle.resources (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 (by decide) primitives comparison comparison_correct
+      goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide) uniformCorrect
+      oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535) goodBound serviceResponseBound
+      oopsNames (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames serviceResponseNames
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, memory⟩
+
+private theorem serviceReady (value : WeightedOracle.Input serviceLayout 65535) {remaining : Nat}
+    (reserved : WeightedOracle.Reserved serviceLayout 4 (remaining + 1) (WeightedOracle.saved serviceLayout 65535 value)) :
+    WeightedOracle.valid (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout (generate := OOPSTerms.value) 65535 value :=
+  WeightedOracle.valid_of_reserved (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 value reserved
+private theorem serviceReservation (value : WeightedOracle.Input serviceLayout 65535) {remaining : Nat}
+    (reserved : WeightedOracle.Reserved serviceLayout 4 (remaining + 1) (WeightedOracle.saved serviceLayout 65535 value))
+    (answer : WeightedOracle.Output serviceLayout 65535)
+    (reached : answer ∈ support (WeightedOracle.denote (base := base) (key := .atom false) (val := .atom true)
+      serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 primitives comparison comparison_correct
+      goodUpdate goodBuffers (by decide) serviceResponse uniformSource value)) :
+    WeightedOracle.Reserved serviceLayout 4 remaining (WeightedOracle.returned serviceLayout 65535 answer).val :=
+  (WeightedOracle.step (base := base) (key := .atom false) (val := .atom true)
+    serviceLayout 4 (by decide) (by decide) oopsGenerator 65535 primitives comparison comparison_correct
+    goodUpdate goodBuffers (by decide) serviceResponse uniformSource value reserved answer reached).1
+
+private def serviceInitial : serviceLayout.store.Value :=
+  ⟨((3, 13), [], [], []), ⟨trivial, trivial⟩,
+    ⟨by decide, by simp⟩, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩⟩
+private theorem serviceInitialRoom : WeightedOracle.Reserved serviceLayout 4 2 serviceInitial.val :=
+  WeightedState.Reserved.empty (3, 13) 8 2 2 4 2 (by decide) (by decide) (by decide)
+private def serviceHashInput (index : Key) (stored : serviceLayout.store.Value) :
+    Option (WeightedOracle.Input serviceLayout 65535) :=
+  if ready : serviceLayout.hashing.room (index, stored.val) then
+    some (.inr (.inl ⟨(index, stored.val), ⟨⟨trivial, trivial⟩, stored.property⟩, ready⟩))
+  else none
+private def serviceSignInput (message : oops.input.Value) (stored : serviceLayout.store.Value) :
+    Option (WeightedOracle.Input serviceLayout 65535) :=
+  if ready : serviceLayout.signing.room (message.val, stored.val) then
+    if stored.val.2.1.length + (OOPSTerms.value (degree := 3) message.val).length ≤ 8 then
+      some (.inr (.inr ⟨(message.val, stored.val), ⟨message.property, stored.property⟩, ready⟩))
+    else none
+  else none
+
+private def proximityService : WeightedOracle.Layouts 16 Key ((Fin 3 → Word 16) × Word 16) (Word 16) (Word 16)
+    (Word 16 × Word 16) (Word 16) :=
+  ⟨accumulation.good, ⟨0, trivial⟩, ⟨99, trivial⟩, proximity.input, groupLayout.points, scalar,
+    1, 1, by decide, by decide, by decide⟩
+private def proximityServiceCode := WeightedOracle.code (base := base) (key := .atom false) (val := .atom true)
+  proximityService 4 (by decide) (by decide) proximityGenerator 65535 (by decide) primitives comparison comparison_correct
+  goodUpdate goodBuffers (by decide) uniformDraw serviceResponse serviceResponseBuffers (by decide)
+private def proximityServiceSign : proximityService.signing.input.Value :=
+  ⟨((vector 3 9 27).val, (3, 13), [], [], []), ⟨⟨(fun _ => trivial), trivial⟩,
+    ⟨trivial, trivial⟩, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩, ⟨by decide, by simp⟩⟩, by decide⟩
+
+open Lean in
+run_cmd do
+  -- The harness chooses successive requests; each service call executes all
+  -- dispatch, forwarding, cache, response and recording instructions.
+  let run (value : WeightedOracle.Input serviceLayout 65535) (replies : List (Word 16))
+      (wanted : (Nat ⊕ Word 16) × WeightedHash.Store Key (Word 16 × Word 16) (Word 16) (Word 16 × Word 16) (Word 16))
+      (trace : List (WordIO.Event 16)) (range : Option Nat) :
+      Lean.Elab.Command.CommandElabM serviceLayout.store.Value := do
+    match executeUniform (serviceLayout.input 65535 (by decide)) (Layout.all (serviceLayout.output 65535 (by decide)))
+        serviceCode value replies with
+    | none => throwError "combined weighted service execution failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      let actualRange := match answer with | .inl value => some value.1.1.val | .inr _ => none
+      unless WeightedOracle.decoded serviceLayout 65535 answer == wanted && actualRange == range &&
+          framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+          events == trace && remaining == [88] && elapsed ≤ serviceTime do
+        throwError "combined service changed its reply, state, range, framing, trace or time bound"
+      pure (WeightedOracle.returned serviceLayout 65535 answer)
+  let stored ← run (.inl (⟨7, by decide⟩, serviceInitial)) [7, 3, 88] (.inl 3, serviceInitial.val)
+    [.output 7, .invoke, .input 7, .input 3] (some 7)
+  let hashed ← match serviceHashInput (2, 42) stored with
+    | some value => pure value
+    | none => throwError "combined hash was unexpectedly unready"
+  let stored ← run hashed [65535, 7, 88] (.inr 21, (3, 13), [((2, 42), 7)], [((2, 42), 21)], [])
+    [.output 65535, .invoke, .input 65535, .input 7] none
+  let signed ← match serviceSignInput message stored with
+    | some value => pure value
+    | none => throwError "combined signing was unexpectedly unready"
+  let cache : List (Key × Word 16) := [((3, 42), 11), ((1, 42), 5), ((0, 42), 2), ((2, 42), 7)]
+  let stored ← run signed [65535, 2, 65535, 5, 65535, 11, 88]
+    (.inr 4901, (3, 13), cache, [((2, 42), 21)], [(message.val, 4901)])
+    [.output 65535, .invoke, .input 65535, .input 2, .output 65535, .invoke, .input 65535, .input 5,
+      .output 65535, .invoke, .input 65535, .input 11] none
+  let hashed ← match serviceHashInput (2, 42) stored with
+    | some value => pure value
+    | none => throwError "combined cache hit was unexpectedly unready"
+  let stored ← run hashed [88] (.inr 21, (3, 13), cache, [((2, 42), 21), ((2, 42), 21)], [(message.val, 4901)]) [] none
+  let signed ← match serviceSignInput message stored with
+    | some value => pure value
+    | none => throwError "combined cached signing was unexpectedly unready"
+  let stored ← run signed [88] (.inr 4901, (3, 13), cache, [((2, 42), 21), ((2, 42), 21)],
+    [(message.val, 4901), (message.val, 4901)]) [] none
+  if (serviceHashInput (2, 42) stored).isSome || (serviceSignInput message stored).isSome then
+    throwError "combined service admitted an exhausted selected reply log"
+  let _ ← run (.inl (⟨0, by decide⟩, stored)) [0, 0, 88] (.inl 0, stored.val)
+    [.output 0, .invoke, .input 0, .input 0] (some 0)
+  match executeUniform (proximityService.input 65535 (by decide)) (Layout.all (proximityService.output 65535 (by decide)))
+      proximityServiceCode (.inr (.inr proximityServiceSign)) [65535, 2, 65535, 5, 65535, 7, 65535, 11, 88] with
+  | none => throwError "combined Proximity service failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+    match answer with
+    | .inl _ => throwError "Proximity signing returned a random-reply tag"
+    | .inr answer =>
+      let signatures := answer.val.2.2.2.2.map (fun entry => (List.ofFn entry.1.1, entry.1.2, entry.2))
+      unless answer.val.1 == 4901 && answer.val.2.1 == (3, 13) && answer.val.2.2.1 == entries &&
+          answer.val.2.2.2.1.isEmpty && signatures == [([3, 9, 27], 42, 4901)] &&
+          framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+          events == [.output 65535, .invoke, .input 65535, .input 2, .output 65535, .invoke, .input 65535, .input 5,
+            .output 65535, .invoke, .input 65535, .input 7, .output 65535, .invoke, .input 65535, .input 11] &&
+          remaining == [88] do
+        throwError "combined Proximity service changed vector logs, private cache or caller state"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``WeightedOracle.Layouts.hashStore, ``WeightedOracle.Layouts.hashOutput,
+      ``WeightedOracle.refines, ``WeightedOracle.denote_source, ``WeightedOracle.observe,
+      ``WeightedOracle.denote_equiv, ``WeightedOracle.observe_equiv, ``WeightedOracle.time_bound,
+      ``WeightedOracle.code_bound, ``WeightedOracle.names, ``WeightedOracle.descriptionFits,
+      ``WeightedOracle.resources, ``WeightedOracle.valid_of_reserved, ``WeightedOracle.step,
+      ``serviceBound, ``serviceFits, ``serviceOracle, ``serviceMemory, ``serviceReady, ``serviceReservation, ``serviceInitialRoom] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

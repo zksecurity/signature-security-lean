@@ -50,6 +50,9 @@ import Signatures.Runtime.Caliper.WeightedRecord
 import Signatures.Runtime.Caliper.WeightedSignBounds
 import Signatures.Runtime.Caliper.WeightedHashBounds
 import Signatures.Runtime.Caliper.WeightedCapacity
+import Signatures.Runtime.Caliper.WeightedOracleMemory
+import Signatures.Runtime.Caliper.WeightedOracleOriginal
+import Signatures.Runtime.Caliper.WeightedOracleInvariant
 import Signatures.OOPS.Statement
 import Signatures.OOPS.GeneralAGMFamilyStatement
 import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics

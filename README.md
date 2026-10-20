@@ -477,9 +477,17 @@ Pinned upstreams:
   now has the same source and resource guarantees, permits full-cache hits,
   and preserves the separately typed signing log. Proved
   [state growth and reservations](Signatures/Runtime/Caliper/WeightedCapacity.lean)
-  supply the capacity steps for caller composition.
-  Combined random/hash/sign dispatch, complete caller invariants,
-  transcript extraction and full-solver integration remain.
+  supply the capacity steps for caller composition. The
+  [combined random/hash/sign service](Signatures/Runtime/Caliper/WeightedOracle.lean)
+  now executes all three branches with one shared store. Its
+  [source theorem](Signatures/Runtime/Caliper/WeightedOracleOriginal.lean)
+  preserves the original oracle's complete reply/state distribution, and its
+  [resource bounds](Signatures/Runtime/Caliper/WeightedOracleMemory.lean)
+  include dispatch, saved-state copies, stored code and every visited memory state.
+  [Per-query invariants](Signatures/Runtime/Caliper/WeightedOracleInvariant.lean)
+  derive signing readiness and preserve the capacity reservation.
+  Caller packet conversion and complete controller invariants, transcript
+  extraction and full-solver integration remain.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
