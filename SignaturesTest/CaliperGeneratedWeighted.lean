@@ -17,6 +17,7 @@ import Signatures.Runtime.Caliper.WeightedCaller
 import Signatures.Runtime.Caliper.WeightedCallerPostcondition
 import Signatures.Runtime.Caliper.WeightedCallerResources
 import Signatures.Runtime.Caliper.WeightedCoefficientBounds
+import Signatures.Runtime.Caliper.WeightedExtractionMemory
 import Signatures.Runtime.Caliper.BLSResponseBounds
 import Signatures.Runtime.Caliper.BLSResponseNames
 import Mathlib.Data.BitVec
@@ -1505,6 +1506,179 @@ run_cmd do
       ``WeightedCoefficient.time_bound, ``WeightedCoefficient.code_bound, ``WeightedCoefficient.names,
       ``WeightedCoefficient.descriptionFits, ``WeightedCoefficient.resources,
       ``coefficientBound, ``coefficientCodeBound, ``coefficientFits, ``coefficientSource, ``coefficientMemory] do
+    for dependency in (← collectAxioms name) do
+      unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
+
+private def extractionRows : WeightedToken.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16) :=
+  ⟨coefficientLayout, scalar, by decide⟩
+private def extractionLayout : WeightedExtraction.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16) where
+  rows := extractionRows
+  capacity := 3
+  coefficients := 4
+  terms := 4
+  termCountFits := by decide
+  termStorageFits := by decide
+  counterFits := by decide
+  coefficientCountFits := by decide
+  storageFits := by decide
+private def extractionProximityRows :
+    WeightedToken.Layouts 16 Key ((Fin 3 → Word 16) × Word 16) (Word 16) (Word 16) (Word 16) :=
+  ⟨coefficientProximityLayout, scalar, by decide⟩
+private def extractionProximityLayout :
+    WeightedExtraction.Layouts 16 Key ((Fin 3 → Word 16) × Word 16) (Word 16) (Word 16) (Word 16) :=
+  ⟨extractionProximityRows, 3, 4, 4, by decide, by decide, by decide, by decide, by decide⟩
+private def extractionPairRows :
+    WeightedToken.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16 × Word 16) :=
+  ⟨coefficientPairLayout, scalar, by decide⟩
+private def extractionPairLayout :
+    WeightedExtraction.Layouts 16 Key (Word 16 × Word 16) (Word 16) (Word 16) (Word 16 × Word 16) :=
+  ⟨extractionPairRows, 3, 4, 4, by decide, by decide, by decide, by decide, by decide⟩
+private def extractionCode := WeightedExtraction.code (base := base) (key := .atom false) (val := .atom true)
+  extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨9, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+private def extractionProximityCode := WeightedExtraction.code (base := base) (key := .atom false) (val := .atom true)
+  extractionProximityLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨9, trivial⟩ ⟨99, trivial⟩ proximityGenerator
+  primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+private def extractionPairCode := WeightedExtraction.code (base := base) (key := .atom false) (val := .pair (.atom true) (.atom true))
+  extractionPairLayout ⟨0, trivial⟩ ⟨(0, 0), trivial, trivial⟩ ⟨(9, 10), trivial, trivial⟩ ⟨(99, 98), trivial, trivial⟩ oopsGenerator
+  primitives comparison comparison_correct badUpdate badBuffers (by decide) uniformPort uniformPairDraw
+private def extractionInput (transcript : List ((Word 16 × Word 16) × Word 16)) (coefficients : List (Word 16))
+    (cache : List (Key × Word 16)) (tokens : transcript.length ≤ 3) (scalars : coefficients.length ≤ 4)
+    (cacheBound : cache.length ≤ 8) : extractionLayout.input.Value :=
+  ⟨((transcript, coefficients), cache),
+    ⟨⟨tokens, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩, scalars, fun _ _ => trivial⟩,
+    cacheBound, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩
+private def extractionTime := WeightedExtraction.timeBudget (base := base) (key := .atom false) (val := .atom true)
+  extractionLayout (OOPSTerms.timeBudget oops 6) 26 (BLSAccumulate.goodTime accumulation.arithmetic 6 6)
+private def extractionWords := WeightedExtraction.codeBudget (base := base) (key := .atom false) (val := .atom true)
+  extractionLayout (OOPSTerms.codeBudget oops 27) 125 (BLSAccumulate.goodCode accumulation.arithmetic 27 27)
+private theorem extractionBound : Interactive.TimeBoundOn extractionLayout.ready uniformPort .unit
+    extractionLayout.input.representation extractionCode extractionTime :=
+  WeightedExtraction.time_bound (base := base) (key := .atom false) (val := .atom true)
+    extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨9, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformCorrect oopsBound
+    (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535) goodBound
+private theorem extractionFits : (extractionCode.lower uniformPort).DescriptionFits :=
+  WeightedExtraction.descriptionFits (base := base) (key := .atom false) (val := .atom true)
+    extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨9, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw
+    (OOPSTerms.buffers oops trivial mul mulNames.buffers (by decide)) (by decide)
+    (UniformSampling.descriptionFits (w := 16) 65535 (by decide) (by decide) 65535)
+    (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) (by decide) (by decide)
+private theorem extractionOracle (tape : RandomTape 16) (value : extractionLayout.input.Value)
+    (admitted : extractionLayout.ready value) (before : State 16) (holds : extractionLayout.input.representation.Holds value before) :
+    (fun result => (fun answer => (answer.val.1, answer.val.2.map (Prod.map Prod.swap id))) <$>
+        Interactive.observe extractionLayout.rows.state.representation result) <$>
+      extractionCode.execute uniformPort .unit tape before =
+      some <$> ((fun answer => (9 + answer.1, answer.2)) <$>
+        (simulateQ (BLS.LazyAGM.Reduction.privateListOracle (M := Word 16 × Fin 4) (R := Word 16))
+          (Model.LazyAGM.evalTerms (Model.LazyAGM.WeightedReduction.signedTerms (OOPS.LazyAGM.terms 3)
+            value.val.1.2 value.val.1.1.reverse))).run (value.val.2.map (Prod.map Prod.swap id))) :=
+  WeightedExtraction.observe_equiv (base := base) (key := .atom false) (val := .atom true)
+    extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨9, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+    primitives comparison comparison_correct goodUpdate goodBuffers (by decide) (fun _ => rfl) rfl rfl
+    uniformSource uniformLaw (Equiv.prodComm (Word 16) (Fin 4)) (OOPS.LazyAGM.terms 3) (OOPSTerms.source 3)
+    uniformPort uniformDraw uniformCorrect tape value admitted before holds
+private theorem extractionMemory (tape : RandomTape 16) (value : extractionLayout.input.Value)
+    (admitted : extractionLayout.ready value) (before : State 16) (holds : extractionLayout.input.representation.Holds value before)
+    (registers buffers : Nat) (initialRegisters : RegisterBound before registers) (initialBuffers : before.SupportBound buffers)
+    (finished : WordIO.Result 16) (reached : some finished ∈ support (extractionCode.execute uniformPort .unit tape before)) :
+    finished.time ≤ extractionTime ∧
+      ∃ execution : WordIO.Exec .unit tape (extractionCode.lower uniformPort) before finished.state
+          finished.trace finished.time finished.net finished.peak,
+        ∀ between, execution.Visits between →
+          ((extractionCode.lower uniformPort).staticWords registers buffers : Int) +
+            between.liveMem (max buffers (extractionCode.lower uniformPort).memBound) ≤
+              5 * extractionWords + 20 + registers + 3 * buffers + before.liveMem buffers + extractionTime := by
+  obtain ⟨elapsed, _, _, _, execution, memory⟩ :=
+    WeightedExtraction.resources (base := base) (key := .atom false) (val := .atom true)
+      extractionLayout ⟨0, trivial⟩ ⟨0, trivial⟩ ⟨9, trivial⟩ ⟨99, trivial⟩ oopsGenerator
+      primitives comparison comparison_correct goodUpdate goodBuffers (by decide) uniformPort uniformDraw uniformCorrect
+      oopsBound (UniformSampling.time_bound (w := 16) 65535 (by decide) (by decide) 65535)
+      (UniformSampling.code_words (w := 16) 65535 (by decide) (by decide) 65535) goodBound oopsNames
+      (UniformSampling.names (w := 16) 65535 (by decide) (by decide) 65535) goodNames
+      tape value admitted before holds registers buffers initialRegisters initialBuffers finished reached
+  exact ⟨elapsed, execution, fun between visited => (memory between visited).2.2.2⟩
+
+open Lean in
+run_cmd do
+  let firstSamples : List (Word 16) := [2, 5, 7, 11]
+  let secondSamples : List (Word 16) := [3, 7, 11, 13]
+  let allSamples := firstSamples ++ secondSamples
+  let replies := allSamples.flatMap (fun sample => [65535, sample]) ++ [88]
+  let trace := allSamples.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+  let secondCache : List (Key × Word 16) := [((3, 43), 13), ((2, 43), 11), ((1, 43), 7), ((0, 43), 3)]
+  let coefficients : List {values : List (Word 16) // values.length ≤ 4} :=
+    [⟨[5, 7], by decide⟩, ⟨[5], by decide⟩, ⟨[0, 0], by decide⟩, ⟨[5, 7, 99], by decide⟩]
+  for cs in coefficients do
+    let value := extractionInput [((2, 43), 17), (message.val, 13)] cs.val [] (by decide) cs.property (by decide)
+    unless decide (extractionLayout.ready value) do
+      throwError "extraction reserved padded capacity instead of actual token count"
+    match executeUniform extractionLayout.input.representation extractionLayout.rows.state extractionCode value replies with
+    | none => throwError "complete weighted transcript extraction failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      let expected := 9 + (cs.val[0]?).getD 0 * 377 + (cs.val[1]?).getD 0 * 165
+      unless answer == (expected, secondCache ++ entries) && framed == #[77] && capacity == 4 &&
+          register == 91 && tape == 9 && scratch && events == trace && remaining == [88] && elapsed ≤ extractionTime do
+        throwError "weighted extraction lost chronological coefficients, zero reads, cache order, frame or budget"
+  let firstReplies := firstSamples.flatMap (fun sample => [65535, sample]) ++ [88]
+  let firstTrace := firstSamples.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+  let repeated := extractionInput [(message.val, 17), (message.val, 13)] [5, 7] [] (by decide) (by decide) (by decide)
+  match executeUniform extractionLayout.input.representation extractionLayout.rows.state extractionCode repeated firstReplies with
+  | none => throwError "repeated-message transcript extraction failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+    unless answer == (4533, entries) && framed == #[77] && capacity == 4 && register == 91 &&
+        tape == 9 && scratch && events == firstTrace && remaining == [88] && elapsed ≤ extractionTime do
+      throwError "repeated-message extraction resampled or merged occurrence coefficients"
+  let cases : List (extractionLayout.input.Value × Word 16) :=
+    [(extractionInput [] [5] entries (by decide) (by decide) (by decide), 9),
+     (extractionInput [(message.val, 13)] [5] entries (by decide) (by decide) (by decide), 1894)]
+  for (value, expected) in cases do
+    match executeUniform extractionLayout.input.representation extractionLayout.rows.state extractionCode value [88] with
+    | none => throwError "empty or cached extraction failed"
+    | some (answer, framed, capacity, register, tape, scratch, events, remaining, elapsed) =>
+      unless answer == (expected, entries) && framed == #[77] && capacity == 4 && register == 91 &&
+          tape == 9 && scratch && events.isEmpty && remaining == [88] && elapsed ≤ extractionTime do
+        throwError "empty or cached extraction changed cache, consumed samples or lost framing"
+  let oversized := extractionInput [(message.val, 17), (message.val, 13)] [5, 7] entries
+    (by decide) (by decide) (by decide)
+  unless !(decide (extractionLayout.ready oversized)) do
+    throwError "weighted extraction admission ignored its cache reservation"
+  let pvalue : extractionProximityLayout.input.Value :=
+    ⟨(([( ((vector 2 4 8).val.1, 43), 17), ((vector 3 9 27).val, 13)], [5, 7]), []),
+      ⟨⟨by decide, fun _ _ => ⟨⟨(fun _ => trivial), trivial⟩, trivial⟩⟩,
+        by decide, fun _ _ => trivial⟩, by decide, by simp⟩
+  match executeUniform extractionProximityLayout.input.representation extractionProximityLayout.rows.state
+      extractionProximityCode pvalue replies with
+  | none => throwError "complete Proximity transcript extraction failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+    unless answer == (3049, secondCache ++ entries) && framed == #[77] && capacity == 4 &&
+        register == 91 && tape == 9 && scratch && events == trace && remaining == [88] do
+      throwError "Proximity transcript extraction changed vector terms, chronology or state"
+  let pairSamples : List (Word 16) := [2, 3, 5, 7, 11, 13, 17, 19]
+  let pairTrace := pairSamples.flatMap (fun sample => [WordIO.Event.output 65535, .invoke, .input 65535, .input sample])
+  let pairValue : extractionPairLayout.input.Value :=
+    ⟨(([(message.val, 17), (message.val, 13)], [5, 7]), []),
+      ⟨⟨by decide, fun _ _ => ⟨⟨trivial, trivial⟩, trivial⟩⟩, by decide, fun _ _ => trivial⟩, by decide, by simp⟩
+  match executeUniform extractionPairLayout.input.representation extractionPairLayout.rows.state extractionPairCode pairValue
+      (pairSamples.flatMap (fun sample => [65535, sample]) ++ [88]) with
+  | none => throwError "complete pair transcript extraction failed"
+  | some (answer, framed, capacity, register, tape, scratch, events, remaining, _) =>
+    unless answer == ((6909, 7858),
+        [((3, 42), (17, 19)), ((2, 42), (11, 13)), ((1, 42), (5, 7)), ((0, 42), (2, 3))]) &&
+        framed == #[77] && capacity == 4 && register == 91 && tape == 9 && scratch &&
+        events == pairTrace && remaining == [88] do
+      throwError "pair transcript extraction changed coordinate sums, shared cache or retained frame"
+  let allowed := [`propext, `Quot.sound, `Classical.choice]
+  for name in [``WeightedToken.refines, ``WeightedToken.ready_of_room, ``WeightedToken.preserves,
+      ``WeightedToken.time_bound, ``WeightedToken.code_bound, ``WeightedToken.buffers,
+      ``WeightedTokenFold.refines, ``WeightedTokenFold.time_bound, ``WeightedTokenFold.code_bound,
+      ``WeightedTokenFold.descriptionFits, ``WeightedTokenFold.listCache, ``WeightedTokenFold.cache_growth,
+      ``WeightedExtraction.prepare_bounded, ``WeightedExtraction.refines, ``WeightedExtraction.time_bound,
+      ``WeightedExtraction.code_bound, ``WeightedExtraction.denote_source, ``WeightedExtraction.denote_encoded,
+      ``WeightedExtraction.denote_equiv, ``WeightedExtraction.observe_equiv, ``WeightedExtraction.cache_growth,
+      ``WeightedExtraction.remaining_room, ``WeightedExtraction.descriptionFits, ``WeightedExtraction.resources,
+      ``extractionBound, ``extractionFits, ``extractionOracle, ``extractionMemory] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

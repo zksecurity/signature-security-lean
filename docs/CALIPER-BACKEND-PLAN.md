@@ -2689,10 +2689,47 @@ Implemented and checked:
   pair values, zero coefficients with fresh sampling, cache hits, distinct
   coefficients on repeated messages sharing the returned cache, Proximity's
   vector messages, exact traces, retained frames and scratch release.
-  The chronological outer Caliper fold, complete extraction/setup/caller
+- [Weighted transcript rows](../Signatures/Runtime/Caliper/WeightedTokenLayout.lean)
+  retain the signed message, delivered point and positional coefficient.
+  Executed routing copies the message/coefficient and accumulator/cache into
+  the checked weighted evaluator. The generator's actual output bound supplies
+  [body admission and preservation](../Signatures/Runtime/Caliper/WeightedToken.lean).
+  [Body bounds](../Signatures/Runtime/Caliper/WeightedTokenBounds.lean) include
+  routing and derive a buffer footprint from generator, sampler and update
+  footprints; the bound is independent of the transcript length.
+- [The weighted outer loop](../Signatures/Runtime/Caliper/WeightedTokenFold.lean)
+  executes each generated message evaluation while copying and retaining its
+  remaining row tail. Its invariant is
+  `cache.length + termCapacity * remainingRows ≤ cacheCapacity`.
+  The number of occupied rows determines this reservation, independently of
+  allocated padding. The loop's time and stored-code bounds include every
+  body and tail copy. [Source and growth proofs](../Signatures/Runtime/Caliper/WeightedTokenFoldSource.lean)
+  preserve the complete cache and bound growth by term capacity times row count.
+- [Complete chronological signing extraction](../Signatures/Runtime/Caliper/WeightedExtraction.lean)
+  constructs transcript reversal and positional attachment with `TokenRows`,
+  stores the initial accumulator, and executes the weighted loop. Transcript
+  and coefficient capacities are independent.
+  [Source equality](../Signatures/Runtime/Caliper/WeightedExtractionSource.lean)
+  identifies the result/cache law with the source's scaled `signedTerms` list,
+  including injective index encodings and the original-key execution
+  observation. No expanded term list is allocated by the evaluator.
+  [Whole-execution resources](../Signatures/Runtime/Caliper/WeightedExtractionMemory.lean)
+  derive time, stored code, names, address acceptance and every visited memory
+  state from component budgets. The postcondition leaves an arbitrary reserved
+  number of later reads available for subsequent extraction phases.
+  [Regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) execute distinct
+  messages in chronological order, zero/missing/surplus coefficients, duplicate
+  messages with shared cache, empty and fully cached transcripts, Proximity
+  vector messages and pair-valued extraction. They check exact sampling traces,
+  full cache order, frames, scratch release and scalar time bounds. Three
+  allocated transcript slots with two occupied slots reserve eight term reads,
+  rather than twelve; insufficient cache reservation is outside the admitted
+  proof domain. Concrete original-game observation and memory instances are
+  axiom-audited.
+  Remaining: combine hash/sign/final-target extraction, terminal/setup/caller
   composition, OOPS/Proximity public concrete/family models and Schnorr ROM
-  replay/composition remain. Conventional CPU/flat-memory adequacy stays
-  outside this migration.
+  replay/composition. Conventional CPU/flat-memory adequacy stays outside this
+  migration.
 
 Remaining integration sequence:
 

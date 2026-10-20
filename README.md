@@ -502,8 +502,13 @@ Pinned upstreams:
   [One weighted occurrence](Signatures/Runtime/Caliper/WeightedCoefficient.lean)
   now executes term generation/evaluation and the final coefficient update,
   with [derived resources](Signatures/Runtime/Caliper/WeightedCoefficientBounds.lean).
-  Zero coefficients retain every read. The chronological outer fold and
-  full-solver integration remain.
+  Zero coefficients retain every read.
+  [Chronological signing extraction](Signatures/Runtime/Caliper/WeightedExtraction.lean)
+  now executes transcript reversal, coefficient attachment and the outer fold.
+  Its [source correspondence](Signatures/Runtime/Caliper/WeightedExtractionSource.lean)
+  matches the original scaled signing terms and complete cache, including under
+  index encoding. [Resources](Signatures/Runtime/Caliper/WeightedExtractionMemory.lean)
+  include the full traversal and retained tails. Full-solver integration remains.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
