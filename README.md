@@ -647,6 +647,11 @@ Pinned upstreams:
   scalar multiplication and group subtraction remain implementation parameters.
   A [decreasing capacity invariant](Signatures/Runtime/Caliper/SchnorrROMHandlerInvariant.lean)
   preserves room for the remaining calls and final LIVE hash.
+  The [caller-facing interface](Signatures/Runtime/Caliper/SchnorrROMCallerSource.lean)
+  separates requests and replies from the private state. Its executed packet
+  conversions preserve the joint oracle law and capacity invariant; the
+  [resource theorem](Signatures/Runtime/Caliper/SchnorrROMCallerMemory.lean)
+  charges both conversions in the same execution's time and memory bounds.
   Joining this service to the adaptive caller loop and complete two-pass
   reduction remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing

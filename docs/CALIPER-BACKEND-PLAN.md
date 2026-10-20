@@ -3349,9 +3349,39 @@ Implemented and checked:
   LIVE challenge, full managed hits, missing replies and capacity rejection.
   It checks exact replies, complete stores, traces, external state, scratch
   release and elapsed bounds, and audits theorem axioms. A field/module source
-  instance matches the repository's original `FinEnum` sampler. Caller-facing
-  packet distribution, the adaptive loop, final verification, both passes and
-  extraction still need composition before public ROM migration.
+  instance matches the repository's original `FinEnum` sampler. The independent
+  caller interface below composes packet distribution and reconstruction; the
+  adaptive loop, final verification, both passes and extraction remain.
+
+- The [caller-facing ROM interface](../Signatures/Runtime/Caliper/SchnorrROMCallerHandler.lean)
+  receives an independent `(random | hash) | sign` request and private store,
+  and returns a separate reply and updated store. Its
+  [packet conversions](../Signatures/Runtime/Caliper/SchnorrROMCallerPackets.lean)
+  distribute and reconstruct the store across both union levels using executed
+  copies. The [admission proof](../Signatures/Runtime/Caliper/SchnorrROMCallerAdmission.lean)
+  derives readiness from remaining-call reservations and supplies the service's
+  bounded input through a byte-identical view after those copies.
+  The [joint source law](../Signatures/Runtime/Caliper/SchnorrROMCallerSource.lean)
+  and execution observation match the original `Shared.interpret handler`,
+  including its dependent reply type and complete updated state. Each supported
+  reply preserves public configuration and decreases the capacity reservation.
+  The total source has a fallback outside the admitted domain; no refinement
+  theorem claims execution there. Full managed hits remain admitted even when
+  unrelated LIVE and saved-tape capacity is exhausted.
+  [Conversion costs](../Signatures/Runtime/Caliper/SchnorrROMCallerPacketBounds.lean)
+  add at most `154 * packetWidth + 12` time and
+  `1020 * packetWidth + 584` stored words to the service. Preparation uses at
+  most three scratch buffer slots and reconstruction four; the whole service
+  retains its `max 12 (primitiveSlots + 3)` buffer bound. The
+  [memory theorem](../Signatures/Runtime/Caliper/SchnorrROMCallerMemory.lean)
+  charges static code, names, initial data and every visited state of the same
+  execution. The [regression](../SignaturesTest/CaliperSchnorrROMCaller.lean)
+  exercises all three branches through the independent packet layout, fresh
+  and replayed randomness, signing followed by managed hashing, full managed
+  hits, missing replies, exhausted capacities, exact traces, external state,
+  scratch release and elapsed bounds. It checks the original finite sampling
+  instance and theorem axioms. The adaptive loop and full two-pass reduction
+  still need composition before the public Schnorr ROM statements migrate.
 
 Remaining integration sequence:
 
