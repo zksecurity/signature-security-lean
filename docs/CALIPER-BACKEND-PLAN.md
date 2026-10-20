@@ -2461,8 +2461,39 @@ Implemented and checked:
   released scratch buffers and time bounds. Coordinate validity excludes
   unrepresentable inputs. No term-generator implementation or completed-generator resource
   contract is an input: only local scalar multiplication is supplied for OOPS.
-  Weighted lazy signing/evaluation, extraction, full solver assembly and the
+  Weighted lazy signing, extraction, full solver assembly and the
   OOPS/Proximity public concrete/family model migrations remain to be connected.
+- [Weighted row layouts](../Signatures/Runtime/Caliper/WeightedRowsLayout.lean)
+  prove that a key/weight list has exactly the existing row fold's stored bytes
+  when its unused point component is zero-word `Unit`. The equality includes
+  the length header and all unused capacity padding. This is a mathematical
+  view of unchanged bytes, with no runtime conversion.
+  [Weighted rows](../Signatures/Runtime/Caliper/WeightedRows.lean) reuse the
+  constructed lazy cache fold and accumulator update. The source equality
+  preserves the entire ordered `ListCache` computation and final cache,
+  including duplicate keys and zero weights. Cache growth is at most the
+  occupied term count; it does not depend on the index domain or list padding.
+  [Generated evaluation](../Signatures/Runtime/Caliper/GeneratedWeighted.lean)
+  physically saves the scalar/pair accumulator and private cache, executes the
+  term generator, restores the state, and evaluates its resulting stored list.
+  For generator input/output/state widths `a`, `b`, `s`, preparing this frame
+  adds at most `8*a + 8*b + 12*s` steps and
+  `26*a + 26*b + 39*s + 42` stored code words to the generator budgets.
+  The complete bounds add the existing row-fold budgets and sequence overhead.
+  [Resource proofs](../Signatures/Runtime/Caliper/GeneratedWeightedBounds.lean)
+  account for generated names, address operands, initial capacity, stored code
+  and every visited memory state in the same source-correct execution.
+  OOPS and Proximity instantiate this composition with their actual generators
+  and the existing scalar/pair arithmetic, with no supplied complete evaluator.
+  [Executed regressions](../SignaturesTest/CaliperGeneratedWeighted.lean) cover
+  both generators, fresh scalar/pair sampling, cached hits, repeated keys,
+  zero-weight queries, empty and padded lists, preserved caller state, released
+  scratch, actual runtime bounds and the instantiated total-memory theorem.
+  Native finite-index/topic or finite-index/slot keys are retained. Transport
+  to the schemes' original private oracle, signing replies, chronological
+  coefficient extraction and complete public solver models remain separate
+  integration steps. The cache reservation must allow one entry per generated
+  term (degree/dimension plus one), even when some weights are zero.
 
 Remaining integration sequence:
 

@@ -457,7 +457,11 @@ Pinned upstreams:
   Fixed vectors retain the source function type; all coordinates, repeated labels,
   tags and scalar powers have charged instructions and stored code. Exact source
   identities and complete memory bounds cover both generators, including degree
-  or dimension zero. Their weighted oracle and extraction integration remains.
+  or dimension zero. The [generated weighted evaluator](Signatures/Runtime/Caliper/GeneratedWeightedBounds.lean)
+  now composes term generation with the executed lazy scalar/pair cache fold.
+  It charges saved-state copying and proves exact ordered evaluation, final cache,
+  cache growth, time, stored code and total visited memory. Signing-handler,
+  transcript-extraction and full-solver integration remains.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
