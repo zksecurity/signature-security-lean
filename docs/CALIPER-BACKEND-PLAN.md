@@ -2080,7 +2080,7 @@ Implemented and checked:
   full stores with zero signing/hash allowances. They also check missing and
   surplus oracle replies, external buffers/registers/tape, scratch release and
   elapsed time. Central results and concrete instances are axiom-audited.
-  Common-store signing, dependent request/reply dispatch,
+  Dependent request/reply dispatch,
   extraction, caller/cyclic DLog and public concrete/family integration remain.
 
 - [Common-store Schnorr hashing](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHash.lean)
@@ -2090,7 +2090,7 @@ Implemented and checked:
   retain the cores' conditional admission predicates: full-cache hits and
   malformed requests remain admitted, while fresh accepted hashes need space.
   The signing input is also derived here with its existing accepted-call guard;
-  its execution wrapper remains pending.
+  its execution wrapper is constructed below.
   [Preparation](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHashPrepare.lean)
   copies request/state into the core order and moves the configuration to a
   suffix for actual saved-buffer retention.
@@ -2112,8 +2112,36 @@ Implemented and checked:
   fresh hashing with runtime affine coefficients, and malformed requests on
   full stores. They check literal bytes, exact sampling traces, surplus/missing
   replies, preserved histories/flags, caller frames, scratch release and time;
-  the central and instantiated theorems are axiom-audited. Common-store signing,
-  dependent dispatch and the complete Schnorr reduction/public integration remain.
+  the central and instantiated theorems are axiom-audited. Dependent dispatch
+  and the complete Schnorr reduction/public integration remain.
+
+- [Common-store Schnorr signing](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigning.lean)
+  now uses and preserves the runtime generator/public key across both scalar
+  draws and all cache/history updates. Its
+  [preparation](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigningPrepare.lean)
+  executes the argument rearrangement and copies configuration both into the
+  signing arguments and into a saved suffix. Actual buffer retention and
+  [output assembly](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigningFinish.lean)
+  restore the common store after accepted signing or malformed rejection.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigningSource.lean)
+  proves the original joint reply/state law and derives input admission from
+  remaining-query reservations; malformed requests still work on full stores.
+  [Bounds](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigningBounds.lean)
+  add at most `64*W` time and `208*W+80` stored code words to the signing-core
+  budgets. The [actual core buffer bound](../Signatures/Runtime/Caliper/SchnorrAGMSigningDispatchBuffers.lean)
+  supplies the saved configuration location using the existing name reserves.
+  [Total memory](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigningMemory.lean)
+  covers the same source-correct execution and every visited state, including
+  stored code, descriptors, configuration and initial caller memory.
+  [Execution tests](../SignaturesTest/CaliperSchnorrAGMHandlerSigning.lean)
+  check three runtime configurations, fresh signing, collisions preserving the
+  first cached challenge and both possible bad flags, final capacity, zero
+  signatures, zero list capacities and malformed requests with full stores.
+  Literal bytes, exact two-draw/no-draw traces, missing/surplus replies, caller
+  frames, scratch release, time and theorem axiom footprints are checked.
+  All three common-store components are implemented. Dependent request/reply
+  dispatch, extraction, caller/cyclic DLog and public concrete/family integration
+  remain pending.
 
 Remaining integration sequence:
 

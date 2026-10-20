@@ -393,8 +393,12 @@ Pinned upstreams:
   [common-store hash wrapper](Signatures/Runtime/Caliper/SchnorrAGMHandlerHash.lean)
   likewise preserves that configuration across cache hits, fresh sampling and
   malformed rejection, with exact source correspondence and complete resource
-  bounds. The signing wrapper, full handler composition, extraction, caller and
-  public theorem integration remain pending.
+  bounds. The [common-store signing wrapper](Signatures/Runtime/Caliper/SchnorrAGMHandlerSigning.lean)
+  now uses and preserves that configuration across both scalar draws and all
+  state updates. It has the original joint reply/state law and complete time,
+  code-size and total-memory bounds. All three common-store components are
+  implemented; full handler composition, extraction, caller and public theorem
+  integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
