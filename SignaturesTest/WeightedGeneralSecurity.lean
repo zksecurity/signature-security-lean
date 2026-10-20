@@ -1,5 +1,11 @@
 import Signatures.OOPS.Statement
 import Signatures.Proximity.Statement
+import Signatures.OOPS.CaliperAGMFamilyStatement
+import Signatures.Proximity.CaliperAGMFamilyStatement
+import Signatures.OOPS.Proofs.GeneralAGM
+import Signatures.Proximity.Proofs.GeneralAGM
+import Signatures.Runtime.WeightedSecurityModel
+import Signatures.Runtime.BackendConfiguration
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -74,7 +80,13 @@ run_meta do
       ``Proximity.agm_security, ``Proximity.agm_security_two_budgets,
       ``OOPS.agmEufCmaGame_eq, ``Proximity.agmEufCmaGame_eq, ``Proximity.freshCollisionGame_eq,
       ``OOPS.dlogSuccessBound_mono, ``Proximity.dlogSuccessBound_mono,
-      ``OOPS.AlgebraicAdversary.query_allowances, ``Proximity.AlgebraicAdversary.query_allowances] do
+      ``OOPS.AlgebraicAdversary.query_allowances, ``Proximity.AlgebraicAdversary.query_allowances,
+      ``CaliperBackend.WeightedFull.SharedCaller.badCorrespondence,
+      ``WeightedCaliper.Parameters.challenge_valid,
+      ``WeightedCaliper.Parameters.pair_uniform, ``WeightedCaliper.reductions_within,
+      ``WeightedCaliper.Family.reductions_nonuniform,
+      ``OOPS.agm_security_asymptotic, ``Proximity.agm_security_asymptotic,
+      ``Proximity.agm_security_asymptotic_up_to_collision] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -83,6 +95,8 @@ run_meta do
 -- finite label domain, restricted arithmetic attacker, or supplied cache condition.
 run_meta do
   for name in #[``General.Parameters.mk, ``General.AlgebraicAdversary.mk,
+      ``WeightedCaliper.Parameters.mk, ``WeightedCaliper.AlgebraicAdversary.mk,
+      ``WeightedCaliper.Family.PolynomialResources.mk,
       ``ExecutionModel.mk, ``OOPS.AGMSecurityModel.mk, ``Proximity.AGMSecurityModel.mk,
       ``OOPS.GeneralAGM.AlgebraicAdversary.mk, ``Proximity.GeneralAGM.AlgebraicAdversary.mk,
       ``General.reductions_within, ``OOPS.GeneralAGM.reductions_within, ``Proximity.GeneralAGM.reductions_within,
@@ -94,6 +108,8 @@ run_meta do
         for forbidden in #[``Within, ``Bounds, ``GeneralCaller.Budget,
             ``NativeSolver.ExtractionReady, ``NativeHandler.ReservedState,
             ``Model.LazyAGM.WeightedReduction.TranscriptCached, ``Model.HardWithin,
+            ``CaliperBackend.dlogWithin, ``CaliperBackend.dlogNonuniformWithin,
+            ``CaliperBackend.Interactive.Within, ``CaliperBackend.Interactive.NonuniformWithin,
             `Signatures.Runtime.AGM.SourceCertificate, `Signatures.Runtime.Coron.SourceCertificate,
             `Signatures.Runtime.Schnorr.SourceCertificate] do
           if (type.find? (fun e => e.isConstOf forbidden)).isSome then
@@ -105,6 +121,37 @@ run_meta do
               if #[`K, `M, `G₂, `Label].contains decl.userName &&
                   (premise.find? (fun e => e == base)).isSome then
                 throwError "{name}: finite topic/slot/message/public-key domain"
+
+-- The public routes must use the actual Caliper solver class and the constructed
+-- certificates. The family theorem must preserve the same source game and collision event.
+run_meta do
+  for (name, required) in #[
+      (``OOPS.dlogSuccessBound, #[``CaliperBackend.dlogWithin]),
+      (``Proximity.dlogSuccessBound, #[``CaliperBackend.dlogWithin]),
+      (``OOPS.Proofs.agm_security, #[``WeightedCaliper.reductions_within]),
+      (``Proximity.Proofs.agm_security, #[``WeightedCaliper.reductions_within]),
+      (``WeightedCaliper.Family.dlogHardness, #[``CaliperBackend.dlogNonuniformHardness]),
+      (``OOPS.agm_security_asymptotic, #[``OOPS.agmEufCmaGame]),
+      (``Proximity.agm_security_asymptotic, #[``Proximity.agmEufCmaGame, ``Proximity.freshCollisionGame]),
+      (``Proximity.agm_security_asymptotic_up_to_collision,
+        #[``Proximity.agmEufCmaGame, ``Proximity.freshCollisionGame])] do
+    let info ← getConstInfo name
+    let expressions := #[info.type, (info.value? true).getD info.type]
+    for symbol in required do
+      unless expressions.any (fun expression =>
+          (expression.find? (fun e => e.isConstOf symbol)).isSome) do
+        throwError "{name}: missing Caliper certificate or original game {symbol}"
+    for expression in expressions do
+      for forbidden in #[``NativeSolver.dlogWithin, ``Signatures.Runtime.BackendProgram.Configuration.nonuniformWithin] do
+        if (expression.find? (fun e => e.isConstOf forbidden)).isSome then
+          throwError "{name}: public Caliper route regressed to {forbidden}"
+  for (name, moduleName) in #[
+      (``OOPS.agm_security_asymptotic, `Signatures.OOPS.CaliperAGMFamilyStatement),
+      (``Proximity.agm_security_asymptotic, `Signatures.Proximity.CaliperAGMFamilyStatement),
+      (``OOPS.CaliperAGM.Family.Proofs.security, `Signatures.OOPS.Proofs.CaliperAGMFamily),
+      (``Proximity.CaliperAGM.Family.Proofs.security, `Signatures.Proximity.Proofs.CaliperAGMFamily)] do
+    unless (← findModuleOf? name) == some moduleName do
+      throwError "{name}: family statements and proofs must remain separate"
 
 run_meta do
   for (name, visible) in #[

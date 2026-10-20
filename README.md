@@ -11,8 +11,8 @@ linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
-The concrete and nonuniform asymptotic BLS AGM, BLS co-CDH and Schnorr AGM statements
-now use Caliper. OOPS, Proximity and Schnorr ROM retain abstract-backend statements
+The concrete and nonuniform asymptotic BLS AGM, BLS co-CDH, Schnorr AGM, OOPS and
+Proximity statements now use Caliper. Schnorr ROM retains abstract-backend statements
 and family corollaries during migration. The
 superseded eager-table AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
 Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
@@ -51,10 +51,18 @@ encoding widths and capacities. Word width must also grow polynomially; field
 cardinality and numerical sampling ranges need not. The earlier
 [abstract-backend family theorem](Signatures/BLS/GeneralAGMFamilyStatement.lean)
 remains a separate result.
-OOPS and Proximity also have general-caller concrete statements and nonuniform
-family corollaries, with derived solver time/code bounds. Their degree/dimension
-must grow polynomially; OOPS retains admissibility and Proximity retains its
-fresh-collision probability. Schnorr AGM now has complete Caliper runtime,
+OOPS and Proximity now use the same
+[weighted Caliper parameters](Signatures/Runtime/Caliper/WeightedParameters.lean)
+and [complete solver certificates](Signatures/Runtime/Caliper/WeightedSecurity.lean).
+One attacker caller is reused in both reductions; the bad reduction derives paired
+sampling from the scalar sampler. Challenge coverage follows from the local routine
+contracts. The [OOPS family corollary](Signatures/OOPS/CaliperAGMFamilyStatement.lean)
+and [Proximity family corollaries](Signatures/Proximity/CaliperAGMFamilyStatement.lean)
+derive complete polynomial time, code and memory from local resource bounds,
+encoding widths and capacities. OOPS retains admissibility. Proximity retains its
+actual fresh-collision probability, with negligible forgery requiring that term to
+be negligible too. Original topic/slot types need not be finite.
+Schnorr AGM now has complete Caliper runtime,
 stored-code and total-memory certificates and a
 [short public theorem](Signatures/Schnorr/Statement.lean), with exact finite-list
 execution, arbitrary message types and query-dependent storage.
@@ -343,7 +351,7 @@ Pinned upstreams:
   Setup copies the runtime challenge and writes the initial affine basis and
   empty stores, with code/time bounds and complete memory accounting. The
   invariants reserve one final cache entry and permit infinite source message
-  types. Its complete Caliper handler, extractor and public theorem are still pending.
+  types. Its complete Caliper handler, extractor and public theorem are described below.
   The [stateful cache reader](Signatures/Runtime/Caliper/StatefulCacheRead.lean)
   now executes lookup, hit/miss selection, saved-state handling and insertion
   with derived time, code and complete memory bounds. The
@@ -548,12 +556,17 @@ Pinned upstreams:
   exact source equality and a complete Caliper DLog resource certificate.
   Its executed setup samples the scalar, computes the public key, and initializes
   the pair-valued cache before running the caller and extractor. Both certificates
-  derive complete costs from local implementations; public OOPS/Proximity parameter
-  constructors, challenge coverage and concrete/family statements remain.
+  derive complete costs from local implementations.
+  [Shared layouts and caller reuse](Signatures/Runtime/Caliper/WeightedSharedCaller.lean)
+  now join these certificates to the public OOPS/Proximity models. Their
+  [challenge-coverage proof](Signatures/Runtime/Caliper/WeightedSecurity.lean) covers
+  every scalar from the uniform source, including zero.
+  [Polynomial resources](Signatures/Runtime/Caliper/WeightedFamilyResources.lean)
+  are derived for both full reductions, with no completed-solver budget premise.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
-  scheme compilation and capacity invariants, and linking
-  replay controllers and broader caller coverage. OOPS, Proximity and Schnorr
-  ROM still use their explicit abstract-backend contracts pending migration.
+  Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
+  uses its explicit abstract-backend contracts pending migration. Curve-specific
+  primitive implementations remain explicit contracts.
 - Hashing, signing, and verification share a cache; internal lookups create no representation tokens.
 - The original pairing-based AGM reductions sample private finite tables. BLS additionally has
   lazy reductions with sparse extraction, finite-list cache refinement, and the same probability

@@ -1,41 +1,37 @@
 import Signatures.OOPS.Game
-import Signatures.Runtime.WeightedSecurityModel
-import Signatures.OOPS.GeneralAGMParameters
+import Signatures.OOPS.CaliperAGMParameters
 
-/-! Inspectable games, execution contracts and DLog bounds for OOPS.
-The degree is explicit and fixed throughout each game. The adversary has general
-backend code with algebraic outputs; its execution/code/query limits are its own.
-Derived solver time and code include the degree/dimension-dependent work.
-Proofs are in `Proofs/GeneralSecurity.lean`; declarations are in `Statement.lean`. -/
+/-! Inspectable games and Caliper DLog bounds for OOPS. The mathematical
+curve and degree stay explicit. Fixed local implementations, encodings and
+caller allowances determine both complete reduction time, code and memory bounds.
+The game stays independent of these implementation contracts. -/
 
 open OracleComp OracleSpec PFunctor
-open Signatures.Runtime Signatures.Runtime.BackendProgram
-open Signatures.Runtime.WeightedAGM
+open Signatures.Runtime
 
 namespace OOPS
 
-universe v w x
+abbrev QueryAllowance := WeightedCaliper.QueryAllowance
 
-abbrev QueryAllowance := General.QueryAllowance
+/-- Caliper layouts, local implementations and caller allowances, fixed before
+choosing the attacker. Complete reduction code and bounds are constructed from
+these components; no completed-solver contract or hardness assumption is a field. -/
+class AGMSecurityModel (curve : Model.PairingCurve) where
+  Topic : Nat → Type
+  [topicEquality : ∀ n, DecidableEq (Topic n)]
+  parameters : ∀ n degree q, CaliperAGM.Parameters
+    (curve.Scalar n) (curve.SignatureGroup n) (curve.KeyGroup n) (Topic n)
+    degree q (curve.generator n) (curve.keyGenerator n)
 
-/-- Primitive and representation contracts, fixed before the attacker is chosen.
-The mathematical curve and degree remain explicit inputs. This model supplies
-neither a completed-reduction budget nor a hardness assumption. -/
-class AGMSecurityModel (curve : Model.PairingCurve) extends ExecutionModel.{v, w} curve where
-  parameters : ∀ n degree, QueryAllowance → GeneralAGM.Parameters.{v, w, x}
-    (Q := quantitative) (F := curve.Scalar n) (G₁ := curve.SignatureGroup n)
-    (G₂ := curve.KeyGroup n) (Gₜ := curve.TargetGroup n) (K := Label n) (M := Label n) degree
-  queries_eq : ∀ n d q, (parameters n d q).queries = q
-  generator_eq : ∀ n d q, (parameters n d q).generator = curve.generator n
-  keyGenerator_eq : ∀ n d q, (parameters n d q).keyGenerator = curve.keyGenerator n
+attribute [instance_reducible, instance] AGMSecurityModel.topicEquality
 
-variable (curve : Model.PairingCurve) [model : AGMSecurityModel.{v, w, x} curve]
+variable (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
 
 /-- An arbitrary realized algebraic attacker within the model's own execution,
-stored-code and per-kind query limits. Local code need not use our arithmetic
-language. The source retains the original scalar/topic game interface. -/
+stored-code, memory and per-kind query limits. Local code is general Caliper
+code; conventional-machine coverage remains a separate adequacy claim. The source retains the original scalar/topic game interface. -/
 abbrev AlgebraicAdversary (securityParameter degree : Nat) (queries : QueryAllowance) :=
-  GeneralAGM.AlgebraicAdversary (model.parameters securityParameter degree queries)
+  WeightedCaliper.AlgebraicAdversary (model.parameters securityParameter degree queries)
 
 /-- Maximum of the two complete runtime bounds proved for the constructed solvers. -/
 def agmReductionTime (securityParameter degree : Nat) (queries : QueryAllowance) : Nat :=
@@ -49,17 +45,20 @@ noncomputable def agmEufCmaGame (securityParameter degree : Nat) {queries : Quer
     (adversary : AlgebraicAdversary curve securityParameter degree queries) : ProbComp Bool :=
   Game.agm curve securityParameter degree adversary.source
 
-/-- Supremum of `(1,1)`-DLog success over implementations in the same fixed
-backend. A solver receives `(g₁, x • g₁, g₂, x • g₂)` and must recover uniform x.
-The input and stored-code limits are derived in the shared weighted resource
-interface; `time` is explicit. A hardness assumption is needed to make this small.
-See `Runtime/BackendWeightedDLog.lean` and `Runtime/GeneralWeightedParameters.lean`. -/
+/-- Supremum of `(1,1)`-DLog success for Caliper solvers receiving
+`(g₁, x • g₁, g₂, x • g₂)`. The fixed code and total-memory bounds are derived
+from local routines and caller limits; `time` is explicit. Every sampled challenge
+is representable, as proved from the scalar sampler and local implementations.
+Memory includes the stored program, input and every intermediate state.
+See `Runtime/Caliper/WeightedSecurity.lean` for the two constructed certificates. -/
 noncomputable def dlogSuccessBound (securityParameter degree : Nat) (queries : QueryAllowance)
     (time : Nat) : ENNReal :=
   let resources := model.parameters securityParameter degree queries
-  ⨆ solver, ⨆ (_ : NativeSolver.dlogWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.keyGenerator resources.inputWidth resources.solverCode time solver),
-    𝒟[AlgebraicGroupModel.dlog11Exp resources.generator resources.keyGenerator solver] {true}
+  ⨆ solver, ⨆ (_ : CaliperBackend.dlogWithin
+      resources.layout.port resources.layout.goodSetup.challenge resources.scalar
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+      resources.solverCode resources.solverMemory time solver),
+    𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter)
+      (curve.keyGenerator securityParameter) solver] {true}
 
 end OOPS

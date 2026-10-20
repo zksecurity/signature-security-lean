@@ -2903,9 +2903,25 @@ Implemented and checked:
   runtime challenges and public keys, zero and nonzero sampled scalars, shared
   pair-cache reuse, cutoff, exact sample traces, external frames, scratch release
   and elapsed bounds. Word arithmetic is an execution fixture, not a field claim.
-  Remaining for weighted schemes: public OOPS/Proximity parameter constructors
-  deriving challenge coverage, concrete and polynomial-family statements, and
-  broader caller coverage. Schnorr ROM replay/composition remains separate work.
+  The public weighted models now use
+  [shared layouts](../Signatures/Runtime/Caliper/WeightedSharedLayouts.lean) and
+  [one shared caller](../Signatures/Runtime/Caliper/WeightedSharedCaller.lean).
+  Reuse preserves the same initialization and continuation code in both reductions.
+  [Parameters](../Signatures/Runtime/Caliper/WeightedParameters.lean) fix local
+  routines, a single scalar sampler, encodings and caller allowances before the
+  attacker is chosen. Paired sampling and its costs are constructed from that sampler.
+  [Security certificates](../Signatures/Runtime/Caliper/WeightedSecurity.lean)
+  derive challenge coverage from local response and key-scaling contracts and prove
+  both full solvers lie in one Caliper DLog class. Public OOPS/Proximity concrete
+  statements now use these certificates without changing the source game or losses.
+  [Family resources](../Signatures/Runtime/Caliper/WeightedFamilyResources.lean)
+  derive polynomial full time, code and memory from local costs, encoding widths
+  and capacities. The [OOPS](../Signatures/OOPS/CaliperAGMFamilyStatement.lean)
+  and [Proximity](../Signatures/Proximity/CaliperAGMFamilyStatement.lean) family
+  statements preserve admissibility and the actual fresh-collision probability.
+  Proximity's negligible-forgery corollary explicitly assumes negligible collisions.
+  Broader caller coverage and canonical local-routine instantiations remain;
+  Schnorr ROM replay/composition remains separate work.
 
 Remaining integration sequence:
 
@@ -2958,8 +2974,8 @@ the source/output conversion for both complete BLS AGM reductions.
    Checked emission proves generated-word acceptance and intermediate
    descriptor bounds. Complete machine-memory bounds include
    static storage and every intermediate buffer state. These finite-program
-   bounds have polynomial-family proofs for BLS AGM, BLS co-CDH and Schnorr AGM;
-   OOPS, Proximity and the Schnorr ROM routes still need corresponding migrations.
+   bounds have polynomial-family proofs for BLS AGM, BLS co-CDH, Schnorr AGM,
+   OOPS and Proximity; the Schnorr ROM routes still need corresponding migrations.
 3. Link the proved word oracle adapter and replay primitives into complete signature
    callers and rewinding. Ordinary saved-state query composition, generated
    caller steps and decreasing-domain loop composition are proved.
@@ -2985,9 +3001,9 @@ the source/output conversion for both complete BLS AGM reductions.
    contracts as explicit assumptions. Pairing/verification routines, if executed
    by the target program, also need implementations; they are not free consequences
    of the field/G₁/G₂ interface.
-5. Migrate the remaining OOPS, Proximity and Schnorr ROM security models.
-   BLS AGM, BLS co-CDH and Schnorr AGM now use Caliper in their public concrete
-   and polynomial-family statements. Establish the remaining schemes'
+5. Migrate the remaining Schnorr ROM security models.
+   BLS AGM, BLS co-CDH, Schnorr AGM, OOPS and Proximity now use Caliper in their
+   public concrete and polynomial-family statements. Establish the ROM routes'
    parameter-indexed bounds using polynomial word widths and routine bounds.
    Prove coverage for the intended Caliper adversary class. A claim about every
    conventional efficient attacker needs a further machine-adequacy result.

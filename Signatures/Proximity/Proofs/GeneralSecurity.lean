@@ -1,31 +1,27 @@
 import Signatures.Proximity.GeneralSecurityModel
-import Signatures.Proximity.Proofs.GeneralAGM
+import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
 import Signatures.Proximity.Proofs.Game
 
 /-! Proofs for the public Proximity statements. The displayed games equal the
-original source games exactly. The native implementations meet the derived
+original source games exactly. The constructed Caliper implementations meet the derived
 resources and therefore belong to the explicit DLog success supremum. -/
 
 open OracleComp OracleSpec PFunctor
-open Signatures.Runtime Signatures.Runtime.BackendProgram
-open Signatures.Runtime.WeightedAGM
+open Signatures.Runtime
 
 namespace Proximity
 
-universe v w x
-
-variable (curve : Model.PairingCurve) [model : AGMSecurityModel.{v, w, x} curve]
+variable (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
 
 theorem AlgebraicAdversary.query_allowances (securityParameter dimension : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
     (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
-      (fun i => General.queryKind i.value.data = 0) queries.random) ∧
+      (fun i => BLS.queryKind i.value.data = 0) queries.random) ∧
     (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
-      (fun i => General.queryKind i.value.data = 1) queries.hash) ∧
+      (fun i => BLS.queryKind i.value.data = 1) queries.hash) ∧
     (∀ pk, IsQueryBoundP (adversary.source.main (Model.LazyAGM.Interactive.initialInput (curve.generator securityParameter) pk))
-      (fun i => General.queryKind i.value.data = 2) queries.sign) := by
-  simpa only [AGMSecurityModel.queries_eq, AGMSecurityModel.generator_eq] using
-    And.intro adversary.randomQueries (And.intro adversary.hashQueries adversary.signingQueries)
+      (fun i => BLS.queryKind i.value.data = 2) queries.sign) := by
+  exact ⟨adversary.randomQueries, adversary.hashQueries, adversary.signingQueries⟩
 
 theorem agmEufCmaGame_eq (securityParameter dimension : Nat) {queries : QueryAllowance}
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
@@ -54,19 +50,19 @@ theorem Proofs.agm_security
       𝒟[freshCollisionGame curve securityParameter dimension adversary] {true} := by
   let resources := model.parameters securityParameter dimension queries
   have probabilityBound := LazyAGM.Proofs.security_arbitrary_slots
-    resources.generator resources.keyGenerator adversary.proofView resources.generates resources.pairingInjective
-  obtain ⟨goodFits, badFits⟩ := GeneralAGM.reductions_within resources adversary
-  have goodBound : Model.dlog11Advantage resources.generator resources.keyGenerator
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.proofView (curve.generates securityParameter) (curve.pairingInjective securityParameter)
+  obtain ⟨goodFits, badFits⟩ := WeightedCaliper.reductions_within resources adversary
+  have goodBound : Model.dlog11Advantage (curve.generator securityParameter) (curve.keyGenerator securityParameter)
       (Model.LazyAGM.WeightedReduction.goodReductionList (LazyAGM.terms) adversary.proofView) ≤
       dlogSuccessBound curve securityParameter dimension queries resources.goodTime :=
     le_iSup_of_le _ (le_iSup_of_le goodFits le_rfl)
-  have badBound : Model.dlog11Advantage resources.generator resources.keyGenerator
+  have badBound : Model.dlog11Advantage (curve.generator securityParameter) (curve.keyGenerator securityParameter)
       (Model.LazyAGM.WeightedReduction.badReductionList (LazyAGM.terms) adversary.proofView) ≤
       dlogSuccessBound curve securityParameter dimension queries resources.badTime :=
     le_iSup_of_le _ (le_iSup_of_le badFits le_rfl)
   have sourceBound := Model.DirectAGM.game_le (Gₜ := curve.TargetGroup securityParameter) LazyAGM.terms (fun _ _ => True)
-    resources.generator resources.keyGenerator adversary.source
-  simpa only [GeneralAGM.AlgebraicAdversary.proofView, resources, agmEufCmaGame_eq, freshCollisionGame_eq, AGMSecurityModel.generator_eq, AGMSecurityModel.keyGenerator_eq,
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source
+  simpa only [WeightedCaliper.AlgebraicAdversary.proofView, resources, agmEufCmaGame_eq, freshCollisionGame_eq,
     Model.PairingCurve.order] using
     sourceBound.trans (probabilityBound.trans (add_le_add (add_le_add (add_le_add goodBound badBound) le_rfl) le_rfl))
 
@@ -74,13 +70,9 @@ theorem dlogSuccessBound_mono (securityParameter dimension : Nat) (queries : Que
     Monotone (dlogSuccessBound curve securityParameter dimension queries) := by
   intro time largerTime ht
   let resources := model.parameters securityParameter dimension queries
-  refine iSup_le fun solver => iSup_le fun fits => ?_
-  have largerFits : NativeSolver.dlogWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.keyGenerator resources.inputWidth resources.solverCode largerTime solver :=
-    ⟨fits.1, Within.mono resources.backend resources.descriptionSizes resources.factor resources.description
-      fits.2 le_rfl ht⟩
-  exact le_iSup_of_le solver (le_iSup_of_le largerFits le_rfl)
+  exact CaliperBackend.dlogSuccessBound_mono resources.layout.port
+    resources.layout.goodSetup.challenge resources.scalar
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter) le_rfl le_rfl ht
 
 theorem Proofs.agm_security_common_budget
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]

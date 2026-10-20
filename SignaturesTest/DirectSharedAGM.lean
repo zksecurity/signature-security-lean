@@ -93,8 +93,7 @@ example (curve : Model.PairingCurve) (n dimension : Nat) {Slot : Type}
 open Lean Meta in
 run_meta do
   for name in #[``BLS.CaliperAGM.AlgebraicAdversary.source,
-      ``OOPS.GeneralAGM.AlgebraicAdversary.source,
-      ``Proximity.GeneralAGM.AlgebraicAdversary.source] do
+      ``Signatures.Runtime.WeightedCaliper.AlgebraicAdversary.source] do
     let type := (← getConstInfo name).type
     unless (type.find? fun e => e.isConstOf ``Model.DirectAGM.Adversary).isSome do
       throwError "{name}: the resource record must retain the shared source attacker"
