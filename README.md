@@ -421,8 +421,13 @@ Pinned upstreams:
   return zero without changing either flag or requesting randomness.
   The [caller and terminal](Signatures/Runtime/Caliper/SchnorrAGMCallerExtraction.lean)
   now compose with derived extraction room, exact original-machine semantics,
-  and complete time, code and total-memory bounds. Setup composition and public
-  theorem integration remain pending.
+  and complete time, code and total-memory bounds. The
+  [complete program](Signatures/Runtime/Caliper/SchnorrAGMFullProgram.lean)
+  now executes initialization and exactly realizes the named DLog reduction;
+  its resource witness includes stored code, initial input and every visited
+  memory state. The [concrete security bridge](Signatures/Runtime/Caliper/SchnorrAGMFullSecurity.lean)
+  applies the original Schnorr probability bound to this constructed Caliper
+  witness. Public statement and polynomial-family integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

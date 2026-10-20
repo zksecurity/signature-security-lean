@@ -2342,8 +2342,41 @@ Implemented and checked:
   They check literal scalar/trace expectations, external caller storage,
   scratch release and time bounds. The generic field proofs and concrete word
   wiring fixtures remain distinct.
-  Next: compose initialization, specialize the source boundary to the named
-  DLog reduction, and migrate the public concrete and polynomial-family models.
+  Initialization and the named source connection are completed below; public
+  concrete and polynomial-family integration remain pending.
+- [Complete Schnorr program](../Signatures/Runtime/Caliper/SchnorrAGMFullProgram.lean)
+  now runs the actual initialization, caller and extractor. Setup copies the
+  runtime challenge and writes an empty private cache, the two initial affine
+  basis elements, empty signed-message history and cleared flags. Its byte-exact
+  output view introduces no uncharged movement. The initial caller reservation
+  follows from that constructed state.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMFullSource.lean)
+  proves that retaining the public configuration across queries leaves the
+  original simulation unchanged. Local caller correspondence and the machine's
+  query bound then identify the complete program with the named
+  `SchnorrAGM.dlogReduction`, including the scalar projection of its original
+  terminal. No completed-reduction correctness or resource contract is assumed.
+  [Full resource membership](../Signatures/Runtime/Caliper/SchnorrAGMFullBounds.lean)
+  derives time, stored-code, descriptor and total-memory bounds for that same
+  reduction. Numeric caller limits are separate from caller implementations.
+  Generated handler address bounds follow from primitive/sampler name budgets
+  and generated code size. The memory bound includes the challenge input,
+  initial descriptor, stored program and all visited buffers.
+  [Ordinary DLog resource membership](../Signatures/Runtime/Caliper/SchnorrAGMFullDLog.lean)
+  uses a fixed word width, layouts, uniform port and code/time/memory allowances.
+  Full-support scalar sampling and implemented group scaling derive coverage
+  of every challenge from the represented generator. The
+  [concrete security bridge](../Signatures/Runtime/Caliper/SchnorrAGMFullSecurity.lean)
+  bounds the original Schnorr AGM game by this Caliper DLog success supremum
+  plus the original hash/signing collision terms.
+  Full execution tests start from only the runtime generator/public key. They
+  check initialized affine arithmetic, cache sharing, immediate return,
+  cutoff, and signing at two different challenges that cause different final
+  cache-hit/miss behavior. Expected scalars and traces are literal; caller
+  memory, scratch release, time and incomplete randomness are checked.
+  Generic field proofs remain separate from the modular-word execution fixture.
+  Next: migrate the public Schnorr concrete and polynomial-family models to
+  these constructed witnesses and derive their polynomial resource bounds.
 
 Remaining integration sequence:
 

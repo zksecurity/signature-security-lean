@@ -4,6 +4,7 @@ import Signatures.Runtime.Caliper.SchnorrAGMCallerResources
 import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.EncodedConstant
 import Signatures.Runtime.Caliper.SchnorrAGMCallerExtractionBounds
+import Signatures.Runtime.Caliper.SchnorrAGMFullSecurity
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -304,28 +305,34 @@ private def extractionAdvance (_ : Unit × extractionLayout.Reply) :
     extractionLayout.forgery.Value ⊕ (extractionLayout.Request × Unit) := .inl forgery
 private def extractionInitial (value : extractionLayout.Request) :
     extractionLayout.forgery.Value ⊕ (extractionLayout.Request × Unit) := .inr (value, ())
-private def extractionReturn {X : Type} (input : Representation 16 X) :
-    Realizer .unit input (CallerStep.next extractionLayout.control) (fun _ => .inl forgery) :=
+private def extractionConstant {X : Type} (input : Representation 16 X)
+    (head : extractionLayout.forgery.Value ⊕ (extractionLayout.Request × Unit)) :
+    Realizer .unit input (CallerStep.next extractionLayout.control) (fun _ => head) :=
   Assembly.realizer .unit (by decide) _ _ _
-    (((CallerStep.next extractionLayout.control).encoding.encode (.inl forgery)).map Assembly.Operand.literal)
+    (((CallerStep.next extractionLayout.control).encoding.encode head).map Assembly.Operand.literal)
     scheme.wordFits (by simp only [List.length_map, Encoding.encode_length])
     (by intro operand member; obtain ⟨word, _, rfl⟩ := List.mem_map.mp member; trivial)
     (by intro value state represented operand member; obtain ⟨word, _, rfl⟩ := List.mem_map.mp member; trivial)
     (by intro value state represented; simp only [Assembly.values, List.map_map]; exact List.map_id _)
+private def extractionReturn {X : Type} (input : Representation 16 X) :=
+  extractionConstant input (.inl forgery)
 private def extractionContinue : Realizer .unit (CallerStep.resume extractionLayout.control) (CallerStep.next extractionLayout.control) extractionAdvance :=
   extractionReturn _
 private def extractionInitialize : Realizer .unit (CallerPackets.request layout) (CallerStep.next extractionLayout.control) extractionInitial :=
   (inrRealizer .unit (by decide) extractionLayout.forgery.representation extractionLayout.pending
     scheme.wordFits (CallerStep.next extractionLayout.control).fits).viewInput (CallerPackets.request layout) (fun value => (value, ()))
       (by intro value; change _ = _ ++ []; exact (List.append_nil _).symm)
-private theorem extractionReturnFits {X : Type} (input : Representation 16 X) :
-    (extractionReturn input).savedBuffer < 2 ^ 16 := by
+private theorem extractionConstantFits {X : Type} (input : Representation 16 X)
+    (head : extractionLayout.forgery.Value ⊕ (extractionLayout.Request × Unit)) :
+    (extractionConstant input head).savedBuffer < 2 ^ 16 := by
   have bound := (Assembly.code_names
-    (((CallerStep.next extractionLayout.control).encoding.encode (.inl forgery)).map Assembly.Operand.literal) 1
+    (((CallerStep.next extractionLayout.control).encoding.encode head).map Assembly.Operand.literal) 1
     (by intro operand member; obtain ⟨word, _, rfl⟩ := List.mem_map.mp member; trivial)).2
-  change (extractionReturn input).code.memBound ≤ 2 at bound
+  change (extractionConstant input head).code.memBound ≤ 2 at bound
   unfold Realizer.savedBuffer
   omega
+private theorem extractionReturnFits {X : Type} (input : Representation 16 X) :
+    (extractionReturn input).savedBuffer < 2 ^ 16 := extractionConstantFits input (.inl forgery)
 private theorem extractionLocalFits : extractionContinue.savedBuffer < 2 ^ 16 := extractionReturnFits _
 private theorem extractionInitialFits : extractionInitialize.savedBuffer < 2 ^ 16 := by
   have bound := (inr_names extractionLayout.forgery.representation extractionLayout.pending
@@ -356,6 +363,40 @@ private def executeExtraction (early : Bool) (fuel : Nat) (args : Dispatch.Input
   pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
     result.state.regs 99, result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0),
     decide (result.time ≤ extractionTime fuel))
+
+private def fullRoutines : SchnorrAGM.Full.Routines extractionLayout where
+  handler := operations
+  oneValid := trivial
+  sub := sub
+  divide := divide
+  subNames := subNames
+  divNames := divNames
+private def fullCaller (early : Bool) (request : extractionLayout.Request) : SchnorrAGM.Full.Caller extractionLayout where
+  advance := extractionAdvance
+  continuation := extractionContinue
+  localNameFits := extractionLocalFits
+  initial := fun _ => if early then .inl forgery else .inr (request, ())
+  initialCode := extractionConstant scheme.config.representation (if early then .inl forgery else .inr (request, ()))
+  initialNameFits := extractionConstantFits _ _
+private def fullProgram (early : Bool) (request : extractionLayout.Request) (fuel : Nat) :=
+  SchnorrAGM.Full.program extractionLayout fullRoutines (fullCaller early request) sampler fuel
+private def fullTime (fuel : Nat) :=
+  8 * scheme.initialized.representation.encoding.words +
+    CallerControl.timeBudget scheme.config.representation.encoding.words (CallerStep.width extractionLayout.control) callerTime
+      (8 * (CallerStep.next extractionLayout.control).encoding.words) (8 * (CallerStep.next extractionLayout.control).encoding.words) fuel +
+    CallerFinish.timeBudget layout.hash extractionLayout.pending extractionLayout.exitFits (Extraction.timeBudget layout.hash 6 6 6 6 26)
+private def executeFull (early : Bool) (fuel : Nat) (args : Dispatch.Input layout) (g pk : Word 16) (replies : List (Word 16)) := do
+  let initial := scheme.config.representation.initial ⟨(g, pk), trivial, trivial⟩
+  let before := { initial with
+    bufs := fun b => if b = 200 then #[77] else initial.bufs b
+    caps := fun b => if b = 200 then 4 else initial.caps b
+    regs := fun r => if r = 99 then 91 else initial.regs r
+    tapePos := 9 }
+  let result ← WordIO.run .unit RandomTape.zero 1000000
+    ((fullProgram early (callerPacket args).1 fuel).lower layout.random.port) before replies
+  pure (result.state.bufs 0, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
+    result.state.regs 99, result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0),
+    decide (result.time ≤ fullTime fuel))
 
 private def execute (args : Dispatch.Input layout) (replies : List (Word 16)) := do
   let initial := (Dispatch.input layout).initial args
@@ -469,8 +510,33 @@ run_cmd do
       executeExtraction false 1 (.inl (random 0)) [0, 0] == none &&
       executeExtraction false 1 (.inl (random 0)) [0, 0, 65535] == none do
     throwError "composed caller/extractor accepted missing caller or terminal randomness"
+  let fullCheck := fun early fuel args g pk replies scalar trace remaining =>
+    executeFull early fuel args g pk replies == some (#[scalar], trace, remaining, #[77], 4, 91, 9, true, true)
+  let draw := fun value => [.output 65535, .invoke, .input 65535, .input value]
+  for fuel in [1, 2] do
+    unless fullCheck false fuel (.inr (.inl freshHash)) 3 5 [65535, 2, 88] 3 (draw 2) [88] &&
+        fullCheck false fuel (.inl (random 0)) 5 3 [0, 0, 65535, 5, 88] 2
+          ([.output 0, .invoke, .input 0, .input 0] ++ draw 5) [88] do
+      throwError "full setup/caller/extractor lost initial affine basis, shared cache or query protocol"
+  unless fullCheck false 0 (.inr (.inl freshHash)) 3 5 [88] 0 [] [88] &&
+      fullCheck true 0 (.inr (.inl fullHitHash)) 3 5 [65535, 5, 88] 2 (draw 5) [88] do
+    throwError "full setup confused cutoff with early return, or inherited a caller-supplied private cache"
+  unless fullCheck false 1 (.inr (.inr (fresh 3 5))) 3 5 [65535, 2, 65535, 11, 88] 0 (draw 2 ++ draw 11) [88] &&
+      fullCheck false 1 (.inr (.inr (fresh 3 5))) 5 3 [65535, 2, 65535, 11, 65535, 9, 88] 21830
+        (draw 2 ++ draw 11 ++ draw 9) [88] do
+    throwError "full signing ignored the runtime challenge, lost its generated basis, or resampled a cached terminal"
+  unless executeFull true 0 (.inr (.inl freshHash)) 3 5 [] == none &&
+      executeFull false 1 (.inr (.inr (fresh 3 5))) 5 3 [65535, 2, 65535, 11, 65535] == none do
+    throwError "full solver accepted incomplete terminal randomness"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
-  for name in [``CallerFinish.success_original, ``CallerExtraction.Layouts.packet_ready,
+  for name in [``SchnorrAGM.Full.setup_refines, ``SchnorrAGM.Full.start_reserved, ``SchnorrAGM.Full.admitted_reserved,
+      ``SchnorrAGM.Full.start_stored, ``SchnorrAGM.Full.tail_refines, ``SchnorrAGM.Full.refines,
+      ``CallerHandler.original_run, ``SchnorrAGM.Full.source_original, ``SchnorrAGM.Full.observe_original,
+      ``SchnorrAGM.Full.words, ``SchnorrAGM.Full.names, ``SchnorrAGM.Full.descriptionFits,
+      ``SchnorrAGM.Full.time, ``SchnorrAGM.Full.within, ``SchnorrAGM.Full.within_original,
+      ``cyclicDLogWithin.mono, ``cyclicDLogSuccessBound_mono, ``SchnorrAGM.Full.scalar_valid,
+      ``SchnorrAGM.Full.challenge_valid, ``SchnorrAGM.Full.dlogWithin, ``SchnorrAGM.Full.security,
+      ``extractionConstant, ``extractionConstantFits, ``CallerFinish.success_original, ``CallerExtraction.Layouts.packet_ready,
       ``CallerExtraction.called_postcondition, ``CallerExtraction.called_ready, ``CallerExtraction.refines,
       ``CallerExtraction.finish_source, ``CallerExtraction.called_source, ``CallerExtraction.denote_source,
       ``CallerExtraction.observe_source, ``CallerExtraction.time, ``CallerExtraction.words, ``CallerExtraction.names,
