@@ -389,9 +389,12 @@ Pinned upstreams:
   [common-store wrapper](Signatures/Runtime/Caliper/SchnorrAGMHandlerRandom.lean)
   now saves and restores the runtime generator/public key with actual copying,
   charging their storage throughout the query. Shared layouts derive the
-  randomness, hash and signing encodings from one set of capacities. The hash
-  and signing wrappers, full handler composition, extraction, caller and public
-  theorem integration remain pending.
+  randomness, hash and signing encodings from one set of capacities. The
+  [common-store hash wrapper](Signatures/Runtime/Caliper/SchnorrAGMHandlerHash.lean)
+  likewise preserves that configuration across cache hits, fresh sampling and
+  malformed rejection, with exact source correspondence and complete resource
+  bounds. The signing wrapper, full handler composition, extraction, caller and
+  public theorem integration remain pending.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

@@ -35,19 +35,19 @@ variable {w qH qS randomBound : Nat} {M F G : Type} (layout : Layouts w M F G qH
 def width : Nat := storageWidth layout.scheme layout.groups layout.rows layout.coefficients
 theorem fits_of_le {words : Nat} (bound : words ≤ 128 * layout.width) : words < 2 ^ w := bound.trans_lt layout.storageFits
 
-def hashCore : Hash.Layouts w M F G qH qS where
+abbrev hashCore : Hash.Layouts w M F G qH qS where
   scheme := layout.scheme
   coefficients := layout.coefficients
   counterFits := layout.counterFits
   coefficientCountFits := layout.coefficientCountFits
   storageFits := layout.fits_of_le (by unfold width storageWidth; omega)
-def arithmetic : Signing.Layouts w M F G qH qS where
+abbrev arithmetic : Signing.Layouts w M F G qH qS where
   scheme := layout.scheme
   storageFits := layout.fits_of_le (by unfold width storageWidth; omega)
-def histories : Signing.Histories.Layouts w M F G qH qS where
+abbrev histories : Signing.Histories.Layouts w M F G qH qS where
   signing := layout.arithmetic
   counterFits := by have := layout.counterFits; omega
-def random : Random.Layouts w M F G qH qS randomBound where
+abbrev random : Random.Layouts w M F G qH qS randomBound where
   scheme := layout.scheme
   rangeFits := layout.rangeFits
   groups := layout.groups
@@ -57,7 +57,7 @@ def random : Random.Layouts w M F G qH qS randomBound where
   rowCountFits := layout.rowCountFits
   coefficientCountFits := layout.coefficientCountFits
   storageFits := layout.fits_of_le (by unfold width storageWidth; omega)
-def hash : HashDispatch.Layouts w M F G qH qS where
+abbrev hash : HashDispatch.Layouts w M F G qH qS where
   hash := layout.hashCore
   groups := layout.groups
   rows := layout.rows
@@ -69,7 +69,7 @@ def hash : HashDispatch.Layouts w M F G qH qS where
         (1 + layout.groups * layout.scheme.point.representation.encoding.words) +
           (1 + layout.rows * (1 + layout.coefficients * layout.scheme.scalar.representation.encoding.words))) ≤ _
     unfold width storageWidth; omega)
-def signing : SigningDispatch.Layouts w M F G qH qS where
+abbrev signing : SigningDispatch.Layouts w M F G qH qS where
   signing := layout.histories
   groups := layout.groups
   rows := layout.rows

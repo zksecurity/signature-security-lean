@@ -2080,8 +2080,40 @@ Implemented and checked:
   full stores with zero signing/hash allowances. They also check missing and
   surplus oracle replies, external buffers/registers/tape, scratch release and
   elapsed time. Central results and concrete instances are axiom-audited.
-  Common-store hash/signing wrappers, dependent request/reply dispatch,
+  Common-store signing, dependent request/reply dispatch,
   extraction, caller/cyclic DLog and public concrete/family integration remain.
+
+- [Common-store Schnorr hashing](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHash.lean)
+  now preserves the represented generator/public key while the existing hash
+  core updates the cache and state. The
+  [group-request layouts](../Signatures/Runtime/Caliper/SchnorrAGMHandlerGroupLayout.lean)
+  retain the cores' conditional admission predicates: full-cache hits and
+  malformed requests remain admitted, while fresh accepted hashes need space.
+  The signing input is also derived here with its existing accepted-call guard;
+  its execution wrapper remains pending.
+  [Preparation](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHashPrepare.lean)
+  copies request/state into the core order and moves the configuration to a
+  suffix for actual saved-buffer retention.
+  [Output assembly](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHashFinish.lean)
+  constructs the padded empty group reply and restores configuration/state.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHashSource.lean)
+  proves the original joint reply/state distribution with the unchanged runtime
+  configuration. Remaining-query reservations establish input representability.
+  [Bounds](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHashBounds.lean) add at
+  most `64*W` time and `208*W+80` stored code words to the all-shape hash core's
+  budgets, where `W` is the common handler layout width. Buffer names for
+  configuration retention are derived from the core's actual footprint; its
+  existing primitive/sampler name-width reserve suffices.
+  [Memory](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHashMemory.lean) covers
+  the same source-correct execution and every visited state, including the
+  saved configuration, stored code, descriptors and initial caller memory.
+  [Execution checks](../SignaturesTest/CaliperSchnorrAGMHandlerHash.lean) test two
+  runtime configurations, a full cache with a zero-valued first duplicate,
+  fresh hashing with runtime affine coefficients, and malformed requests on
+  full stores. They check literal bytes, exact sampling traces, surplus/missing
+  replies, preserved histories/flags, caller frames, scratch release and time;
+  the central and instantiated theorems are axiom-audited. Common-store signing,
+  dependent dispatch and the complete Schnorr reduction/public integration remain.
 
 Remaining integration sequence:
 
