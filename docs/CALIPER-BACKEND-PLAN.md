@@ -2397,6 +2397,25 @@ Implemented and checked:
   assumptions. The polynomial helper now resolves inferred hypothesis types
   before matching them; a regression keeps an inferred bound after clearing
   its premises. It still rejects unknown costs and emits kernel-checked proofs.
+- [Schnorr caller presentation](../Signatures/Runtime/Caliper/SchnorrAGMCallerPresentation.lean)
+  derives the source machine and finite source tree from local initialization,
+  continuation code and branchwise termination. Local hash/sign bounds construct
+  the capacity-reservation invariant; all three query allowances transfer to
+  the source. The [public caller constructor](../Signatures/Schnorr/CaliperAGMCaller.lean)
+  assembles those certificates and uses the existing sampler/scaling proofs to
+  cover each public-key challenge. It retains the shared AGM algebraic source
+  and equality with the derived caller tree as explicit inputs.
+  The reply relation now includes the random answer's pre-tagging range.
+  Previously, dependent `Fin.ofNat` tagging alone could identify stored `0` and
+  `1` for range zero; a general caller can distinguish those words. The actual
+  handler already returned in-range answers, and a support proof transfers that
+  fact through the full caller simulation. A regression rejects the aliased
+  out-of-range packet while preserving the canonical answer.
+  Mathematical replies outside the bounded packet representation use a
+  source-only extension. Every related executed reply uses its unique exact
+  packet. This constructs local machine correspondence; it does not eliminate
+  all algebraic-source coverage obligations or prove conventional-machine
+  adequacy.
 
 Remaining integration sequence:
 

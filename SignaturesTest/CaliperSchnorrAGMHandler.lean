@@ -5,6 +5,7 @@ import Signatures.Runtime.Caliper.UniformSamplingBounds
 import Signatures.Runtime.Caliper.EncodedConstant
 import Signatures.Runtime.Caliper.SchnorrAGMCallerExtractionBounds
 import Signatures.Runtime.Caliper.SchnorrAGMFullSecurity
+import Signatures.Runtime.Caliper.SchnorrAGMCallerReplyEncoding
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -66,6 +67,32 @@ private def layout : CaliperBackend.SchnorrAGM.Handler.Layouts 16 Nat (Word 16) 
   rowCountFits := by decide
   coefficientCountFits := by decide
   storageFits := by decide
+
+-- Dependent tagging alone normalizes out-of-range answers. Such a packet must
+-- not be admitted as a related caller reply: arbitrary local code can inspect it.
+private def zeroRange : layout.randomArgs.Value :=
+  ⟨(0, [], []), by change 0 < 65536; decide,
+    ⟨by change 0 ≤ 2; decide, by simp⟩, ⟨by change 0 ≤ 3; decide, by simp⟩⟩
+private def rangePacket (answer : Fin 65536) : SchnorrAGM.CallerPackets.Reply layout :=
+  .inl (⟨(answer.val, []), answer.isLt, ⟨by change 0 ≤ 1; decide, by simp⟩⟩, zeroRange)
+private def zeroAnswer : (SchnorrAGM.Native.Interface.sourceSpec (Word 16) (Word 16) Nat).Range
+    (SchnorrAGM.CallerHandler.query layout (.inl zeroRange)) := ⟨(0 : Fin 1), fun _ => []⟩
+
+example : SchnorrAGM.CallerHandler.replyValue layout (rangePacket 0) =
+    SchnorrAGM.CallerHandler.replyValue layout (rangePacket 1) := rfl
+example : rangePacket 0 ≠ rangePacket 1 := by
+  intro equal
+  have impossible : (0 : Nat) = 1 :=
+    congrArg (fun packet : SchnorrAGM.CallerPackets.Reply layout =>
+      match packet with | .inl (answer, _) => answer.val.1 | .inr _ => 0) equal
+  omega
+example : ¬ SchnorrAGM.CallerHandler.replyMatches layout (.inl zeroRange) (rangePacket 1) zeroAnswer := by
+  intro related
+  have impossible : 1 ≤ (0 : Nat) := related.2
+  omega
+example : SchnorrAGM.CallerHandler.representReply layout (by trivial) (.inl zeroRange) zeroAnswer = rangePacket 0 :=
+  (SchnorrAGM.CallerHandler.representReply_eq layout (by trivial) (.inl zeroRange) (rangePacket 0) zeroAnswer
+    ⟨rfl, by change 0 ≤ (0 : Nat); omega⟩).symm
 
 
 private def mul : Implementation .unit scheme.affine scheme.scalar (fun value => value.1 * value.2) := scale

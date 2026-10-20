@@ -19,7 +19,8 @@ def Allowed (hashes signatures : Nat) (q : Request layout) : Prop :=
   hashCharge layout q ≤ hashes ∧ signCharge layout q ≤ signatures
 def replyMatches (q : Request layout) (represented : Reply layout)
     (original : (Interface.sourceSpec F G M).Range (query layout q)) : Prop :=
-  replyValue layout represented = (⟨query layout q, original⟩ : Interface.SourceIndex F G M)
+  replyValue layout represented = (⟨query layout q, original⟩ : Interface.SourceIndex F G M) ∧
+    canonicalReply layout represented
 
 variable [Field F]
 def Reserved (hashes signatures : Nat) (saved : layout.scheme.store.Value) : Prop :=
@@ -121,7 +122,12 @@ theorem synchronizes_stored (value : Packet layout) {hashes signatures : Nat}
       (source layout ops sampler value) ((original (query layout value.1)).run (stored layout value.2)) := by
   have coupled := synchronizes layout ops sampler uniform value (ready_of_reserved layout value room allowed)
     (decodeState value.2.val.2) (Reserved.canonical layout room).symm
-  have mapped := coupled.map
+  have canonical := coupled.mono_left_support (stronger := fun represented source =>
+      replyMatches layout value.1 represented.1 source.1 ∧
+        represented.2.val = (value.2.val.1, encodeState source.2))
+    (fun represented _ reached related =>
+      ⟨⟨related.1, source_canonical layout ops sampler value represented reached⟩, related.2⟩)
+  have mapped := canonical.map
     (result := fun represented source => replyMatches layout value.1 represented.1 source.1 ∧ stored layout represented.2 = source.2)
     id (fun result => (result.1, value.2.val.1, result.2)) (by
       intro represented source related

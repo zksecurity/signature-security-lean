@@ -1,5 +1,6 @@
 import Signatures.BLS.CaliperAGMParameters
 import Signatures.Runtime.Caliper.CallerQueryBounds
+import Signatures.Schnorr.CaliperAGMCaller
 import Lean.Util.CollectAxioms
 
 /-! A stateless caller may select different queries. Its source is constructed
@@ -116,6 +117,12 @@ run_meta do
       ``BLS.CaliperAGM.Parameters.callerCorrespondence,
       ``CallerMachine.QueryBound.terminates, ``CallerMachine.QueryBound.unroll,
       ``CallerMachine.sourceOfCaller_queryBound,
+      ``Synchronizes.mono_left_support,
+      ``SchnorrAGM.CallerHandler.source_canonical, ``SchnorrAGM.CallerHandler.canonical_reply_injective,
+      ``SchnorrAGM.CallerHandler.representReply_eq, ``SchnorrAGM.Full.Caller.Source.ofCaller,
+      ``SchnorrAGM.Full.Caller.Source.ofCaller_run, ``SchnorrAGM.Full.Caller.Source.ofCaller_queryBound,
+      ``SchnorrAGM.Full.Caller.Invariant.ofQueryBounds,
+      ``Schnorr.CaliperAGM.Parameters.point_valid, ``Schnorr.CaliperAGM.AlgebraicAdversary.ofCaller,
       ``source_eq, ``repeat_never_terminates, ``adaptive_bound, ``adaptive_over_budget,
       ``adaptive_source_bound] do
     for axiomName in (← collectAxioms name) do
@@ -132,5 +139,48 @@ run_meta do
       ``BLSFull.Caller.Correspondence.ofCaller] do
     unless (constructor.find? (fun expression => expression.isConstOf required)).isSome do
       throwError "parameter constructor must derive its representation facts from {required}"
+
+open Lean Meta in
+run_meta do
+  let constructor := (← getConstInfo ``SchnorrAGM.Full.Caller.Source.ofCaller).type
+  for forbidden in #[``OracleMachine, ``ImplementsWithin, ``OracleComp] do
+    if (constructor.find? (fun expression => expression.isConstOf forbidden)).isSome then
+      throwError "Schnorr caller constructor assumes a separate machine/source certificate: {forbidden}"
+  unless (constructor.find? (fun expression => expression.isConstOf ``SchnorrAGM.Full.Caller.Terminates)).isSome do
+    throwError "Schnorr caller construction must require branchwise termination"
+  forallTelescope (← getConstInfo ``Schnorr.CaliperAGM.AlgebraicAdversary.ofCaller).type fun params _ => do
+    for param in params do
+      let premise ← inferType param
+      for forbidden in #[``OracleMachine, ``SchnorrAGM.Full.Caller.Source, ``SchnorrAGM.Full.Caller.Invariant,
+          ``Interactive.Within, ``cyclicDLogWithin] do
+        if (premise.find? (fun expression => expression.isConstOf forbidden)).isSome then
+          throwError "Schnorr public constructor requires a derived certificate: {forbidden}"
+  let publicConstructor := (← getConstInfo ``Schnorr.CaliperAGM.AlgebraicAdversary.ofCaller).value?.get!
+  for required in #[``Schnorr.CaliperAGM.CallerQueries.invariant,
+      ``Schnorr.CaliperAGM.Parameters.callerCorrespondence] do
+    unless (publicConstructor.find? (fun expression => expression.isConstOf required)).isSome do
+      throwError "Schnorr public caller constructor omits derived obligation {required}"
+  let presentation := (← getConstInfo ``Schnorr.CaliperAGM.Parameters.callerCorrespondence).value?.get!
+  unless (presentation.find? (fun expression => expression.isConstOf ``SchnorrAGM.Full.Caller.Source.ofCaller)).isSome do
+    throwError "Schnorr correspondence must construct the local machine and source"
+
+section SchnorrConstructor
+open Caliper OracleSpec Signatures.Runtime BoundedSource
+variable {F G M : Type} [Field F] [SampleableType F] [AddCommGroup G] [Module F G]
+    [DecidableEq F] [DecidableEq G] [DecidableEq M]
+    {queries : Schnorr.QueryAllowance} {generator : G}
+    (P : Schnorr.CaliperAGM.Parameters F G M queries generator)
+    (caller : SchnorrAGM.Full.Caller P.layout)
+    (allowances : Schnorr.CaliperAGM.CallerQueries P caller)
+    (generates : Function.Surjective (fun scalar : F => scalar • generator))
+    (resources : SchnorrAGM.Full.Caller.Bounds P.layout caller P.callerLimits)
+    (source : Schnorr.AGM.Adversary F G M)
+    (same : ∀ value, (fun answer => SchnorrAGM.Native.Interface.decodeForgery answer.val) <$>
+      (P.callerCorrespondence caller allowances).program value =
+        source.main (Schnorr.AGM.initial value.val.1 value.val.2))
+
+example : (Schnorr.CaliperAGM.AlgebraicAdversary.ofCaller P caller allowances generates resources source same).source = source := rfl
+example : SchnorrAGM.Full.Caller.Invariant P.layout caller queries.total := allowances.invariant P caller
+end SchnorrConstructor
 
 end SignaturesTest.CaliperCallerPresentation

@@ -20,6 +20,10 @@ def replyValue : Reply layout → Interface.SourceIndex F G M
   | .inr (.inl (answer, args)) => Interface.scalarTag false (args.val, answer.val)
   | .inr (.inr (answer, args)) => Interface.scalarTag true (args.val, answer.val)
 def observed (value : Reply layout × layout.scheme.store.Value) := (replyValue layout value.1, value.2.val)
+/-- The stored random answer is in the requested range, before dependent tagging. -/
+def canonicalReply : Reply layout → Prop
+  | .inl (answer, args) => answer.val.1 ≤ args.val.1
+  | .inr _ => True
 theorem observed_finished (value : Handler.Dispatch.Output layout) :
     observed layout (finished layout value) = Handler.eraseReply layout value := by
   rcases value with value | (value | value) <;> rfl
@@ -39,6 +43,31 @@ theorem serviceRequest_inputFor (value : Packet layout) (valid : ready layout va
 variable [Field F] [AddCommGroup G] [Module F G] [DecidableEq F] [SampleableType F]
     (ops : Handler.Operations layout) (sampler : ProbComp layout.scheme.scalar.Value)
     (uniform : Subtype.val <$> sampler = ($ᵗ F : ProbComp F))
+
+omit [SampleableType F] in
+theorem source_canonical (value : Packet layout) (answer : Reply layout × layout.scheme.store.Value)
+    (reached : answer ∈ support (source layout ops sampler value)) :
+    canonicalReply layout answer.1 := by
+  unfold source at reached
+  split at reached
+  · rcases value with ⟨args | (args | args), saved⟩
+    · simp only [Handler.source, Handler.Dispatch.source, serviceRequest, Sum.elim,
+        Handler.Dispatch.randomSource, Functor.map_map, support_map, Set.mem_image] at reached
+      obtain ⟨result, supported, rfl⟩ := reached
+      exact (Handler.RandomComponent.reply_bound layout _ result supported).1
+    · simp only [Handler.source, Handler.Dispatch.source, serviceRequest, Sum.elim,
+        Handler.Dispatch.hashSource, Functor.map_map, support_map, Set.mem_image] at reached
+      obtain ⟨result, _, rfl⟩ := reached
+      trivial
+    · simp only [Handler.source, Handler.Dispatch.source, serviceRequest, Sum.elim,
+        Handler.Dispatch.signingSource, Functor.map_map, support_map, Set.mem_image] at reached
+      obtain ⟨result, _, rfl⟩ := reached
+      trivial
+  · obtain rfl := (mem_support_pure_iff _ _).mp reached
+    rcases value with ⟨args | (args | args), saved⟩
+    · exact Nat.zero_le _
+    · trivial
+    · trivial
 
 include uniform in
 theorem source_original (value : Packet layout) (valid : ready layout value)

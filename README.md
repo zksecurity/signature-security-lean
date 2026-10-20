@@ -64,6 +64,10 @@ derives negligible forgery from polynomial component resources, Caliper DLog
 hardness and negligible inverse field size. The
 [parameters](Signatures/Schnorr/CaliperAGMParameters.lean) fix the layouts,
 implemented primitives, sampler and caller limits before choosing the attacker.
+The [caller constructor](Signatures/Schnorr/CaliperAGMCaller.lean) derives the
+source machine, capacity invariant and source query bounds from local Caliper
+code and branchwise query allowances. The shared AGM source and its identification
+with that code remain explicit.
 The earlier [abstract-backend family theorem](Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
 remains separate. The same public file
 also exposes `Schnorr.rom_security` for unrestricted attackers, with the full-field
@@ -437,6 +441,10 @@ Pinned upstreams:
   those witnesses. Complete solver time, code and total memory are polynomial
   consequences of component bounds; numerical field size and sampling arity
   need not be polynomial.
+  Schnorr's caller presentation now records the random reply's actual range
+  before dependent tagging, so distinct stored answers cannot be identified by
+  modulo conversion. The implemented handler proves this property on every
+  supported reply; local caller code can inspect the original stored words.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   scheme compilation and capacity invariants, and linking
   replay controllers and broader caller coverage. OOPS, Proximity and Schnorr

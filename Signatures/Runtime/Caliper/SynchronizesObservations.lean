@@ -22,6 +22,18 @@ theorem Synchronizes.left_support {relation : A → B → Prop}
     (related : Synchronizes relation left right) {value : A} (reached : value ∈ support left) :
     ∃ answer, answer ∈ support right ∧ relation value answer := related.symm.right_support reached
 
+/-- A leaf invariant of the left computation can strengthen synchronization. -/
+theorem Synchronizes.mono_left_support {relation stronger : A → B → Prop}
+    {left : OracleComp spec A} {right : OracleComp spec B}
+    (related : Synchronizes relation left right)
+    (implies : ∀ a b, a ∈ support left → relation a b → stronger a b) :
+    Synchronizes stronger left right := by
+  induction related with
+  | pure h => exact .pure (implies _ _ (by simp) h)
+  | query position _ ih =>
+    exact .query position (fun answer => ih answer
+      (fun a b reached h => implies a b (Set.mem_iUnion.mpr ⟨answer, reached⟩) h))
+
 /-- Recover joint leaf synchronization from an equality of observed query
 trees. Neither observation has to be injective. -/
 theorem Synchronizes.of_map_eq (f : A → D) (g : B → D)

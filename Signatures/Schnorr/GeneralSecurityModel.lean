@@ -1,6 +1,6 @@
 import Signatures.Schnorr.Game
 import Signatures.Model.CyclicCurve
-import Signatures.Schnorr.CaliperAGMParameters
+import Signatures.Schnorr.CaliperAGMCaller
 
 /-! Inspectable game and Caliper resource model for the public Schnorr AGM
 statement. Implemented primitives, layouts, sampler and caller allowances are
