@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMPrivateSamplerBounds
+import Signatures.Runtime.Caliper.SchnorrROMPrivateServiceBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -71,6 +71,10 @@ private theorem program_time : Interactive.TimeBoundOn (PrivateSampler.admissibl
     (PrivateSampler.input layout) (PrivateSampler.code layout caller zeroValid 2)
     (PrivateSampler.timeBudget layout zeroValid 24 24 2) :=
   PrivateSampler.time_bound layout caller zeroValid 2 24 24 local_time initial_time
+private theorem service_time : Interactive.TimeBoundOn (PrivateSampler.Service.ready layout 2) (Fresh.port tapeLayout) .unit
+    (Read.tapes tapeLayout).representation (PrivateSampler.Service.code layout caller zeroValid 2)
+    (PrivateSampler.Service.timeBudget layout zeroValid 24 24 2) :=
+  PrivateSampler.Service.time_bound layout caller zeroValid 2 24 24 local_time initial_time
 example : ((PrivateSampler.code layout caller zeroValid 2).lower (Fresh.port tapeLayout)).DescriptionFits :=
   PrivateSampler.descriptionFits layout caller zeroValid 2
 example : WordIO.NamesAccounted ((PrivateSampler.code layout caller zeroValid 2).lower (Fresh.port tapeLayout))
@@ -78,7 +82,7 @@ example : WordIO.NamesAccounted ((PrivateSampler.code layout caller zeroValid 2)
   PrivateSampler.names layout caller zeroValid 2 3 local_names initial_names
 
 private def saved : List (Schnorr.TapeCell Nat) := [(3, 0, 1)]
-private def run (fuel : Nat) (remaining : List (Schnorr.TapeCell Nat)) (replies : List (Word 12)) := do
+private def run (fuel : Nat) (remaining : List (Schnorr.TapeCell Nat)) (replies : List (Word 12)) (asService : Bool := false) := do
   let store : (Read.tapes tapeLayout).Value ←
     if valid : remaining.length ≤ 6 ∧ ∀ cell ∈ remaining,
         cell.1 < 4096 ∧ cell.2.1 < 4096 ∧ cell.2.2 < 4096 then
@@ -93,11 +97,15 @@ private def run (fuel : Nat) (remaining : List (Schnorr.TapeCell Nat)) (replies 
                                caps := fun b => if b = 200 then 4 else initial.caps b
                                regs := fun r => if r = 99 then 91 else initial.regs r
                                tapePos := 9 }
-  let result ← WordIO.run .unit RandomTape.zero 1000000
-    ((PrivateSampler.code layout caller zeroValid fuel).lower (Fresh.port tapeLayout)) before replies
+  let program := if asService then PrivateSampler.Service.code layout caller zeroValid fuel else
+    PrivateSampler.code layout caller zeroValid fuel
+  let result ← WordIO.run .unit RandomTape.zero 1000000 (program.lower (Fresh.port tapeLayout)) before replies
   let decoded := (CallerStep.output (PrivateSampler.step layout)).encoding.decode (result.state.bufs 0).toList
-  let observed := decoded.map (fun p : CallerControl.Packet Bool (PrivateSampler.Request layout)
-    tapeLayout.scalar.Value (PrivateSampler.Store layout) => ((CallerControl.answer p).1.map Subtype.val, p.2.val))
+  let observed := if asService then
+      ((Reply.scalarOutput tapeLayout).representation.encoding.decode (result.state.bufs 0).toList).map
+        (fun p : (Reply.scalarOutput tapeLayout).Value => (some p.val.1, p.val.2))
+    else decoded.map (fun p : CallerControl.Packet Bool (PrivateSampler.Request layout)
+      tapeLayout.scalar.Value (PrivateSampler.Store layout) => ((CallerControl.answer p).1.map Subtype.val, p.2.val))
   pure (observed, result.trace, result.remaining, result.state.bufs 200, result.state.caps 200,
     result.state.regs 99, result.state.tapePos)
 
@@ -130,12 +138,26 @@ run_cmd do
   unless run 2 tail [] == none do throwError "a private miss succeeded without a uniform reply"
   unless run 2 (List.replicate 7 (9, 0, 0)) [] == none do
     throwError "out-of-capacity input was admitted"
+  for (remaining, replies) in [
+      ([(9, 0, 10), (4, 0, 8)] ++ tail, [88]),
+      ([(9, 0, 7), (9, 0, 3)] ++ tail, [88]),
+      ([(9, 0, 10)] ++ tail, [2, 1, 88]),
+      (tail, [7, 4, 4, 3, 88]), (tail, [7, 0, 0, 0, 88])] do
+    unless run 2 remaining replies true == run 2 remaining replies do
+      throwError "executed service output conversion lost the scalar, tapes, trace or caller frame"
+  unless run 1 ([(9, 0, 10)] ++ tail) [88] true ==
+      some (some (some 0, saved, tail), [], [88], #[77], 4, 91, 9) do
+    throwError "service cutoff did not construct its literal fallback and preserve the tapes"
+  unless run 2 tail [] true == none do throwError "completed service succeeded without a uniform reply"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``Schnorr.RawTape.Private.simulate_source, ``Schnorr.RawTape.Private.scalar_source,
       ``PrivateQuery.refines, ``PrivateQuery.source_eq, ``PrivateQuery.time_bound, ``PrivateQuery.descriptionFits,
       ``PrivateHandler.synchronizes, ``PrivateHandler.reserved_after,
       ``PrivateSampler.refines, ``PrivateSampler.observe_source, ``PrivateSampler.scalar_source,
-      ``PrivateSampler.resources, ``program_time, ``terminates] do
+      ``PrivateSampler.resources, ``PrivateSampler.Finish.program, ``PrivateSampler.Finish.time,
+      ``PrivateSampler.Finish.words, ``PrivateSampler.Service.refines, ``PrivateSampler.Service.scalar_source,
+      ``PrivateSampler.Service.observe_scalar, ``PrivateSampler.Service.reserved_after,
+      ``PrivateSampler.Service.resources, ``program_time, ``service_time, ``terminates] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

@@ -3069,9 +3069,30 @@ Implemented and checked:
   two-query adaptive caller, including repeated families, oversized payloads,
   mixed hits/misses, two fresh draws, zero-range follow-up, unchanged challenge
   cells, cutoff, absent replies, invalid input capacity and external frames.
-  Integration still needs charged projection of the returned control packet
-  to scalar/store, the concrete local sampler witness used by signing, and the
-  full managed/LIVE cache, pass and fork composition.
+  The concrete local sampler witness used by signing and full managed/LIVE
+  cache, pass and fork composition remain integration work.
+
+- The [private sampling service](../Signatures/Runtime/Caliper/SchnorrROMPrivateService.lean)
+  now accepts only the shared tapes and returns the scalar and updated tapes.
+  [Executed output conversion](../Signatures/Runtime/Caliper/SchnorrROMPrivateFinish.lean)
+  removes the controller tag and padding by copying. Cutoff constructs a literal
+  zero while preserving the tapes; branchwise termination excludes that branch
+  in the source equality theorem. The complete service observes exactly the
+  original `privateImpl`, including the sampler's internal queries and both tapes.
+  Its `reserved_after` theorem preserves any extra capacity reserved for later
+  sampling or signing, including early returns and cutoffs.
+  [Complete bounds](../Signatures/Runtime/Caliper/SchnorrROMPrivateServiceBounds.lean)
+  add at most `68 * callerWidth + 4` time and `325 * callerWidth + 189` stored
+  words to the generated sampler controller, including its output conversion.
+  The whole-execution memory theorem includes that same code and all visited
+  states. No completed service correctness/resource contract is assumed.
+  The adaptive regression now executes this service for mixed hits/misses,
+  repeated families, zero-range follow-up, cutoff, and absent replies; it checks
+  the scalar, both tapes, exact trace and external frame after output conversion.
+  Signing integration next needs two service calls through the **same** tape,
+  with charged retention of the first scalar while the second call executes.
+  The existing independent, stateless `PairSampling` constructor cannot be used
+  unchanged for these shared-state calls.
 
 Remaining integration sequence:
 

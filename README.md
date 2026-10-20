@@ -594,6 +594,10 @@ Pinned upstreams:
   Every internal uniform query retains its original range and family order;
   no single-query scalar sampler is assumed. Only the sampler's local code,
   termination and exact source correspondence remain explicit contracts.
+  The [private scalar service](Signatures/Runtime/Caliper/SchnorrROMPrivateServiceBounds.lean)
+  also executes the output conversion, returns the scalar and both shared tapes,
+  and preserves reserved space for later calls. Its full execution agrees with
+  the original private sampler, including internal query chronology.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
