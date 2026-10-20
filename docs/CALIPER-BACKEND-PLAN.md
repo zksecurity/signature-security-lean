@@ -3413,9 +3413,37 @@ Implemented and checked:
   zero-fuel and repeated-call cutoff, fresh and replayed randomness, hashing,
   signing, missing replies, insufficient reserve, exact traces and updated stores,
   external-state preservation, scratch release, elapsed bounds, canonical finite
-  sampling and theorem axioms. Terminal final hashing with the retained forgery,
-  pass initialization, charged replay/restart, extraction and public full/nonzero
-  ROM migration remain.
+  sampling and theorem axioms. The final-hash terminal is implemented below;
+  its caller composition, pass initialization, charged replay/restart, extraction
+  and public full/nonzero ROM migration remain.
+
+- [Final hashing with a retained forgery](../Signatures/Runtime/Caliper/SchnorrROMForgeryHash.lean)
+  executes the key/store preparation, saves the complete message/commitment/response,
+  calls the existing LIVE hash and reconstructs the forgery/challenge/store result.
+  Its [source law](../Signatures/Runtime/Caliper/SchnorrROMForgeryHashSource.lean)
+  agrees with the original `Shared.interpret finalHash`, jointly with both caches
+  and tapes. It preserves the forgery, public configuration and managed table;
+  at most one LIVE entry and saved cell are added. `Reserved 0` supplies readiness.
+  [Resource bounds](../Signatures/Runtime/Caliper/SchnorrROMForgeryHashBounds.lean)
+  charge all preparation, retention and reconstruction copies.
+  The [terminal dispatcher](../Signatures/Runtime/Caliper/SchnorrROMTerminal.lean)
+  hashes a returned forgery and produces a distinct empty result for a pending
+  packet at cutoff. Its executed union/context conversions move the private store
+  across padding; cutoff needs no final-hash capacity and leaves the store intact.
+  [Exact source laws](../Signatures/Runtime/Caliper/SchnorrROMTerminalSource.lean)
+  preserve the original final-hash distribution and the entire store.
+  For `W = 1 + forgeryWords + pendingWords + storeWords`,
+  [terminal bounds](../Signatures/Runtime/Caliper/SchnorrROMTerminalBounds.lean)
+  add at most `120*W + 10` time and `800*W + 400` description words to the
+  retained-forgery hash budgets. They account for both stored branches, dense
+  names, description acceptance and all visited memory of the same execution.
+  The [regression](../SignaturesTest/CaliperSchnorrROMTerminal.lean) executes full
+  and duplicate LIVE hits, zero challenges, public replay, fresh challenges,
+  varied response scalars, a nonidentity scalar encoding, missing replies,
+  exhausted reservations and cutoff on exhausted stores. The pending payload is
+  wider than the forgery to exercise padding. It checks exact traces, external
+  state, scratch release, elapsed bounds, canonical finite sampling and axioms.
+  Caller/terminal composition and full pass/reduction assembly remain.
 
 Remaining integration sequence:
 
@@ -3481,7 +3509,8 @@ the source/output conversion for both complete BLS AGM reductions.
    Both BLS AGM setups and source/output conversions are now joined in `BLSFull`.
    The Schnorr ROM adaptive caller now also has the original-machine bridge,
    all-exit final-hash reservation and complete word-execution resource bounds.
-   Compose its final-hash terminal, initialization and two-pass reduction next.
+   Its final-hash terminal now has exact source and complete resource bounds.
+   Join it to the caller, initialization and two-pass reduction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and

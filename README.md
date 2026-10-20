@@ -658,8 +658,14 @@ Pinned upstreams:
   [exit postcondition](Signatures/Runtime/Caliper/SchnorrROMCallerPostcondition.lean)
   preserves public configuration and final-hash space, including early returns
   and fuel cutoff. [Whole-loop resources](Signatures/Runtime/Caliper/SchnorrROMCallerResources.lean)
-  include stored loop bodies and every state-retention copy. Composing final
-  verification and the complete two-pass reduction remains part of the ROM migration.
+  include stored loop bodies and every state-retention copy.
+  The [terminal handler](Signatures/Runtime/Caliper/SchnorrROMTerminalSource.lean)
+  retains the complete forgery during its final LIVE hash and distinguishes
+  fuel cutoff without changing the oracle state. Its
+  [resource bounds](Signatures/Runtime/Caliper/SchnorrROMTerminalBounds.lean)
+  charge all copies, both stored branches and every visited memory state.
+  Joining this terminal to the caller, initialization and the complete two-pass
+  reduction remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
