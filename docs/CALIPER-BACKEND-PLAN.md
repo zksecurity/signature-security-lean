@@ -3350,8 +3350,9 @@ Implemented and checked:
   It checks exact replies, complete stores, traces, external state, scratch
   release and elapsed bounds, and audits theorem axioms. A field/module source
   instance matches the repository's original `FinEnum` sampler. The independent
-  caller interface below composes packet distribution and reconstruction; the
-  adaptive loop, final verification, both passes and extraction remain.
+  caller interface and adaptive loop below compose packet distribution,
+  reconstruction and repeated calls; final verification, both passes and
+  extraction remain.
 
 - The [caller-facing ROM interface](../Signatures/Runtime/Caliper/SchnorrROMCallerHandler.lean)
   receives an independent `(random | hash) | sign` request and private store,
@@ -3380,8 +3381,41 @@ Implemented and checked:
   and replayed randomness, signing followed by managed hashing, full managed
   hits, missing replies, exhausted capacities, exact traces, external state,
   scratch release and elapsed bounds. It checks the original finite sampling
-  instance and theorem axioms. The adaptive loop and full two-pass reduction
-  still need composition before the public Schnorr ROM statements migrate.
+  instance and theorem axioms. The adaptive loop below completes caller control;
+  final verification and the full two-pass reduction still need composition
+  before the public Schnorr ROM statements migrate.
+
+- The [generated adaptive ROM caller](../Signatures/Runtime/Caliper/SchnorrROMCaller.lean)
+  takes only local initialization and continuation realizers. It constructs the
+  complete handler loop and physically retains the caller state and private
+  oracle store across calls. A single remaining-call reservation proves admission
+  for every represented random, hash or signing request; no separate theorem
+  about a finished controller is assumed. The `Routines` structure keeps local
+  representations, implementations and their address bounds together.
+  [Source and execution correspondence](../Signatures/Runtime/Caliper/SchnorrROMCallerExecution.lean)
+  identify the joint result/store with the original `simulateQ` program from a
+  local machine-step correspondence and `ImplementsWithin` certificate. This
+  excludes cutoff when relating execution to the original completed program;
+  the generated controller itself keeps cutoff distinct from a returned result.
+  The [all-exit postcondition](../Signatures/Runtime/Caliper/SchnorrROMCallerPostcondition.lean)
+  preserves public configuration and room for the final LIVE hash, including
+  immediate returns, early returns and pending packets at exhausted fuel.
+  [Whole-loop resource bounds](../Signatures/Runtime/Caliper/SchnorrROMCallerResources.lean)
+  add one initialization plus `fuel` copies of the handler and local continuation,
+  with explicit linear copying overhead in represented width. Stored code
+  includes every unrolled body. The memory theorem includes the returned-state
+  postcondition, static code, names, initial data and every visited state of the
+  same execution. The existing primitive reserve also proves that the fresh
+  retention-buffer index fits; no extra allocation contract is required.
+  The [regression](../SignaturesTest/CaliperSchnorrROMCallerControl.lean) executes
+  a caller that returns after its first reply and a caller whose next random
+  range depends on the preceding reply. It covers immediate/early returns,
+  zero-fuel and repeated-call cutoff, fresh and replayed randomness, hashing,
+  signing, missing replies, insufficient reserve, exact traces and updated stores,
+  external-state preservation, scratch release, elapsed bounds, canonical finite
+  sampling and theorem axioms. Terminal final hashing with the retained forgery,
+  pass initialization, charged replay/restart, extraction and public full/nonzero
+  ROM migration remain.
 
 Remaining integration sequence:
 
@@ -3445,6 +3479,9 @@ the source/output conversion for both complete BLS AGM reductions.
    carrying reservations through the generated controller. The caller and terminal
    execution now compose with derived extraction room and complete resource bounds.
    Both BLS AGM setups and source/output conversions are now joined in `BLSFull`.
+   The Schnorr ROM adaptive caller now also has the original-machine bridge,
+   all-exit final-hash reservation and complete word-execution resource bounds.
+   Compose its final-hash terminal, initialization and two-pass reduction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and

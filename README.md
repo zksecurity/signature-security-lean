@@ -652,8 +652,14 @@ Pinned upstreams:
   conversions preserve the joint oracle law and capacity invariant; the
   [resource theorem](Signatures/Runtime/Caliper/SchnorrROMCallerMemory.lean)
   charges both conversions in the same execution's time and memory bounds.
-  Joining this service to the adaptive caller loop and complete two-pass
-  reduction remains part of the ROM migration.
+  The [adaptive caller loop](Signatures/Runtime/Caliper/SchnorrROMCallerExecution.lean)
+  now executes local initialization and continuation routines and agrees with
+  the original attacker program. Its
+  [exit postcondition](Signatures/Runtime/Caliper/SchnorrROMCallerPostcondition.lean)
+  preserves public configuration and final-hash space, including early returns
+  and fuel cutoff. [Whole-loop resources](Signatures/Runtime/Caliper/SchnorrROMCallerResources.lean)
+  include stored loop bodies and every state-retention copy. Composing final
+  verification and the complete two-pass reduction remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
