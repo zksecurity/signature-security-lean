@@ -3041,6 +3041,38 @@ Implemented and checked:
   zero replies, missing replies, distinct tapes and caller frames.
   These calls still need joining into the complete ROM pass and fork controller.
 
+- [Private replay semantics](../Signatures/Runtime/SchnorrPrivateReplay.lean)
+  now handle an arbitrary adaptive uniform-query computation. Exact tree equality
+  preserves its query order, ranges, result and both shared tapes. The scalar
+  specialization equals the original `privateImpl`, with no assumption that
+  `SampleableType.selectElem` makes only one query.
+  [Constructed private queries](../Signatures/Runtime/Caliper/SchnorrROMPrivateQuery.lean)
+  eliminate the external scalar-sampler premise: the unreachable challenge
+  branch contains a charged constant routine. All private query resource and
+  address bounds are derived from the actual code.
+  The [caller handler](../Signatures/Runtime/Caliper/SchnorrROMPrivateHandler.lean)
+  uses independent request/reply/store representations with proved identical
+  bytes, synchronizes with that original private oracle, and proves decreasing
+  tape reservations after each supported reply.
+  The [adaptive controller](../Signatures/Runtime/Caliper/SchnorrROMPrivateSampler.lean)
+  is generated from local initialization and continuation realizers. Its source
+  machine/tree are derived from those transitions and branchwise termination.
+  Actual execution observes the original sampled result and both tapes, with no
+  cutoff under termination. An exact equality with the specified scalar sampler
+  connects this computation to `privateImpl`; uniform output distribution alone
+  would not preserve its internal replay chronology.
+  [Complete bounds](../Signatures/Runtime/Caliper/SchnorrROMPrivateSamplerBounds.lean)
+  include initialization, suspended caller state, private store, stored code and
+  every visited machine state. The only supplied resource bounds concern the
+  local sampler transitions, not the assembled replay controller.
+  [Regressions](../SignaturesTest/CaliperSchnorrROMPrivateSampler.lean) execute a
+  two-query adaptive caller, including repeated families, oversized payloads,
+  mixed hits/misses, two fresh draws, zero-range follow-up, unchanged challenge
+  cells, cutoff, absent replies, invalid input capacity and external frames.
+  Integration still needs charged projection of the returned control packet
+  to scalar/store, the concrete local sampler witness used by signing, and the
+  full managed/LIVE cache, pass and fork composition.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

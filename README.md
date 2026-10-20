@@ -588,6 +588,12 @@ Pinned upstreams:
   connects each private and challenge call to the original raw oracle, including
   both tapes. Their full time/code/memory bounds require only the local scalar
   sampler's resources. The handler requires one reserved saved-tape slot.
+  [Adaptive private sampling](Signatures/Runtime/Caliper/SchnorrROMPrivateSamplerBounds.lean)
+  now runs a sampler's local transitions through a fully constructed private
+  replay handler, with exact source correspondence and full execution bounds.
+  Every internal uniform query retains its original range and family order;
+  no single-query scalar sampler is assumed. Only the sampler's local code,
+  termination and exact source correspondence remain explicit contracts.
   Joining these calls into the pass handlers and complete two-pass reduction
   remains part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
