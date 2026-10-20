@@ -3007,6 +3007,20 @@ Implemented and checked:
   The reset output still allows `capacity+1` cells; the full caller must allocate
   and prove the corresponding replay reservation.
 
+- [Caller reply decoders](../Signatures/Runtime/Caliper/SchnorrROMTapeReply.lean)
+  now execute the original raw-oracle decoding. A private reply retains its
+  requested range, computes `range+1` and natural remainder, then constructs the
+  range/answer packet with both tapes. Its represented answer is proved within
+  range even for an oversized stored payload; no valid-cell assumption is used.
+  Scalar replies execute projection and tape copies.
+  [Bounds](../Signatures/Runtime/Caliper/SchnorrROMTapeReplyBounds.lean) derive
+  linear time/code overhead and complete visited-memory bounds from those
+  instructions. Private/scalar buffer extents are six/three.
+  The [regression](../SignaturesTest/CaliperSchnorrROMTapeReply.lean) checks zero
+  and maximum represented ranges, oversized payloads, zero-divisor remainder,
+  distinct tapes, invalid bounds and caller frames. Request preparation and
+  retaining the range across the query must still be composed with these decoders.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in

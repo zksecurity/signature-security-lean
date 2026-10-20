@@ -579,8 +579,12 @@ Pinned upstreams:
   Only the local scalar sampler supplies an implementation contract.
   Source equality recovers the original raw oracle's answer and both tapes,
   with derived time, stored-code and visited-state memory bounds.
-  The handler requires one reserved saved-tape slot. Caller query/reply routing
-  and the complete two-pass composition remain part of the ROM migration.
+  [Caller reply decoders](Signatures/Runtime/Caliper/SchnorrROMTapeReplyBounds.lean)
+  also execute scalar projection, private range/remainder decoding and copies of
+  both tapes, with linear time/code bounds and complete memory accounting.
+  The handler requires one reserved saved-tape slot. Preparing caller requests,
+  composing query/decoder execution and the complete two-pass reduction remain
+  part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
