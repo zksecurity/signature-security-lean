@@ -35,7 +35,7 @@ end Program
 
 section Original
 variable [Field F] [DecidableEq F] [AddCommGroup G] [Module F G] [DecidableEq M] [DecidableEq G]
-    (caller : Pass.Caller config A) (ops : Handler.Operations config) (qH : Nat) (indexFits : qH + 1 < 2 ^ w)
+    (caller : Pass.Caller config A) (ops : Handler.Operations config) (law : Handler.SigningLaw config ops.signing) (qH : Nat) (indexFits : qH + 1 < 2 ^ w)
     (fuel : Nat) (witness : Pass.Caller.Source config caller fuel)
 
 omit [Field F] [DecidableEq F] [AddCommGroup G] [Module F G] [DecidableEq M] [DecidableEq G] in
@@ -53,11 +53,11 @@ theorem fullSource_original (tables : fuel + 1 ≤ config.capacityPred + 1)
     letI := PrivateSampler.Enumerated.sampleable config.sampler
     Subtype.val <$> fullSource config caller ops qH indexFits fuel tables tapes value =
       simulateQ (_root_.Schnorr.LazyROM.sample (F := F))
-        (Schnorr.RawTape.fork (originalMain config caller fuel witness value) qH
+        (Schnorr.RawTape.fork (originalMain config caller ops law fuel witness value) qH
           (Schnorr.selectPass (G₂ := G) (K := M) PrimitiveCosts.unit qH) >>= fun result =>
             Schnorr.liftRandom (Schnorr.extractFork (G₂ := G) (K := M) result)) := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
-  have controller := Initialized.source_original config caller ops qH indexFits fuel witness tables tapes value
+  have controller := Initialized.source_original config caller ops law qH indexFits fuel witness tables tapes value
   calc
     Subtype.val <$> fullSource config caller ops qH indexFits fuel tables tapes value =
         (Initialized.source config caller ops qH indexFits fuel tables tapes value >>= fun result =>
@@ -82,14 +82,14 @@ theorem full_observe_original (tables : fuel + 1 ≤ config.capacityPred + 1)
     (fun result => (Interactive.observe config.handler.sampler.tape.scalar.representation result).map Subtype.val) <$>
         (fullProgram config caller ops qH indexFits arith fuel).execute (Fresh.port config.handler.sampler.tape) .unit tape before =
       some <$> simulateQ (_root_.Schnorr.LazyROM.sample (F := F))
-        (Schnorr.RawTape.fork (originalMain config caller fuel witness value) qH
+        (Schnorr.RawTape.fork (originalMain config caller ops law fuel witness value) qH
           (Schnorr.selectPass (G₂ := G) (K := M) PrimitiveCosts.unit qH) >>= fun result =>
             Schnorr.liftRandom (Schnorr.extractFork (G₂ := G) (K := M) result)) := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
   have executed := congrArg (Functor.map (Option.map Subtype.val))
     ((full_refines config caller ops qH indexFits arith fuel tables tapes).observe tape value before holds)
   have original := congrArg (Functor.map some)
-    (fullSource_original config caller ops qH indexFits fuel witness tables tapes value)
+    (fullSource_original config caller ops law qH indexFits fuel witness tables tapes value)
   simp only [Functor.map_map, Option.map_some] at executed original
   exact executed.trans original
 

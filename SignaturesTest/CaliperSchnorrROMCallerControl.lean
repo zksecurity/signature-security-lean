@@ -26,6 +26,8 @@ private def sub : Implementation .unit config.handler.core.arithmetic.points con
   program := ((WordBinary.realizer .unit .sub (by decide)).viewInput config.handler.core.arithmetic.points.representation
     (fun value => value.val) (fun _ => rfl)).viewOutput config.handler.core.point.representation
       (fun value => ⟨value.val.1 - value.val.2, trivial⟩) (fun _ => rfl)
+private theorem scaleBound : scale.BoundedBy 6 27 := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
+private theorem subBound : sub.BoundedBy 6 27 := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
 private def operations : Handler.Operations config where
   scale := scale
   sub := sub
@@ -33,13 +35,14 @@ private def operations : Handler.Operations config where
   scaleNames := ⟨by decide, by decide⟩
   subNames := ⟨by decide, by decide⟩
   reserve := by decide
+  signing := Handler.fullField config scale sub ⟨by decide, by decide⟩ ⟨by decide, by decide⟩ (by decide) scaleBound subBound
 private def budget : Handler.Budget config operations where
   scaleTime := 6
   scaleWords := 27
   subTime := 6
   subWords := 27
-  scale := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
-  sub := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
+  scale := scaleBound
+  sub := subBound
 
 private abbrev Store := Schnorr.ListROM.Shared.Store (ZMod 7) (Word 16) Nat
 private abbrev Query := (Nat ⊕ (Nat × Word 16)) ⊕ Nat
@@ -166,9 +169,9 @@ private def groupConfig : Signing.Enumerated.Configuration 16 Nat (ZMod 7) (ZMod
   capacityPred := 2
   countFits := by decide
   storageFits := by decide
-private theorem original_sampler (q : (Nat ⊕ (Nat × ZMod 7)) ⊕ Nat) :
-    Caller.original (G₂ := ZMod 7) (K := Nat) groupConfig q =
-      Schnorr.ListROM.Shared.interpret (Schnorr.ListROM.handler (G₂ := ZMod 7) (K := Nat) q) := by
+private theorem original_sampler (target : Schnorr.ListROM.Handler (ZMod 7) (ZMod 7) (ZMod 7) Nat Nat)
+    (q : (Nat ⊕ (Nat × ZMod 7)) ⊕ Nat) :
+    Caller.original groupConfig target q = Schnorr.ListROM.Shared.interpret (target q) := by
   have same : PrivateSampler.Enumerated.sampleable groupConfig.sampler = FinEnum.SampleableType (ZMod 7) :=
     PrivateSampler.Enumerated.sampleable_finEnum 6 (by decide) (by decide) (by decide)
   unfold Caller.original

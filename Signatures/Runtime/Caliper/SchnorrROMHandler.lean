@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.SchnorrROMHandlerLayout
+import Signatures.Runtime.Caliper.SchnorrROMPrivateGrowth
 
 /-! The complete three-way ROM service is constructed from the verified
 handlers. Only scalar multiplication and group subtraction are supplied as
@@ -8,6 +9,30 @@ open Caliper BoundedSource SchnorrROMTape OracleComp OracleSpec
 variable {w : Nat} {M F G : Type} [Zero F] [SMul F G] [Sub G] [DecidableEq M] [DecidableEq G]
     (config : Signing.Enumerated.Configuration w M F G)
 
+/-- An executed signing branch: code over the signing packet, its source, their
+refinement, resource bounds and the store postconditions the service invariant
+needs. The full-field and nonzero-nonce simulators are instances; its source law
+to a list-backend handler is stated separately (`SigningLaw`). -/
+structure SigningBranch (slots : Nat) where
+  code : Interactive.Code w
+  source : config.handler.input.Value → ProbComp config.handler.output.Value
+  refines : Interactive.RefinesOn (Signing.Handler.ready config.handler 1) (Fresh.port config.handler.sampler.tape) .unit
+    config.handler.input.representation config.handler.output.representation source code
+  time : Nat
+  words : Nat
+  nameSlots : Nat
+  time_bound : Interactive.TimeBoundOn (Signing.Handler.ready config.handler 1) (Fresh.port config.handler.sampler.tape) .unit
+    config.handler.input.representation code time
+  code_bound : (code.lower (Fresh.port config.handler.sampler.tape)).descriptionWords ≤ words
+  names : WordIO.NamesAccounted (code.lower (Fresh.port config.handler.sampler.tape)) nameSlots
+  buffers : (code.lower (Fresh.port config.handler.sampler.tape)).memBound ≤ max 11 (slots + 3)
+  descriptionFits : (code.lower (Fresh.port config.handler.sampler.tape)).DescriptionFits
+  preserves_config : ∀ value answer, answer ∈ support (source value) → answer.val.2.1.1 = value.val.2.1.1
+  preserves_live : ∀ value answer, answer ∈ support (source value) → answer.val.2.1.2.2 = value.val.2.1.2.2
+  managed_length : ∀ value answer, answer ∈ support (source value) → answer.val.2.1.2.1.length ≤ value.val.2.1.2.1.length + 1
+  tape_lengths : ∀ value, Signing.Handler.ready config.handler 1 value → ∀ answer, answer ∈ support (source value) →
+    answer.val.2.2.1.length ≤ value.val.2.2.1.length + 2 ∧ answer.val.2.2.2.length ≤ value.val.2.2.2.length
+
 structure Operations where
   scale : Implementation .unit config.handler.core.arithmetic.scaleArgs config.handler.core.point (fun value => value.1 • value.2)
   sub : Implementation .unit config.handler.core.arithmetic.points config.handler.core.point (fun value => value.1 - value.2)
@@ -15,15 +40,52 @@ structure Operations where
   scaleNames : NamesBound scale.program.code slots
   subNames : NamesBound sub.program.code slots
   reserve : slots + 3 < 2 ^ w
+  signing : SigningBranch config slots
+
+/-- The full-field signing branch: two private tape draws through the enumerated
+sampler, then the executed commitment and cache programming. -/
+def fullField (scale : Implementation .unit config.handler.core.arithmetic.scaleArgs config.handler.core.point (fun value => value.1 • value.2))
+    (sub : Implementation .unit config.handler.core.arithmetic.points config.handler.core.point (fun value => value.1 - value.2))
+    {slots : Nat} (scaleNames : NamesBound scale.program.code slots) (subNames : NamesBound sub.program.code slots)
+    (reserve : slots + 3 < 2 ^ w) {scaleTime subTime scaleWords subWords : Nat}
+    (scaleBound : scale.BoundedBy scaleTime scaleWords) (subBound : sub.BoundedBy subTime subWords) : SigningBranch config slots where
+  code := Signing.Enumerated.code config scale sub scaleNames.buffers subNames.buffers reserve
+  source := Signing.Enumerated.source config scale sub scaleNames.buffers subNames.buffers reserve
+  refines := Signing.Handler.refines config.handler trivial scale sub scaleNames.buffers subNames.buffers reserve
+    (PrivateSampler.Enumerated.caller config.sampler) 1
+  time := Signing.Handler.timeBudget config.handler trivial 38 16 1 scaleTime subTime
+  words := Signing.Handler.codeBudget config.handler trivial (PrivateSampler.Enumerated.caller config.sampler) 1 scaleWords subWords
+  nameSlots := Signing.Handler.nameBudget config.handler trivial 3 slots
+  time_bound := Signing.Enumerated.time_bound config scale sub scaleNames.buffers subNames.buffers reserve scaleBound subBound
+  code_bound := Signing.Enumerated.code_bound config scale sub scaleNames.buffers subNames.buffers reserve scaleBound subBound
+  names := Signing.Enumerated.names config scale sub scaleNames.buffers subNames.buffers reserve slots
+    scaleNames.accounted subNames.accounted
+  buffers := Signing.Enumerated.buffers config scale sub scaleNames.buffers subNames.buffers reserve
+  descriptionFits := Signing.Enumerated.descriptionFits config scale sub scaleNames.buffers subNames.buffers reserve
+  preserves_config := by
+    intro value answer reached
+    simp only [Signing.Enumerated.source, Signing.Handler.source, support_map, Set.mem_image] at reached
+    obtain ⟨sampled, _, rfl⟩ := reached
+    rfl
+  preserves_live := fun value answer reached => Signing.Handler.preserves_live config.handler trivial scale sub
+    scaleNames.buffers subNames.buffers reserve (PrivateSampler.Enumerated.caller config.sampler) 1 value answer reached
+  managed_length := fun value answer reached => Signing.Handler.managed_length config.handler trivial scale sub
+    scaleNames.buffers subNames.buffers reserve (PrivateSampler.Enumerated.caller config.sampler) 1 value answer reached
+  tape_lengths := by
+    intro value valid answer reached
+    simp only [Signing.Enumerated.source, Signing.Handler.source, support_map, Set.mem_image] at reached
+    obtain ⟨sampled, supported, rfl⟩ := reached
+    exact PrivateSampler.Pair.tape_lengths config.handler.sampler (PrivateSampler.Enumerated.caller config.sampler)
+      trivial 1 (Signing.Handler.tapes config.handler value) valid sampled supported
 
 variable (ops : Operations config)
-def signCode := Signing.Enumerated.code config ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers ops.reserve
-def signSource := Signing.Enumerated.source config ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers ops.reserve
+def signCode := ops.signing.code
+def signSource := ops.signing.source
+omit [Zero F] [DecidableEq M] [DecidableEq G] in
 theorem sign_refines : Interactive.RefinesOn (Signing.Handler.ready config.handler 1)
     (Fresh.port config.handler.sampler.tape) .unit config.handler.input.representation config.handler.output.representation
     (signSource config ops) (signCode config ops) :=
-  Signing.Handler.refines config.handler trivial ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers ops.reserve
-    (PrivateSampler.Enumerated.caller config.sampler) 1
+  ops.signing.refines
 
 omit [SMul F G] [Sub G] in
 def randomCode : Interactive.Code w := .seq (Random.code config) (.compute (randomTag config).code)
@@ -66,6 +128,7 @@ theorem hash_refines : Interactive.RefinesOn (Hash.ready config) (Fresh.port con
     simp only [bind_pure_comp]
     rfl
   · rfl
+omit [Zero F] [DecidableEq M] [DecidableEq G] in
 theorem signing_refines : Interactive.RefinesOn (Signing.Handler.ready config.handler 1)
     (Fresh.port config.handler.sampler.tape) .unit config.handler.input.representation (output config)
     (signingSource config ops) (signingCode config ops) := by

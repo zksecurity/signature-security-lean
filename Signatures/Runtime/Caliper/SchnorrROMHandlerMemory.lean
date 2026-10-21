@@ -20,8 +20,7 @@ theorem tag_names : NamesBound (randomTag config).code 3 ∧ NamesBound (hashTag
   exact ⟨⟨max_le innerLeft.registers outerLeft.registers, max_le innerLeft.buffers outerLeft.buffers⟩,
     ⟨max_le innerRight.registers outerLeft.registers, max_le innerRight.buffers outerLeft.buffers⟩, outerRight⟩
 
-def nameBudget := max 3 (max (max (Random.nameBudget config) (Hash.nameBudget config))
-  (Signing.Handler.nameBudget config.handler trivial 3 ops.slots))
+def nameBudget := max 3 (max (max (Random.nameBudget config) (Hash.nameBudget config)) ops.signing.nameSlots)
 
 theorem names : WordIO.NamesAccounted ((code config ops).lower (Fresh.port config.handler.sampler.tape))
     (nameBudget config ops) := by
@@ -30,9 +29,7 @@ theorem names : WordIO.NamesAccounted ((code config ops).lower (Fresh.port confi
   have st := (tag_names config).2.2.accounted.mono (show 3 ≤ nameBudget config ops from Nat.le_max_left 3 _)
   have random := (Random.names config).mono (show Random.nameBudget config ≤ nameBudget config ops by unfold nameBudget; omega)
   have hashed := (Hash.names config).mono (show Hash.nameBudget config ≤ nameBudget config ops by unfold nameBudget; omega)
-  have signed := (Signing.Enumerated.names config ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers ops.reserve
-    ops.slots ops.scaleNames.accounted ops.subNames.accounted).mono
-      (show Signing.Handler.nameBudget config.handler trivial 3 ops.slots ≤ nameBudget config ops by unfold nameBudget; omega)
+  have signed := ops.signing.names.mono (show ops.signing.nameSlots ≤ nameBudget config ops by unfold nameBudget; omega)
   exact @Interactive.dispatch_names w Nat unifSpec (Fresh.port config.handler.sampler.tape)
     (innerCode config) (signingCode config ops) (nameBudget config ops)
     (@Interactive.dispatch_names w Nat unifSpec (Fresh.port config.handler.sampler.tape)
@@ -43,8 +40,8 @@ theorem names : WordIO.NamesAccounted ((code config ops).lower (Fresh.port confi
 theorem buffers : ((code config ops).lower (Fresh.port config.handler.sampler.tape)).memBound ≤ max 12 (ops.slots + 3) := by
   have random := Random.buffers config
   have hashed := Hash.buffers config
-  have signed := Signing.Enumerated.buffers config ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers ops.reserve
-  change ((signCode config ops).lower (Fresh.port config.handler.sampler.tape)).memBound ≤ _ at signed
+  have signed : ((signCode config ops).lower (Fresh.port config.handler.sampler.tape)).memBound ≤ max 11 (ops.slots + 3) :=
+    ops.signing.buffers
   have tags := tag_names config
   have inner := Interactive.dispatch_buffers (Fresh.port config.handler.sampler.tape) (randomCode config) (hashCode config)
     (Random.input config).representation.encoding.words (Hash.input config).representation.encoding.words
@@ -65,9 +62,7 @@ theorem descriptionFits : ((code config ops).lower (Fresh.port config.handler.sa
       (.seq config.sampler.wordFits (Random.descriptionFits config) (.compute (randomTag config).description_fits))
       (.seq config.sampler.wordFits (Hash.descriptionFits config) (.compute (hashTag config).description_fits))
       (Random.input config).representation.fits (Hash.input config).representation.fits)
-    (.seq config.sampler.wordFits
-      (Signing.Enumerated.descriptionFits config ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers ops.reserve)
-      (.compute (signingTag config).description_fits))
+    (.seq config.sampler.wordFits ops.signing.descriptionFits (.compute (signingTag config).description_fits))
     (innerInput config).fits config.handler.input.representation.fits
 
 theorem resources (budget : Budget config ops) (random : RandomTape w) (value : Input config) (valid : ready config value)

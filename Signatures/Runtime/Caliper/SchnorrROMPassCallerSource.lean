@@ -5,8 +5,8 @@ Only local caller-step correspondence is supplied; the completed pass equation
 is derived and preserves both caches and tapes jointly. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrROM.Pass
 open Caliper BoundedSource SchnorrROMTape OracleComp OracleSpec
-variable {w : Nat} {M F G G₂ K A : Type} [Field F] [DecidableEq F] [AddCommGroup G] [Module F G]
-    [DecidableEq M] [DecidableEq G] [AddCommGroup G₂] [Module F G₂] [DecidableEq G₂] [DecidableEq K]
+variable {w : Nat} {M F G A : Type} [Field F] [DecidableEq F] [AddCommGroup G] [Module F G]
+    [DecidableEq M] [DecidableEq G]
     (config : Signing.Enumerated.Configuration w M F G) (caller : Caller config A)
 
 structure Caller.Source (fuel : Nat) where
@@ -31,39 +31,39 @@ def originalFinish (value : Option (ForgeryHash.forgery config).Value × Schnorr
   | none => pure (none, value.2)
   | some forge => (fun hashed => (some (forge.val, hashed.1), hashed.2)) <$>
       (Schnorr.ListROM.Shared.interpret
-        (Schnorr.ListROM.finalHash (G₂ := G₂) (K := K) (ForgeryHash.key config forge))).run value.2
+        (Schnorr.ListROM.finalHash (G₂ := G) (K := M) (ForgeryHash.key config forge))).run value.2
 
 theorem terminal_source (packet : Terminal.Input config (P := CallerPackets.Request config × A))
     (valid : Terminal.ready config packet) :
     Terminal.observed config <$> Terminal.source config packet =
-      originalFinish (G₂ := G₂) (K := K) config (CallerMachine.observe Subtype.val packet) := by
+      originalFinish config (CallerMachine.observe Subtype.val packet) := by
   rcases packet with ⟨forge | next, saved⟩
-  · exact Terminal.source_returned (G₂ := G₂) (K := K) config forge saved valid
+  · exact Terminal.source_returned (G₂ := G) (K := M) config forge saved valid
   · exact Terminal.source_cutoff config next saved
 
-variable (ops : Handler.Operations config) (fuel : Nat) (witness : Caller.Source config caller fuel)
+variable (ops : Handler.Operations config) (law : Handler.SigningLaw config ops.signing) (fuel : Nat) (witness : Caller.Source config caller fuel)
 
 theorem finish_source_original (value : config.point.Value × config.handler.store.Value)
     (room : SchnorrROM.Caller.admitted config fuel value) :
     letI := PrivateSampler.Enumerated.sampleable config.sampler
     Terminal.observed config <$> finishSource config caller ops fuel value =
       (fun result => (some result.1, result.2)) <$>
-        (Schnorr.ListROM.Shared.interpret (Schnorr.ListROM.pass (G₂ := G₂) (K := K)
+        (Schnorr.ListROM.Shared.interpret (Schnorr.ListROM.passWith law.target
           (Subtype.val <$> witness.program (witness.inputView value.1)))).run value.2.val := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
-  have invoked := SchnorrROM.Caller.source_original (G₂ := G₂) (K := K) config (caller.routines config) ops
+  have invoked := SchnorrROM.Caller.source_original config (caller.routines config) ops law
     witness.machine witness.stateView witness.inputView witness.advance witness.initial fuel witness.program witness.implements value room
   have finished : Terminal.observed config <$> finishSource config caller ops fuel value =
       (called config caller ops fuel value >>= fun packet =>
-        originalFinish (G₂ := G₂) (K := K) config (CallerMachine.observe Subtype.val packet)) := by
+        originalFinish config (CallerMachine.observe Subtype.val packet)) := by
     simp only [finishSource, map_bind]
     apply bind_congr_of_forall_mem_support
     intro packet reached
-    exact terminal_source (G₂ := G₂) (K := K) config packet (called_ready config caller ops fuel value room packet reached)
+    exact terminal_source config packet (called_ready config caller ops fuel value room packet reached)
   rw [finished, ← bind_map_left]
   change ((CallerMachine.observe Subtype.val <$> SchnorrROM.Caller.source config (caller.routines config) ops fuel value) >>= _) = _
   rw [invoked, bind_map_left]
-  simp only [Schnorr.ListROM.pass, Schnorr.ListROM.Shared.interpret_bind, Schnorr.ListROM.Shared.interpret_simulate,
+  simp only [Schnorr.ListROM.passWith, Schnorr.ListROM.Shared.interpret_bind, Schnorr.ListROM.Shared.interpret_simulate,
     simulateQ_map, StateT.run_bind, map_bind, bind_map_left]
   apply bind_congr
   intro answer
@@ -76,12 +76,12 @@ theorem finish_observe_original (tape : RandomTape w) (value : config.point.Valu
     (fun result => (Interactive.observe (output config caller) result).map (Terminal.observed config)) <$>
         (finishCode config caller ops fuel).execute (Fresh.port config.handler.sampler.tape) .unit tape before =
       (fun result => some (some result.1, result.2)) <$>
-        (Schnorr.ListROM.Shared.interpret (Schnorr.ListROM.pass (G₂ := G₂) (K := K)
+        (Schnorr.ListROM.Shared.interpret (Schnorr.ListROM.passWith law.target
           (Subtype.val <$> witness.program (witness.inputView value.1)))).run value.2.val := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
   have executed := congrArg (Functor.map (Option.map (Terminal.observed config)))
     ((finish_refines config caller ops fuel).observe tape value room before holds)
-  have original := congrArg (Functor.map some) (finish_source_original (G₂ := G₂) (K := K) config caller ops fuel witness value room)
+  have original := congrArg (Functor.map some) (finish_source_original config caller ops law fuel witness value room)
   simp only [Functor.map_map, Option.map_some] at executed original
   exact executed.trans original
 

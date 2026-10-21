@@ -28,11 +28,7 @@ theorem Handler.tape_lengths (value : Handler.Input config) (valid : Handler.rea
     exact ⟨growth.1.trans (by omega), growth.2⟩
   · simp only [Handler.source, Sum.elim, Handler.signingSource, support_map, Set.mem_image] at reached
     obtain ⟨read, supported, rfl⟩ := reached
-    simp only [Handler.signSource, Signing.Enumerated.source, Signing.Handler.source,
-      support_map, Set.mem_image] at supported
-    obtain ⟨sampled, supported, rfl⟩ := supported
-    exact PrivateSampler.Pair.tape_lengths config.handler.sampler (PrivateSampler.Enumerated.caller config.sampler)
-      trivial 1 (Signing.Handler.tapes config.handler value) valid sampled supported
+    exact ops.signing.tape_lengths value valid read supported
 
 theorem CallerHandler.tape_lengths (value : CallerPackets.Packet config) (valid : CallerPackets.ready config value)
     (answer : CallerPackets.Reply config × config.handler.store.Value)

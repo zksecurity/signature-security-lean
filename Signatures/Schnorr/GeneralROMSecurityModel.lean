@@ -51,6 +51,7 @@ class ROMSecurityModel (curve : Model.CyclicCurve) where
   parameters : ∀ n q, CaliperROM.Parameters (curve.Scalar n) (curve.Group n) (Message n) q (curve.generator n)
   sampling : ∀ n q, curve.scalarSampling n =
     Signatures.Runtime.CaliperBackend.SchnorrROMTape.PrivateSampler.Enumerated.sampleable (parameters n q).config.sampler
+  fullField : ∀ n q, (parameters n q).FullField
 
 attribute [instance_reducible, instance] ROMSecurityModel.messageEquality
 

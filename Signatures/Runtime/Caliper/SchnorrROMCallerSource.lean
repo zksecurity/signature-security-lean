@@ -44,19 +44,19 @@ theorem reserved_after (remaining : Nat) (value : Packet config)
 end Layout
 
 section Original
-variable {w : Nat} {M F G G₂ K : Type} [Field F] [DecidableEq F]
+variable {w : Nat} {M F G : Type} [Field F] [DecidableEq F]
     [AddCommGroup G] [Module F G] [DecidableEq M] [DecidableEq G]
-    [AddCommGroup G₂] [Module F G₂] [DecidableEq G₂] [DecidableEq K]
     (config : Signing.Enumerated.Configuration w M F G) (ops : Handler.Operations config)
+    (law : Handler.SigningLaw config ops.signing)
 
 theorem source_original (value : Packet config) (valid : ready config value) :
     letI := PrivateSampler.Enumerated.sampleable config.sampler
     observed config <$> source config ops value =
       (fun answer => (representReply config value.1 answer.1, answer.2)) <$>
         (Schnorr.ListROM.Shared.interpret
-          (Schnorr.ListROM.handler (G₂ := G₂) (K := K) (query config value.1))).run value.2.val := by
+          (law.target (query config value.1))).run value.2.val := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
-  have same := Handler.source_original (G₂ := G₂) (K := K) config ops
+  have same := Handler.source_original config ops law
     (serviceRequest config value valid) (service_ready config value valid)
   simp only [source, dite_eq_left valid, Functor.map_map, observed_finished]
   rcases value with ⟨(range | key) | message, saved⟩ <;> convert same using 1 <;> rfl
@@ -67,12 +67,12 @@ theorem synchronizes (value : Packet config) (valid : ready config value) :
       replyValue config represented.1 = representReply config value.1 original.1 ∧ represented.2.val = original.2)
       (source config ops value)
       ((Schnorr.ListROM.Shared.interpret
-        (Schnorr.ListROM.handler (G₂ := G₂) (K := K) (query config value.1))).run value.2.val) := by
+        (law.target (query config value.1))).run value.2.val) := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
   have joint := Synchronizes.of_map_eq (observed config)
     (fun answer : (FiatShamir.cmaOracleSpec M G F F).Range (query config value.1) × Schnorr.ListROM.Shared.Store F G M =>
       (representReply config value.1 answer.1, answer.2))
-    (source_original (G₂ := G₂) (K := K) config ops value valid)
+    (source_original config ops law value valid)
   exact joint.mono (fun _ _ equal => Prod.mk.inj equal)
 
 theorem observe_original (random : RandomTape w) (value : Packet config) (valid : ready config value)
@@ -82,12 +82,12 @@ theorem observe_original (random : RandomTape w) (value : Packet config) (valid 
         (code config ops).execute (Fresh.port config.handler.sampler.tape) .unit random before =
       (fun answer => some (representReply config value.1 answer.1, answer.2)) <$>
         (Schnorr.ListROM.Shared.interpret
-          (Schnorr.ListROM.handler (G₂ := G₂) (K := K) (query config value.1))).run value.2.val := by
+          (law.target (query config value.1))).run value.2.val := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
   have executed := (refines config ops).observe random value valid before holds
   have erased := congrArg (Functor.map (Option.map (observed config))) executed
   simp only [Functor.map_map, Option.map_some] at erased
-  have same := source_original (G₂ := G₂) (K := K) config ops value valid
+  have same := source_original config ops law value valid
   simpa only [Functor.map_map, Option.map_some] using erased.trans (by
     simpa only [Functor.map_map] using congrArg (Functor.map some) same)
 

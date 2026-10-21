@@ -14,7 +14,9 @@ namespace Signatures.Runtime.CaliperBackend.SchnorrROM.Full
 open Caliper BoundedSource SchnorrROMTape OracleComp OracleSpec
 variable {w : Nat} {M F G : Type} [Field F] [DecidableEq F] [AddCommGroup G] [Module F G] [DecidableEq M] [DecidableEq G]
     (config : Signing.Enumerated.Configuration w M F G) (shape : Shape config) (caller : Caller config shape)
-    (ops : Handler.Operations config) (budget : Handler.Budget config ops) (qH : Nat) (indexFits : qH + 1 < 2 ^ w)
+    (ops : Handler.Operations config) (law : Handler.SigningLaw config ops.signing)
+    (full : letI := PrivateSampler.Enumerated.sampleable config.sampler; law.target = Schnorr.ListROM.handler (G₂ := G) (K := M))
+    (budget : Handler.Budget config ops) (qH : Nat) (indexFits : qH + 1 < 2 ^ w)
     (limits : Limits) (bounded : caller.Bounds config shape limits)
     (arith : ReplayFork.Extract.Arithmetic config) (arithBudget : ReplayFork.Extract.Arithmetic.Budget config arith)
     (handlerRoom : Handler.nameBudget config ops ≤ limits.names) (slotsRoom : ops.slots + 4 < 2 ^ w)
@@ -43,16 +45,17 @@ variable [inst : SampleableType F] (sampled : inst = PrivateSampler.Enumerated.s
     (attacker : G → OracleComp (Schnorr.ListROM.NativeInterface.sourceSpec F G M) (M × G × F))
     (same : ∀ pk : config.point.Value, Subtype.val <$> witness.program (witness.inputView pk) = attacker pk.val)
 
-include sampled same in
+include sampled full same in
 theorem source_original (value : (Pass.Initialization.points config).Value) :
     Subtype.val <$> ReplayFork.Extract.fullSource config (caller.toPass config shape) ops qH indexFits fuel tables tapes value =
       Schnorr.ListROM.NativeSolver.reduction (G₂ := G) (K := M) attacker qH value.val.1 value.val.2 := by
   subst sampled
-  rw [ReplayFork.Extract.fullSource_original config (caller.toPass config shape) ops qH indexFits fuel witness tables tapes value]
+  rw [ReplayFork.Extract.fullSource_original config (caller.toPass config shape) ops law qH indexFits fuel witness tables tapes value]
   unfold Schnorr.ListROM.NativeSolver.reduction ReplayFork.originalMain
-  rw [same ⟨value.val.2, value.property.2⟩]
+  rw [full, same ⟨value.val.2, value.property.2⟩]
+  rfl
 
-include bounded handlerRoom slotsRoom tables tapes sampled same in
+include bounded handlerRoom slotsRoom tables tapes sampled full same in
 theorem within_original :
     Interactive.Within (Fresh.port config.handler.sampler.tape) (Pass.Initialization.points config) config.handler.sampler.tape.scalar
       (codeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
@@ -60,7 +63,7 @@ theorem within_original :
       (timeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
       (fun value => Schnorr.ListROM.NativeSolver.reduction (G₂ := G) (K := M) attacker qH value.val.1 value.val.2) :=
   (within config shape caller ops budget qH indexFits limits bounded arith arithBudget handlerRoom slotsRoom fuel tables tapes).congr
-    (source_original config shape caller ops qH indexFits fuel tables tapes sampled witness attacker same)
+    (source_original config shape caller ops law full qH indexFits fuel tables tapes sampled witness attacker same)
 
 variable (generator : config.point.Value)
 
@@ -71,7 +74,7 @@ handler's implemented scaling preserves point validity. -/
 theorem challenge_valid (scalar : F) : (Pass.Initialization.points config).valid (generator.val, scalar • generator.val) :=
   ⟨generator.property, ops.scale.preserves (scalar, generator.val) ⟨trivial, generator.property⟩⟩
 
-include bounded handlerRoom slotsRoom tables tapes sampled same in
+include bounded handlerRoom slotsRoom tables tapes sampled full same in
 theorem dlogWithin :
     cyclicDLogWithin (Fresh.port config.handler.sampler.tape) (Pass.Initialization.points config) config.handler.sampler.tape.scalar generator.val
       (codeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
@@ -79,7 +82,7 @@ theorem dlogWithin :
       (timeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
       (Schnorr.ListROM.NativeSolver.reduction (G₂ := G) (K := M) attacker qH) :=
   ⟨challenge_valid config ops generator,
-    within_original config shape caller ops budget qH indexFits limits bounded arith arithBudget handlerRoom slotsRoom fuel tables tapes
+    within_original config shape caller ops law full budget qH indexFits limits bounded arith arithBudget handlerRoom slotsRoom fuel tables tapes
       sampled witness attacker same⟩
 
 section Security
@@ -87,7 +90,7 @@ variable [Fintype F] [SampleableType G]
     (generates : Function.Bijective (fun x : F => x • generator.val))
     (adversary : _root_.Schnorr.ROM.Adversary (F := F) (M := M) generator.val) (qS : Nat)
 
-include bounded handlerRoom slotsRoom tables tapes sampled generates in
+include bounded handlerRoom slotsRoom tables tapes sampled full generates in
 /-- The concrete ROM forking bound, with the DLog term ranging over the fixed
 Caliper class at the derived shape-level budgets. -/
 theorem security
@@ -101,7 +104,7 @@ theorem security
         (codeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
         (memoryBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
         (timeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)) ^ (1 / 2 : ℝ) := by
-  have fits := dlogWithin config shape caller ops budget qH indexFits limits bounded arith arithBudget handlerRoom slotsRoom
+  have fits := dlogWithin config shape caller ops law full budget qH indexFits limits bounded arith arithBudget handlerRoom slotsRoom
     fuel tables tapes sampled witness adversary.main same generator
   have hardness := Model.le_advantageBound
     (fun solver => 𝒟[DiffieHellman.dlogExperiment generator.val solver] {true}) _ _ fits

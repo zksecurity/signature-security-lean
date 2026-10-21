@@ -50,7 +50,7 @@ theorem Proofs.rom_security
         romDLogSuccessBound curve securityParameter queries (romReductionTime curve securityParameter queries)) ^ (1 / 2 : ℝ) := by
   rw [romEufCmaGame_eq, romDLogSuccessBound_eq]
   exact CaliperROM.security (model.parameters securityParameter queries) adversary
-    (model.sampling securityParameter queries) (curve.generates securityParameter)
+    (model.sampling securityParameter queries) (model.fullField securityParameter queries) (curve.generates securityParameter)
 
 theorem romDLogSuccessBound_mono (securityParameter : Nat) (queries : QueryAllowance) :
     Monotone (romDLogSuccessBound curve securityParameter queries) :=

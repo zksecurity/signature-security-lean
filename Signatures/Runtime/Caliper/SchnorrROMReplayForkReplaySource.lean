@@ -26,7 +26,7 @@ theorem finish_observed (qH : Nat) (indexFits : qH + 1 < 2 ^ w)
   unfold secondExit
   split <;> rfl
 
-variable (caller : Pass.Caller config A) (ops : Handler.Operations config)
+variable (caller : Pass.Caller config A) (ops : Handler.Operations config) (law : Handler.SigningLaw config ops.signing)
     (qH : Nat) (indexFits : qH + 1 < 2 ^ w) (fuel : Nat)
     (witness : Pass.Caller.Source config caller fuel)
 
@@ -38,13 +38,13 @@ theorem second_original (first : Terminal.Output config) (slot : Fin (qH + 1))
       ((counterOfIndex config qH indexFits slot, replacement), first) =
         (fun result => secondExit config qH first slot (some result.1)) <$>
           Schnorr.ListROM.Shared.tapeRun
-            (originalMain config caller fuel witness (publicPoints config first))
+            (originalMain config caller ops law fuel witness (publicPoints config first))
             (ReplayRestart.tapes (Schnorr.RawTape.restart slot.val replacement.val
               ⟨first.2.val.2.1, first.2.val.2.2⟩)) := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
   let request : ReplaySecond.Request config := ((counterOfIndex config qH indexFits slot, replacement), first)
   let next := ReplaySecond.nextInput config fuel ⟨request, room⟩
-  have original := pass_original config caller ops fuel witness next (ReplaySecond.next_ready config fuel ⟨request, room⟩)
+  have original := pass_original config caller ops law fuel witness next (ReplaySecond.next_ready config fuel ⟨request, room⟩)
   have viewed := congrArg (Functor.map (fun result => secondExit config qH first slot result.1)) original
   simp only [Functor.map_map] at viewed
   calc
@@ -58,7 +58,7 @@ theorem second_original (first : Terminal.Output config) (slot : Fin (qH + 1))
       funext second
       exact finish_observed config qH indexFits first second slot replacement
     _ = (fun result => secondExit config qH first slot (some result.1)) <$>
-        Schnorr.ListROM.Shared.tapeRun (originalMain config caller fuel witness next.2) next.1.val := viewed
+        Schnorr.ListROM.Shared.tapeRun (originalMain config caller ops law fuel witness next.2) next.1.val := viewed
     _ = _ := rfl
 
 theorem after_original (first : Terminal.Output config) (slot : Fin (qH + 1))
@@ -68,14 +68,14 @@ theorem after_original (first : Terminal.Output config) (slot : Fin (qH + 1))
       (($ᵗ F : ProbComp F) >>= fun replacement =>
         if (Schnorr.RawTape.values (.inr ()) first.2.val.2.1)[slot.val]? = some replacement then pure none
         else (fun result => secondExit config qH first slot (some result.1)) <$>
-          Schnorr.ListROM.Shared.tapeRun (originalMain config caller fuel witness (publicPoints config first))
+          Schnorr.ListROM.Shared.tapeRun (originalMain config caller ops law fuel witness (publicPoints config first))
             (ReplayRestart.tapes (Schnorr.RawTape.restart slot.val replacement
               ⟨first.2.val.2.1, first.2.val.2.2⟩))) := by
   let := PrivateSampler.Enumerated.sampleable config.sampler
   let next (replacement : F) : ProbComp (Option (OriginalPass (M := M) (F := F) (G := G) × OriginalPass (M := M) (F := F) (G := G))) :=
     if (Schnorr.RawTape.values (.inr ()) first.2.val.2.1)[slot.val]? = some replacement then pure none
     else (fun result => secondExit config qH first slot (some result.1)) <$>
-      Schnorr.ListROM.Shared.tapeRun (originalMain config caller fuel witness (publicPoints config first))
+      Schnorr.ListROM.Shared.tapeRun (originalMain config caller ops law fuel witness (publicPoints config first))
         (ReplayRestart.tapes (Schnorr.RawTape.restart slot.val replacement ⟨first.2.val.2.1, first.2.val.2.2⟩))
   change _ = (($ᵗ F : ProbComp F) >>= next)
   calc
@@ -88,7 +88,7 @@ theorem after_original (first : Terminal.Output config) (slot : Fin (qH + 1))
       · simp only [counterOfIndex, duplicate, ↓reduceIte, map_pure, next]
         rfl
       · simp only [counterOfIndex, duplicate, ↓reduceIte, next]
-        exact second_original config caller ops qH indexFits fuel witness first slot replacement room
+        exact second_original config caller ops law qH indexFits fuel witness first slot replacement room
     _ = _ := by
       rw [← PrivateSampler.Enumerated.Direct.uniform config.sampler]
       erw [bind_map_left]

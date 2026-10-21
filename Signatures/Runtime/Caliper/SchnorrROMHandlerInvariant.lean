@@ -51,11 +51,10 @@ theorem reserved_final (key : M × G) (saved : Schnorr.ListROM.Shared.Store F G 
 
 variable [SMul F G] [Sub G] (ops : Operations config)
 
+omit [Zero F] [DecidableEq M] [DecidableEq G] in
 theorem sign_preserves_config (value : config.handler.input.Value) (answer : config.handler.output.Value)
-    (reached : answer ∈ support (signSource config ops value)) : answer.val.2.1.1 = value.val.2.1.1 := by
-  simp only [signSource, Signing.Enumerated.source, Signing.Handler.source, support_map, Set.mem_image] at reached
-  obtain ⟨sampled, _, rfl⟩ := reached
-  rfl
+    (reached : answer ∈ support (signSource config ops value)) : answer.val.2.1.1 = value.val.2.1.1 :=
+  ops.signing.preserves_config value answer reached
 
 theorem reserved_after (remaining : Nat) (value : Input config)
     (room : Reserved config (remaining + 1) (initialStore config value))
@@ -87,23 +86,15 @@ theorem reserved_after (remaining : Nat) (value : Input config)
     exact ⟨by omega, by omega, by omega⟩
   · simp only [source, Sum.elim, signingSource, support_map, Set.mem_image] at reached
     obtain ⟨read, supported, rfl⟩ := reached
-    have managed := Signing.Handler.managed_length config.handler trivial ops.scale ops.sub
-      ops.scaleNames.buffers ops.subNames.buffers ops.reserve (PrivateSampler.Enumerated.caller config.sampler) 1 value read supported
-    have live := Signing.Handler.preserves_live config.handler trivial ops.scale ops.sub
-      ops.scaleNames.buffers ops.subNames.buffers ops.reserve (PrivateSampler.Enumerated.caller config.sampler) 1 value read supported
-    have tape := Signing.Handler.reserved_after config.handler trivial ops.scale ops.sub
-      ops.scaleNames.buffers ops.subNames.buffers ops.reserve (PrivateSampler.Enumerated.caller config.sampler)
-      1 (2 * remaining + 1) value (by
-        have saved := room.2.2
-        change value.val.2.2.1.length + (2 * (remaining + 1) + 1) ≤ config.sampler.capacity at saved
-        change value.val.2.2.1.length + (1 + 1 + (2 * remaining + 1)) ≤ config.sampler.capacity
-        omega) read supported
+    have managed := ops.signing.managed_length value read supported
+    have live := ops.signing.preserves_live value read supported
+    have tape := (ops.signing.tape_lengths value valid read supported).1
     change read.val.2.1.1 = value.val.2.1.1 ∧ Reserved config remaining read.val.2
     refine ⟨sign_preserves_config config ops value read supported, ?_⟩
     change Reserved config (remaining + 1) value.val.2 at room
-    rcases room with ⟨managedRoom, liveRoom, _⟩
+    rcases room with ⟨managedRoom, liveRoom, saved⟩
     unfold Reserved
     rw [live]
-    exact ⟨by omega, by omega, tape⟩
+    exact ⟨by omega, by omega, by omega⟩
 
 end Signatures.Runtime.CaliperBackend.SchnorrROM.Handler

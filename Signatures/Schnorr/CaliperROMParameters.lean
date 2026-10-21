@@ -16,6 +16,7 @@ structure Parameters where
   wordBits : Nat
   config : SchnorrROM.Signing.Enumerated.Configuration wordBits M F G
   operations : SchnorrROM.Handler.Operations config
+  law : SchnorrROM.Handler.SigningLaw config operations.signing
   handlerBudget : SchnorrROM.Handler.Budget config operations
   arithmetic : SchnorrROM.ReplayFork.Extract.Arithmetic config
   arithmeticBudget : SchnorrROM.ReplayFork.Extract.Arithmetic.Budget config arithmetic
@@ -29,6 +30,11 @@ structure Parameters where
   generatorValid : config.point.valid generator
 
 variable {F G M queries generator} (P : Parameters F G M queries generator)
+
+/-- The signing branch simulates the full-field scheme's list backend. -/
+def Parameters.FullField : Prop :=
+  letI := SchnorrROMTape.PrivateSampler.Enumerated.sampleable P.config.sampler
+  P.law.target = Schnorr.ListROM.handler (G₂ := G) (K := M)
 
 /-- Arbitrary local Caliper code over the fixed caller shape, with its own
 resource and query allowances and a source correspondence for its machine.

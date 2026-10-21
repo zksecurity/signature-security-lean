@@ -26,19 +26,19 @@ theorem selection_original (qH : Nat) (value : Terminal.Output config) :
   cases returned : (Terminal.observed config value).1 <;>
     simp [originalSelection, observedPass, Pass.observed, returned]
 
-variable (caller : Pass.Caller config A) (ops : Handler.Operations config)
+variable (caller : Pass.Caller config A) (ops : Handler.Operations config) (law : Handler.SigningLaw config ops.signing)
     (fuel : Nat) (witness : Pass.Caller.Source config caller fuel)
 
 def originalMain (points : (Pass.Initialization.points config).Value) :=
   letI := PrivateSampler.Enumerated.sampleable config.sampler
-  (Schnorr.ListROM.pass (G₂ := G) (K := M)
+  (Schnorr.ListROM.passWith law.target
     (Subtype.val <$> witness.program (witness.inputView ⟨points.val.2, points.property.2⟩))).run (points.val, [], [])
 
 theorem pass_original (value : Pass.Initialization.Input config) (room : Pass.Initialization.admitted config fuel value) :
     letI := PrivateSampler.Enumerated.sampleable config.sampler
     Pass.observed config <$> Pass.source config caller ops fuel value =
       (fun result => (some result.1, result.2)) <$>
-        Schnorr.ListROM.Shared.tapeRun (originalMain config caller fuel witness value.2) value.1.val :=
-  Pass.source_tapeRun (G₂ := G) (K := M) config caller ops fuel witness value room
+        Schnorr.ListROM.Shared.tapeRun (originalMain config caller ops law fuel witness value.2) value.1.val :=
+  Pass.source_tapeRun config caller ops law fuel witness value room
 
 end Signatures.Runtime.CaliperBackend.SchnorrROM.ReplayFork

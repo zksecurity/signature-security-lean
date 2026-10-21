@@ -17,7 +17,7 @@ theorem security
     (fieldGrowth : negligible (fun n => (curve.order n : ENNReal)⁻¹)) :
     negligible (fun n => 𝒟[Schnorr.romEufCmaGame curve n (adversary n)] {true}) := by
   have fits := reduction_nonuniform (fun n => model.parameters n (queries n)) resources adversary
-    (fun n => model.sampling n (queries n))
+    (fun n => model.sampling n (queries n)) (fun n => model.fullField n (queries n))
   have solverSmall := hardness _ fits
   have signingLossSmall : negligible (fun n =>
       ((queries n).sign : ENNReal) * ((queries n).sign + (queries n).hash) * (curve.order n : ENNReal)⁻¹) := by

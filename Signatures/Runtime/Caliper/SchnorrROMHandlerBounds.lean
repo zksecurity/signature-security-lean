@@ -16,12 +16,13 @@ structure Budget where
   sub : ops.sub.BoundedBy subTime subWords
 
 variable (budget : Budget config ops)
-def signingTime := Signing.Handler.timeBudget config.handler trivial 38 16 1 budget.scaleTime budget.subTime
-def signingWords := Signing.Handler.codeBudget config.handler trivial (PrivateSampler.Enumerated.caller config.sampler) 1
-  budget.scaleWords budget.subWords
-def timeBudget := max (max (Random.timeBudget config) (Hash.timeBudget config)) (signingTime config ops budget) +
+def signingTime := ops.signing.time
+def signingWords := ops.signing.words
+/-- The budget record is retained for the selector's primitive bounds; the
+signing branch carries its own derived budgets. -/
+def timeBudget (_ : Budget config ops) := max (max (Random.timeBudget config) (Hash.timeBudget config)) (signingTime config ops) +
   200 * config.handler.width + 10
-def codeBudget := Random.codeBudget config + Hash.codeBudget config + signingWords config ops budget +
+def codeBudget (_ : Budget config ops) := Random.codeBudget config + Hash.codeBudget config + signingWords config ops +
   1400 * config.handler.width + 200
 
 omit [SMul F G] [Sub G] [Zero F] [DecidableEq M] [DecidableEq G] in
@@ -48,9 +49,7 @@ theorem time_bound : Interactive.TimeBoundOn (ready config) (Fresh.port config.h
   have hashed := Interactive.TimeBoundOn.seq (Hash.refines config) (Hash.time_bound config)
     ((Interactive.TimeBound.compute (port := Fresh.port config.handler.sampler.tape) (cost := .unit)
       (hashTag config) _ (hashTag_time config)).on (fun _ => True)) (by intros; trivial)
-  have signed := Interactive.TimeBoundOn.seq (sign_refines config ops)
-    (Signing.Enumerated.time_bound config ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers ops.reserve
-      budget.scale budget.sub)
+  have signed := Interactive.TimeBoundOn.seq (sign_refines config ops) ops.signing.time_bound
     ((Interactive.TimeBound.compute (port := Fresh.port config.handler.sampler.tape) (cost := .unit)
       (signingTag config) _ (signingTag_time config)).on (fun _ => True)) (by intros; trivial)
   have inner := Interactive.TimeBoundOn.dispatch _ _ (random.on (fun _ => True)) hashed
@@ -95,10 +94,8 @@ theorem code_bound : ((code config ops).lower (Fresh.port config.handler.sampler
     codeBudget config ops budget := by
   have random := Random.code_bound config
   have hashed := Hash.code_bound config
-  have signed := Signing.Enumerated.code_bound config ops.scale ops.sub ops.scaleNames.buffers ops.subNames.buffers
-    ops.reserve budget.scale budget.sub
-  change ((signCode config ops).lower (Fresh.port config.handler.sampler.tape)).descriptionWords ≤
-    signingWords config ops budget at signed
+  have signed : ((signCode config ops).lower (Fresh.port config.handler.sampler.tape)).descriptionWords ≤
+    signingWords config ops := ops.signing.code_bound
   have rt := randomTag_words config; have ht := hashTag_words config; have st := signingTag_words config
   rw [code, Interactive.dispatch_descriptionWords, innerCode, Interactive.dispatch_descriptionWords]
   simp only [randomCode, hashCode, signingCode, Interactive.Code.lower,

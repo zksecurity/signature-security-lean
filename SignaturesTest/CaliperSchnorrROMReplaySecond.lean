@@ -27,6 +27,8 @@ private def sub : Implementation .unit config.handler.core.arithmetic.points con
   program := ((WordBinary.realizer .unit .sub (by decide)).viewInput config.handler.core.arithmetic.points.representation
     (fun value => value.val) (fun _ => rfl)).viewOutput config.handler.core.point.representation
       (fun value => ⟨value.val.1 - value.val.2, trivial⟩) (fun _ => rfl)
+private theorem scaleBound : scale.BoundedBy 6 27 := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
+private theorem subBound : sub.BoundedBy 6 27 := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
 private def operations : Handler.Operations config where
   scale := scale
   sub := sub
@@ -34,13 +36,14 @@ private def operations : Handler.Operations config where
   scaleNames := ⟨by decide, by decide⟩
   subNames := ⟨by decide, by decide⟩
   reserve := by decide
+  signing := Handler.fullField config scale sub ⟨by decide, by decide⟩ ⟨by decide, by decide⟩ (by decide) scaleBound subBound
 private def budget : Handler.Budget config operations where
   scaleTime := 6
   scaleWords := 27
   subTime := 6
   subWords := 27
-  scale := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
-  sub := ⟨fun _ => by change 6 ≤ 6; omega, by decide⟩
+  scale := scaleBound
+  sub := subBound
 
 private abbrev Key := config.point.Value
 private def layout := Pass.control config config.point.representation (by decide)
@@ -171,12 +174,13 @@ private def groupConfig : Signing.Enumerated.Configuration 16 Nat (ZMod 7) (ZMod
   countFits := by decide
   storageFits := by decide
 private theorem original_sampler {A : Type} (caller : Pass.Caller groupConfig A) (ops : Handler.Operations groupConfig)
+    (law : Handler.SigningLaw groupConfig ops.signing)
     (fuel : Nat) (witness : Pass.Caller.Source groupConfig caller fuel)
     (value : {value : ReplaySecond.Request groupConfig // ReplaySecond.ready groupConfig fuel value}) :
     ReplaySecond.observed groupConfig <$> ReplaySecond.source groupConfig caller ops fuel value =
       (fun result => ((some result.1, result.2), value.val)) <$>
         Schnorr.ListROM.Shared.tapeRun
-          ((Schnorr.ListROM.pass (G₂ := ZMod 7) (K := Nat)
+          ((Schnorr.ListROM.passWith law.target
             (Subtype.val <$> witness.program
               (witness.inputView (Pass.Initialization.start groupConfig (ReplaySecond.nextInput groupConfig fuel value)).1))).run
                 (value.val.2.2.val.1.1, [], []))
@@ -184,7 +188,7 @@ private theorem original_sampler {A : Type} (caller : Pass.Caller groupConfig A)
             ⟨value.val.2.2.val.2.1, value.val.2.2.val.2.2⟩)) := by
   have same : PrivateSampler.Enumerated.sampleable groupConfig.sampler = FinEnum.SampleableType (ZMod 7) :=
     PrivateSampler.Enumerated.sampleable_finEnum 10 (by decide) (by decide) (by decide)
-  have original := ReplaySecond.source_original (G₂ := ZMod 7) (K := Nat) groupConfig caller ops fuel witness value
+  have original := ReplaySecond.source_original groupConfig caller ops law fuel witness value
   rw [same] at original
   exact original
 

@@ -109,7 +109,6 @@ import Signatures.Runtime.Caliper.SchnorrROMFullShape
 import Signatures.Runtime.Caliper.SchnorrROMFullSecurity
 import Signatures.Schnorr.CaliperROMParameters
 import Signatures.Schnorr.Proofs.CaliperROM
-import Signatures.Runtime.Caliper.SchnorrROMHandlerWordsBound
 import Signatures.Schnorr.CaliperROMFamilyResources
 import Signatures.Schnorr.Proofs.CaliperROMFamily
 import Signatures.Schnorr.CaliperROMFamilyStatement
