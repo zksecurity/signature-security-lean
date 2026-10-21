@@ -3570,7 +3570,33 @@ Implemented and checked:
   cover interleaved private/public draws, missing and word-limit slots, repeated
   and zero challenges, full capacity, multiword scalar comparisons, invalid
   encodings, external state, scratch release, time and theorem axioms.
-  This guard still needs integration with the first-pass selector and fresh draw.
+  The guard is now integrated with the fresh draw as described below; the outer
+  fork's conditional branches remain to be assembled.
+
+- The [initialized first pass and retained selector](../Signatures/Runtime/Caliper/SchnorrROMReplayFirstBounds.lean)
+  now execute as one program with source refinement, dense names, stored-code,
+  time, buffer extent, description validity and every-visited-state memory bounds.
+  Its input reservation derives second-pass admission for every returned result
+  and replacement; no completed second-pass invariant is supplied. The
+  [source selector](../Signatures/Runtime/Caliper/SchnorrROMReplayFirstSource.lean)
+  is exactly the original optional fork-point observation. The
+  [choice view](../Signatures/Runtime/Caliper/SchnorrROMReplayFirstChoice.lean)
+  proves that its stored Boolean/index/result bytes are already a sum tag and
+  retained slot/result frame. This supplies the branch interface without host
+  inspection or an uncharged copy.
+  The [fresh challenge](../Signatures/Runtime/Caliper/SchnorrROMReplayChallengeBounds.lean)
+  is drawn by the constructed uniform sampler while retaining the complete first
+  result and runtime slot. Its scalar distribution is proved uniform; all copies,
+  repacking, code and visited memory are charged. The
+  [composed draw and guard](../Signatures/Runtime/Caliper/SchnorrROMReplayChallengeChecked.lean)
+  has exact original saved-cell comparison and one complete resource account.
+  [First-pass regressions](../SignaturesTest/CaliperSchnorrROMReplayFirst.lean)
+  cover cutoff, invalid signatures, chronological selection, zero/fresh challenges,
+  reservation bounds, retained bytes, I/O and scratch release.
+  [Draw/guard regressions](../SignaturesTest/CaliperSchnorrROMReplayChallenge.lean)
+  deliberately distinguish saved cells, the remaining tape and forgery challenge.
+  The outer first-failure/duplicate/mismatch branches, complete two-pass source
+  identity, extraction and public concrete/family migration remain unfinished.
 
 Remaining integration sequence:
 
@@ -3647,8 +3673,11 @@ the source/output conversion for both complete BLS AGM reductions.
    now execute in that same branch, retaining both pass results, with exact
    optional-selector agreement and derived time, code, name and visited-memory
    bounds. The original public-cell fresh-challenge rejection guard now also
-   has constructed code and complete resources. Join the first pass, retained
-   first selector, fresh-challenge sampling, the guard and extraction next.
+   has constructed code and complete resources. First-pass selection now retains
+   its terminal result with derived replay admission. A uniform fresh draw and
+   original saved-cell rejection test now also execute together, retaining the
+   selected slot and first result with complete resources. Join the conditional
+   first-failure/duplicate/mismatch branches, second pass and extraction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and

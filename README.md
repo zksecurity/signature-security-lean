@@ -696,8 +696,15 @@ Pinned upstreams:
   The [fresh-challenge rejection guard](Signatures/Runtime/Caliper/SchnorrROMFreshGuardBounds.lean)
   now executes the original saved-tape comparison, counting only public cells.
   Encoded scalar equality and all scan copies have explicit polynomial time,
-  stored-code and visited-memory bounds. The first-pass controller, fresh draw,
-  guard integration and extraction remain part of the ROM migration.
+  stored-code and visited-memory bounds. The
+  [initialized first pass and retained selector](Signatures/Runtime/Caliper/SchnorrROMReplayFirstBounds.lean)
+  now execute together and derive replay admission from the initial reservation.
+  An [identical-byte branch view](Signatures/Runtime/Caliper/SchnorrROMReplayFirstChoice.lean)
+  retains the selected slot and first result under both selector outcomes.
+  The [fresh-draw and guard phase](Signatures/Runtime/Caliper/SchnorrROMReplayChallengeChecked.lean)
+  preserves those bytes, proves the new scalar uniform, and charges the oracle
+  call, saved-tape scan and all retained copies. The complete conditional two-pass
+  controller, extraction and public ROM statement migration remain unfinished.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
