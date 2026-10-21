@@ -95,6 +95,16 @@ import Signatures.Runtime.Caliper.SchnorrROMReplayChallengeChecked
 import Signatures.Runtime.Caliper.SchnorrROMReplayForkSource
 import Signatures.Runtime.Caliper.SchnorrROMReplayInitializedBounds
 import Signatures.Runtime.Caliper.SchnorrROMReplayForkCorrectness
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractLayout
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractArithmetic
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractArithmeticBounds
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractClassify
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtract
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractSource
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractFull
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractBounds
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractCodeBounds
+import Signatures.Runtime.Caliper.SchnorrROMReplayExtractFullBounds
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement
