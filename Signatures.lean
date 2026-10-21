@@ -84,6 +84,7 @@ import Signatures.Runtime.Caliper.SchnorrROMEnumeratedReplay
 import Signatures.Runtime.Caliper.SchnorrROMHashCacheSource
 import Signatures.Runtime.Caliper.SchnorrROMCallerResources
 import Signatures.Runtime.Caliper.SchnorrROMTerminalSource
+import Signatures.Runtime.Caliper.SchnorrROMPassPresentation
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement

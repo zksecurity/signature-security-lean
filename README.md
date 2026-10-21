@@ -664,8 +664,13 @@ Pinned upstreams:
   fuel cutoff without changing the oracle state. Its
   [resource bounds](Signatures/Runtime/Caliper/SchnorrROMTerminalBounds.lean)
   charge all copies, both stored branches and every visited memory state.
-  Joining this terminal to the caller, initialization and the complete two-pass
-  reduction remains part of the ROM migration.
+  The [complete initialized pass](Signatures/Runtime/Caliper/SchnorrROMPass.lean)
+  now joins setup, the adaptive caller and terminal, with exact correspondence
+  to the original replay-aware ROM pass. [Whole-pass resources](Signatures/Runtime/Caliper/SchnorrROMPassBounds.lean)
+  include initialization and all visited memory. The
+  [source constructor](Signatures/Runtime/Caliper/SchnorrROMPassPresentation.lean)
+  derives the source machine/program from local transitions and termination.
+  The complete two-pass controller and extraction remain part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific

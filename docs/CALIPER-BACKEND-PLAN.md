@@ -3414,8 +3414,8 @@ Implemented and checked:
   signing, missing replies, insufficient reserve, exact traces and updated stores,
   external-state preservation, scratch release, elapsed bounds, canonical finite
   sampling and theorem axioms. The final-hash terminal is implemented below;
-  its caller composition, pass initialization, charged replay/restart, extraction
-  and public full/nonzero ROM migration remain.
+  caller composition and pass initialization are now implemented below. Charged
+  replay/restart composition, extraction and public full/nonzero ROM migration remain.
 
 - [Final hashing with a retained forgery](../Signatures/Runtime/Caliper/SchnorrROMForgeryHash.lean)
   executes the key/store preparation, saves the complete message/commitment/response,
@@ -3443,7 +3443,39 @@ Implemented and checked:
   exhausted reservations and cutoff on exhausted stores. The pending payload is
   wider than the forgery to exercise padding. It checks exact traces, external
   state, scratch release, elapsed bounds, canonical finite sampling and axioms.
-  Caller/terminal composition and full pass/reduction assembly remain.
+  Caller/terminal composition and pass assembly follow below; the full reduction
+  remains to be assembled.
+
+- [The complete ROM pass](../Signatures/Runtime/Caliper/SchnorrROMPass.lean) now
+  executes initialization, the adaptive caller and the final LIVE hash. The
+  [caller/terminal composition](../Signatures/Runtime/Caliper/SchnorrROMPassCaller.lean)
+  derives final-hash readiness from the caller's exit postcondition. `Pass.Caller`
+  fixes public-key/forgery encodings and contains only local state, initialization,
+  continuation code and their address bounds.
+  [Initialization](../Signatures/Runtime/Caliper/SchnorrROMPassInitialization.lean)
+  copies the runtime generator, public key and both tapes and writes both caches
+  empty. Its admission condition reserves `fuel + 1` table entries and
+  `2*fuel + 1` additional saved cells; the incoming saved tape is included.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrROMPassCallerSource.lean)
+  and `Pass.source_tapeRun` identify the complete joint output with the original
+  `Shared.tapeRun (ListROM.pass ...)`, including caches and tapes. A source-machine
+  implementation within fuel excludes cutoff; the emitted program retains a
+  distinct cutoff result without a default message.
+  [Whole-pass resource bounds](../Signatures/Runtime/Caliper/SchnorrROMPassBounds.lean)
+  add setup copies to the caller and terminal budgets, count all stored code,
+  prove description acceptance and account for initial data and all visited
+  memory in the same execution. [The source constructor](../Signatures/Runtime/Caliper/SchnorrROMPassPresentation.lean)
+  derives the source machine, program and local correspondence from the caller's
+  own transitions and branchwise termination. Mathematical totalization outside
+  represented replies is not an executed instruction.
+  [The regression](../SignaturesTest/CaliperSchnorrROMPass.lean) executes immediate
+  return, cutoff, early return, private/public replay, fresh draws, hashing,
+  signing and a conflicting managed/LIVE final lookup. It varies runtime public
+  inputs, checks missing replies and exhausted reservations, and verifies exact
+  traces, complete stores, external state, scratch release and time bounds.
+  It also checks the derived caller presentation, original finite sampler and
+  theorem axioms. Two-pass restart/control, selection, extraction and public
+  full/nonzero ROM migration remain.
 
 Remaining integration sequence:
 
@@ -3509,8 +3541,10 @@ the source/output conversion for both complete BLS AGM reductions.
    Both BLS AGM setups and source/output conversions are now joined in `BLSFull`.
    The Schnorr ROM adaptive caller now also has the original-machine bridge,
    all-exit final-hash reservation and complete word-execution resource bounds.
-   Its final-hash terminal now has exact source and complete resource bounds.
-   Join it to the caller, initialization and two-pass reduction next.
+   Its complete initialized pass now has exact original-source correspondence
+   and complete resource bounds. The source machine/program can be derived from
+   local caller transitions. Join both passes with charged restart, selection
+   and extraction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and
