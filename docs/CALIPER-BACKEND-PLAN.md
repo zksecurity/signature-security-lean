@@ -3710,7 +3710,9 @@ the source/output conversion for both complete BLS AGM reductions.
    `Parameters.Nonzero` (`law.target = NonzeroListROM.handler`), and the executed
    nonzero-nonce branch (`SchnorrROMNonzeroSigning*.lean`: enumerated nonzero draw,
    executed zero test and repair, field addition contract) is a
-   `SigningBranch`/`SigningLaw` instance (`Handler.nonzero`, `Handler.nonzeroLaw`).
+   `SigningBranch`/`SigningLaw` instance (`Handler.nonzero`, `Handler.nonzeroLaw`),
+   instantiated concretely on `ZMod 7` points with executed mod-7 arithmetic in
+   `SignaturesTest/CaliperSchnorrROMNonzeroLaw.lean`.
    Because that branch replays three private draws, the service reserves three
    tape cells per query (`Handler.Reserved`, `Pass.Replay.ready`: `6 * fuel + 3`).
    Prove coverage for the intended Caliper adversary class. A claim about every
