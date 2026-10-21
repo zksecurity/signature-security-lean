@@ -3727,9 +3727,19 @@ controller with `RawTape.fork`.
 [Execution tests](../SignaturesTest/CaliperSchnorrROMReplayFork.lean) cover skipped
 branches, fresh and replayed draws, positive selected ordinals, ordered full
 outputs, canonical failure bytes, external state and the charged time bound.
+The [public-input setup](../Signatures/Runtime/Caliper/SchnorrROMReplaySetup.lean)
+now constructs both empty tapes, including all reserved padding, and copies the
+runtime generator and public key. Replay admission is derived from cache/tape
+capacities for the two passes. The
+[initialized controller](../Signatures/Runtime/Caliper/SchnorrROMReplayInitializedBounds.lean)
+composes that executed setup with the entire fork and proves joint time,
+stored-code, descriptor, buffer and visited-memory bounds from the public inputs.
+No preencoded empty tapes are supplied as solver input. Execution regressions
+cover exact initialization bytes and complete initialized branches, including
+fresh first-pass hashing and a positive selected ordinal.
 Remaining integration is whole-fork source equality, extraction (including its
-uniform scalar draw on failure), charged empty-tape setup from public inputs,
-and both FULL and NONZERO public concrete and polynomial-family statements.
+uniform scalar draw on failure), and both FULL and NONZERO public concrete and
+polynomial-family statements.
 
 Use one Lean compiler process at a time. Check operational examples, invalid
 encoding/bounds cases, resource composition and theorem axiom footprints.

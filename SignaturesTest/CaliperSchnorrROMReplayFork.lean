@@ -1,5 +1,6 @@
 import Signatures.Runtime.Caliper.SchnorrROMPassPresentation
 import Signatures.Runtime.Caliper.SchnorrROMReplayForkSource
+import Signatures.Runtime.Caliper.SchnorrROMReplayInitializedBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -145,6 +146,49 @@ private def run (qH : Fin 65535) (done : Bool) (q : CallerPackets.Request config
 
 private def store (g pk : Word 16) (managed live : Signing.Table Nat (ZMod 7) (Word 16))
     (saved remaining : List (Schnorr.TapeCell (ZMod 7))) : Store := (((g, pk), managed, live), saved, remaining)
+
+private def runInitialized (qH : Fin 65535) (done : Bool) (q : CallerPackets.Request config)
+    (fuel : Fin 2) (g pk : Word 16) (replies : List (Word 16)) := do
+  let value : (Pass.Initialization.points config).Value := ⟨(g, pk), trivial, trivial⟩
+  let initial := (ReplayFork.Setup.input config).initial value
+  let before := { initial with bufs := fun i => if i = 200 then #[77] else initial.bufs i
+                               caps := fun i => if i = 200 then 4 else initial.caps i
+                               regs := fun i => if i = 99 then 91 else initial.regs i
+                               tapePos := 9 }
+  let body := ReplayFork.Initialized.program config (caller done q) operations qH.val (by have := qH.isLt; omega) fuel.val
+  let result ← WordIO.run .unit RandomTape.zero 1000000 (body.lower (Fresh.port config.handler.sampler.tape)) before replies
+  pure (((ReplayFork.output config).encoding.decode (result.state.bufs 0).toList).map
+      (fun answer : ReplayFork.Result config => Sum.elim (fun _ => none)
+        (fun pair : Terminal.Output config × Terminal.Output config => some (Terminal.observed config pair.1, Terminal.observed config pair.2)) answer),
+    result.trace, result.remaining, result.state.bufs 200, result.state.caps 200, result.state.regs 99,
+    result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0),
+    decide (result.time ≤ ReplayFork.Initialized.timeBudget config (caller done q) operations qH.val
+      (by have := qH.isLt; omega) budget (localBudget done q) fuel.val))
+
+example (qH : Fin 65535) (done : Bool) (q : CallerPackets.Request config) (fuel : Fin 2) :
+    Interactive.Refines (Fresh.port config.handler.sampler.tape) .unit (ReplayFork.Setup.input config) (ReplayFork.output config)
+      (ReplayFork.Initialized.source config (caller done q) operations qH.val (by have := qH.isLt; omega) fuel.val
+        (by have := fuel.isLt; change fuel.val + 1 ≤ 3; omega)
+        (by have := fuel.isLt; change 4 * fuel.val + 3 ≤ 10; omega))
+      (ReplayFork.Initialized.program config (caller done q) operations qH.val (by have := qH.isLt; omega) fuel.val) :=
+  ReplayFork.Initialized.refines config (caller done q) operations qH.val (by have := qH.isLt; omega) fuel.val _ _
+example (qH : Fin 65535) (done : Bool) (q : CallerPackets.Request config) (fuel : Nat) :
+    ((ReplayFork.Initialized.program config (caller done q) operations qH.val (by have := qH.isLt; omega) fuel).lower
+      (Fresh.port config.handler.sampler.tape)).DescriptionFits :=
+  ReplayFork.Initialized.descriptionFits config (caller done q) operations qH.val (by have := qH.isLt; omega) (nameRoom done q) fuel
+
+private def runSetup (g pk : Word 16) := do
+  let value : (Pass.Initialization.points config).Value := ⟨(g, pk), trivial, trivial⟩
+  let initial := (ReplayFork.Setup.input config).initial value
+  let before := { initial with bufs := fun i => if i = 200 then #[77] else initial.bufs i
+                               caps := fun i => if i = 200 then 4 else initial.caps i
+                               regs := fun i => if i = 99 then 91 else initial.regs i
+                               tapePos := 9 }
+  let result ← Caliper.run .unit RandomTape.zero 100000 (ReplayFork.Setup.realizer config).code before
+  pure ((result.1.bufs 0).toList ==
+      (Pass.Initialization.input config).encoding.encode (ReplayFork.Setup.initialValue config value),
+    result.1.bufs 200, result.1.caps 200, result.1.regs 99, result.1.tapePos,
+    result.1.bufs 1, result.1.caps 1, decide (result.2.1 ≤ 8 * (Pass.Initialization.input config).encoding.words))
 private def runFinish (accepted : Bool) := do
   let first : Terminal.Output config := (.inl (),
     ⟨store 3 5 [((31, 7), 1)] [((21, 8), 2)] [(3, 0, 4)] [(1, 5, 0)], by decide⟩)
@@ -204,6 +248,33 @@ run_cmd do
   for accepted in [false, true] do
     unless runFinish accepted == some (true, #[77], 4, 91, 9, true, true) do
       throwError "second selection exit lost canonical failure padding, union bytes or result order"
+  for (g, pk) in [((0 : Word 16), 0), (3, 5), (65535, 65534)] do
+    unless runSetup g pk == some (true, #[77], 4, 91, 9, #[], 0, true) do
+      throwError "empty-tape setup lost padding, runtime points, external state or its time bound"
+  unless (ReplayFork.Setup.input config).encoding.decode [3] |>.isNone do
+    throwError "empty-tape setup accepted a truncated public-point input"
+  unless (ReplayFork.Setup.input config).encoding.decode [3, 0, 91] |>.isNone do
+    throwError "empty-tape setup accepted excess public-point data"
+  unless runInitialized 0 true random 0 3 0 [6, 4, 6, 5, 88] ==
+      some (some (some ((some ((2, 0, 0), 4), store 3 0 [] [((2, 0), 4)] [(1, 4, 0)] []),
+        (some ((2, 0, 0), 5), store 3 0 [] [((2, 0), 5)] [(1, 5, 0)] []))),
+        [.output 6, .invoke, .input 6, .input 4, .output 6, .invoke, .input 6, .input 5], [88], #[77], 4, 91, 9, true, true) do
+    throwError "initialized fork did not start from public points alone with charged empty tapes"
+  unless runInitialized 0 false random 0 3 0 [6, 4, 6, 5, 88] ==
+      some (some none, [], [6, 4, 6, 5, 88], #[77], 4, 91, 9, true, true) do
+    throwError "initialized cutoff consumed a fresh reply"
+  unless runInitialized 0 true random 0 3 5 [6, 4, 6, 5, 88] ==
+      some (some none, [.output 6, .invoke, .input 6, .input 4], [6, 5, 88], #[77], 4, 91, 9, true, true) do
+    throwError "initialized invalid signature consumed the later challenge"
+  unless runInitialized 0 true random 0 3 0 [6, 4, 6, 4, 88] ==
+      some (some none, [.output 6, .invoke, .input 6, .input 4, .output 6, .invoke, .input 6, .input 4], [88], #[77], 4, 91, 9, true, true) do
+    throwError "initialized duplicate challenge ran a second pass"
+  unless runInitialized 1 false hashed 1 3 0 [6, 3, 6, 4, 6, 5, 88] ==
+      some (some (some ((some ((2, 0, 0), 4), store 3 0 [((2, 5), 3)] [((2, 0), 4), ((2, 5), 3)] two []),
+        (some ((2, 0, 0), 5), store 3 0 [((2, 5), 3)] [((2, 0), 5), ((2, 5), 3)] twoReset []))),
+        [.output 6, .invoke, .input 6, .input 3, .output 6, .invoke, .input 6, .input 4,
+         .output 6, .invoke, .input 6, .input 5], [88], #[77], 4, 91, 9, true, true) do
+    throwError "initialized fork lost positive-index chronology or fresh-draw order"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``ReplayFork.accept_bytes, ``ReplayFork.chooseMatch_bytes, ``ReplayFork.finish,
       ``ReplayFork.finish_time, ``ReplayFork.finish_words, ``ReplayFork.finish_names, ``ReplayFork.finish_buffers,
@@ -212,7 +283,13 @@ run_cmd do
       ``ReplayFork.time, ``ReplayFork.words, ``ReplayFork.names, ``ReplayFork.buffers,
       ``ReplayFork.descriptionFits, ``ReplayFork.resources, ``ReplayFork.guarded_range,
       ``ReplayFork.indexed_flag, ``ReplayFork.selection_range, ``ReplayFork.pass_range,
-      ``ReplayFork.first_gate_original, ``ReplayFork.second_exit_original] do
+      ``ReplayFork.first_gate_original, ``ReplayFork.second_exit_original,
+      ``ReplayFork.Setup.parts_bytes, ``ReplayFork.Setup.realizer, ``ReplayFork.Setup.time,
+      ``ReplayFork.Setup.words, ``ReplayFork.Setup.names, ``ReplayFork.Setup.buffers,
+      ``ReplayFork.Setup.ready, ``ReplayFork.Setup.prepared,
+      ``ReplayFork.Initialized.refines, ``ReplayFork.Initialized.names, ``ReplayFork.Initialized.buffers,
+      ``ReplayFork.Initialized.descriptionFits, ``ReplayFork.Initialized.time,
+      ``ReplayFork.Initialized.words, ``ReplayFork.Initialized.resources] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

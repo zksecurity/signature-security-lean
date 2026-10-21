@@ -708,8 +708,11 @@ Pinned upstreams:
   now joins both passes: first failure skips the fresh draw, a repeated challenge
   skips replay, and second-selection mismatch returns failure. Its time, stored
   code and every visited memory state are accounted for together.
-  Exact whole-controller equality with the original fork, extraction, empty-tape
-  solver initialization and public FULL/NONZERO ROM statement migration remain unfinished.
+  The [initialized controller](Signatures/Runtime/Caliper/SchnorrROMReplayInitializedBounds.lean)
+  starts from runtime generator/public-key inputs alone and charges construction
+  of both empty tapes, including reserved padding. Exact whole-controller equality
+  with the original fork, extraction and public FULL/NONZERO ROM statement migration
+  remain unfinished.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
