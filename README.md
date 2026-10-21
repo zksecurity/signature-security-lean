@@ -710,9 +710,11 @@ Pinned upstreams:
   code and every visited memory state are accounted for together.
   The [initialized controller](Signatures/Runtime/Caliper/SchnorrROMReplayInitializedBounds.lean)
   starts from runtime generator/public-key inputs alone and charges construction
-  of both empty tapes, including reserved padding. Exact whole-controller equality
-  with the original fork, extraction and public FULL/NONZERO ROM statement migration
-  remain unfinished.
+  of both empty tapes, including reserved padding. Its
+  [whole-fork source correspondence](Signatures/Runtime/Caliper/SchnorrROMReplayForkCorrectness.lean)
+  proves the executed initialized controller observes exactly `RawTape.fork` of
+  the original list-cache pass, derived from the caller's local source witness.
+  Extraction and public FULL/NONZERO ROM statement migration remain unfinished.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific

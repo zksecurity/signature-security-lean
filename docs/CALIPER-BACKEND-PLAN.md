@@ -3722,8 +3722,12 @@ state. Admission to replay is derived from first-pass tape growth, not assumed
 as a completed-controller contract. The
 [branch source proofs](../Signatures/Runtime/Caliper/SchnorrROMReplayForkSource.lean)
 connect the first Boolean gate and second selection exit with the original
-optional-selector tests; they do not yet establish equality of the entire
-controller with `RawTape.fork`.
+optional-selector tests. The
+[whole-fork correspondence](../Signatures/Runtime/Caliper/SchnorrROMReplayForkCorrectness.lean)
+then expands the executed controller into the original optional-index branches,
+observes successful terminal frames as list-cache pass outputs, and proves the
+complete initialized program observes exactly `RawTape.fork` of the original
+pass (`Initialized.observe_original`), with no completed-controller assumption.
 [Execution tests](../SignaturesTest/CaliperSchnorrROMReplayFork.lean) cover skipped
 branches, fresh and replayed draws, positive selected ordinals, ordered full
 outputs, canonical failure bytes, external state and the charged time bound.
@@ -3737,8 +3741,8 @@ stored-code, descriptor, buffer and visited-memory bounds from the public inputs
 No preencoded empty tapes are supplied as solver input. Execution regressions
 cover exact initialization bytes and complete initialized branches, including
 fresh first-pass hashing and a positive selected ordinal.
-Remaining integration is whole-fork source equality, extraction (including its
-uniform scalar draw on failure), and both FULL and NONZERO public concrete and
+Remaining integration is extraction (including its uniform scalar draw on
+failure) composed after the fork, and both FULL and NONZERO public concrete and
 polynomial-family statements.
 
 Use one Lean compiler process at a time. Check operational examples, invalid
