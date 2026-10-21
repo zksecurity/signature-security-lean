@@ -105,6 +105,10 @@ import Signatures.Runtime.Caliper.SchnorrROMReplayExtractFull
 import Signatures.Runtime.Caliper.SchnorrROMReplayExtractBounds
 import Signatures.Runtime.Caliper.SchnorrROMReplayExtractCodeBounds
 import Signatures.Runtime.Caliper.SchnorrROMReplayExtractFullBounds
+import Signatures.Runtime.Caliper.SchnorrROMFullShape
+import Signatures.Runtime.Caliper.SchnorrROMFullSecurity
+import Signatures.Schnorr.CaliperROMParameters
+import Signatures.Schnorr.Proofs.CaliperROM
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement

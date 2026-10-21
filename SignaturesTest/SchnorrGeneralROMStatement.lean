@@ -131,7 +131,7 @@ example (curve : Model.CyclicCurve) [model : Schnorr.ROMSecurityModel curve]
     (securityParameter : Nat) (queries : Schnorr.QueryAllowance)
     (adversary : Schnorr.UnrestrictedAdversary curve securityParameter queries) :
     Schnorr.romEufCmaGame curve securityParameter adversary =
-      Schnorr.ROM.game (model.parameters securityParameter queries).generator adversary.source :=
+      Schnorr.ROM.game (curve.generator securityParameter) adversary.source :=
   Schnorr.romEufCmaGame_eq curve securityParameter adversary
 
 end SignaturesTest.SchnorrGeneralROMStatement

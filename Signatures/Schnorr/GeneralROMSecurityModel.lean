@@ -1,9 +1,13 @@
 import Signatures.Schnorr.Game
 import Signatures.Model.CyclicCurveSampling
 import Signatures.Schnorr.GeneralROMParameters
+import Signatures.Schnorr.CaliperROMParameters
 
-/-! Inspectable execution contracts, ordinary EUF-CMA game and DLog supremum
-for the general Schnorr ROM statement. No algebraic interface is imposed. -/
+/-! Inspectable game and Caliper resource model for the public ordinary-ROM
+Schnorr statement. Implemented primitives, layouts, caller shape and allowances
+are fixed before choosing the attacker. The game remains independent of this
+model. The abstract backend's execution model is retained below for the
+nonzero-nonce route. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram
@@ -14,8 +18,9 @@ namespace Schnorr
 universe v w x
 
 /-- The common execution model for arbitrary local attacker computation and
-the reduction. Encoded sizes and operation costs are measured by this model.
-Messages require equality, with no finite-domain or default-message assumption. -/
+the reduction in the abstract backend. Encoded sizes and operation costs are
+measured by this model. Messages require equality, with no finite-domain or
+default-message assumption. -/
 class ROMExecutionModel (curve : Model.CyclicCurve) where
   steps : StepClass.{0, v}
   [products : steps.HasProd]
@@ -36,23 +41,27 @@ attribute [instance_reducible, instance] ROMExecutionModel.products ROMExecution
   ROMExecutionModel.quantitativeOptions ROMExecutionModel.distributive ROMExecutionModel.optionCode
   ROMExecutionModel.messageEquality
 
-/-- Original backend, encoding, sampling and primitive contracts, fixed before
-the attacker is chosen. These fields contain no completed solver budget or
-cryptographic hardness assumption. Group sampling follows from the curve's
-scalar sampler and generator bijection. -/
-class ROMSecurityModel (curve : Model.CyclicCurve) extends ROMExecutionModel.{v, w} curve where
-  parameters : ∀ n, QueryAllowance → GeneralROM.Parameters.{v, w, x}
-    (Q := quantitative) (F := curve.Scalar n) (G := curve.Group n) (M := Message n)
-  queries_eq : ∀ n q, (parameters n q).queries = q
-  generator_eq : ∀ n q, (parameters n q).generator = curve.generator n
+/-- Fixed Caliper components, with no completed-reduction certificate. The
+fields are in `CaliperROMParameters.lean`; the actual setup, replaying
+controller, extraction and fallback are constructed and proved separately. The
+curve's scalar sampler is the enumerated draw that the handler executes. -/
+class ROMSecurityModel (curve : Model.CyclicCurve) where
+  Message : Nat → Type
+  [messageEquality : ∀ n, DecidableEq (Message n)]
+  parameters : ∀ n q, CaliperROM.Parameters (curve.Scalar n) (curve.Group n) (Message n) q (curve.generator n)
+  sampling : ∀ n q, curve.scalarSampling n =
+    Signatures.Runtime.CaliperBackend.SchnorrROMTape.PrivateSampler.Enumerated.sampleable (parameters n q).config.sampler
 
-variable (curve : Model.CyclicCurve) [model : ROMSecurityModel.{v, w, x} curve]
+attribute [instance_reducible, instance] ROMSecurityModel.messageEquality
 
-/-- Any general implementation within its declared execution, stored-code and
-query allowances. The source is the ordinary adaptive Schnorr adversary;
-no algebraicity, arithmetic-language certificate or fixed query schedule is required. -/
+variable (curve : Model.CyclicCurve) [model : ROMSecurityModel curve]
+
+/-- Any local Caliper implementation over the fixed caller shape, within its
+declared execution, stored-code and query allowances. The source is the ordinary
+adaptive Schnorr adversary; no algebraicity, arithmetic-language certificate or
+fixed query schedule is required. -/
 abbrev UnrestrictedAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
-  GeneralROM.UnrestrictedAdversary (model.parameters securityParameter queries)
+  CaliperROM.UnrestrictedAdversary (model.parameters securityParameter queries)
 
 /-- Derived cost of setup, both attacker executions, lazy hashing/signing,
 private-tape replay, selection, extraction and uniform fallback. -/
@@ -62,26 +71,25 @@ def romReductionTime (securityParameter : Nat) (queries : QueryAllowance) : Nat 
 /-- Full-field-nonce Schnorr EUF-CMA: generate `pk = x • g`, give the attacker
 adaptive randomness/hash/signing access, then verify `z • g = R + H(m,R) • pk`
 and require the message to be unsigned. All hash/signing/final-verification calls
-share the same initially empty lazy oracle. The model's generator equals the
-curve's generator by `ROMSecurityModel.generator_eq`. -/
+share the same initially empty lazy oracle. -/
 noncomputable def romEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
   Schnorr.Game.rom curve securityParameter adversary.source.main
 
-/-- Supremum of DLog success in the same fixed backend: sample `x`, run the
-solver on `(g, x • g)`, and test its answer against `x`. Every challenge fits
-the encoded input cap; full stored code/advice meets the derived code allowance,
-and runtime is bounded on every supported execution. An optimal solver need
-not exist. A hardness assumption makes this quantity small.
-
-`GeneralROM.reduction_within` derives the actual reduction's membership from
-original component contracts and the attacker's own resources. -/
+/-- Supremum of DLog success in the fixed Caliper model: sample `x`, run the
+solver on `(g, x • g)`, and test its answer against `x`. Solvers use the fixed
+port and layouts with the derived code and total-memory limits and the displayed
+runtime limit. Every challenge must be represented. An optimal solver need not
+exist. `CaliperROM.reduction_within` constructs the actual reduction witness;
+a hardness assumption makes this quantity small. -/
 noncomputable def romDLogSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
     (time : Nat) : ENNReal :=
   let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : NativeSolver.dlogWithin
-      resources.rep resources.backend resources.descriptionSizes resources.factor resources.description
-      resources.generator resources.inputWidth resources.solverCode time solver),
-    𝒟[DiffieHellman.dlogExperiment resources.generator solver] {true}
+  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.cyclicDLogWithin
+      (Signatures.Runtime.CaliperBackend.SchnorrROMTape.Fresh.port resources.config.handler.sampler.tape)
+      (Signatures.Runtime.CaliperBackend.SchnorrROM.Pass.Initialization.points resources.config)
+      resources.config.handler.sampler.tape.scalar (curve.generator securityParameter)
+      resources.solverCode resources.solverMemory time solver),
+    𝒟[DiffieHellman.dlogExperiment (curve.generator securityParameter) solver] {true}
 
 end Schnorr
