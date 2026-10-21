@@ -3595,8 +3595,9 @@ Implemented and checked:
   reservation bounds, retained bytes, I/O and scratch release.
   [Draw/guard regressions](../SignaturesTest/CaliperSchnorrROMReplayChallenge.lean)
   deliberately distinguish saved cells, the remaining tape and forgery challenge.
-  The outer first-failure/duplicate/mismatch branches, complete two-pass source
-  identity, extraction and public concrete/family migration remain unfinished.
+  The conditional controller below now executes the outer
+  first-failure/duplicate/mismatch branches. Complete original two-pass source
+  identity, extraction and public FULL/NONZERO concrete/family migration remain unfinished.
 
 Remaining integration sequence:
 
@@ -3676,8 +3677,9 @@ the source/output conversion for both complete BLS AGM reductions.
    has constructed code and complete resources. First-pass selection now retains
    its terminal result with derived replay admission. A uniform fresh draw and
    original saved-cell rejection test now also execute together, retaining the
-   selected slot and first result with complete resources. Join the conditional
-   first-failure/duplicate/mismatch branches, second pass and extraction next.
+   selected slot and first result with complete resources. The conditional
+   two-pass controller is assembled. Prove its whole original-source identity,
+   then integrate extraction and migrate the public ROM statements.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and
@@ -3706,6 +3708,28 @@ types require a proved refinement. A fixed-word implementation must justify its
 representable ranges along executions; attaching a cost table alone is insufficient.
 Pure Caliper instruction counts require the cryptographic routine contracts to be
 discharged. Machine-to-CPU adequacy remains a separate refinement.
+
+The [conditional ROM fork controller](../Signatures/Runtime/Caliper/SchnorrROMReplayFork.lean)
+now executes the first pass, its optional selection, fresh challenge and original
+saved-tape guard, followed by the admitted second pass and selection comparison.
+Failed first selection consumes no fresh reply; duplicate challenge consumes no
+second-pass replies; success returns the ordered pair of complete pass outputs.
+Canonical failure padding and all retained copies execute as Caliper instructions.
+[Bounds](../Signatures/Runtime/Caliper/SchnorrROMReplayForkBounds.lean) and
+[memory accounting](../Signatures/Runtime/Caliper/SchnorrROMReplayForkMemory.lean)
+cover the same execution, including both stored branch bodies and each visited
+state. Admission to replay is derived from first-pass tape growth, not assumed
+as a completed-controller contract. The
+[branch source proofs](../Signatures/Runtime/Caliper/SchnorrROMReplayForkSource.lean)
+connect the first Boolean gate and second selection exit with the original
+optional-selector tests; they do not yet establish equality of the entire
+controller with `RawTape.fork`.
+[Execution tests](../SignaturesTest/CaliperSchnorrROMReplayFork.lean) cover skipped
+branches, fresh and replayed draws, positive selected ordinals, ordered full
+outputs, canonical failure bytes, external state and the charged time bound.
+Remaining integration is whole-fork source equality, extraction (including its
+uniform scalar draw on failure), charged empty-tape setup from public inputs,
+and both FULL and NONZERO public concrete and polynomial-family statements.
 
 Use one Lean compiler process at a time. Check operational examples, invalid
 encoding/bounds cases, resource composition and theorem axiom footprints.
