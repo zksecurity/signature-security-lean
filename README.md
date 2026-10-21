@@ -688,7 +688,13 @@ Pinned upstreams:
   [resource bounds](Signatures/Runtime/Caliper/SchnorrROMReplaySecondBounds.lean)
   charge reset, public-point initialization and every retained copy; the output
   agrees with the original ROM pass on the original restart tapes.
-  The complete two-pass controller and extraction remain part of the ROM migration.
+  [Second-pass matching](Signatures/Runtime/Caliper/SchnorrROMReplayMatchSource.lean)
+  now executes the selector and compares its optional result with the saved slot,
+  retaining both pass outputs. Cutoff, failed verification and missing LIVE entries
+  cannot match slot zero. The [composed second branch](Signatures/Runtime/Caliper/SchnorrROMReplaySecondSelectionBounds.lean)
+  includes restart, replay, selection and comparison in the same resource account.
+  The first-pass controller, fresh-challenge guard and extraction remain part of
+  the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific

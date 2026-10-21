@@ -3625,8 +3625,11 @@ the source/output conversion for both complete BLS AGM reductions.
    copies. The signature/LIVE selector and cutoff-aware pass-output wrapper now
    have exact original-source correspondence and complete resource bounds.
    The restart and second pass now execute together with the complete first
-   result retained. Join the first pass, selector, fresh-challenge/matching-slot
-   checks and extraction next.
+   result retained. Second-pass selection and comparison with the saved slot
+   now execute in that same branch, retaining both pass results, with exact
+   optional-selector agreement and derived time, code, name and visited-memory
+   bounds. Join the first pass, retained first selector, fresh-challenge sampling
+   and guard, and extraction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and

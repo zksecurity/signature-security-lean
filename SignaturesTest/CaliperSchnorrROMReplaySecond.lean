@@ -1,5 +1,5 @@
 import Signatures.Runtime.Caliper.SchnorrROMPassPresentation
-import Signatures.Runtime.Caliper.SchnorrROMReplaySecondSource
+import Signatures.Runtime.Caliper.SchnorrROMReplaySecondSelectionBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -137,6 +137,29 @@ private def run (done : Bool) (q : CallerPackets.Request config) (fuel : Nat) (g
     result.trace, result.remaining, result.state.bufs 200, result.state.caps 200, result.state.regs 99,
     result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0),
     decide (result.time ≤ ReplaySecond.timeBudget config (caller done q) operations budget (localBudget done q) fuel))
+private def runSelected (qH : Fin 65535) (done : Bool) (q : CallerPackets.Request config) (fuel : Nat) (generator publicKey : Word 16)
+    (slot : Fin 65536) (replacement : ZMod 7)
+    (saved remaining : List (Schnorr.TapeCell (ZMod 7))) (replies : List (Word 16)) := do
+  let original : Store := (((generator, publicKey), [((2, publicKey), 6)], [((2, publicKey), 3)]), saved, remaining)
+  let old : config.handler.store.Value ← if valid : config.handler.store.valid original then some ⟨original, valid⟩ else none
+  let first : Terminal.Output config := (.inr (forge ⟨publicKey, trivial⟩, ⟨3, trivial⟩), old)
+  let request : ReplaySecond.Request config := ((⟨slot.val, slot.isLt⟩, ⟨replacement, trivial⟩), first)
+  let value : {value : ReplaySecond.Request config // ReplaySecond.ready config fuel value} ←
+    if valid : ReplaySecond.ready config fuel request then some ⟨request, valid⟩ else none
+  let initial := (ReplaySecond.input config fuel).initial value
+  let before := { initial with
+    bufs := fun i => if i = 200 then #[77] else initial.bufs i
+    caps := fun i => if i = 200 then 4 else initial.caps i
+    regs := fun i => if i = 99 then 91 else initial.regs i
+    tapePos := 9 }
+  let result ← WordIO.run .unit RandomTape.zero 1000000
+    ((ReplaySecond.Selected.program config (caller done q) operations qH.val (by have := qH.isLt; omega) fuel).lower (Fresh.port config.handler.sampler.tape)) before replies
+  pure (((ReplayMatch.output config).encoding.decode (result.state.bufs 0).toList).map
+      (fun answer : (Selection.boolean config).Value × ReplayMatch.Frame config =>
+        (answer.1.val, (ReplaySecond.rawInput config).encoding.encode answer.2.2 == (ReplaySecond.rawInput config).encoding.encode value.val)),
+    result.trace, result.remaining, result.state.bufs 200, result.state.caps 200, result.state.regs 99,
+    result.state.tapePos, (List.range 30).all (fun i => result.state.caps (i + 1) == 0),
+    decide (result.time ≤ ReplaySecond.Selected.timeBudget config (caller done q) operations qH.val (by have := qH.isLt; omega) budget (localBudget done q) fuel))
 private def store (g pk : Word 16) (managed live : Signing.Table Nat (ZMod 7) (Word 16))
     (saved remaining : List (Schnorr.TapeCell (ZMod 7))) : Store := (((g, pk), managed, live), saved, remaining)
 
@@ -207,6 +230,15 @@ run_cmd do
       run false random 3 3 5 0 4 [] [] [] == none &&
       run false random 1 3 5 0 4 short [] [7] == none do
     throwError "second pass accepted insufficient tape/cache reserve or an incomplete reply"
+  unless runSelected 0 true random 0 3 0 0 0 old [] [88] ==
+      some (some (true, true), [], [88], #[77], 4, 91, 9, true, true) do
+    throwError "composed second branch failed reset, selector, saved slot or retained request"
+  unless runSelected 1 true random 0 3 0 1 0 old [] [88] ==
+      some (some (false, true), [], [88], #[77], 4, 91, 9, true, true) do
+    throwError "composed second branch accepted a different fork slot"
+  unless runSelected 0 false random 0 3 0 0 0 old [] [88] ==
+      some (some (false, true), [], [88], #[77], 4, 91, 9, true, true) do
+    throwError "composed second branch accepted cutoff at slot zero"
   let allowed := [`propext, `Quot.sound, `Classical.choice]
   for name in [``Pass.buffers, ``Pass.savedNameFits, ``ReplaySecond.prepare_bytes, ``ReplaySecond.repack_bytes,
       ``ReplaySecond.next_ready, ``ReplaySecond.initialization_time, ``ReplaySecond.initialization_words,
