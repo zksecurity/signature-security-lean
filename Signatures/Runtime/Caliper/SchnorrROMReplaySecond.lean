@@ -47,7 +47,7 @@ theorem ready_after_first (fuel : Nat) (value : Pass.Initialization.Input config
     (slot : config.handler.sampler.tape.counter.Value) (replacement : config.handler.sampler.tape.scalar.Value) :
     ready config fuel ((slot, replacement), first) := by
   have growth := Pass.tape_lengths config ops caller fuel value (Pass.Replay.first_ready config fuel value room) first reached
-  exact ⟨room.1, by have := room.2; change first.2.val.2.1.length + (2 * fuel + 2) ≤ _; omega⟩
+  exact ⟨room.1, by have := room.2; change first.2.val.2.1.length + (3 * fuel + 2) ≤ _; omega⟩
 
 theorem buffers (fuel : Nat) : ((program config caller ops fuel).lower (Fresh.port config.handler.sampler.tape)).memBound ≤
     Pass.bufferBudget config caller ops + 1 := by

@@ -14,7 +14,7 @@ def ready (value : Packet config) : Prop :=
   | .inl (.inr key) => Hash.admissible config (key.val, value.2.val) ∧
       (cacheMap value.2.val.1.2.1 key.val = none →
         FinalHash.admissible config (key.val, value.2.val) ∧ value.2.val.2.1.length < config.sampler.capacity)
-  | .inr _ => value.2.val.1.2.1.length ≤ config.capacityPred ∧ value.2.val.2.1.length + 2 ≤ config.sampler.capacity
+  | .inr _ => value.2.val.1.2.1.length ≤ config.capacityPred ∧ value.2.val.2.1.length + 3 ≤ config.sampler.capacity
 instance : DecidablePred (ready config) := fun value => by
   rcases value with ⟨(range | key) | message, saved⟩ <;> dsimp [ready] <;> infer_instance
 

@@ -11,19 +11,19 @@ variable {w : Nat} {M F G A B U P : Type} [Zero F] [SMul F G] [Sub G] [Decidable
 
 theorem Handler.tape_lengths (value : Handler.Input config) (valid : Handler.ready config value)
     (answer : Handler.Output config) (reached : answer ∈ support (Handler.source config ops value)) :
-    (Handler.observed config answer).2.2.1.length ≤ (Handler.initialStore config value).2.1.length + 2 ∧
+    (Handler.observed config answer).2.2.1.length ≤ (Handler.initialStore config value).2.1.length + 3 ∧
       (Handler.observed config answer).2.2.2.length ≤ (Handler.initialStore config value).2.2.length := by
   rcases value with (value | value) | value
   · simp only [Handler.source, Sum.elim, Handler.randomSource, support_map, Set.mem_image] at reached
     obtain ⟨read, supported, rfl⟩ := reached
     have growth := Random.tape_lengths config value read supported
-    change read.val.2.2.1.length ≤ value.val.2.2.1.length + 2 ∧
+    change read.val.2.2.1.length ≤ value.val.2.2.1.length + 3 ∧
       read.val.2.2.2.length ≤ value.val.2.2.2.length
     exact ⟨growth.1.trans (by omega), growth.2⟩
   · simp only [Handler.source, Sum.elim, Handler.hashSource, support_map, Set.mem_image] at reached
     obtain ⟨read, supported, rfl⟩ := reached
     have growth := Hash.tape_lengths config value valid read supported
-    change read.val.2.2.1.length ≤ value.val.2.2.1.length + 2 ∧
+    change read.val.2.2.1.length ≤ value.val.2.2.1.length + 3 ∧
       read.val.2.2.2.length ≤ value.val.2.2.2.length
     exact ⟨growth.1.trans (by omega), growth.2⟩
   · simp only [Handler.source, Sum.elim, Handler.signingSource, support_map, Set.mem_image] at reached
@@ -33,7 +33,7 @@ theorem Handler.tape_lengths (value : Handler.Input config) (valid : Handler.rea
 theorem CallerHandler.tape_lengths (value : CallerPackets.Packet config) (valid : CallerPackets.ready config value)
     (answer : CallerPackets.Reply config × config.handler.store.Value)
     (reached : answer ∈ support (CallerHandler.source config ops value)) :
-    answer.2.val.2.1.length ≤ value.2.val.2.1.length + 2 ∧
+    answer.2.val.2.1.length ≤ value.2.val.2.1.length + 3 ∧
       answer.2.val.2.2.length ≤ value.2.val.2.2.length := by
   simp only [CallerHandler.source, dite_eq_left valid, support_map, Set.mem_image] at reached
   obtain ⟨result, supported, rfl⟩ := reached
@@ -46,11 +46,11 @@ theorem Caller.tape_lengths (routines : Caller.Routines config A B U) (fuel : Na
     (value : CallerControl.Packet A (CallerPackets.Request config) B config.handler.store.Value)
     (room : Handler.Reserved config fuel value.2.val) (answer)
     (reached : answer ∈ support (CallerControl.start routines.advance (CallerHandler.source config ops) fuel value)) :
-    answer.2.val.2.1.length ≤ value.2.val.2.1.length + 2 * fuel ∧
+    answer.2.val.2.1.length ≤ value.2.val.2.1.length + 3 * fuel ∧
       answer.2.val.2.2.length ≤ value.2.val.2.2.length := by
   have bounded := CallerControl.start_store routines.advance (CallerHandler.source config ops)
     (fun remaining saved => Handler.Reserved config remaining saved.val ∧
-      saved.val.2.1.length + 2 * remaining ≤ value.2.val.2.1.length + 2 * fuel ∧
+      saved.val.2.1.length + 3 * remaining ≤ value.2.val.2.1.length + 3 * fuel ∧
       saved.val.2.2.length ≤ value.2.val.2.2.length)
     (by
       intro small large saved fewer valid
@@ -85,7 +85,7 @@ variable (caller : Pass.Caller config A)
 theorem finish_tape_lengths (fuel : Nat) (value : config.point.Value × config.handler.store.Value)
     (room : Caller.admitted config fuel value) (answer)
     (reached : answer ∈ support (finishSource config caller ops fuel value)) :
-    answer.2.val.2.1.length ≤ value.2.val.2.1.length + (2 * fuel + 1) ∧
+    answer.2.val.2.1.length ≤ value.2.val.2.1.length + (3 * fuel + 1) ∧
       answer.2.val.2.2.length ≤ value.2.val.2.2.length := by
   simp only [finishSource, support_bind, Set.mem_iUnion] at reached
   obtain ⟨packet, supported, finished⟩ := reached
@@ -97,7 +97,7 @@ theorem finish_tape_lengths (fuel : Nat) (value : config.point.Value × config.h
 
 theorem tape_lengths (fuel : Nat) (value : Initialization.Input config) (room : Initialization.admitted config fuel value)
     (answer) (reached : answer ∈ support (source config caller ops fuel value)) :
-    answer.2.val.2.1.length ≤ value.1.val.1.length + (2 * fuel + 1) ∧
+    answer.2.val.2.1.length ≤ value.1.val.1.length + (3 * fuel + 1) ∧
       answer.2.val.2.2.length ≤ value.1.val.2.length :=
   finish_tape_lengths config ops caller fuel (Initialization.start config value)
     (Initialization.reserved config fuel value room) answer reached
@@ -107,7 +107,7 @@ theorem execution_tape_lengths (fuel : Nat) (tape : RandomTape w) (value : Initi
     (finished : WordIO.Result w)
     (reached : some finished ∈ support ((program config caller ops fuel).execute (Fresh.port config.handler.sampler.tape) .unit tape before)) :
     ∃ answer, (output config caller).Holds answer finished.state ∧
-      answer.2.val.2.1.length ≤ value.1.val.1.length + (2 * fuel + 1) ∧
+      answer.2.val.2.1.length ≤ value.1.val.1.length + (3 * fuel + 1) ∧
       answer.2.val.2.2.length ≤ value.1.val.2.length ∧
       WordIO.Exec .unit tape ((program config caller ops fuel).lower (Fresh.port config.handler.sampler.tape))
         before finished.state finished.trace finished.time finished.net finished.peak := by

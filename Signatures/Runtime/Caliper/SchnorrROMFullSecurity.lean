@@ -20,7 +20,7 @@ variable {w : Nat} {M F G : Type} [Field F] [DecidableEq F] [AddCommGroup G] [Mo
     (limits : Limits) (bounded : caller.Bounds config shape limits)
     (arith : ReplayFork.Extract.Arithmetic config) (arithBudget : ReplayFork.Extract.Arithmetic.Budget config arith)
     (handlerRoom : Handler.nameBudget config ops ≤ limits.names) (slotsRoom : ops.slots + 4 < 2 ^ w)
-    (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1) (tapes : 4 * fuel + 3 ≤ config.sampler.capacity)
+    (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1) (tapes : 6 * fuel + 3 ≤ config.sampler.capacity)
 
 include bounded handlerRoom slotsRoom in
 theorem within :

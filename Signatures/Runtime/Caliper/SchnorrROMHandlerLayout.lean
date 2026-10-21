@@ -76,7 +76,16 @@ def signingTag : Realizer .unit config.handler.output.representation (output con
   inrRealizer .unit (by decide) (innerOutput config) config.handler.output.representation
     config.sampler.wordFits (output config).fits
 
+/-- Three reserved tape cells: enough for the full-field pair of draws and for
+the nonzero-nonce triple. -/
+def signingReady (value : config.handler.input.Value) : Prop :=
+  PrivateHandler.Reserved config.handler.sampler.tape 3 (Signing.Handler.tapes config.handler value)
+theorem signingReady_pair (value : config.handler.input.Value) (valid : signingReady config value) :
+    Signing.Handler.ready config.handler 1 value := by
+  unfold signingReady PrivateHandler.Reserved at valid
+  change (Signing.Handler.tapes config.handler value).val.1.length + (1 + 1) ≤ config.handler.sampler.tape.capacity
+  omega
 def ready : Input config → Prop :=
-  Sum.elim (Sum.elim (fun _ => True) (Hash.ready config)) (Signing.Handler.ready config.handler 1)
+  Sum.elim (Sum.elim (fun _ => True) (Hash.ready config)) (signingReady config)
 
 end Signatures.Runtime.CaliperBackend.SchnorrROM.Handler

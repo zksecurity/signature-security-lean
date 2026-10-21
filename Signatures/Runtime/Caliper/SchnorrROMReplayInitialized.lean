@@ -12,12 +12,12 @@ variable {w : Nat} {M F G A : Type} [Zero F] [SMul F G] [Sub G]
 def program (fuel : Nat) : Interactive.Code w :=
   .seq (.compute (Setup.realizer config).code) (ReplayFork.program config caller ops qH indexFits fuel)
 def source (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
     ProbComp (Result config) :=
   ReplayFork.source config caller ops qH indexFits fuel (Setup.start config fuel tables tapes value)
 
 theorem refines (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) :
     Interactive.Refines (Fresh.port config.handler.sampler.tape) .unit (Setup.input config) (output config)
       (source config caller ops qH indexFits fuel tables tapes) (program config caller ops qH indexFits fuel) := by
   have joined := (Interactive.Refines.compute (Fresh.port config.handler.sampler.tape) .unit

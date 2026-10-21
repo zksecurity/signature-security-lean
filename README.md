@@ -106,7 +106,12 @@ and [parameters](Signatures/Schnorr/CaliperNonzeroROMParameters.lean) instantiat
 full-field polynomial resources. The abstract-backend
 [nonuniform family corollary](Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean)
 remains separate; both family proofs need the same negligible inverse-field-size assumption.
-An executed nonzero-nonce signing branch instance is being constructed separately.
+The [executed nonzero-nonce signing branch](Signatures/Runtime/Caliper/SchnorrROMNonzeroSigningBranch.lean)
+(two replayed field draws, a replayed nonzero draw through the enumerated index with the
+zero index skipped, the executed zero test and repair, cache programming) is a
+`SigningBranch` with its `SigningLaw` to the nonzero-nonce list backend, so the
+nonzero-nonce model is instantiable; the service reserves three private-tape cells
+per query for both branches.
 All general-attacker route endpoints are proved and the eager AGM API is retired.
 Full integration checks and the completion audit remain tracked in the plan.
 A conventional machine instantiation is separate from these conditional results.

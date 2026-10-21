@@ -3707,10 +3707,12 @@ the source/output conversion for both complete BLS AGM reductions.
    `ListROM.handler` on random and hash queries; the whole caller/pass/fork/extractor
    chain is proved once for `passWith law.target`. The nonzero-nonce public
    statement and family corollary instantiate the same solver with
-   `Parameters.Nonzero` (`law.target = NonzeroListROM.handler`). Remaining for that
-   route is the executed nonzero-nonce signing branch itself (nonzero scalar draw,
-   zero test against `ops.sub (g, g)`, repair through `ops.scale` and a field
-   addition contract), as a `SigningBranch`/`SigningLaw` instance.
+   `Parameters.Nonzero` (`law.target = NonzeroListROM.handler`), and the executed
+   nonzero-nonce branch (`SchnorrROMNonzeroSigning*.lean`: enumerated nonzero draw,
+   executed zero test and repair, field addition contract) is a
+   `SigningBranch`/`SigningLaw` instance (`Handler.nonzero`, `Handler.nonzeroLaw`).
+   Because that branch replays three private draws, the service reserves three
+   tape cells per query (`Handler.Reserved`, `Pass.Replay.ready`: `6 * fuel + 3`).
    Prove coverage for the intended Caliper adversary class. A claim about every
    conventional efficient attacker needs a further machine-adequacy result.
 
@@ -3759,8 +3761,8 @@ failure path; its [source law](../Signatures/Runtime/Caliper/SchnorrROMReplayExt
 is exactly `extractFork` on the observed result, and the
 [full solver](../Signatures/Runtime/Caliper/SchnorrROMReplayExtractFull.lean) has the
 law of `RawTape.fork … >>= liftRandom ∘ extractFork`. Both public ROM
-statements and family corollaries are migrated over the generic signing branch;
-the executed nonzero-nonce branch instance remains.
+statements and family corollaries are migrated over the generic signing branch,
+and both branches are executed.
 
 Use one Lean compiler process at a time. Check operational examples, invalid
 encoding/bounds cases, resource composition and theorem axiom footprints.

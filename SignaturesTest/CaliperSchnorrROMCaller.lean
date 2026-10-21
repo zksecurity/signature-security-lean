@@ -8,7 +8,7 @@ open SchnorrROMTape SchnorrROM
 private instance : Fact (Nat.Prime 7) := ⟨by decide⟩
 private instance : SMul (ZMod 7) (Word 16) := ⟨fun scalar point => BitVec.ofNat 16 scalar.val * point⟩
 private def params : PrivateSampler.Enumerated.Parameters 16 (ZMod 7) :=
-  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 6 (by decide) (by decide) (by decide)
+  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 12 (by decide) (by decide) (by decide)
 private def config : Signing.Enumerated.Configuration 16 Nat (ZMod 7) (Word 16) where
   sampler := params
   message := Layout.counter 16 256 (by decide) (by decide)
@@ -50,8 +50,8 @@ private instance (value : Store) : Decidable (config.handler.store.valid value) 
   change Decidable ((((True ∧ True) ∧
     (value.1.2.1.length ≤ 3 ∧ ∀ entry ∈ value.1.2.1, (entry.1.1 < 256 ∧ True) ∧ True) ∧
     (value.1.2.2.length ≤ 3 ∧ ∀ entry ∈ value.1.2.2, (entry.1.1 < 256 ∧ True) ∧ True)) ∧
-    (value.2.1.length ≤ 6 ∧ ∀ cell ∈ value.2.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
-    (value.2.2.length ≤ 6 ∧ ∀ cell ∈ value.2.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536)))
+    (value.2.1.length ≤ 12 ∧ ∀ cell ∈ value.2.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
+    (value.2.2.length ≤ 12 ∧ ∀ cell ∈ value.2.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536)))
   infer_instance
 private def packet (query : Query) (saved : Store) : Option (CallerPackets.Packet config) := do
   if good : config.handler.store.valid saved then
@@ -101,7 +101,7 @@ private theorem matches_original (ops : Handler.Operations groupConfig) (law : H
       (fun answer => (CallerHandler.representReply groupConfig value.1 answer.1, answer.2)) <$>
         (Schnorr.ListROM.Shared.interpret (law.target (CallerHandler.query groupConfig value.1))).run value.2.val := by
   have same : PrivateSampler.Enumerated.sampleable groupConfig.sampler = FinEnum.SampleableType (ZMod 7) :=
-    PrivateSampler.Enumerated.sampleable_finEnum 6 (by decide) (by decide) (by decide)
+    PrivateSampler.Enumerated.sampleable_finEnum 12 (by decide) (by decide) (by decide)
   have original := CallerHandler.source_original groupConfig ops law value valid
   rw [same] at original
   exact original

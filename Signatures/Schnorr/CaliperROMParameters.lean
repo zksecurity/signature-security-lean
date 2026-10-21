@@ -24,7 +24,7 @@ structure Parameters where
   limits : SchnorrROM.Full.Limits
   indexFits : queries.hash + 1 < 2 ^ wordBits
   tables : queries.total + 1 ≤ config.capacityPred + 1
-  tapes : 4 * queries.total + 3 ≤ config.sampler.capacity
+  tapes : 6 * queries.total + 3 ≤ config.sampler.capacity
   handlerRoom : SchnorrROM.Handler.nameBudget config operations ≤ limits.names
   slotsRoom : operations.slots + 4 < 2 ^ wordBits
   generatorValid : config.point.valid generator

@@ -22,7 +22,7 @@ theorem chooseGuard_bytes (value : config.handler.sampler.tape.boolean.Value × 
     rfl
 
 def savedReady (fuel : Nat) (value : ReplayChallenge.Input config) : Prop :=
-  fuel + 1 ≤ config.capacityPred + 1 ∧ value.2.2.val.2.1.length + (2 * fuel + 2) ≤ config.sampler.capacity
+  fuel + 1 ≤ config.capacityPred + 1 ∧ value.2.2.val.2.1.length + (3 * fuel + 2) ≤ config.sampler.capacity
 
 variable [DecidableEq F]
 def guardChoiceSource (value : ReplayChallenge.Input config) : ProbComp (ReplaySecond.Request config ⊕ ReplaySecond.Request config) :=

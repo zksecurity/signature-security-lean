@@ -9,11 +9,11 @@ open Caliper BoundedSource SchnorrROMTape OracleComp OracleSpec
 variable {w : Nat} {M F G A : Type} (config : Signing.Enumerated.Configuration w M F G)
 
 def ready (fuel : Nat) (value : Initialization.Input config) : Prop :=
-  fuel + 1 ≤ config.capacityPred + 1 ∧ value.1.val.1.length + (4 * fuel + 3) ≤ config.sampler.capacity
+  fuel + 1 ≤ config.capacityPred + 1 ∧ value.1.val.1.length + (6 * fuel + 3) ≤ config.sampler.capacity
 theorem first_ready (fuel : Nat) (value : Initialization.Input config) (room : ready config fuel value) :
     Initialization.admitted config fuel value := ⟨room.1, by have := room.2; omega⟩
 theorem ready_empty (fuel : Nat) (value : Initialization.Input config) (empty : value.1.val.1 = [])
-    (tables : fuel + 1 ≤ config.capacityPred + 1) (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) :
+    (tables : fuel + 1 ≤ config.capacityPred + 1) (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) :
     ready config fuel value := by
   refine ⟨tables, ?_⟩
   simpa only [empty, List.length_nil, Nat.zero_add] using tapes
@@ -63,8 +63,8 @@ theorem second_lengths (fuel : Nat) (value : Initialization.Input config) (room 
     (second : Terminal.Output config)
     (finished : second ∈ support (Pass.source config caller ops fuel
       (nextInput config first slot replacement (restart_room config ops caller fuel value room first reached)))) :
-    second.2.val.2.1.length ≤ value.1.val.1.length + (4 * fuel + 3) ∧
-      second.2.val.2.2.length ≤ value.1.val.1.length + (2 * fuel + 2) := by
+    second.2.val.2.1.length ≤ value.1.val.1.length + (6 * fuel + 3) ∧
+      second.2.val.2.2.length ≤ value.1.val.1.length + (3 * fuel + 2) := by
   have firstGrowth := Pass.tape_lengths config ops caller fuel value (first_ready config fuel value room) first reached
   have reset := restart_lengths config first slot replacement (restart_room config ops caller fuel value room first reached)
   have secondGrowth := Pass.tape_lengths config ops caller fuel _

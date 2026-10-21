@@ -9,7 +9,7 @@ open SchnorrROMTape SchnorrROM
 private instance : Fact (Nat.Prime 7) := ⟨by decide⟩
 private instance : SMul (ZMod 7) (Word 16) := ⟨fun scalar point => BitVec.ofNat 16 scalar.val * point⟩
 private def params : PrivateSampler.Enumerated.Parameters 16 (ZMod 7) :=
-  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 10 (by decide) (by decide) (by decide)
+  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 12 (by decide) (by decide) (by decide)
 private def config : Signing.Enumerated.Configuration 16 Nat (ZMod 7) (Word 16) where
   sampler := params
   message := Layout.counter 16 256 (by decide) (by decide)
@@ -105,8 +105,8 @@ private instance (value : Store) : Decidable (config.handler.store.valid value) 
   change Decidable ((((True ∧ True) ∧
     (value.1.2.1.length ≤ 3 ∧ ∀ entry ∈ value.1.2.1, (entry.1.1 < 256 ∧ True) ∧ True) ∧
     (value.1.2.2.length ≤ 3 ∧ ∀ entry ∈ value.1.2.2, (entry.1.1 < 256 ∧ True) ∧ True)) ∧
-    (value.2.1.length ≤ 10 ∧ ∀ cell ∈ value.2.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
-    (value.2.2.length ≤ 10 ∧ ∀ cell ∈ value.2.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536)))
+    (value.2.1.length ≤ 12 ∧ ∀ cell ∈ value.2.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
+    (value.2.2.length ≤ 12 ∧ ∀ cell ∈ value.2.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536)))
   infer_instance
 private theorem nameRoom (done : Bool) (q : CallerPackets.Request config) : Pass.replayNameRoom config (caller done q) operations := by
   have initial := initialize_buffers done q
@@ -187,7 +187,7 @@ private theorem original_sampler {A : Type} (caller : Pass.Caller groupConfig A)
           (ReplayRestart.tapes (Schnorr.RawTape.restart value.val.1.1.val value.val.1.2.val
             ⟨value.val.2.2.val.2.1, value.val.2.2.val.2.2⟩)) := by
   have same : PrivateSampler.Enumerated.sampleable groupConfig.sampler = FinEnum.SampleableType (ZMod 7) :=
-    PrivateSampler.Enumerated.sampleable_finEnum 10 (by decide) (by decide) (by decide)
+    PrivateSampler.Enumerated.sampleable_finEnum 12 (by decide) (by decide) (by decide)
   have original := ReplaySecond.source_original groupConfig caller ops law fuel witness value
   rw [same] at original
   exact original
@@ -225,12 +225,12 @@ run_cmd do
         some (some ((some ((2, 5, 0), 3), store 3 5 [] [((2, 5), 3)] (old ++ [(1, 4, 0)]) [(3, 0, 1), (9, 0, 10), (1, 4, 0)]), true),
           [], [88], #[77], 4, 91, 9, true, true) do
       throwError "restart must retain earlier public challenges in chronological order"
-  let full : List (Schnorr.TapeCell (ZMod 7)) := List.replicate 8 (3, 0, 1)
+  let full : List (Schnorr.TapeCell (ZMod 7)) := List.replicate 10 (3, 0, 1)
   unless run true random 0 3 5 0 4 full [] [] ==
       some (some ((some ((2, 5, 0), 4), store 3 5 [] [((2, 5), 4)] (full ++ [(1, 4, 0)]) full), true),
         [], [], #[77], 4, 91, 9, true, true) do
     throwError "second pass rejected the exact admitted tape boundary"
-  unless run true random 0 3 5 0 4 (List.replicate 9 (3, 0, 1)) [] [] == none &&
+  unless run true random 0 3 5 0 4 (List.replicate 11 (3, 0, 1)) [] [] == none &&
       run false random 3 3 5 0 4 [] [] [] == none &&
       run false random 1 3 5 0 4 short [] [7] == none do
     throwError "second pass accepted insufficient tape/cache reserve or an incomplete reply"

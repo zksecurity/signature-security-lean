@@ -38,15 +38,15 @@ theorem names (slots : Nat) : NamesAccounted (realizer config).code slots :=
 theorem buffers : (realizer config).code.memBound ≤ 2 := ByteRoute.buffers _ _ _ _ _ _ _ _
 
 theorem ready (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
     Pass.Replay.ready config fuel (initialValue config value) :=
   Pass.Replay.ready_empty config fuel (initialValue config value) rfl tables tapes
 def start (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
     {value : Pass.Initialization.Input config // Pass.Replay.ready config fuel value} :=
   ⟨initialValue config value, ready config fuel tables tapes value⟩
 def prepared (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) :
     Realizer .unit (input config) (ReplayFirst.input config fuel) (start config fuel tables tapes) :=
   (realizer config).viewOutput (ReplayFirst.input config fuel) (start config fuel tables tapes) (fun _ => rfl)
 

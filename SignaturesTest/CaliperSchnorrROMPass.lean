@@ -9,7 +9,7 @@ open SchnorrROMTape SchnorrROM
 private instance : Fact (Nat.Prime 7) := ⟨by decide⟩
 private instance : SMul (ZMod 7) (Word 16) := ⟨fun scalar point => BitVec.ofNat 16 scalar.val * point⟩
 private def params : PrivateSampler.Enumerated.Parameters 16 (ZMod 7) :=
-  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 6 (by decide) (by decide) (by decide)
+  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 12 (by decide) (by decide) (by decide)
 private def config : Signing.Enumerated.Configuration 16 Nat (ZMod 7) (Word 16) where
   sampler := params
   message := Layout.counter 16 256 (by decide) (by decide)
@@ -114,8 +114,8 @@ private def random : CallerPackets.Request config := .inl (.inl ⟨7, by change 
 private def hashed : CallerPackets.Request config := .inl (.inr ⟨(2, 5), by change 2 < 256; decide, trivial⟩)
 private def signed : CallerPackets.Request config := .inr ⟨2, by change 2 < 256; decide⟩
 private instance (value : Schnorr.ListROM.Shared.Tape (ZMod 7)) : Decidable ((Pass.Initialization.tapes config).valid value) := by
-  change Decidable ((value.1.length ≤ 6 ∧ ∀ cell ∈ value.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
-    (value.2.length ≤ 6 ∧ ∀ cell ∈ value.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536))
+  change Decidable ((value.1.length ≤ 12 ∧ ∀ cell ∈ value.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
+    (value.2.length ≤ 12 ∧ ∀ cell ∈ value.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536))
   infer_instance
 private instance (fuel : Nat) (value : Pass.Initialization.Input config) : Decidable (Pass.Initialization.admitted config fuel value) := by
   unfold Pass.Initialization.admitted
@@ -159,7 +159,7 @@ private theorem original_sampler {A : Type} (caller : Pass.Caller groupConfig A)
           (Subtype.val <$> witness.program (witness.inputView (Pass.Initialization.start groupConfig value).1))).run
             (value.2.val, [], [])) value.1.val := by
   have same : PrivateSampler.Enumerated.sampleable groupConfig.sampler = FinEnum.SampleableType (ZMod 7) :=
-    PrivateSampler.Enumerated.sampleable_finEnum 6 (by decide) (by decide) (by decide)
+    PrivateSampler.Enumerated.sampleable_finEnum 12 (by decide) (by decide) (by decide)
   have original := Pass.source_tapeRun groupConfig caller ops law fuel witness value room
   rw [same] at original
   exact original

@@ -16,12 +16,12 @@ to a list-backend handler is stated separately (`SigningLaw`). -/
 structure SigningBranch (slots : Nat) where
   code : Interactive.Code w
   source : config.handler.input.Value → ProbComp config.handler.output.Value
-  refines : Interactive.RefinesOn (Signing.Handler.ready config.handler 1) (Fresh.port config.handler.sampler.tape) .unit
+  refines : Interactive.RefinesOn (signingReady config) (Fresh.port config.handler.sampler.tape) .unit
     config.handler.input.representation config.handler.output.representation source code
   time : Nat
   words : Nat
   nameSlots : Nat
-  time_bound : Interactive.TimeBoundOn (Signing.Handler.ready config.handler 1) (Fresh.port config.handler.sampler.tape) .unit
+  time_bound : Interactive.TimeBoundOn (signingReady config) (Fresh.port config.handler.sampler.tape) .unit
     config.handler.input.representation code time
   code_bound : (code.lower (Fresh.port config.handler.sampler.tape)).descriptionWords ≤ words
   names : WordIO.NamesAccounted (code.lower (Fresh.port config.handler.sampler.tape)) nameSlots
@@ -30,8 +30,8 @@ structure SigningBranch (slots : Nat) where
   preserves_config : ∀ value answer, answer ∈ support (source value) → answer.val.2.1.1 = value.val.2.1.1
   preserves_live : ∀ value answer, answer ∈ support (source value) → answer.val.2.1.2.2 = value.val.2.1.2.2
   managed_length : ∀ value answer, answer ∈ support (source value) → answer.val.2.1.2.1.length ≤ value.val.2.1.2.1.length + 1
-  tape_lengths : ∀ value, Signing.Handler.ready config.handler 1 value → ∀ answer, answer ∈ support (source value) →
-    answer.val.2.2.1.length ≤ value.val.2.2.1.length + 2 ∧ answer.val.2.2.2.length ≤ value.val.2.2.2.length
+  tape_lengths : ∀ value, signingReady config value → ∀ answer, answer ∈ support (source value) →
+    answer.val.2.2.1.length ≤ value.val.2.2.1.length + 3 ∧ answer.val.2.2.2.length ≤ value.val.2.2.2.length
 
 structure Operations where
   scale : Implementation .unit config.handler.core.arithmetic.scaleArgs config.handler.core.point (fun value => value.1 • value.2)
@@ -51,12 +51,15 @@ def fullField (scale : Implementation .unit config.handler.core.arithmetic.scale
     (scaleBound : scale.BoundedBy scaleTime scaleWords) (subBound : sub.BoundedBy subTime subWords) : SigningBranch config slots where
   code := Signing.Enumerated.code config scale sub scaleNames.buffers subNames.buffers reserve
   source := Signing.Enumerated.source config scale sub scaleNames.buffers subNames.buffers reserve
-  refines := Signing.Handler.refines config.handler trivial scale sub scaleNames.buffers subNames.buffers reserve
-    (PrivateSampler.Enumerated.caller config.sampler) 1
+  refines := fun tape value valid before holds =>
+    Signing.Handler.refines config.handler trivial scale sub scaleNames.buffers subNames.buffers reserve
+      (PrivateSampler.Enumerated.caller config.sampler) 1 tape value (signingReady_pair config value valid) before holds
   time := Signing.Handler.timeBudget config.handler trivial 38 16 1 scaleTime subTime
   words := Signing.Handler.codeBudget config.handler trivial (PrivateSampler.Enumerated.caller config.sampler) 1 scaleWords subWords
   nameSlots := Signing.Handler.nameBudget config.handler trivial 3 slots
-  time_bound := Signing.Enumerated.time_bound config scale sub scaleNames.buffers subNames.buffers reserve scaleBound subBound
+  time_bound := fun tape value valid before holds =>
+    Signing.Enumerated.time_bound config scale sub scaleNames.buffers subNames.buffers reserve scaleBound subBound
+      tape value (signingReady_pair config value valid) before holds
   code_bound := Signing.Enumerated.code_bound config scale sub scaleNames.buffers subNames.buffers reserve scaleBound subBound
   names := Signing.Enumerated.names config scale sub scaleNames.buffers subNames.buffers reserve slots
     scaleNames.accounted subNames.accounted
@@ -75,14 +78,17 @@ def fullField (scale : Implementation .unit config.handler.core.arithmetic.scale
     intro value valid answer reached
     simp only [Signing.Enumerated.source, Signing.Handler.source, support_map, Set.mem_image] at reached
     obtain ⟨sampled, supported, rfl⟩ := reached
-    exact PrivateSampler.Pair.tape_lengths config.handler.sampler (PrivateSampler.Enumerated.caller config.sampler)
-      trivial 1 (Signing.Handler.tapes config.handler value) valid sampled supported
+    have grown := PrivateSampler.Pair.tape_lengths config.handler.sampler (PrivateSampler.Enumerated.caller config.sampler)
+      trivial 1 (Signing.Handler.tapes config.handler value) (signingReady_pair config value valid) sampled supported
+    change sampled.val.2.2.1.length ≤ value.val.2.2.1.length + 3 ∧ sampled.val.2.2.2.length ≤ value.val.2.2.2.length
+    change sampled.val.2.2.1.length ≤ value.val.2.2.1.length + 2 ∧ sampled.val.2.2.2.length ≤ value.val.2.2.2.length at grown
+    exact ⟨grown.1.trans (by omega), grown.2⟩
 
 variable (ops : Operations config)
 def signCode := ops.signing.code
 def signSource := ops.signing.source
 omit [Zero F] [DecidableEq M] [DecidableEq G] in
-theorem sign_refines : Interactive.RefinesOn (Signing.Handler.ready config.handler 1)
+theorem sign_refines : Interactive.RefinesOn (signingReady config)
     (Fresh.port config.handler.sampler.tape) .unit config.handler.input.representation config.handler.output.representation
     (signSource config ops) (signCode config ops) :=
   ops.signing.refines
@@ -129,7 +135,7 @@ theorem hash_refines : Interactive.RefinesOn (Hash.ready config) (Fresh.port con
     rfl
   · rfl
 omit [Zero F] [DecidableEq M] [DecidableEq G] in
-theorem signing_refines : Interactive.RefinesOn (Signing.Handler.ready config.handler 1)
+theorem signing_refines : Interactive.RefinesOn (signingReady config)
     (Fresh.port config.handler.sampler.tape) .unit config.handler.input.representation (output config)
     (signingSource config ops) (signingCode config ops) := by
   have combined := (sign_refines config ops).seq

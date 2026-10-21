@@ -39,7 +39,7 @@ theorem after_fixed (first : Terminal.Output config) (slot : Fin (qH + 1))
     · simp only [same, ↓reduceIte]
 
 namespace Initialized
-variable (tables : fuel + 1 ≤ config.capacityPred + 1) (tapes : 4 * fuel + 3 ≤ config.sampler.capacity)
+variable (tables : fuel + 1 ≤ config.capacityPred + 1) (tapes : 6 * fuel + 3 ≤ config.sampler.capacity)
 
 theorem source_original (value : (Pass.Initialization.points config).Value) :
     letI := PrivateSampler.Enumerated.sampleable config.sampler

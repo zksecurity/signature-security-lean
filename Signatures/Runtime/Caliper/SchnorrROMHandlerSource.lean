@@ -43,7 +43,7 @@ structure SigningLaw {slots : Nat} (branch : SigningBranch config slots) where
   target : Schnorr.ListROM.Handler F G G M M
   shared : ∀ i, letI := PrivateSampler.Enumerated.sampleable config.sampler
     target (.inl i) = Schnorr.ListROM.handler (G₂ := G) (K := M) (.inl i)
-  source_original : ∀ (value : config.handler.input.Value), Signing.Handler.ready config.handler 1 value →
+  source_original : ∀ (value : config.handler.input.Value), signingReady config value →
     letI := PrivateSampler.Enumerated.sampleable config.sampler
     Subtype.val <$> branch.source value = (Schnorr.ListROM.Shared.interpret (target (.inr value.val.1))).run value.val.2
 
@@ -56,7 +56,7 @@ def fullFieldLaw (scale : Implementation .unit config.handler.core.arithmetic.sc
   target := letI := PrivateSampler.Enumerated.sampleable config.sampler; Schnorr.ListROM.handler
   shared _ := rfl
   source_original value valid := Signing.Enumerated.source_original (G₂ := G) (K := M) config scale sub
-    scaleNames.buffers subNames.buffers reserve value valid
+    scaleNames.buffers subNames.buffers reserve value (signingReady_pair config value valid)
 
 variable (ops : Operations config) (law : SigningLaw config ops.signing)
 

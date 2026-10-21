@@ -27,7 +27,7 @@ def fullNameBudget (slots : Nat) : Nat := max (ReplayFork.nameBudget config ops 
 def fullBufferBudget : Nat := max (Pass.bufferBudget config caller ops + 1) (bufferBudget config arith)
 
 theorem full_time (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) :
     Interactive.TimeBound (Fresh.port config.handler.sampler.tape) .unit (Setup.input config)
       (fullProgram config caller ops qH indexFits arith fuel)
       (fullTimeBudget config caller ops qH indexFits budget localBudget arith arithBudget fuel) :=
@@ -72,7 +72,7 @@ theorem full_resources (slots : Nat) (handlerRoom : Handler.nameBudget config op
     (localNames : NamesAccounted caller.continuation.code slots)
     (initialNames : NamesAccounted caller.initialization.code slots)
     (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity)
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity)
     (tape : RandomTape w) (value : (Pass.Initialization.points config).Value)
     (before : State w) (holds : (Setup.input config).Holds value before)
     (registers buffers : Nat) (initialRegisters : RegisterBound before registers)

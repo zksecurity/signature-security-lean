@@ -39,7 +39,7 @@ theorem combinedFits {words : Nat} (small : words ≤ 8 * (first config).encodin
 def rawInput : Representation w (Request config) := (arguments config).prod (first config)
   (combinedFits config (by change (1 + 1) + _ ≤ _; omega))
 def ready (fuel : Nat) (value : Request config) : Prop :=
-  fuel + 1 ≤ config.capacityPred + 1 ∧ value.2.2.val.2.1.length + (2 * fuel + 2) ≤ config.sampler.capacity
+  fuel + 1 ≤ config.capacityPred + 1 ∧ value.2.2.val.2.1.length + (3 * fuel + 2) ≤ config.sampler.capacity
 instance (fuel : Nat) : DecidablePred (ready config fuel) := fun _ => by unfold ready; infer_instance
 def input (fuel : Nat) := (rawInput config).restrict (ready config fuel)
 def prepared := (ReplayRestart.input config.handler.sampler.tape).representation.prod (rawInput config)

@@ -20,12 +20,12 @@ variable [Zero F] [SMul F G] [Sub G] [DecidableEq M] [DecidableEq G] [DecidableE
 def fullProgram (fuel : Nat) : Interactive.Code w :=
   .seq (Initialized.program config caller ops qH indexFits fuel) (code config arith)
 def fullSource (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
     ProbComp config.handler.sampler.tape.scalar.Value :=
   Initialized.source config caller ops qH indexFits fuel tables tapes value >>= source config
 
 theorem full_refines (fuel : Nat) (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) :
     Interactive.Refines (Fresh.port config.handler.sampler.tape) .unit (Setup.input config)
       config.handler.sampler.tape.scalar.representation
       (fullSource config caller ops qH indexFits fuel tables tapes) (fullProgram config caller ops qH indexFits arith fuel) :=
@@ -49,7 +49,7 @@ theorem sample_liftRandom {X : Type} (main : ProbComp X) :
 /-- The whole executed solver has exactly the law of the ROM theorem's DLog
 reduction `ListROM.dlogReduction` on the caller's original program. -/
 theorem fullSource_original (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) (value : (Pass.Initialization.points config).Value) :
     letI := PrivateSampler.Enumerated.sampleable config.sampler
     Subtype.val <$> fullSource config caller ops qH indexFits fuel tables tapes value =
       simulateQ (_root_.Schnorr.LazyROM.sample (F := F))
@@ -75,7 +75,7 @@ include witness in
 /-- The executed solver, observed on the scalar output, is the original
 reduction law; every terminating run decodes. -/
 theorem full_observe_original (tables : fuel + 1 ≤ config.capacityPred + 1)
-    (tapes : 4 * fuel + 3 ≤ config.sampler.capacity) (arith : Arithmetic config)
+    (tapes : 6 * fuel + 3 ≤ config.sampler.capacity) (arith : Arithmetic config)
     (tape : RandomTape w) (value : (Pass.Initialization.points config).Value)
     (before : State w) (holds : (Setup.input config).Holds value before) :
     letI := PrivateSampler.Enumerated.sampleable config.sampler

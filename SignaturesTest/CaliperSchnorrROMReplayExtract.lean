@@ -9,7 +9,7 @@ open SchnorrROMTape SchnorrROM
 private instance : Fact (Nat.Prime 7) := ⟨by decide⟩
 private instance : SMul (ZMod 7) (Word 16) := ⟨fun scalar point => BitVec.ofNat 16 scalar.val * point⟩
 private def params : PrivateSampler.Enumerated.Parameters 16 (ZMod 7) :=
-  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 10 (by decide) (by decide) (by decide)
+  PrivateSampler.Enumerated.Parameters.ofFinEnum 16 (ZMod 7) 18 (by decide) (by decide) (by decide)
 private def config : Signing.Enumerated.Configuration 16 Nat (ZMod 7) (Word 16) where
   sampler := params
   message := Layout.counter 16 256 (by decide) (by decide)
@@ -102,8 +102,8 @@ private def random : CallerPackets.Request config := .inl (.inl ⟨7, by change 
 private def hashed : CallerPackets.Request config := .inl (.inr ⟨(2, 5), by change 2 < 256; decide, trivial⟩)
 private def signed : CallerPackets.Request config := .inr ⟨2, by change 2 < 256; decide⟩
 private instance (value : Schnorr.ListROM.Shared.Tape (ZMod 7)) : Decidable ((Pass.Initialization.tapes config).valid value) := by
-  change Decidable ((value.1.length ≤ 10 ∧ ∀ cell ∈ value.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
-    (value.2.length ≤ 10 ∧ ∀ cell ∈ value.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536))
+  change Decidable ((value.1.length ≤ 18 ∧ ∀ cell ∈ value.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
+    (value.2.length ≤ 18 ∧ ∀ cell ∈ value.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536))
   infer_instance
 private abbrev Store := Schnorr.ListROM.Shared.Store (ZMod 7) (Word 16) Nat
 private abbrev Observation := Option ((Nat × Word 16 × ZMod 7) × ZMod 7) × Store
@@ -112,8 +112,8 @@ private instance (value : Store) : Decidable (config.handler.store.valid value) 
   change Decidable ((((True ∧ True) ∧
     (value.1.2.1.length ≤ 3 ∧ ∀ entry ∈ value.1.2.1, (entry.1.1 < 256 ∧ True) ∧ True) ∧
     (value.1.2.2.length ≤ 3 ∧ ∀ entry ∈ value.1.2.2, (entry.1.1 < 256 ∧ True) ∧ True)) ∧
-    (value.2.1.length ≤ 10 ∧ ∀ cell ∈ value.2.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
-    (value.2.2.length ≤ 10 ∧ ∀ cell ∈ value.2.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536)))
+    (value.2.1.length ≤ 18 ∧ ∀ cell ∈ value.2.1, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536) ∧
+    (value.2.2.length ≤ 18 ∧ ∀ cell ∈ value.2.2, cell.1 < 65536 ∧ True ∧ cell.2.2 < 65536)))
   infer_instance
 
 private theorem nameRoom (done : Bool) (q : CallerPackets.Request config) : Pass.replayNameRoom config (caller done q) operations := by

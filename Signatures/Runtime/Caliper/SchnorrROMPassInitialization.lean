@@ -75,7 +75,7 @@ theorem names (slots : Nat) : NamesAccounted (code config).code slots := ByteRou
 theorem buffers : (code config).code.memBound ≤ 2 := ByteRoute.buffers _ _ _ _ _ _ _ _
 
 def admitted (fuel : Nat) (value : Input config) : Prop :=
-  fuel + 1 ≤ config.capacityPred + 1 ∧ value.1.val.1.length + (2 * fuel + 1) ≤ config.sampler.capacity
+  fuel + 1 ≤ config.capacityPred + 1 ∧ value.1.val.1.length + (3 * fuel + 1) ≤ config.sampler.capacity
 theorem reserved (fuel : Nat) (value : Input config) (room : admitted config fuel value) :
     Handler.Reserved config fuel (store config value).val := by
   change 0 + fuel ≤ _ ∧ 0 + (fuel + 1) ≤ _ ∧ _ ≤ _

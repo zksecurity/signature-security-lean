@@ -11,11 +11,11 @@ variable {w : Nat} {M F G : Type} [Zero F] [DecidableEq M] [DecidableEq G]
 def Reserved (remaining : Nat) (saved : Schnorr.ListROM.Shared.Store F G M) : Prop :=
   saved.1.2.1.length + remaining ≤ config.capacityPred + 1 ∧
     saved.1.2.2.length + (remaining + 1) ≤ config.capacityPred + 1 ∧
-    saved.2.1.length + (2 * remaining + 1) ≤ config.sampler.capacity
+    saved.2.1.length + (3 * remaining + 1) ≤ config.sampler.capacity
 
 omit [Zero F] [DecidableEq M] [DecidableEq G] in
 theorem reserved_empty (remaining : Nat) (generator publicKey : G)
-    (tables : remaining + 1 ≤ config.capacityPred + 1) (tapes : 2 * remaining + 1 ≤ config.sampler.capacity) :
+    (tables : remaining + 1 ≤ config.capacityPred + 1) (tapes : 3 * remaining + 1 ≤ config.sampler.capacity) :
     Reserved config remaining (((generator, publicKey), [], []), [], []) := by
   simp only [Reserved, List.length_nil, Nat.zero_add]
   exact ⟨by omega, tables, tapes⟩
@@ -32,11 +32,11 @@ theorem reserved_ready (remaining : Nat) (value : Input config)
       change value.val.2.1.2.2.length + (remaining + 1 + 1) ≤ _ at live
       omega
     · change value.val.2.2.1.length < config.sampler.capacity
-      change value.val.2.2.1.length + (2 * (remaining + 1) + 1) ≤ _ at tape
+      change value.val.2.2.1.length + (3 * (remaining + 1) + 1) ≤ _ at tape
       omega
-  · change value.val.2.2.1.length + (1 + 1) ≤ config.sampler.capacity
+  · change value.val.2.2.1.length + 3 ≤ config.sampler.capacity
     have tape := room.2.2
-    change value.val.2.2.1.length + (2 * (remaining + 1) + 1) ≤ _ at tape
+    change value.val.2.2.1.length + (3 * (remaining + 1) + 1) ≤ _ at tape
     omega
 
 theorem reserved_final (key : M × G) (saved : Schnorr.ListROM.Shared.Store F G M)
