@@ -41,6 +41,19 @@ run_meta do
       throwError "Resource records must stay out of the public conclusion"
 
 run_meta do
+  unless (← findModuleOf? ``Schnorr.NonzeroNonce.rom_security_asymptotic) == some `Signatures.Schnorr.CaliperNonzeroROMFamilyStatement do
+    throwError "Keep the Caliper nonzero-nonce ROM family statement in its statement file"
+  let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
+  for name in #[``Schnorr.NonzeroNonce.rom_security_asymptotic, ``Schnorr.CaliperROM.nonzero_security,
+      ``Schnorr.CaliperROM.nonzero_reduction_within, ``Schnorr.CaliperROM.Family.nonzero_reduction_nonuniform,
+      ``Schnorr.CaliperROM.Family.Proofs.nonzero_security,
+      ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.Nonzero.security,
+      ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.Nonzero.dlogWithin] do
+    for axiomName in (← collectAxioms name) do
+      unless allowed.contains axiomName do
+        throwError "{name}: unexpected axiom {axiomName}"
+
+run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``Model.forking_inverse, ``Model.negligible_sqrt, ``Model.negligible_of_forking_bound,
       ``NonzeroListROM.NativeSolver.DescriptionInputs.solver_withCaller, ``Schnorr.NonzeroNonce.rom_security,
@@ -131,7 +144,7 @@ example (curve : Model.CyclicCurve) [model : Schnorr.NonzeroNonce.ROMSecurityMod
     (securityParameter : Nat) (queries : Schnorr.QueryAllowance)
     (adversary : Schnorr.NonzeroNonce.UnrestrictedAdversary curve securityParameter queries) :
     Schnorr.NonzeroNonce.romEufCmaGame curve securityParameter adversary =
-      Schnorr.NonzeroNonce.game (model.parameters securityParameter queries).generator adversary.source :=
+      Schnorr.NonzeroNonce.game (curve.generator securityParameter) adversary.source :=
   Schnorr.NonzeroNonce.romEufCmaGame_eq curve securityParameter adversary
 
 run_meta do

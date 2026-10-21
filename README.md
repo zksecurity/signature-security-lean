@@ -12,9 +12,9 @@ linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
 The concrete and nonuniform asymptotic BLS AGM, BLS co-CDH, Schnorr AGM, OOPS and
-Proximity statements now use Caliper, as does the full-field Schnorr ROM statement.
-The nonzero-nonce Schnorr ROM route retains abstract-backend statements and family
-corollaries during migration. The
+Proximity statements now use Caliper, as do both Schnorr ROM statements (full-field
+and nonzero-nonce signing). The abstract-backend ROM statements and family
+corollaries are retained separately. The
 superseded eager-table AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
 Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
 implementation models. Schnorr also has a bit-heap theorem charging replay,
@@ -95,9 +95,18 @@ derives negligible forgery from polynomial component resources and nonuniform
 Caliper DLog hardness; the earlier
 [abstract-backend family theorem](Signatures/Schnorr/GeneralROMFamilyStatement.lean)
 remains separate. The same file now exposes `Schnorr.NonzeroNonce.rom_security`, with
-signing denominator `|F|-1`, derived complete solver resources, and a separate
-[nonuniform family corollary](Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean).
-Its family proof needs the same negligible inverse-field-size assumption.
+signing denominator `|F|-1`, over the same Caliper solver: the executed handler is
+generic in an [executed signing branch](Signatures/Runtime/Caliper/SchnorrROMHandler.lean)
+whose [source law](Signatures/Runtime/Caliper/SchnorrROMHandlerSource.lean) may target
+the full-field or the nonzero-nonce list backend, so the caller, pass, replaying fork
+and extractor laws are proved once for `passWith law.target`; the
+[nonzero-nonce certificate](Signatures/Runtime/Caliper/SchnorrROMNonzeroFullSecurity.lean)
+and [parameters](Signatures/Schnorr/CaliperNonzeroROMParameters.lean) instantiate it, with a
+[family corollary](Signatures/Schnorr/CaliperNonzeroROMFamilyStatement.lean) reusing the
+full-field polynomial resources. The abstract-backend
+[nonuniform family corollary](Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean)
+remains separate; both family proofs need the same negligible inverse-field-size assumption.
+An executed nonzero-nonce signing branch instance is being constructed separately.
 All general-attacker route endpoints are proved and the eager AGM API is retired.
 Full integration checks and the completion audit remain tracked in the plan.
 A conventional machine instantiation is separate from these conditional results.

@@ -3701,9 +3701,16 @@ the source/output conversion for both complete BLS AGM reductions.
    ROM route now use Caliper in their public concrete and polynomial-family
    statements. The full-field ROM model fixes the enumerated handler, point and
    field primitives, caller shape and allowances; its executed solver is the
-   initialized fork followed by the extractor, with shape-level budgets and a
-   width-only bound for the handler's signing code. The nonzero-nonce ROM route
-   still needs a nonzero-nonce Caliper signing handler before the same migration.
+   initialized fork followed by the extractor, with shape-level budgets. The
+   handler is generic in an executed signing branch (`Handler.SigningBranch`) whose
+   source law (`Handler.SigningLaw`) targets any list-backend handler agreeing with
+   `ListROM.handler` on random and hash queries; the whole caller/pass/fork/extractor
+   chain is proved once for `passWith law.target`. The nonzero-nonce public
+   statement and family corollary instantiate the same solver with
+   `Parameters.Nonzero` (`law.target = NonzeroListROM.handler`). Remaining for that
+   route is the executed nonzero-nonce signing branch itself (nonzero scalar draw,
+   zero test against `ops.sub (g, g)`, repair through `ops.scale` and a field
+   addition contract), as a `SigningBranch`/`SigningLaw` instance.
    Prove coverage for the intended Caliper adversary class. A claim about every
    conventional efficient attacker needs a further machine-adequacy result.
 
@@ -3751,8 +3758,9 @@ explicit field primitives and falls back to the charged uniform draw on every
 failure path; its [source law](../Signatures/Runtime/Caliper/SchnorrROMReplayExtractSource.lean)
 is exactly `extractFork` on the observed result, and the
 [full solver](../Signatures/Runtime/Caliper/SchnorrROMReplayExtractFull.lean) has the
-law of `RawTape.fork … >>= liftRandom ∘ extractFork`. The public full-field ROM
-statement and family corollary are migrated. Remaining is the NONZERO route.
+law of `RawTape.fork … >>= liftRandom ∘ extractFork`. Both public ROM
+statements and family corollaries are migrated over the generic signing branch;
+the executed nonzero-nonce branch instance remains.
 
 Use one Lean compiler process at a time. Check operational examples, invalid
 encoding/bounds cases, resource composition and theorem axiom footprints.

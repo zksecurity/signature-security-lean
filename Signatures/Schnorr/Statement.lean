@@ -4,6 +4,7 @@ import Signatures.Schnorr.Proofs.GeneralNonzeroROMSecurity
 import Signatures.Schnorr.ArithmeticStatement
 import Signatures.Schnorr.CaliperAGMFamilyStatement
 import Signatures.Schnorr.CaliperROMFamilyStatement
+import Signatures.Schnorr.CaliperNonzeroROMFamilyStatement
 
 /-! Schnorr security. Fix the curve, security parameter, query allowances and
 execution model, then quantify over the attacker. The independent `Game.lean`
@@ -13,10 +14,11 @@ shows key generation, oracle interaction, verification and freshness.
 is DLog success at that route's complete proved reduction budget, including
 replay for ROM. The local notation expands to the resource-indexed definition;
 a hardness assumption makes it small. ROM requires no algebraic explanations.
-The AGM and full-field ROM routes use actual Caliper programs with derived code
-and total-memory bounds; their polynomial-family theorems are in
-`CaliperAGMFamilyStatement.lean` and `CaliperROMFamilyStatement.lean`. The
-nonzero-nonce ROM route still uses the abstract backend.
+All three routes use actual Caliper programs with derived code and total-memory
+bounds; their polynomial-family theorems are in `CaliperAGMFamilyStatement.lean`,
+`CaliperROMFamilyStatement.lean` and `CaliperNonzeroROMFamilyStatement.lean`. The
+two ROM routes share one executed replaying solver; only the executed signing
+branch's source law differs.
 Proofs, cost formulas and execution contracts remain in supporting files. -/
 
 namespace Schnorr

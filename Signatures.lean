@@ -112,6 +112,10 @@ import Signatures.Schnorr.Proofs.CaliperROM
 import Signatures.Schnorr.CaliperROMFamilyResources
 import Signatures.Schnorr.Proofs.CaliperROMFamily
 import Signatures.Schnorr.CaliperROMFamilyStatement
+import Signatures.Runtime.Caliper.SchnorrROMNonzeroFullSecurity
+import Signatures.Schnorr.CaliperNonzeroROMParameters
+import Signatures.Schnorr.Proofs.CaliperNonzeroROMFamily
+import Signatures.Schnorr.CaliperNonzeroROMFamilyStatement
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement
