@@ -3530,8 +3530,29 @@ Implemented and checked:
   checking duplicates, multiword keys, zero capacity/challenge, query-limit
   boundaries, changed public points, managed/LIVE conflicts, cutoff, external
   state, scratch release, time bounds and theorem axioms.
-  Joining both passes, retaining the first result, fresh-challenge and matching-slot
-  checks, extraction and public full/nonzero ROM migration remain.
+  Joining the first pass, fresh-challenge and matching-slot checks, extraction
+  and public full/nonzero ROM migration remain.
+- [The restart and second pass](../Signatures/Runtime/Caliper/SchnorrROMReplaySecond.lean)
+  now execute as one program with the complete first result retained. The
+  [frame preparation](../Signatures/Runtime/Caliper/SchnorrROMReplaySecondRouting.lean)
+  copies the original request, executes bounded restart, and copies the runtime
+  generator/public key into fresh second-pass caches. Both saved and remaining
+  tapes contain the reset prefix. The second-pass admission predicate follows
+  from the first pass's tape-growth theorem and replay reservation.
+  [Pass buffer bounds](../Signatures/Runtime/Caliper/SchnorrROMPassBuffers.lean)
+  derive a safe outer saved-buffer name from local caller/primitive footprints,
+  independently of fuel. The extra name must fit the word width.
+  [Resource bounds](../Signatures/Runtime/Caliper/SchnorrROMReplaySecondBounds.lean)
+  charge reset, every retained copy and the complete second execution, with
+  stored-code and all-visited-memory accounting tied to that same execution.
+  [Source correspondence](../Signatures/Runtime/Caliper/SchnorrROMReplaySecondSource.lean)
+  identifies the original ROM pass on `RawTape.restart` and retains the first
+  result unchanged. [Execution regressions](../SignaturesTest/CaliperSchnorrROMReplaySecond.lean)
+  cover private/public replay, fresh private sampling, rebuilt caches, cutoff,
+  zero challenge, runtime public points, slot and capacity boundaries, missing
+  replies, external state, scratch release, time bounds and theorem axioms.
+  The first-pass selector/fresh-challenge guard, second-slot check and extraction
+  still need assembly into the complete fork controller.
 
 Remaining integration sequence:
 
@@ -3603,7 +3624,8 @@ the source/output conversion for both complete BLS AGM reductions.
    now derived, and restart returns the original tape layout through charged
    copies. The signature/LIVE selector and cutoff-aware pass-output wrapper now
    have exact original-source correspondence and complete resource bounds.
-   Join both passes with first-result retention, fresh-challenge/matching-slot
+   The restart and second pass now execute together with the complete first
+   result retained. Join the first pass, selector, fresh-challenge/matching-slot
    checks and extraction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row

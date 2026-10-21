@@ -683,6 +683,11 @@ Pinned upstreams:
   [pass-output wrapper](Signatures/Runtime/Caliper/SchnorrROMPassSelectionBounds.lean)
   handles both returned forgeries and cutoff, including union-padding copies,
   time, stored code and every visited memory state.
+  The [restart and second pass](Signatures/Runtime/Caliper/SchnorrROMReplaySecondSource.lean)
+  now execute together, retaining the complete first result. Their
+  [resource bounds](Signatures/Runtime/Caliper/SchnorrROMReplaySecondBounds.lean)
+  charge reset, public-point initialization and every retained copy; the output
+  agrees with the original ROM pass on the original restart tapes.
   The complete two-pass controller and extraction remain part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
