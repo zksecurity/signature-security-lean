@@ -670,6 +670,12 @@ Pinned upstreams:
   include initialization and all visited memory. The
   [source constructor](Signatures/Runtime/Caliper/SchnorrROMPassPresentation.lean)
   derives the source machine/program from local transitions and termination.
+  [Tape-growth bounds](Signatures/Runtime/Caliper/SchnorrROMPassGrowth.lean)
+  limit each pass to `2*fuel + 1` additional saved cells, including early return
+  and cutoff. [Replay admission](Signatures/Runtime/Caliper/SchnorrROMReplayAdmission.lean)
+  derives enough room for the second pass from `4*fuel + 3` cells per tape when
+  starting empty. The [bounded restart](Signatures/Runtime/Caliper/SchnorrROMReplayRestart.lean)
+  executes and charges removal of the extra padding in both reset tapes.
   The complete two-pass controller and extraction remain part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still

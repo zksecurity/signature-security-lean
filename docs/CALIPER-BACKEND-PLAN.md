@@ -3477,6 +3477,30 @@ Implemented and checked:
   theorem axioms. Two-pass restart/control, selection, extraction and public
   full/nonzero ROM migration remain.
 
+- [Relative tape growth](../Signatures/Runtime/Caliper/SchnorrROMPrivateGrowth.lean)
+  is derived for private queries, adaptive sampling and paired scalar draws,
+  including early returns and cutoffs. The
+  [complete pass bound](../Signatures/Runtime/Caliper/SchnorrROMPassGrowth.lean)
+  adds at most `2*fuel + 1` saved cells and never increases the remaining tape.
+  Its execution theorem applies to the same word execution as the existing
+  pass resource bounds.
+  [Replay admission](../Signatures/Runtime/Caliper/SchnorrROMReplayAdmission.lean)
+  derives restart room and second-pass readiness from a reservation of
+  `initialSavedLength + 4*fuel + 3` cells. Starting empty, capacity `4*fuel + 3`
+  for each tape suffices; both stored lists are still counted in memory.
+  The second pass's remaining list has at most `2*fuel + 2` cells in this case.
+  Restart retains the reset prefix in both saved and remaining tapes.
+  [The bounded restart implementation](../Signatures/Runtime/Caliper/SchnorrROMReplayRestart.lean)
+  executes the original reset, then copies both lists into the original-capacity
+  layout, removing only unused padding. The conversion adds at most `8*tapeWords`
+  time and `26*tapeWords + 15` stored words including sequence composition.
+  [Regression coverage](../SignaturesTest/CaliperSchnorrROMReplayRestart.lean)
+  checks chronological/private-cell retention, rejection of insufficient reserve,
+  zero replacement challenges, empty input, exact-capacity output, external state,
+  scratch release, time bounds and theorem axioms. This supplies the admission
+  proof and restart component; retaining the first result around the complete
+  second pass and assembling the selector/guard/extraction controller remain.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in
@@ -3543,8 +3567,9 @@ the source/output conversion for both complete BLS AGM reductions.
    all-exit final-hash reservation and complete word-execution resource bounds.
    Its complete initialized pass now has exact original-source correspondence
    and complete resource bounds. The source machine/program can be derived from
-   local caller transitions. Join both passes with charged restart, selection
-   and extraction next.
+   local caller transitions. Relative tape growth and second-pass admission are
+   now derived, and restart returns the original tape layout through charged
+   copies. Join both passes with first-result retention, selection and extraction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and

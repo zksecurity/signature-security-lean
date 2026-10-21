@@ -1,4 +1,5 @@
 import Signatures.Runtime.Caliper.SchnorrROMPassPresentation
+import Signatures.Runtime.Caliper.SchnorrROMPassGrowth
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource
@@ -204,7 +205,10 @@ run_cmd do
       ``Pass.Initialization.parts_bytes, ``Pass.Initialization.reserved, ``Pass.Initialization.time, ``Pass.Initialization.words,
       ``Pass.refines, ``Pass.preserves_config, ``Pass.source_original, ``Pass.source_tapeRun, ``Pass.observe_original,
       ``Pass.time, ``Pass.words, ``Pass.names, ``Pass.descriptionFits, ``Pass.resources,
-      ``Pass.reply_injective, ``Pass.representedReply_eq, ``Pass.Caller.Source.ofCaller_run, ``original_sampler] do
+      ``Pass.reply_injective, ``Pass.representedReply_eq, ``Pass.Caller.Source.ofCaller_run, ``original_sampler,
+      ``PrivateHandler.tape_lengths, ``PrivateSampler.Service.tape_lengths, ``PrivateSampler.Pair.tape_lengths,
+      ``Handler.tape_lengths, ``CallerHandler.tape_lengths, ``Caller.tape_lengths, ``Terminal.tape_lengths,
+      ``Pass.finish_tape_lengths, ``Pass.tape_lengths, ``Pass.execution_tape_lengths] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 
