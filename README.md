@@ -676,6 +676,13 @@ Pinned upstreams:
   derives enough room for the second pass from `4*fuel + 3` cells per tape when
   starting empty. The [bounded restart](Signatures/Runtime/Caliper/SchnorrROMReplayRestart.lean)
   executes and charges removal of the extra padding in both reset tapes.
+  The [executed fork-point selector](Signatures/Runtime/Caliper/SchnorrROMSelectionSource.lean)
+  verifies the signature and finds its chronological LIVE position, with exact
+  agreement to the original selector. Its charged scan traverses only stored
+  entries and needs no finite message domain. The
+  [pass-output wrapper](Signatures/Runtime/Caliper/SchnorrROMPassSelectionBounds.lean)
+  handles both returned forgeries and cutoff, including union-padding copies,
+  time, stored code and every visited memory state.
   The complete two-pass controller and extraction remain part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still

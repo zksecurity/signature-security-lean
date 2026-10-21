@@ -3499,7 +3499,39 @@ Implemented and checked:
   zero replacement challenges, empty input, exact-capacity output, external state,
   scratch release, time bounds and theorem axioms. This supplies the admission
   proof and restart component; retaining the first result around the complete
-  second pass and assembling the selector/guard/extraction controller remain.
+  second pass and assembling the full fork/extraction controller remain.
+
+- The [chronological index scan](../Signatures/Runtime/Caliper/ChronologicalIndex.lean)
+  traverses a newest-first stored list and returns the same oldest-match ordinal
+  as searching its reverse. It resets the counter on a match and increments on
+  other entries. Iteration-specific counter bounds prove no word overflow;
+  empty and missing cases return the list length with a false flag. Its code,
+  copies, encoded-key comparisons and scan are charged. Only represented values
+  and stored capacity are bounded; the source key domain remains arbitrary.
+  The [Schnorr selector](../Signatures/Runtime/Caliper/SchnorrROMSelection.lean)
+  executes two scalar products, subtraction and encoded point equality, then
+  scans LIVE and checks the hash-query ordinal. It rejects invalid signatures,
+  absent keys and out-of-range ordinals. The
+  [source bridge](../Signatures/Runtime/Caliper/SchnorrROMSelectionSource.lean)
+  proves agreement with the existing `selectValue`, `forkPoint` and `selectPass`,
+  including duplicate keys and conflicts with the unused managed cache.
+  [Selection resources](../Signatures/Runtime/Caliper/SchnorrROMSelectionMemory.lean)
+  account for time, stored code, dense names, caller-owned initial data and all
+  visited memory in that same execution. The
+  [pass-output wrapper](../Signatures/Runtime/Caliper/SchnorrROMPassSelection.lean)
+  executes cutoff rejection or selection of the returned forgery. Its input
+  bytes equal the complete pass's output bytes. Moving the union padding and
+  dispatching have [derived resource bounds](../Signatures/Runtime/Caliper/SchnorrROMPassSelectionBounds.lean);
+  the code bound includes both alternatives.
+  Its source result agrees with original selection on the observed optional
+  forgery, and cutoff yields no index. Regressions execute
+  [the generic scan](../SignaturesTest/CaliperChronologicalIndex.lean) and
+  [the complete selector](../SignaturesTest/CaliperSchnorrROMSelection.lean),
+  checking duplicates, multiword keys, zero capacity/challenge, query-limit
+  boundaries, changed public points, managed/LIVE conflicts, cutoff, external
+  state, scratch release, time bounds and theorem axioms.
+  Joining both passes, retaining the first result, fresh-challenge and matching-slot
+  checks, extraction and public full/nonzero ROM migration remain.
 
 Remaining integration sequence:
 
@@ -3569,7 +3601,10 @@ the source/output conversion for both complete BLS AGM reductions.
    and complete resource bounds. The source machine/program can be derived from
    local caller transitions. Relative tape growth and second-pass admission are
    now derived, and restart returns the original tape layout through charged
-   copies. Join both passes with first-result retention, selection and extraction next.
+   copies. The signature/LIVE selector and cutoff-aware pass-output wrapper now
+   have exact original-source correspondence and complete resource bounds.
+   Join both passes with first-result retention, fresh-challenge/matching-slot
+   checks and extraction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and
