@@ -41,6 +41,20 @@ run_meta do
       throwError "Resource records must stay out of the public conclusion"
 
 run_meta do
+  unless (← findModuleOf? ``Schnorr.rom_security_asymptotic) == some `Signatures.Schnorr.CaliperROMFamilyStatement do
+    throwError "Keep the Caliper ROM family statement in its statement file"
+  let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
+  for name in #[``Schnorr.rom_security_asymptotic, ``Schnorr.CaliperROM.security, ``Schnorr.CaliperROM.reduction_within,
+      ``Schnorr.CaliperROM.Family.reduction_nonuniform, ``Schnorr.CaliperROM.Family.Proofs.security,
+      ``Schnorr.CaliperROM.Family.PolynomialResources.solverTime, ``Schnorr.CaliperROM.Family.PolynomialResources.solverCode,
+      ``Schnorr.CaliperROM.Family.PolynomialResources.solverMemory,
+      ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.security, ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.dlogWithin,
+      ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.time_eq, ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.code_eq] do
+    for axiomName in (← collectAxioms name) do
+      unless allowed.contains axiomName do
+        throwError "{name}: unexpected axiom {axiomName}"
+
+run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``Model.forking_inverse, ``Model.negligible_sqrt, ``Model.negligible_of_forking_bound,
       ``NativeSolver.DescriptionInputs.solver_withCaller, ``Schnorr.rom_security,

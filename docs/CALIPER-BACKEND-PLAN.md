@@ -3697,9 +3697,13 @@ the source/output conversion for both complete BLS AGM reductions.
    by the target program, also need implementations; they are not free consequences
    of the field/G₁/G₂ interface.
 5. Migrate the remaining Schnorr ROM security models.
-   BLS AGM, BLS co-CDH, Schnorr AGM, OOPS and Proximity now use Caliper in their
-   public concrete and polynomial-family statements. Establish the ROM routes'
-   parameter-indexed bounds using polynomial word widths and routine bounds.
+   BLS AGM, BLS co-CDH, Schnorr AGM, OOPS, Proximity and the full-field Schnorr
+   ROM route now use Caliper in their public concrete and polynomial-family
+   statements. The full-field ROM model fixes the enumerated handler, point and
+   field primitives, caller shape and allowances; its executed solver is the
+   initialized fork followed by the extractor, with shape-level budgets and a
+   width-only bound for the handler's signing code. The nonzero-nonce ROM route
+   still needs a nonzero-nonce Caliper signing handler before the same migration.
    Prove coverage for the intended Caliper adversary class. A claim about every
    conventional efficient attacker needs a further machine-adequacy result.
 
@@ -3741,9 +3745,14 @@ stored-code, descriptor, buffer and visited-memory bounds from the public inputs
 No preencoded empty tapes are supplied as solver input. Execution regressions
 cover exact initialization bytes and complete initialized branches, including
 fresh first-pass hashing and a positive selected ordinal.
-Remaining integration is extraction (including its uniform scalar draw on
-failure) composed after the fork, and both FULL and NONZERO public concrete and
-polynomial-family statements.
+The [executed extractor](../Signatures/Runtime/Caliper/SchnorrROMReplayExtract.lean)
+runs `EncodedEquality` on both commitments and challenges, divides through
+explicit field primitives and falls back to the charged uniform draw on every
+failure path; its [source law](../Signatures/Runtime/Caliper/SchnorrROMReplayExtractSource.lean)
+is exactly `extractFork` on the observed result, and the
+[full solver](../Signatures/Runtime/Caliper/SchnorrROMReplayExtractFull.lean) has the
+law of `RawTape.fork … >>= liftRandom ∘ extractFork`. The public full-field ROM
+statement and family corollary are migrated. Remaining is the NONZERO route.
 
 Use one Lean compiler process at a time. Check operational examples, invalid
 encoding/bounds cases, resource composition and theorem axiom footprints.

@@ -12,8 +12,9 @@ linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
 The concrete and nonuniform asymptotic BLS AGM, BLS co-CDH, Schnorr AGM, OOPS and
-Proximity statements now use Caliper. Schnorr ROM retains abstract-backend statements
-and family corollaries during migration. The
+Proximity statements now use Caliper, as does the full-field Schnorr ROM statement.
+The nonzero-nonce Schnorr ROM route retains abstract-backend statements and family
+corollaries during migration. The
 superseded eager-table AGM wrappers are retired; see the [API migration guide](docs/API-MIGRATION.md).
 Arithmetic-source BLS co-CDH and Schnorr statements remain for their distinct
 implementation models. Schnorr also has a bit-heap theorem charging replay,
@@ -81,11 +82,19 @@ Local implementation/resource contracts and algebraic explanations remain explic
 The earlier [abstract-backend family theorem](Signatures/Schnorr/GeneralAGMFamilyStatement.lean)
 remains separate. The same public file
 also exposes `Schnorr.rom_security` for unrestricted attackers, with the full-field
-nonce signing/forking losses and a square-root DLog bound. Its complete replaying
-solver has derived runtime/code bounds, and its
-[nonuniform family corollary](Signatures/Schnorr/GeneralROMFamilyStatement.lean)
-concludes negligible forgery from polynomial original resources in one fixed
-backend. The same file now exposes `Schnorr.NonzeroNonce.rom_security`, with
+nonce signing/forking losses and a square-root DLog bound. Its DLog term ranges over
+the fixed Caliper class at the budgets of the actual executed replaying solver:
+the [parameters](Signatures/Schnorr/CaliperROMParameters.lean) fix the enumerated
+handler, point operations, extractor field primitives, caller shape and allowances;
+the [shape-level budgets](Signatures/Runtime/Caliper/SchnorrROMFullShape.lean) are
+attacker-independent and agree with the caller-indexed ones by `rfl`; the
+[solver certificate](Signatures/Runtime/Caliper/SchnorrROMFullSecurity.lean) derives
+class membership, challenge coverage and the forking bound. Its
+[polynomial-family corollary](Signatures/Schnorr/CaliperROMFamilyStatement.lean)
+derives negligible forgery from polynomial component resources and nonuniform
+Caliper DLog hardness; the earlier
+[abstract-backend family theorem](Signatures/Schnorr/GeneralROMFamilyStatement.lean)
+remains separate. The same file now exposes `Schnorr.NonzeroNonce.rom_security`, with
 signing denominator `|F|-1`, derived complete solver resources, and a separate
 [nonuniform family corollary](Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean).
 Its family proof needs the same negligible inverse-field-size assumption.
