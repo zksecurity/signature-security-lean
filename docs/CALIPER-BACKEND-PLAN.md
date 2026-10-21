@@ -3554,6 +3554,24 @@ Implemented and checked:
   The first-pass selector/fresh-challenge guard, second-slot check and extraction
   still need assembly into the complete fork controller.
 
+- The [fresh-challenge guard](../Signatures/Runtime/Caliper/SchnorrROMFreshGuardBounds.lean)
+  now has constructed Caliper code for the original predicate
+  `(RawTape.values (.inr ()) saved)[slot]? = some replacement`.
+  The [source proof](../Signatures/Runtime/Caliper/SchnorrROMFreshGuardLayout.lean)
+  counts only tag-1 public cells in source order and preserves the first selected
+  cell's comparison result. Private cells do not consume the runtime slot;
+  missing slots compare unequal. The final forgery's challenge is not substituted
+  for this lookup. Equality executes `EncodedEquality` over the complete scalar
+  encoding, with no finite-domain enumeration. The saturating countdown and
+  fixed accumulator preserve their represented ranges. Explicit polynomial time
+  and stored-code bounds, dense names, scratch bounds, description validity and
+  every visited memory state follow from the emitted code, including preparation
+  copies. [Execution regressions](../SignaturesTest/CaliperSchnorrROMFreshGuard.lean)
+  cover interleaved private/public draws, missing and word-limit slots, repeated
+  and zero challenges, full capacity, multiword scalar comparisons, invalid
+  encodings, external state, scratch release, time and theorem axioms.
+  This guard still needs integration with the first-pass selector and fresh draw.
+
 Remaining integration sequence:
 
 The caller completion bound is now proved in
@@ -3628,8 +3646,9 @@ the source/output conversion for both complete BLS AGM reductions.
    result retained. Second-pass selection and comparison with the saved slot
    now execute in that same branch, retaining both pass results, with exact
    optional-selector agreement and derived time, code, name and visited-memory
-   bounds. Join the first pass, retained first selector, fresh-challenge sampling
-   and guard, and extraction next.
+   bounds. The original public-cell fresh-challenge rejection guard now also
+   has constructed code and complete resources. Join the first pass, retained
+   first selector, fresh-challenge sampling, the guard and extraction next.
    Carry this composition through the remaining Schnorr ROM reduction. The complete
    extractors and terminal branches above execute chronological coefficient-row
    preparation/evaluation, the retained outer frames, numerator addition and

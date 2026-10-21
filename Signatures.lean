@@ -89,6 +89,7 @@ import Signatures.Runtime.Caliper.SchnorrROMReplayAdmission
 import Signatures.Runtime.Caliper.SchnorrROMPassSelectionBounds
 import Signatures.Runtime.Caliper.SchnorrROMReplaySecondSource
 import Signatures.Runtime.Caliper.SchnorrROMReplaySecondSelectionBounds
+import Signatures.Runtime.Caliper.SchnorrROMFreshGuardBounds
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Proofs.CaliperAGMFamily
 import Signatures.OOPS.CaliperAGMFamilyStatement

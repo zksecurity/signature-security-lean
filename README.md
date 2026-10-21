@@ -693,8 +693,11 @@ Pinned upstreams:
   retaining both pass outputs. Cutoff, failed verification and missing LIVE entries
   cannot match slot zero. The [composed second branch](Signatures/Runtime/Caliper/SchnorrROMReplaySecondSelectionBounds.lean)
   includes restart, replay, selection and comparison in the same resource account.
-  The first-pass controller, fresh-challenge guard and extraction remain part of
-  the ROM migration.
+  The [fresh-challenge rejection guard](Signatures/Runtime/Caliper/SchnorrROMFreshGuardBounds.lean)
+  now executes the original saved-tape comparison, counting only public cells.
+  Encoded scalar equality and all scan copies have explicit polynomial time,
+  stored-code and visited-memory bounds. The first-pass controller, fresh draw,
+  guard integration and extraction remain part of the ROM migration.
   [Remaining integration work](docs/CALIPER-BACKEND-PLAN.md) includes completing
   Schnorr ROM replay/composition and broader caller coverage. Schnorr ROM still
   uses its explicit abstract-backend contracts pending migration. Curve-specific
