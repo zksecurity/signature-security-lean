@@ -40,8 +40,8 @@ The [public BLS statements](Signatures/BLS/Statement.lean) now distinguish
 `agm_security` (an algebraic attacker, twice one DLog bound plus `1/|F|`) from
 `cocdh_security` (an unrestricted attacker, Coron factor times a co-CDH bound).
 Each takes the curve, security parameter, query allowances, and adversary.
-The DLog time allowance is the maximum of the two derived reduction times;
-`agm_security_two_budgets` preserves the sharper bound using each time separately.
+The DLog time allowance is the maximum of the two derived reduction times
+(`Proofs.agm_security` keeps them separate).
 The [model and game definitions](Signatures/BLS/GeneralSecurityModel.lean) expose
 attacker resources, primitive/encoding contracts, and explicit hardness suprema.
 The [proofs](Signatures/BLS/Proofs/GeneralSecurity.lean) combine the original

@@ -11,7 +11,7 @@ namespace BLS
 abbrev SecurityModel := AGMSecurityModel
 
 /-- Compatibility name preserving the original two-budget AGM-to-DLog theorem. -/
-alias security := agm_security_two_budgets
+alias security := Proofs.agm_security
 
 /-- Compatibility name for the AGM game. -/
 noncomputable abbrev eufCmaGame := agmEufCmaGame

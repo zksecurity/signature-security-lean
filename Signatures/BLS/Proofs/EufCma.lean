@@ -278,7 +278,7 @@ theorem eufCma_eq_rom (adversary : EufCma.Adversary (signature curve securityPar
       (simulateQ (standard curve securityParameter secret) (transcript curve securityParameter adversary secret)).run (∅, []) >>=
         fun result => pure (!result.2.2.wasQueried result.1.1 && decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.1 g₂ =
           BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.2 (secret • g₂))) := by
-    simp only [eufCma, EufCma.game, SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def,
+    simp only [eufCma_eq_game, EufCma.game, SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def,
       RandomOracle.run, keygen, verify, bind_assoc, pure_bind, simulateQ_bind, simulateQ_pure, StateT.run'_eq,
       StateT.run_bind, StateT.run_pure, simulateQ_romImpl_liftM_run, map_bind, map_pure, bind_map_left, standard_run,
       standard_transcript]

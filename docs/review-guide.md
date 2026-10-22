@@ -188,7 +188,7 @@ Schnorr endpoints retain their distinct implementation scopes.
 
 ### BLS: query-only lazy AGM
 
-- [Statement](../Signatures/BLS/Statement.lean): `BLS.agm_security_two_budgets`.
+- [Statement](../Signatures/BLS/Statement.lean): `BLS.agm_security` (two separate budgets: `BLS.Proofs.agm_security`).
 - [Source game](../Signatures/BLS/Spec/LazyAGM.lean) and [proof](../Signatures/BLS/Proofs/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F|`, with hardness at each derived solver budget.
 - Arbitrary message types; measured all-path execution, encoding and coefficient-size bounds.

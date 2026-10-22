@@ -59,10 +59,48 @@ noncomputable def signature : EufCma.Scheme Message 𝔾₁ Message 𝔾₂ 𝔽
     return decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
       BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey)
 
-/-- Standard EUF-CMA for BLS: the shared experiment at `signature`. -/
+/-- How the attacker's requests are answered. `random n` draws a uniform element of
+`Fin (n + 1)`; `hash m` returns `H(m)` from the shared lazy oracle; `sign m` returns
+`x • H(m)` and records `m` as signed. -/
+noncomputable def oracle (secret : 𝔽) :
+    QueryImpl (ROM.advSpec Message 𝔾₁) (WriterT (QueryLog (Message →ₒ 𝔾₁)) (RandomOracle.Computation Message 𝔾₁))
+  | ROM.Request.random n => liftM (RandomOracle.random (Input := Message) (Output := 𝔾₁) n)
+  | ROM.Request.hash message => liftM (RandomOracle.hash (Output := 𝔾₁) message)
+  | ROM.Request.sign message => do
+      let signature := secret • (← liftM (RandomOracle.hash (Output := 𝔾₁) message))
+      tell [⟨message, signature⟩]
+      return signature
+
+/-- Standard EUF-CMA for BLS: generate `pk = x • g₂`, run the attacker against the oracle,
+hash the forged message through the same oracle, and accept a valid signature on a message
+that was never signed. -/
 noncomputable def eufCma
     (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) : ProbComp Bool :=
-  EufCma.game adversary
+  RandomOracle.run do
+    let secret ← RandomOracle.sample 𝔽
+    let publicKey := secret • g₂
+    let ((message, forged), signingLog) ←
+      (simulateQ (oracle curve securityParameter secret) (adversary.main publicKey)).run
+    let hash ← RandomOracle.hash message
+    return !signingLog.wasQueried message &&
+      decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forged g₂ = BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey)
+
+omit [DecidableEq Message] in
+theorem oracle_eq (secret : 𝔽) :
+    oracle curve securityParameter (Message := Message) secret =
+      EufCma.oracle (signature curve securityParameter) (secret • g₂) secret := by
+  funext request
+  rcases request with (n | message) | message
+  · simp [oracle, EufCma.oracle, ROM.Request.random, RandomOracle.random]
+  · simp [oracle, EufCma.oracle, ROM.Request.hash, RandomOracle.hash]
+  · show WriterT.run _ = WriterT.run _
+    simp [SignatureAlg.signingOracle, signature, RandomOracle.hash, WriterT.run_tell]
+
+/-- `eufCma` is the shared experiment at `signature`. -/
+theorem eufCma_eq_game (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) :
+    eufCma curve securityParameter adversary = EufCma.game adversary := by
+  rw [EufCma.game_eq, eufCma]
+  simp only [oracle_eq, signature, bind_assoc, pure_bind]
 
 /-- A win requires validity and freshness. -/
 noncomputable def agm

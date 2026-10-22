@@ -27,7 +27,7 @@ run_meta do
 -- curve/security parameter/query allowances/adversary. Resource proofs stay in the records.
 run_meta do
   for (name, expected) in #[( ``BLS.GeneralAGM.security, 2), (``BLS.GeneralAGM.Family.security, 3),
-      (``BLS.agm_security, 4), (``BLS.agm_security_two_budgets, 4), (``BLS.cocdh_security, 4)] do
+      (``BLS.agm_security, 4), (``BLS.cocdh_security, 4)] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       let mut explicitCount := 0
       for param in params do
@@ -40,7 +40,7 @@ run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``Model.le_advantageBound, ``Model.hardWithin_advantageBound, ``Model.advantageBound_le,
       ``challenge_size, ``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.Family.security,
-      ``BLS.agm_security, ``BLS.agm_security_two_budgets, ``BLS.dlogSuccessBound_mono,
+      ``BLS.agm_security, ``BLS.dlogSuccessBound_mono,
       ``BLS.agmEufCmaGame_eq, ``BLS.GeneralAGM.reductions_within, ``BLS.CaliperAGM.reductions_within,
       ``BLS.AlgebraicAdversary.query_allowances, ``BLS.cocdh_security, ``BLS.cocdhEufCmaGame_eq,
       ``BLS.GeneralCoCDH.reduction_within, ``BLS.UnrestrictedAdversary.query_allowances] do
@@ -51,7 +51,7 @@ run_meta do
 run_meta do
   for name in #[``security_of_resources, ``BLS.GeneralAGM.security, ``BLS.GeneralAGM.reductions_within,
       ``BLS.GeneralAGM.Family.security, ``BLS.GeneralAGM.Parameters.mk, ``BLS.GeneralAGM.AlgebraicAdversary.mk,
-      ``BLS.agm_security, ``BLS.agm_security_two_budgets,
+      ``BLS.agm_security,
       ``BLS.AGMSecurityModel.mk, ``BLS.CaliperAGM.Parameters.mk, ``BLS.CaliperAGM.AlgebraicAdversary.mk,
       ``BLS.CaliperAGM.reductions_within, ``BLS.ExecutionModel.mk, ``Model.PairingCurve.mk,
       ``BLS.cocdh_security, ``BLS.CoCDHSecurityModel.mk, ``BLS.GeneralCoCDH.Parameters.mk,
@@ -109,7 +109,7 @@ run_meta do
 
 -- Both public routes have four explicit inputs and one route-specific model.
 run_meta do
-  for name in #[``BLS.agm_security, ``BLS.agm_security_two_budgets, ``BLS.cocdh_security] do
+  for name in #[``BLS.agm_security, ``BLS.cocdh_security] do
     unless (← findModuleOf? name) == some `Signatures.BLS.Statement do
       throwError "{name} must be defined in Signatures.BLS.Statement"
     forallTelescope (← getConstInfo name).type fun params _ => do

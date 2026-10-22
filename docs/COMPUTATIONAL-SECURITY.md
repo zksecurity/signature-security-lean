@@ -107,7 +107,7 @@ which supply the DLog premises in the
 The [public statement](../Signatures/BLS/Statement.lean) takes the curve,
 security parameter, query allowances, and algebraic adversary. Its main bound is
 twice the maximum DLog advantage at the larger derived reduction time plus `1/|F|`.
-`agm_security_two_budgets` preserves the sharper sum at the two separate times.
+`BLS.Proofs.agm_security` keeps the sharper sum at the two separate times.
 The common time bound changes neither the backend nor its input/code limits. The
 execution/resource model, actual forgery experiment and explicit DLog-success
 supremum are in [GeneralSecurityModel.lean](../Signatures/BLS/GeneralSecurityModel.lean).
@@ -327,7 +327,7 @@ The hardness assertion is a theorem hypothesis, not a custom axiom or a proved p
 | Route | Conditional theorem | Numerical bound |
 | --- | --- | --- |
 | BLS co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `coronFactor qS * epsilon` |
-| BLS AGM | [`BLS.agm_security_two_budgets`](../Signatures/BLS/Statement.lean) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
+| BLS AGM | [`BLS.agm_security`](../Signatures/BLS/Statement.lean) (two budgets: `BLS.Proofs.agm_security`) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
 | OOPS AGM | [`OOPS.agm_security_two_budgets`](../Signatures/OOPS/Statement.lean) | same two-branch bound |
 | Proximity AGM | [`Proximity.agm_security_two_budgets`](../Signatures/Proximity/Statement.lean) | two-branch bound plus actual fresh-collision probability |
 | Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | `delta * (delta/(qH+1) - 1/card F) <= epsilon`, where `delta = Adv - qS*(qS+qH)/card F` |

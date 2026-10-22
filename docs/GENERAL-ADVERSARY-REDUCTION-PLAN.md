@@ -202,7 +202,7 @@ resource class separately from the curve. Its
 keep backend contracts and actual attacker resources inspectable. The main RHS is
 `2 * dlogSuccessBound(agmReductionTime) + 1/|F|`, using the maximum of the two
 derived solver times. The sharper sum of the two separately budgeted terms is
-`agm_security_two_budgets`. The DLog bound is the supremum over
+`BLS.Proofs.agm_security` (OOPS and Proximity keep `agm_security_two_budgets`). The DLog bound is the supremum over
 all solvers within the fixed backend's code/input/time limits, not an assumed
 advantage of the constructed reduction. Numerical hardness bounds are separate.
 The same public interface is implemented for all seven routes, with OOPS's degree
@@ -277,7 +277,7 @@ Public-statement simplification, 2026-10-14: the main `agm_security` now states
 `agmReductionTime` is exactly the maximum of the good and bad native solver
 times. Monotonicity of the DLog success supremum is proved by enlarging only the
 runtime allowance of the same executable; the backend, input cap and stored-code
-cap stay fixed. `agm_security_two_budgets` preserves the sharper original bound,
+cap stay fixed. `BLS.Proofs.agm_security` preserves the sharper original bound,
 and the compatibility name `BLS.security` retains that original type.
 Both main public statements omit the internal resource-record binding; co-CDH
 uses `cocdhReductionTime`, exactly the already-proved complete Coron runtime.
@@ -3534,7 +3534,8 @@ standard. This is targeted verification, not the final full-suite result.
 
 The BLS/OOPS/Proximity `*_lazy_agm_of_dlog_machine_hardness` wrappers are removed,
 as is BLS's `ArithmeticAttackerCertificate` alias. Their public replacements are
-`agm_security` and `agm_security_two_budgets` in each scheme's `Statement.lean`.
+`agm_security` in each scheme's `Statement.lean` (OOPS and Proximity also keep
+`agm_security_two_budgets`; BLS's two-budget form is `BLS.Proofs.agm_security`).
 The OOPS/Proximity `ArithmeticStatement` paths now import the current public
 statements without restoring retired declarations. The arithmetic-source BLS
 co-CDH theorem and Schnorr's separately scoped endpoints remain.

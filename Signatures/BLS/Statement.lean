@@ -51,17 +51,4 @@ theorem cocdh_security
 
 end CoCDH
 
-/-- Optional sharper refinement: give the two DLog solvers separate budgets. -/
-theorem agm_security_two_budgets
-    (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
-    (securityParameter : Nat)
-    (queries : QueryAllowance)
-    (adversary : AlgebraicAdversary curve securityParameter queries) :
-    let resources := model.parameters securityParameter queries
-    𝒟[agmEufCmaGame curve securityParameter adversary] {true} ≤
-      dlogSuccessBound curve securityParameter queries resources.goodTime +
-      dlogSuccessBound curve securityParameter queries resources.badTime +
-      1 / (curve.order securityParameter : ENNReal) :=
-  Proofs.agm_security curve securityParameter queries adversary
-
 end BLS

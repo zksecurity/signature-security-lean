@@ -306,7 +306,7 @@ public theorem is `BLS.agm_security`, with curve, security parameter, query allo
 and algebraic adversary as its four explicit inputs. `BLS.cocdh_security` gives
 the unrestricted co-CDH route in the same form, with its own attacker/model class.
 The main AGM bound is twice the DLog advantage at the larger derived reduction
-time plus `1/|F|`; `BLS.agm_security_two_budgets` retains the sharper separate times.
+time plus `1/|F|` (`Proofs.agm_security` keeps the two reduction times separate).
 Parameters expose query/resource limits and primitive contracts in separate
 `AGMSecurityModel` and `CoCDHSecurityModel` records,
 while the adversary supplies its actual general realization. The AGM asymptotic

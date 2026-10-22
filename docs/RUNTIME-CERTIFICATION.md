@@ -114,7 +114,7 @@ parameter, query allowances, and algebraic adversary. Its
 the execution/resource model, actual forgery experiment, and DLog-success
 supremum. The separate proof combines the probability inequality, derived
 executable witnesses, and supremum inclusions. The main bound uses a common
-derived time allowance; `agm_security_two_budgets` preserves the sharper bound.
+derived time allowance; `BLS.Proofs.agm_security` keeps the two times separate.
 [Polynomial-family closure](../Signatures/Runtime/BackendLazyAGMPolynomial.lean)
 now covers both full runtimes and stored-code bounds. The
 [family certificates](../Signatures/BLS/GeneralAGMFamilyResources.lean) use the
