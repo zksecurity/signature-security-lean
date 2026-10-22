@@ -9,6 +9,15 @@ The endpoints have checked axiom footprints without `sorryAx`. The pairing-based
 include both DLog reductions and `1/|F|`; Proximity also includes the probability of a fresh
 linear collision. Schnorr AGM has loss `(qH+1)/|F| + qS*(qS+qH)/|F|`.
 
+One readable [EUF-CMA experiment](Signatures/Model/EufCma.lean) serves every scheme: a
+scheme is key generation, signing and verification over the shared lazy random oracle,
+and the experiment (VCVio's `unforgeableExperiment` in the random-oracle model) is written
+out with its oracle. The Schnorr games are this experiment at `Schnorr.signature` and
+`NonzeroNonce.signature` by unfolding ([proof](Signatures/Schnorr/Proofs/Game.lean));
+[BLS](Signatures/BLS/Game.lean) is a scheme too, and its exponent-keeping readable game,
+the one the co-CDH theorem is about, has the [same distribution](Signatures/BLS/Proofs/EufCma.lean)
+as the experiment because the generator identifies exponents with hash points.
+
 The general-attacker statements derive complete reduction runtime and stored-code
 bounds from the attacker's measured resources and explicit backend contracts.
 The concrete and nonuniform asymptotic BLS AGM, BLS co-CDH, Schnorr AGM, OOPS and
