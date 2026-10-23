@@ -29,7 +29,7 @@
   "Examples/Retry.lean": "03e9d557a2eacb1171380a814e3d4083371e9acd7e1f635e5caed2f271edab89",
   "Examples.lean": "c5d4a81e3b745f3b09b6085f558ff544b0d61ca5538fb601fa5458b5dbbc955c",
   "README.md": "d012062286469de60d74ed894cab1c1a17dc8ec3c1bca7697b37fcbaa219f967",
-  "UPSTREAM.md": "eac3e658549d2a88addc727bff933d0b865e5721930c7b8157993b059a34ca3c",
+  "UPSTREAM.md": "4dd609fbec962699ef38cbdc51b4590fcf7b5cee317a40141bf21e456509a72b",
   "assets/logo.svg": "13c8d0b05c46079c6a7cc45dff980f3c950260e0d7b65639a9bd6ce268622312",
   "docs/00-overview.md": "747aa48409b9c6437d7ba066be659be0c8f40a3f091ab23a294a9bc7eabdd551",
   "docs/01-machine-model.md": "b22b3cd8b8bb830fad01726572cea33987782141344c2dc77ebdc333d7486442",
@@ -38,6 +38,6 @@
   "docs/04-compilation.md": "82f9977b3ed2fab92e06fd05d78522f47cb24dcb433d58707dbb8caa0ac00554",
   "docs/05-limitations.md": "d6fd9d6c0402d3f66e9c237cfd743b3e9b78868a63bb5ddfba0fde09710a9a26",
   "docs/06-randomness.md": "46cb368b3ceaa256449bd5f9c1527e3d24a0639d4b19c42d5104095031d4adfc",
-  "lakefile.lean": "90fb416e25d4ca27a751f80807f18a30b7bbf71b9b07e74be81a6f0c35a3764a",
+  "lakefile.lean": "f52fb63fef702a43263133cdd46aed3bb50d08dfa50de0a693a70d6fcfc3f12e",
   "lean-toolchain": "8733782dc070a99b312039cda424f601b80f3be6f6f512627da5ba25adc27632"
 }

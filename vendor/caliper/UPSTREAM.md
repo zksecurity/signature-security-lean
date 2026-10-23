@@ -10,6 +10,8 @@ Lean 4.34.0 port needed to preserve the same definitions and theorems:
 - pin Mathlib to immutable `v4.34.0` revision
   `5ed2965256430c3649e86755f9576b54eca72435`;
 - use Mathlib's new automatic `IsProbabilityMeasure (Measure.map ...)` instance;
-- make the summand function explicit in one `ENNReal.le_tsum` proof.
+- make the summand function explicit in one `ENNReal.le_tsum` proof;
+- drop the `lean_lib Examples` declaration (unused here; its root collided with
+  VCVio's `Examples` library and broke `lake build`).
 
 No cost-model, execution, scoring, or resource definition was changed.
