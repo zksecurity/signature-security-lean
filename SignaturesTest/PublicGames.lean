@@ -39,7 +39,7 @@ example (curve : Model.PairingCurve) [BLS.AGMSecurityModel curve]
 
 example (curve : Model.PairingCurve) [BLS.CoCDHSecurityModel curve]
     (n : Nat) (q : BLS.QueryAllowance) (A : BLS.UnrestrictedAdversary curve n q) :
-    BLS.cocdhEufCmaGame curve n A = BLS.Game.eufCma curve n ⟨A.source⟩ := rfl
+    BLS.cocdhEufCmaGame curve n A = BLS.Game.eufCma curve n A.source := rfl
 
 example (curve : Model.PairingCurve) [OOPS.AGMSecurityModel curve]
     (n degree : Nat) (q : OOPS.QueryAllowance) (A : OOPS.AlgebraicAdversary curve n degree q) :

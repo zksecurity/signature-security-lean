@@ -29,6 +29,9 @@ local notation "𝔾₂" => curve.KeyGroup securityParameter
 local notation "𝔾ₜ" => curve.TargetGroup securityParameter
 local notation "g₁" => curve.generator securityParameter
 local notation "g₂" => curve.keyGenerator securityParameter
+/-- The pairing `e : 𝔾₁ × 𝔾₂ → 𝔾ₜ`. -/
+local notation "e(" a ", " b ")" =>
+  BilinearGroup.pairing (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter) a b
 
 /-- Arbitrary internal computation with algebraic group outputs. -/
 abbrev AlgebraicAdversary := Model.DirectAGM.Adversary (curve.Scalar securityParameter)
@@ -49,20 +52,7 @@ noncomputable def signature : EufCma.Scheme Message 𝔾₁ Message 𝔾₂ 𝔽
     return secret • hash
   verify publicKey message signature := do
     let hash ← RandomOracle.hash message
-    return decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
-      BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey)
-
-/-- BLS is the pairing-family scheme with one hash term per message. -/
-theorem signature_eq_scheme :
-    signature curve securityParameter (Message := Message) =
-      DirectAGM.scheme (G₁ := 𝔾₁) (Gₜ := 𝔾ₜ) LazyAGM.terms g₂ := by
-  unfold signature DirectAGM.scheme
-  congr 1
-  · funext _ secret message
-    simp [Model.AlgebraicOracle.sign, Model.AlgebraicOracle.hashMessage, LazyAGM.terms, Model.LazyAGM.evalTerms,
-      RandomOracle.hash]
-  · funext publicKey message point
-    simp [Model.AlgebraicOracle.hashMessage, LazyAGM.terms, Model.LazyAGM.evalTerms, RandomOracle.hash]
+    return decide (e(signature, g₂) = e(hash, publicKey))
 
 /-- Algebraic attackers, run through the explanation-checking interaction from `g₁`. -/
 noncomputable instance : EufCma.Attacker (AlgebraicAdversary curve securityParameter (Message := Message))
@@ -71,8 +61,9 @@ noncomputable instance : EufCma.Attacker (AlgebraicAdversary curve securityParam
 
 /-- Standard EUF-CMA for BLS: the shared experiment at `signature`, for an ordinary attacker. -/
 noncomputable def eufCma
-    (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) : ProbComp Bool :=
-  EufCma.game (signature curve securityParameter (Message := Message)) adversary
+    (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) : ProbComp Bool :=
+  EufCma.game (signature curve securityParameter (Message := Message))
+    (⟨adversary⟩ : EufCma.Adversary (signature curve securityParameter (Message := Message)))
 
 /-- The same experiment for an algebraic attacker. -/
 noncomputable def agm
@@ -105,15 +96,14 @@ theorem oracle_eq (secret : 𝔽) :
 /-- The ordinary experiment, written out: generate `pk = x • g₂`, run the attacker
 against `oracle x`, hash the forged message through the same oracle, and accept a
 valid signature on a message that was never signed. -/
-theorem eufCma_eq (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) :
+theorem eufCma_eq (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) :
     eufCma curve securityParameter adversary = RandomOracle.run do
       let secret ← RandomOracle.sample 𝔽
       let publicKey := secret • g₂
       let ((message, forged), signingLog) ←
-        (simulateQ (oracle curve securityParameter secret) (adversary.main publicKey)).run
+        (simulateQ (oracle curve securityParameter secret) (adversary publicKey)).run
       let hash ← RandomOracle.hash message
-      return !signingLog.wasQueried message &&
-        decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forged g₂ = BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey) := by
+      return !signingLog.wasQueried message && decide (e(forged, g₂) = e(hash, publicKey)) := by
   rw [eufCma, EufCma.game_eq_unforgeableExperiment]
   simp only [SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def, SignatureAlg.signingOracle,
     oracle_eq, EufCma.oracle, signature, bind_assoc, pure_bind]

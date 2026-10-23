@@ -125,7 +125,7 @@ hashing, signing and final verification through one initially empty lazy random
 oracle, for the attacker's source program. -/
 noncomputable def cocdhEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
-  Game.eufCma curve securityParameter ⟨adversary.source⟩
+  Game.eufCma curve securityParameter adversary.source
 
 /-- Supremum of co-CDH success: sample a scalar `x` and group point `h`, give a
 solver `(g₁, g₂, x • g₁, x • g₂, h)`, and test whether it returns `x • h`.

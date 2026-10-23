@@ -190,31 +190,31 @@ theorem standard_hash_run (secret : 𝔽) (message : Message) (state : Cache cur
   simp [standard, flattened, ROM.hash, RandomOracle.hash]
 
 /-- The attacker's run followed by the verifier's hash of the forged message. -/
-def transcript (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) (secret : 𝔽) :
+def transcript (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) (secret : 𝔽) :
     OracleComp (ROM.advSpec Message 𝔾₁) (Message × 𝔾₁ × 𝔾₁) := do
-  let (message, point) ← adversary.main (secret • g₂)
+  let (message, point) ← adversary (secret • g₂)
   let hash ← ROM.hash message
   return (message, point, hash)
 
-theorem standard_transcript (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) (secret : 𝔽)
+theorem standard_transcript (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) (secret : 𝔽)
     (state : Cache curve securityParameter (Message := Message) × Log curve securityParameter) :
     (simulateQ (standard curve securityParameter secret) (transcript curve securityParameter adversary secret)).run state =
-      (simulateQ (standard curve securityParameter secret) (adversary.main (secret • g₂))).run state >>= fun first =>
+      (simulateQ (standard curve securityParameter secret) (adversary (secret • g₂))).run state >>= fun first =>
         (simulateQ (Message →ₒ 𝔾₁).romImpl (RandomOracle.hash first.1.1)).run first.2.1 >>= fun second =>
           pure ((first.1.1, first.1.2, second.1), (second.2, first.2.2)) := by
   simp only [transcript, simulateQ_bind, StateT.run_bind, simulateQ_pure, StateT.run_pure, standard_hash_run, bind_map_left]
 
-theorem readable_transcript (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) (secret : 𝔽)
+theorem readable_transcript (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) (secret : 𝔽)
     (state : ROM.State 𝔽 Message) :
     (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁)) (transcript curve securityParameter adversary secret)).run state =
-      (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁)) (adversary.main (secret • g₂))).run state >>= fun first =>
+      (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁)) (adversary (secret • g₂))).run state >>= fun first =>
         (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁)) (ROM.hash first.1.1)).run first.2 >>= fun second =>
           pure ((first.1.1, first.1.2, second.1), second.2) := by
   simp [transcript, simulateQ_bind, StateT.run_bind]
 
 /-- The standard experiment and the readable exponent-keeping game have the same distribution. -/
-theorem eufCma_eq_rom (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) :
-    𝒟[eufCma curve securityParameter adversary] = 𝒟[ROM.game curve securityParameter adversary.main] := by
+theorem eufCma_eq_rom (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) :
+    𝒟[eufCma curve securityParameter adversary] = 𝒟[ROM.game curve securityParameter adversary] := by
   classical
   have keygen : (signature curve securityParameter (Message := Message)).keygen =
       liftM ($ᵗ 𝔽 : ProbComp 𝔽) >>= fun secret => pure (secret • g₂, secret) := rfl
@@ -230,7 +230,7 @@ theorem eufCma_eq_rom (adversary : EufCma.Adversary (signature curve securityPar
       StateT.run_bind, StateT.run_pure, simulateQ_romImpl_liftM_run, map_bind, map_pure, bind_map_left, standard_run,
       standard_transcript]
     congr!
-  have rhs : ROM.game curve securityParameter adversary.main = ($ᵗ 𝔽 : ProbComp 𝔽) >>= fun secret =>
+  have rhs : ROM.game curve securityParameter adversary = ($ᵗ 𝔽 : ProbComp 𝔽) >>= fun secret =>
       (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁)) (transcript curve securityParameter adversary secret)).run ROM.State.empty >>=
         fun result => pure (decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.1 g₂ =
           BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.2 (secret • g₂)) && decide (result.1.1 ∉ result.2.signedMessages)) := by
