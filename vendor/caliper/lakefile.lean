@@ -10,9 +10,8 @@ package caliper where
 @[default_target]
 lean_lib Caliper where
 
-/-- Executable examples and their proofs; built in CI. -/
-@[default_target]
-lean_lib Examples where
+-- The upstream `Examples` library (executable examples and their proofs) is not declared here: its root collides with VCVio's
+-- `Examples` library, which this repository imports (`Examples.Schnorr.*`).
 
 /-- Test-only: RV64 lowering + differential-vector exporter. Not imported by
 `Caliper`; users running `lake build Caliper` never build it. -/
