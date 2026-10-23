@@ -30,18 +30,4 @@ theorem agm_security
 
 end AGM
 
-/-- Optional sharper refinement: give the two DLog solvers separate budgets. -/
-theorem agm_security_two_budgets
-    (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
-    (securityParameter dimension : Nat)
-    (queries : QueryAllowance)
-    (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
-    let resources := model.parameters securityParameter dimension queries
-    𝒟[agmEufCmaGame curve securityParameter dimension adversary] {true} ≤
-      dlogSuccessBound curve securityParameter dimension queries resources.goodTime +
-      dlogSuccessBound curve securityParameter dimension queries resources.badTime +
-      1 / (curve.order securityParameter : ENNReal) +
-      𝒟[freshCollisionGame curve securityParameter dimension adversary] {true} :=
-  Proofs.agm_security curve securityParameter dimension queries adversary
-
 end Proximity

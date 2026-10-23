@@ -13,12 +13,14 @@ One [EUF-CMA experiment](Signatures/Model/EufCma.lean) serves every scheme and e
 attacker model: a scheme is key generation, signing and verification over the shared lazy
 random oracle, and an attacker model says how an attacker is run against the signing oracle
 (ordinary oracle programs; algebraic attackers that explain every group element they
-output, with malformed interactions flagged). For ordinary attackers it is VCVio's
-`unforgeableExperiment` in the random-oracle model. The [BLS game file](Signatures/BLS/Game.lean)
-has `signature`, `eufCma` and `agm` as that one experiment at the two attacker models, and
-the ordinary oracle written out; the Schnorr games are the experiment at
-`Schnorr.signature`/`NonzeroNonce.signature` by unfolding ([proof](Signatures/Schnorr/Proofs/Game.lean)).
-The co-CDH proof's exponent-keeping game ([`BLS.ROM.game`](Signatures/BLS/Proofs/ROM.lean)) has the
+output, a malformed interaction losing). For ordinary attackers it is VCVio's
+`unforgeableExperiment` in the random-oracle model. Every public game is this experiment:
+[BLS](Signatures/BLS/Game.lean) `eufCma`/`agm` at `BLS.Game.signature`,
+[OOPS](Signatures/OOPS/Game.lean) and [Proximity](Signatures/Proximity/Game.lean) `agm` at the
+[pairing-family scheme](Signatures/Model/DirectAGM.lean) with their hash-term families (OOPS adds
+its degree rule as the admissibility restriction), and [Schnorr](Signatures/Schnorr/Game.lean)
+`rom`/`nonzeroRom`/`agm` at `Schnorr.signature`/`NonzeroNonce.signature`. The co-CDH proof's
+exponent-keeping game ([`BLS.ROM.game`](Signatures/BLS/Proofs/ROM.lean)) has the
 [same distribution](Signatures/BLS/Proofs/EufCma.lean) as the real game because the generator
 identifies exponents with hash points.
 

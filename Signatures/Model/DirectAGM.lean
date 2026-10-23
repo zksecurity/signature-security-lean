@@ -118,8 +118,23 @@ EUF-CMA experiment: the explanation-checking interaction from the generator, wit
 @[instance_reducible]
 def attacker (generator : G₁) : EufCma.Attacker (Adversary F Index Message G₁ G₂) Index G₁ Message G₂ G₁ where
   run adversary sign publicKey :=
-    (fun forgery => ((forgery.message, forgery.signature), forgery.signedMessages, forgery.wellFormed)) <$>
+    (fun forgery => some ((forgery.message, forgery.signature), forgery.signedMessages, forgery.wellFormed)) <$>
       runWith sign adversary generator publicKey
+
+/-- The pairing-family scheme whose hash of a message is the combination of shared
+oracle values prescribed by `terms`: secret `x`, public key `x • keyGenerator`,
+signature `x • H(m)`, and verification `e(σ, keyGenerator) = e(H(m), pk)`. -/
+noncomputable def scheme {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
+    [SampleableType F] [DecidableEq Gₜ] (terms : Message → List (Index × F)) (keyGenerator : G₂) :
+    EufCma.Scheme Index G₁ Message G₂ F G₁ where
+  keygen := do
+    let secret ← RandomOracle.sample F
+    return (secret • keyGenerator, secret)
+  sign _ secret message := AlgebraicOracle.sign terms secret message
+  verify publicKey message signature := do
+    let hash ← AlgebraicOracle.hashMessage terms message
+    return decide (BilinearGroup.pairing (F := F) (Gₜ := Gₜ) signature keyGenerator =
+      BilinearGroup.pairing (F := F) (Gₜ := Gₜ) hash publicKey)
 
 /-- Native EUF-CMA experiment; malformed protocol messages cannot win. -/
 noncomputable def game {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
@@ -169,5 +184,22 @@ def adversary (generator : G₁) (attack : Adversary F Index Message G₁ G₂) 
   main publicKey := program (attack.main (initialInput generator publicKey)) {}
 
 end ProofView
+
+
+/-- The shared EUF-CMA experiment at the pairing-family scheme, for algebraic attackers,
+is this native experiment. -/
+theorem eufCma_game_eq {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ]
+    [SampleableType F] [SampleableType G₁] [DecidableEq Index] [DecidableEq Message] [DecidableEq Gₜ]
+    (terms : Message → List (Index × F)) (admissible : Message → List Message → Prop)
+    [∀ message signed, Decidable (admissible message signed)]
+    (generator : G₁) (keyGenerator : G₂) (attack : Adversary F Index Message G₁ G₂) :
+    letI := attacker (F := F) (Index := Index) (Message := Message) (G₂ := G₂) generator
+    EufCma.game (scheme (G₁ := G₁) (Gₜ := Gₜ) terms keyGenerator) attack admissible =
+      game (Gₜ := Gₜ) terms admissible generator keyGenerator attack := by
+  let := attacker (F := F) (Index := Index) (Message := Message) (G₂ := G₂) generator
+  simp only [EufCma.game, scheme, EufCma.Attacker.run, game, run, map_eq_bind_pure_comp, bind_assoc,
+    pure_bind, Function.comp_apply]
+  congr! 7
+  simp [Bool.decide_and, Bool.and_comm, Bool.and_left_comm]
 
 end Model.DirectAGM

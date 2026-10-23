@@ -27,6 +27,11 @@ def admissible {F T : Type} [DecidableEq F] [DecidableEq T]
   -- Count distinct messages only on the forged topic; repeats and other topics add no count.
   ((signed.filter fun q => q.2 = mt.2).map Prod.fst).toFinset.card ≤ d
 
+instance {F T : Type} [DecidableEq F] [DecidableEq T] (d : Nat) (mt : F × T) (signed : List (F × T)) :
+    Decidable (admissible d mt signed) := by
+  unfold admissible
+  infer_instance
+
 -- The game is parameterized by scalars, topics, source groups, and a pairing target group.
 noncomputable def game {F T G₁ G₂ Gₜ : Type}
     -- Sample scalars uniformly; topic equality supports base caching and topic selection.

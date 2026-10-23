@@ -3,10 +3,10 @@ import Signatures.OOPS.Spec.LazyAGM
 import Signatures.Model.DirectAGM
 
 /-! OOPS security games, independent of any execution model or resource certificate.
-Read the experiment below as: sample a key, run the attacker with adaptive
-hash/signing access, then accept a valid forgery on an unsigned message.
-One initially empty lazy oracle is shared by hashing, signing and verification.
-Oracle dispatch and algebraic explanation bookkeeping are in the imported spec.
+`signature` is OOPS as a pairing-family scheme: the hash of a scalar message `c` on
+a topic is `Σ cⁱ • H(topic, i)` over the shared lazy oracle, and `agm` is the shared
+EUF-CMA experiment (`Model.EufCma.game`) at it for algebraic attackers, with the
+target-topic degree rule as the admissibility restriction.
 Security bounds are in `Statement.lean`; execution contracts remain separate. -/
 
 open OracleComp OracleSpec
@@ -27,18 +27,20 @@ local notation "g₂" => curve.keyGenerator securityParameter
 abbrev AlgebraicAdversary := Model.DirectAGM.Adversary (curve.Scalar securityParameter)
   (Topic × Fin (degree + 1)) (curve.Scalar securityParameter × Topic) (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter)
 
-/-- A win requires validity and freshness. At most `degree` distinct scalar messages may have been signed on the forged topic. -/
+/-- OOPS: secret `x`, public key `x • g₂`, signature `x • H(c, topic)` with
+`H(c, topic) = Σ cⁱ • H₀(topic, i)`, verification `e(σ, g₂) = e(H(c, topic), pk)`. -/
+noncomputable def signature : EufCma.Scheme (Topic × Fin (degree + 1)) 𝔾₁ (𝔽 × Topic) (curve.KeyGroup securityParameter) 𝔽 𝔾₁ :=
+  DirectAGM.scheme (Gₜ := 𝔾ₜ) (LazyAGM.terms degree) g₂
+
+/-- Algebraic attackers, run through the explanation-checking interaction from `g₁`. -/
+noncomputable instance : EufCma.Attacker (AlgebraicAdversary curve securityParameter degree (Topic := Topic))
+    (Topic × Fin (degree + 1)) 𝔾₁ (𝔽 × Topic) (curve.KeyGroup securityParameter) 𝔾₁ :=
+  DirectAGM.attacker g₁
+
+/-- A win requires validity and freshness, and at most `degree` distinct scalar messages
+signed on the forged topic. -/
 noncomputable def agm
-    (adversary : AlgebraicAdversary curve securityParameter degree (Topic := Topic)) : ProbComp Bool := by
-  classical
-  exact RandomOracle.run do
-    let secret ← RandomOracle.sample 𝔽
-    let forgery ← DirectAGM.run (LazyAGM.terms degree) secret adversary g₁ (secret • g₂)
-    let hash ← AlgebraicOracle.hashMessage (LazyAGM.terms degree) forgery.message
-    return decide (forgery.wellFormed ∧
-      LazyAGM.admissible degree forgery.message forgery.signedMessages ∧
-      BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forgery.signature g₂ =
-        BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂) ∧
-      forgery.message ∉ forgery.signedMessages)
+    (adversary : AlgebraicAdversary curve securityParameter degree (Topic := Topic)) : ProbComp Bool :=
+  EufCma.game (signature curve securityParameter degree (Topic := Topic)) adversary (LazyAGM.admissible degree)
 
 end OOPS.Game

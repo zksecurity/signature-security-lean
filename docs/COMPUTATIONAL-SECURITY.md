@@ -328,8 +328,8 @@ The hardness assertion is a theorem hypothesis, not a custom axiom or a proved p
 | --- | --- | --- |
 | BLS co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | `coronFactor qS * epsilon` |
 | BLS AGM | [`BLS.agm_security`](../Signatures/BLS/Statement.lean) (two budgets: `BLS.Proofs.agm_security`) | `goodEpsilon + badEpsilon + 1 / Nat.card F` |
-| OOPS AGM | [`OOPS.agm_security_two_budgets`](../Signatures/OOPS/Statement.lean) | same two-branch bound |
-| Proximity AGM | [`Proximity.agm_security_two_budgets`](../Signatures/Proximity/Statement.lean) | two-branch bound plus actual fresh-collision probability |
+| OOPS AGM | [`OOPS.agm_security`](../Signatures/OOPS/Statement.lean) (two budgets: `OOPS.Proofs.agm_security`) | same two-branch bound |
+| Proximity AGM | [`Proximity.agm_security`](../Signatures/Proximity/Statement.lean) (two budgets: `Proximity.Proofs.agm_security`) | two-branch bound plus actual fresh-collision probability |
 | Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | `delta * (delta/(qH+1) - 1/card F) <= epsilon`, where `delta = Adv - qS*(qS+qH)/card F` |
 | Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | same left side, bounded by `epsilon + targetBudget * 2^(-k)` at proved bit budget `(targetBudget+4)*bitFactor` |
 

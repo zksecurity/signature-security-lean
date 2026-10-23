@@ -23,8 +23,8 @@ security wrappers and BLS's `ArithmeticAttackerCertificate` alias are retired.
 | Retired declaration | Public replacement |
 | --- | --- |
 | `BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness` | [`BLS.agm_security`](../Signatures/BLS/Statement.lean) (two separate DLog budgets: `BLS.Proofs.agm_security`) |
-| `OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness` | [`OOPS.agm_security`](../Signatures/OOPS/Statement.lean), or `OOPS.agm_security_two_budgets` |
-| `Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness` | [`Proximity.agm_security`](../Signatures/Proximity/Statement.lean), or `Proximity.agm_security_two_budgets` |
+| `OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness` | [`OOPS.agm_security`](../Signatures/OOPS/Statement.lean) (two separate DLog budgets: `OOPS.Proofs.agm_security`) |
+| `Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness` | [`Proximity.agm_security`](../Signatures/Proximity/Statement.lean) (two separate DLog budgets: `Proximity.Proofs.agm_security`) |
 
 The replacement is not a textual rename. Choose a curve and an execution model
 with the original primitive, sampler and encoding contracts, then provide the
@@ -35,9 +35,9 @@ derived input/code/time budgets. An old arithmetic-only hardness hypothesis does
 not automatically establish hardness against this broader implementation class.
 
 The main theorem takes the curve, security parameter, query allowances and
-algebraic adversary; OOPS adds degree and Proximity adds dimension. The OOPS and
-Proximity `agm_security_two_budgets` statements (and `BLS.Proofs.agm_security`) keep
-separate success bounds for the two reduction runtimes. OOPS retains its target-topic admissibility rule. Proximity
+algebraic adversary; OOPS adds degree and Proximity adds dimension. Each scheme's
+`Proofs.agm_security` keeps separate success bounds for the two reduction runtimes.
+OOPS retains its target-topic admissibility rule. Proximity
 retains the actual collision probability; it is not silently assumed negligible.
 
 Original eager probability definitions and resource lemmas remain as supporting

@@ -52,6 +52,18 @@ noncomputable def signature : EufCma.Scheme Message 𝔾₁ Message 𝔾₂ 𝔽
     return decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
       BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey)
 
+/-- BLS is the pairing-family scheme with one hash term per message. -/
+theorem signature_eq_scheme :
+    signature curve securityParameter (Message := Message) =
+      DirectAGM.scheme (G₁ := 𝔾₁) (Gₜ := 𝔾ₜ) LazyAGM.terms g₂ := by
+  unfold signature DirectAGM.scheme
+  congr 1
+  · funext _ secret message
+    simp [Model.AlgebraicOracle.sign, Model.AlgebraicOracle.hashMessage, LazyAGM.terms, Model.LazyAGM.evalTerms,
+      RandomOracle.hash]
+  · funext publicKey message point
+    simp [Model.AlgebraicOracle.hashMessage, LazyAGM.terms, Model.LazyAGM.evalTerms, RandomOracle.hash]
+
 /-- Algebraic attackers, run through the explanation-checking interaction from `g₁`. -/
 noncomputable instance : EufCma.Attacker (AlgebraicAdversary curve securityParameter (Message := Message))
     Message 𝔾₁ Message 𝔾₂ 𝔾₁ :=

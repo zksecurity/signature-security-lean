@@ -11,9 +11,8 @@ theorem agm_eq_source (curve : Model.PairingCurve) (securityParameter dimension 
     agm curve securityParameter dimension adversary =
       Model.DirectAGM.game (Gₜ := curve.TargetGroup securityParameter)
         LazyAGM.terms (fun _ _ => True)
-        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary := by
-  classical
-  simp only [agm, Model.DirectAGM.game, true_and]
+        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary :=
+  Model.DirectAGM.eufCma_game_eq LazyAGM.terms (fun _ _ => True) _ _ adversary
 
 theorem collision_eq_source (curve : Model.PairingCurve) (securityParameter dimension : Nat)
     {Slot : Type} [DecidableEq Slot]

@@ -202,7 +202,7 @@ resource class separately from the curve. Its
 keep backend contracts and actual attacker resources inspectable. The main RHS is
 `2 * dlogSuccessBound(agmReductionTime) + 1/|F|`, using the maximum of the two
 derived solver times. The sharper sum of the two separately budgeted terms is
-`BLS.Proofs.agm_security` (OOPS and Proximity keep `agm_security_two_budgets`). The DLog bound is the supremum over
+each scheme's `Proofs.agm_security`. The DLog bound is the supremum over
 all solvers within the fixed backend's code/input/time limits, not an assumed
 advantage of the constructed reduction. Numerical hardness bounds are separate.
 The same public interface is implemented for all seven routes, with OOPS's degree
@@ -3534,8 +3534,8 @@ standard. This is targeted verification, not the final full-suite result.
 
 The BLS/OOPS/Proximity `*_lazy_agm_of_dlog_machine_hardness` wrappers are removed,
 as is BLS's `ArithmeticAttackerCertificate` alias. Their public replacements are
-`agm_security` in each scheme's `Statement.lean` (OOPS and Proximity also keep
-`agm_security_two_budgets`; BLS's two-budget form is `BLS.Proofs.agm_security`).
+`agm_security` in each scheme's `Statement.lean`; the two-budget forms are each
+scheme's `Proofs.agm_security`.
 The OOPS/Proximity `ArithmeticStatement` paths now import the current public
 statements without restoring retired declarations. The arithmetic-source BLS
 co-CDH theorem and Schnorr's separately scoped endpoints remain.

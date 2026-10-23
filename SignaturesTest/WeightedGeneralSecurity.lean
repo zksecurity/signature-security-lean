@@ -44,9 +44,7 @@ open Lean Meta
 run_meta do
   for (name, moduleName, dimension) in #[
       (``OOPS.agm_security, `Signatures.OOPS.Statement, `degree),
-      (``OOPS.agm_security_two_budgets, `Signatures.OOPS.Statement, `degree),
-      (``Proximity.agm_security, `Signatures.Proximity.Statement, `dimension),
-      (``Proximity.agm_security_two_budgets, `Signatures.Proximity.Statement, `dimension)] do
+      (``Proximity.agm_security, `Signatures.Proximity.Statement, `dimension)] do
     unless (← findModuleOf? name) == some moduleName do
       throwError "{name}: public theorem must remain in the scheme's Statement module"
     forallTelescope (← getConstInfo name).type fun params _ => do
@@ -76,8 +74,7 @@ run_meta do
       ``OOPS.GeneralAGM.reductions_within, ``Proximity.GeneralAGM.reductions_within,
       ``OOPS.GeneralAGM.security, ``Proximity.GeneralAGM.security,
       ``OOPS.GeneralAGM.security_of_hardness, ``Proximity.GeneralAGM.security_of_hardness,
-      ``OOPS.agm_security, ``OOPS.agm_security_two_budgets,
-      ``Proximity.agm_security, ``Proximity.agm_security_two_budgets,
+      ``OOPS.agm_security, ``Proximity.agm_security,
       ``OOPS.agmEufCmaGame_eq, ``Proximity.agmEufCmaGame_eq, ``Proximity.freshCollisionGame_eq,
       ``OOPS.dlogSuccessBound_mono, ``Proximity.dlogSuccessBound_mono,
       ``OOPS.AlgebraicAdversary.query_allowances, ``Proximity.AlgebraicAdversary.query_allowances,

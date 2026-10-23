@@ -9,10 +9,7 @@ theorem agm_eq_source (curve : Model.PairingCurve) (securityParameter degree : N
     agm curve securityParameter degree adversary =
       Model.DirectAGM.game (Gₜ := curve.TargetGroup securityParameter)
         (LazyAGM.terms degree) (LazyAGM.admissible degree)
-        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary := by
-  classical
-  simp only [agm, Model.DirectAGM.game, LazyAGM.admissible]
-  congr!
-  simp
+        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary :=
+  Model.DirectAGM.eufCma_game_eq (LazyAGM.terms degree) (LazyAGM.admissible degree) _ _ adversary
 
 end OOPS.Game
