@@ -47,18 +47,38 @@ theorem run_encode {α : Type} (g₁ X₁ : G₁) (program : OracleComp (advSpec
 
 end BLS.ROM
 
-namespace BLS.Game
+namespace BLS.ROM
 
-/-- The readable experiment is exactly the source game used by the co-CDH proof. -/
-theorem rom_eq_source (curve : Model.PairingCurve) (securityParameter : Nat)
-    {Message : Type} [DecidableEq Message]
-    (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) :
-    rom curve securityParameter adversary =
+variable (curve : Model.PairingCurve) (securityParameter : Nat) {Message : Type} [DecidableEq Message]
+
+/-- The EUF-CMA experiment with the exponent-keeping oracle: the first simulation
+step of the co-CDH reduction, where every hash value `ρ • g₁` is produced from a
+remembered exponent `ρ`. `Game.eufCma_eq_rom` shows it has the distribution of the
+real game because `g₁` generates. -/
+noncomputable def game (adversary : Game.UnrestrictedAdversary curve securityParameter (Message := Message)) : ProbComp Bool := by
+  classical
+  exact do
+    let secret ← ($ᵗ curve.Scalar securityParameter : ProbComp (curve.Scalar securityParameter))
+    let ((message, valid), state) ←
+      (simulateQ (oracle (F := curve.Scalar securityParameter) (curve.generator securityParameter)
+          (secret • curve.generator securityParameter)) (do
+        let (message, signature) ← adversary (secret • curve.keyGenerator securityParameter)
+        let hash ← ROM.hash message
+        return (message, decide (
+          BilinearGroup.pairing (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
+              signature (curve.keyGenerator securityParameter) =
+            BilinearGroup.pairing (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
+              hash (secret • curve.keyGenerator securityParameter))))).run State.empty
+    return valid && decide (message ∉ state.signedMessages)
+
+/-- The exponent-keeping experiment is exactly the source game of the co-CDH proof. -/
+theorem game_eq_source (adversary : Game.UnrestrictedAdversary curve securityParameter (Message := Message)) :
+    game curve securityParameter adversary =
       CoCDH.Tight.blsEufLazyPK (F := curve.Scalar securityParameter)
         (Gₜ := curve.TargetGroup securityParameter)
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary := by
   classical
-  simp only [rom, CoCDH.Tight.blsEufLazyPK, CoCDH.Tight.blsEufTightPK,
+  simp only [game, CoCDH.Tight.blsEufLazyPK, CoCDH.Tight.blsEufTightPK,
     ROM.cacheForgeryPK, ROM.cacheForgery, simulateQ_bind, simulateQ_pure,
     StateT.run_bind, StateT.run_pure, bind_assoc, pure_bind]
   apply bind_congr
@@ -68,6 +88,7 @@ theorem rom_eq_source (curve : Model.PairingCurve) (securityParameter : Nat)
     (adversary (secret • curve.keyGenerator securityParameter)) ROM.State.empty
   simp only [ROM.Internal.encodeState, ROM.State.empty] at hRun
   rw [← hRun, bind_map_left]
+
   apply bind_congr
   rintro ⟨⟨message, signature⟩, state⟩
   rcases state with ⟨cache, signed⟩
@@ -76,4 +97,4 @@ theorem rom_eq_source (curve : Model.PairingCurve) (securityParameter : Nat)
       ROM.Internal.encodeState, h, StateT.run_bind, StateT.run_get, StateT.run_pure,
       StateT.run_modify, StateT.run_monadLift]
 
-end BLS.Game
+end BLS.ROM

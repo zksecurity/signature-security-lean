@@ -1,4 +1,5 @@
 import Signatures.Model.AlgebraicOracle
+import Signatures.Model.EufCma
 
 /-! Signature protocols for the shared interactive AGM adversary.
 
@@ -95,15 +96,30 @@ def result (output : Explained F Message (Group G₁ G₂)) (state : State Messa
     ((output.value.groups .signature).length == 1) &&
     (output.value.groups .verification).isEmpty
 
+/-- Execute the shared certified attacker with the shared hash oracle and the given
+signing oracle, starting from the generator and public key as its received inputs. -/
+def runWith (sign : Message → RandomOracle.Computation Index G₁ G₁)
+    (adversary : Adversary F Index Message G₁ G₂) (generator : G₁) (publicKey : G₂) :
+    RandomOracle.Computation Index G₁ (Result F Message G₁) := do
+  let ((output, _received), state) ←
+    (adversary.run (oracle RandomOracle.random RandomOracle.hash sign) (initialInput generator publicKey)).run {}
+  return result output state
+
 /-- Execute the shared certified attacker directly with the signature oracles. -/
 def run
     (terms : Message → List (Index × F)) (secret : F)
     (adversary : Adversary F Index Message G₁ G₂) (generator : G₁) (publicKey : G₂) :
-    RandomOracle.Computation Index G₁ (Result F Message G₁) := do
-  let ((output, _received), state) ←
-    (adversary.run (oracle RandomOracle.random RandomOracle.hash
-      (AlgebraicOracle.sign terms secret)) (initialInput generator publicKey)).run {}
-  return result output state
+    RandomOracle.Computation Index G₁ (Result F Message G₁) :=
+  runWith (AlgebraicOracle.sign terms secret) adversary generator publicKey
+
+/-- Algebraic attackers of the pairing family as an attacker model for the shared
+EUF-CMA experiment: the explanation-checking interaction from the generator, with
+`wellFormed` as the protocol flag. -/
+@[instance_reducible]
+def attacker (generator : G₁) : EufCma.Attacker (Adversary F Index Message G₁ G₂) Index G₁ Message G₂ G₁ where
+  run adversary sign publicKey :=
+    (fun forgery => ((forgery.message, forgery.signature), forgery.signedMessages, forgery.wellFormed)) <$>
+      runWith sign adversary generator publicKey
 
 /-- Native EUF-CMA experiment; malformed protocol messages cannot win. -/
 noncomputable def game {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]

@@ -5,22 +5,15 @@ import Signatures.Model.DirectAGM
 import Signatures.Model.EufCma
 
 /-! BLS security games, independent of any execution model or resource certificate.
-Read the experiment below as: sample a key, run the attacker with adaptive
-hash/signing access, then accept a valid forgery on an unsigned message.
-Security bounds are in `Statement.lean`; execution contracts remain separate.
-
-`signature` is BLS as a scheme and `eufCma` is the shared EUF-CMA experiment at
-it (`Model.EufCma.game`): the attacker's `random`/`hash` requests pass to one
-lazy random oracle `H : Message → 𝔾₁`, started empty and shared with the signer
-and the verifier, and `sign m` runs `signature.sign` and records `m`. `rom` is the
-same experiment with the hash exponents kept by the oracle (`ROM.oracle`, replies
-`ρ_m • g₁` and `ρ_m • (x • g₁)`), the form the co-CDH proof starts from;
-`Proofs/EufCma.lean` shows the two have the same distribution because `g₁`
-generates. In `agm` the attacker must explain every group element it sends as a
-combination of the elements received so far (`g₁`, then each hash and signing
-reply in order); requests carry no group arguments and the output is exactly one
-`𝔾₁` signature with its explanation, recorded by `wellFormed`, so a malformed run
-cannot win. -/
+`signature` is BLS as a scheme; `eufCma` and `agm` are one experiment, the shared
+EUF-CMA game (`Model.EufCma.game`), for two attacker models: ordinary oracle
+programs, and algebraic attackers that explain every group element they output as
+a combination of the elements received so far (`g₁`, then each hash and signing
+reply in order), a malformed interaction being flagged and losing. `eufCma_eq`
+writes the ordinary experiment out: the attacker's `random`/`hash` requests pass to
+one lazy random oracle `H : Message → 𝔾₁`, started empty and shared with the signer
+and the verifier, and `sign m` returns `x • H(m)` and records `m`.
+Security bounds are in `Statement.lean`; execution contracts remain separate. -/
 
 open OracleComp OracleSpec
 open Model
@@ -59,8 +52,23 @@ noncomputable def signature : EufCma.Scheme Message 𝔾₁ Message 𝔾₂ 𝔽
     return decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
       BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey)
 
-/-- How the attacker's requests are answered. `random n` draws a uniform element of
-`Fin (n + 1)`; `hash m` returns `H(m)` from the shared lazy oracle; `sign m` returns
+/-- Algebraic attackers, run through the explanation-checking interaction from `g₁`. -/
+noncomputable instance : EufCma.Attacker (AlgebraicAdversary curve securityParameter (Message := Message))
+    Message 𝔾₁ Message 𝔾₂ 𝔾₁ :=
+  DirectAGM.attacker g₁
+
+/-- Standard EUF-CMA for BLS: the shared experiment at `signature`, for an ordinary attacker. -/
+noncomputable def eufCma
+    (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) : ProbComp Bool :=
+  EufCma.game (signature curve securityParameter (Message := Message)) adversary
+
+/-- The same experiment for an algebraic attacker. -/
+noncomputable def agm
+    (adversary : AlgebraicAdversary curve securityParameter (Message := Message)) : ProbComp Bool :=
+  EufCma.game (signature curve securityParameter (Message := Message)) adversary
+
+/-- How an ordinary attacker's requests are answered. `random n` draws a uniform element
+of `Fin (n + 1)`; `hash m` returns `H(m)` from the shared lazy oracle; `sign m` returns
 `x • H(m)` and records `m` as signed. -/
 noncomputable def oracle (secret : 𝔽) :
     QueryImpl (ROM.advSpec Message 𝔾₁) (WriterT (QueryLog (Message →ₒ 𝔾₁)) (RandomOracle.Computation Message 𝔾₁))
@@ -71,63 +79,32 @@ noncomputable def oracle (secret : 𝔽) :
       tell [⟨message, signature⟩]
       return signature
 
-/-- Standard EUF-CMA for BLS: generate `pk = x • g₂`, run the attacker against the oracle,
-hash the forged message through the same oracle, and accept a valid signature on a message
-that was never signed. -/
-noncomputable def eufCma
-    (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) : ProbComp Bool :=
-  RandomOracle.run do
-    let secret ← RandomOracle.sample 𝔽
-    let publicKey := secret • g₂
-    let ((message, forged), signingLog) ←
-      (simulateQ (oracle curve securityParameter secret) (adversary.main publicKey)).run
-    let hash ← RandomOracle.hash message
-    return !signingLog.wasQueried message &&
-      decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forged g₂ = BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey)
-
 omit [DecidableEq Message] in
 theorem oracle_eq (secret : 𝔽) :
     oracle curve securityParameter (Message := Message) secret =
-      EufCma.oracle (signature curve securityParameter) (secret • g₂) secret := by
+      EufCma.oracle ((signature curve securityParameter).sign (secret • g₂) secret) := by
   funext request
   rcases request with (n | message) | message
   · simp [oracle, EufCma.oracle, ROM.Request.random, RandomOracle.random]
   · simp [oracle, EufCma.oracle, ROM.Request.hash, RandomOracle.hash]
   · show WriterT.run _ = WriterT.run _
-    simp [SignatureAlg.signingOracle, signature, RandomOracle.hash, WriterT.run_tell]
+    simp [signature, RandomOracle.hash, WriterT.run_tell]
 
-/-- `eufCma` is the shared experiment at `signature`. -/
-theorem eufCma_eq_game (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) :
-    eufCma curve securityParameter adversary = EufCma.game adversary := by
-  rw [EufCma.game_eq, eufCma]
-  simp only [oracle_eq, signature, bind_assoc, pure_bind]
-
-/-- A win requires validity and freshness. -/
-noncomputable def agm
-    (adversary : AlgebraicAdversary curve securityParameter (Message := Message)) : ProbComp Bool := by
-  classical
-  exact RandomOracle.run do
-    let secret ← RandomOracle.sample 𝔽
-    let forgery ← DirectAGM.run LazyAGM.terms secret adversary g₁ (secret • g₂)
-    let hash ← RandomOracle.hash forgery.message
-    return decide (forgery.wellFormed ∧
-      BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forgery.signature g₂ =
-        BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂) ∧
-      forgery.message ∉ forgery.signedMessages)
-
-/-- Ordinary ROM: no algebraic explanation is requested. -/
-noncomputable def rom
-    (adversary : UnrestrictedAdversary curve securityParameter (Message := Message)) : ProbComp Bool := by
-  classical
-  exact do
-    let secret ← ($ᵗ 𝔽 : ProbComp 𝔽)
-    let ((message, valid), state) ←
-      (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁)) (do
-        let (message, signature) ← adversary (secret • g₂)
-        let hash ← ROM.hash message
-        return (message, decide (
-          BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) signature g₂ =
-            BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash (secret • g₂))))).run ROM.State.empty
-    return valid && decide (message ∉ state.signedMessages)
+/-- The ordinary experiment, written out: generate `pk = x • g₂`, run the attacker
+against `oracle x`, hash the forged message through the same oracle, and accept a
+valid signature on a message that was never signed. -/
+theorem eufCma_eq (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) :
+    eufCma curve securityParameter adversary = RandomOracle.run do
+      let secret ← RandomOracle.sample 𝔽
+      let publicKey := secret • g₂
+      let ((message, forged), signingLog) ←
+        (simulateQ (oracle curve securityParameter secret) (adversary.main publicKey)).run
+      let hash ← RandomOracle.hash message
+      return !signingLog.wasQueried message &&
+        decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) forged g₂ = BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) hash publicKey) := by
+  rw [eufCma, EufCma.game_eq_unforgeableExperiment]
+  simp only [SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def, SignatureAlg.signingOracle,
+    oracle_eq, EufCma.oracle, signature, bind_assoc, pure_bind]
+  congr!
 
 end BLS.Game

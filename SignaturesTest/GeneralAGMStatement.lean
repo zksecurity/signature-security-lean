@@ -217,9 +217,9 @@ example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
 example (curve : Model.PairingCurve) [BLS.CoCDHSecurityModel curve]
     (securityParameter : Nat) (queries : BLS.QueryAllowance)
     (adversary : BLS.UnrestrictedAdversary curve securityParameter queries) :
-    BLS.cocdhEufCmaGame curve securityParameter adversary =
-      BLS.CoCDH.Tight.blsEufLazyPK (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
-        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source :=
+    𝒟[BLS.cocdhEufCmaGame curve securityParameter adversary] =
+      𝒟[BLS.CoCDH.Tight.blsEufLazyPK (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
+        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source] :=
   BLS.cocdhEufCmaGame_eq curve securityParameter adversary
 
 end SignaturesTest.GeneralAGMStatement

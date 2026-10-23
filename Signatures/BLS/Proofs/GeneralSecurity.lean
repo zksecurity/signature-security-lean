@@ -3,6 +3,7 @@ import Signatures.BLS.Proofs.CaliperAGM
 import Signatures.BLS.Proofs.CaliperCoCDH
 import Signatures.BLS.CoCDH.Proofs.ArbitraryMessages
 import Signatures.BLS.Proofs.ROM
+import Signatures.BLS.Proofs.EufCma
 import Signatures.BLS.Proofs.Game
 
 /-! Proofs for the public BLS AGM/DLog and unrestricted co-CDH statements.
@@ -119,13 +120,14 @@ theorem UnrestrictedAdversary.query_allowances (securityParameter : Nat) (querie
     (∀ pk, IsQueryBoundP (adversary.source pk) (fun i => Sum.isRight i = true) queries.sign) := by
   exact ⟨adversary.randomQueries, adversary.hashQueries, adversary.signingQueries⟩
 
-/-- Exact equality to the established lazy ROM game. -/
+/-- The same distribution as the established lazy ROM game, whose hash oracle keeps
+exponents: a perfect simulation because `g₁` generates. -/
 theorem cocdhEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : UnrestrictedAdversary curve securityParameter queries) :
-    cocdhEufCmaGame curve securityParameter adversary =
-      CoCDH.Tight.blsEufLazyPK (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
-        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
-  exact Game.rom_eq_source curve securityParameter adversary.source
+    𝒟[cocdhEufCmaGame curve securityParameter adversary] =
+      𝒟[CoCDH.Tight.blsEufLazyPK (F := curve.Scalar securityParameter) (Gₜ := curve.TargetGroup securityParameter)
+        (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source] := by
+  rw [cocdhEufCmaGame, Game.eufCma_eq_rom, ROM.game_eq_source]
 
 /-- The original probability inequality, independent of the solver's resource
 membership. Both the concrete and family theorems use this same reduction. -/

@@ -294,7 +294,7 @@ theorem run_eq (terms : Message → List (Index × F)) (secret : F)
     (AlgebraicOracle.sign terms secret) (attack.main (initialInput generator publicKey))
     generator (initialInput generator publicKey).groups {} ([], [])
     (attack.algebraic _) (ProofView.aligned_initial generator publicKey) rfl
-  simp only [run, bind_pure_comp, Functor.map_map]
+  simp only [run, runWith, bind_pure_comp, Functor.map_map]
   convert same using 1 <;> rfl
 
 theorem run_bind_eq {α : Type} (terms : Message → List (Index × F)) (secret : F)

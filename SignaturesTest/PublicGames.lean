@@ -13,7 +13,7 @@ namespace SignaturesTest.PublicGames
 
 run_meta do
   let games := #[
-    (``BLS.Game.agm, `Signatures.BLS.Game), (``BLS.Game.rom, `Signatures.BLS.Game),
+    (``BLS.Game.agm, `Signatures.BLS.Game), (``BLS.Game.eufCma, `Signatures.BLS.Game),
     (``OOPS.Game.agm, `Signatures.OOPS.Game),
     (``Proximity.Game.agm, `Signatures.Proximity.Game),
     (``Proximity.Game.collision, `Signatures.Proximity.Game),
@@ -39,7 +39,7 @@ example (curve : Model.PairingCurve) [BLS.AGMSecurityModel curve]
 
 example (curve : Model.PairingCurve) [BLS.CoCDHSecurityModel curve]
     (n : Nat) (q : BLS.QueryAllowance) (A : BLS.UnrestrictedAdversary curve n q) :
-    BLS.cocdhEufCmaGame curve n A = BLS.Game.rom curve n A.source := rfl
+    BLS.cocdhEufCmaGame curve n A = BLS.Game.eufCma curve n ⟨A.source⟩ := rfl
 
 example (curve : Model.PairingCurve) [OOPS.AGMSecurityModel curve]
     (n degree : Nat) (q : OOPS.QueryAllowance) (A : OOPS.AlgebraicAdversary curve n degree q) :

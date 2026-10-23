@@ -1,12 +1,15 @@
 import Signatures.Model.RandomOracle
 import VCVio.CryptoFoundations.SignatureAlg
 
-/-! One EUF-CMA experiment for every scheme. A scheme is key generation, signing
-and verification over the shared lazy random oracle (`SignatureAlg`); the
-experiment and the attacker's oracle are written out below and are, by
-definition, VCVio's `SignatureAlg.unforgeableExperiment` in the random-oracle
-model. Each scheme's readable game is proved equal to this experiment at its
-own `Scheme`. -/
+/-! One EUF-CMA experiment for every scheme and every attacker model. A scheme is
+key generation, signing and verification over the shared lazy random oracle
+(`SignatureAlg`). An attacker model says how an attacker is run against the
+signing oracle; it reports the forgery, the messages it had signed, and whether
+it respected the model's protocol. Ordinary attackers are oracle programs and
+always respect it; algebraic attackers additionally explain every group element
+they output, and malformed interactions are flagged. For ordinary attackers the
+experiment is VCVio's `SignatureAlg.unforgeableExperiment` in the random-oracle
+model (`game_eq_unforgeableExperiment`). -/
 
 open OracleComp OracleSpec
 
@@ -19,34 +22,56 @@ hash through the shared oracle `Input → Output`. -/
 abbrev Scheme (Input Output M PK SK S : Type) :=
   SignatureAlg (RandomOracle.Computation Input Output) M PK SK S
 
+/-- How attackers of type `A` are run: given the signing oracle and the public key,
+with randomness and hashing from the ambient shared oracle, produce the candidate
+forgery, the messages submitted for signing, and whether the model's protocol was
+respected. -/
+class Attacker (A : Type) (Input Output M PK S : Type) where
+  run : A → (M → RandomOracle.Computation Input Output S) → PK →
+    RandomOracle.Computation Input Output ((M × S) × List M × Bool)
+
+/-- Generate a key pair, run the attacker against the signing oracle, verify its
+forgery, and require the forged message never to have been signed and the
+protocol respected. Everything shares one initially empty lazy random oracle. -/
+noncomputable def game {A : Type} [Attacker A Input Output M PK S]
+    (scheme : Scheme Input Output M PK SK S) (attacker : A) : ProbComp Bool :=
+  RandomOracle.run do
+    let (publicKey, secretKey) ← scheme.keygen
+    let ((message, signature), signed, wellFormed) ←
+      Attacker.run attacker (scheme.sign publicKey secretKey) publicKey
+    let valid ← scheme.verify publicKey message signature
+    return wellFormed && decide (message ∉ signed) && valid
+
+/-! ### Ordinary attackers -/
+
 /-- Given the public key, any computation with randomness, hashing and signing
 access, ending in a candidate message/signature pair. -/
 abbrev Adversary (scheme : Scheme Input Output M PK SK S) := SignatureAlg.UnforgeableAdversary scheme
 
-/-- How the attacker's requests are answered. `random` and `hash` pass through to
-the shared oracle unchanged; `sign m` runs the scheme's signer under the secret
-key and records the pair `(m, σ)` it returned. -/
-abbrev oracle (scheme : Scheme Input Output M PK SK S) (publicKey : PK) (secretKey : SK) :
+/-- How an ordinary attacker's requests are answered. `random` and `hash` pass
+through to the shared oracle unchanged; `sign m` runs the signer and records the
+pair `(m, σ)` it returned. -/
+abbrev oracle (sign : M → RandomOracle.Computation Input Output S) :
     QueryImpl (RandomOracle.Spec Input Output + (M →ₒ S))
       (WriterT (QueryLog (M →ₒ S)) (RandomOracle.Computation Input Output)) :=
-  (RandomOracle.Spec Input Output).passthrough + scheme.signingOracle publicKey secretKey
+  (RandomOracle.Spec Input Output).passthrough + QueryImpl.withLogging sign
 
-/-- Generate a key pair, run the attacker against the oracle, verify its forgery
-and require the forged message never to have been signed. Key generation, the
-oracle and verification share one initially empty lazy random oracle. -/
-noncomputable def game {scheme : Scheme Input Output M PK SK S} (adversary : Adversary scheme) :
-    ProbComp Bool :=
-  RandomOracle.run (SignatureAlg.unforgeableExperiment adversary)
+noncomputable instance (scheme : Scheme Input Output M PK SK S) : Attacker (Adversary scheme) Input Output M PK S where
+  run adversary sign publicKey := do
+    let ((message, signature), log) ← (simulateQ (oracle sign) (adversary.main publicKey)).run
+    return ((message, signature), log.map Sigma.fst, true)
 
-/-- The experiment, written out. -/
-theorem game_eq {scheme : Scheme Input Output M PK SK S} (adversary : Adversary scheme) :
-    game adversary = RandomOracle.run (do
-    let (publicKey, secretKey) ← scheme.keygen
-    let ((message, signature), signingLog) ←
-      (simulateQ (oracle scheme publicKey secretKey) (adversary.main publicKey)).run
-    let valid ← scheme.verify publicKey message signature
-    return !signingLog.wasQueried message && valid) := by
-  simp only [game, SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def, oracle]
+theorem not_wasQueried (log : QueryLog (M →ₒ S)) (message : M) :
+    (!log.wasQueried message) = decide (message ∉ log.map Sigma.fst) := by
+  show (!decide (log.getQ (· = message) ≠ [])) = _
+  rw [← decide_not, decide_eq_decide]
+  exact not_congr (QueryLog.getQ_ne_nil_iff_mem_map_fst log message)
+
+/-- For ordinary attackers the experiment is VCVio's, in the random-oracle model. -/
+theorem game_eq_unforgeableExperiment {scheme : Scheme Input Output M PK SK S} (adversary : Adversary scheme) :
+    game scheme adversary = RandomOracle.run (SignatureAlg.unforgeableExperiment adversary) := by
+  simp only [game, SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def,
+    SignatureAlg.signingOracle, Attacker.run, oracle, bind_assoc, pure_bind, not_wasQueried, Bool.true_and]
   congr!
 
 end Model.EufCma

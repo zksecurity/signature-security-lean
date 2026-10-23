@@ -120,14 +120,12 @@ is `CaliperCoCDH.Parameters.solverTime`; no completed-solver budget is assumed. 
 def cocdhReductionTime (securityParameter : Nat) (queries : QueryAllowance) : Nat :=
   (model.parameters securityParameter queries).solverTime
 
-/-- The ordinary BLS EUF-CMA experiment. The real oracle samples a fresh scalar
-only when a message is first encountered, hashes it to `scalar • generator`, and
-signs it with the secret key. Hashing, signing and final verification share that
-cache. `cacheForgeryPK` appends the verifier's hash lookup before the final test.
-The secret is uniform over the whole scalar field, including zero. -/
+/-- The ordinary BLS EUF-CMA experiment: the shared game at `Game.signature`, with
+hashing, signing and final verification through one initially empty lazy random
+oracle, for the attacker's source program. -/
 noncomputable def cocdhEufCmaGame (securityParameter : Nat) {queries : QueryAllowance}
     (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
-  Game.rom curve securityParameter adversary.source
+  Game.eufCma curve securityParameter ⟨adversary.source⟩
 
 /-- Supremum of co-CDH success: sample a scalar `x` and group point `h`, give a
 solver `(g₁, g₂, x • g₁, x • g₂, h)`, and test whether it returns `x • h`.

@@ -126,7 +126,7 @@ example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
     (adversary : ∀ n, BLS.UnrestrictedAdversary curve n (queries n))
     (resources : BLS.CaliperCoCDH.Family.PolynomialResources (fun n => model.parameters n (queries n)))
     (hardness : BLS.CaliperCoCDH.Family.coCDHHardness (fun n => model.parameters n (queries n))) :
-    negligible (fun n => 𝒟[BLS.Game.rom curve n (adversary n).source] {true}) :=
+    negligible (fun n => 𝒟[BLS.Game.eufCma curve n ⟨(adversary n).source⟩] {true}) :=
   BLS.cocdh_security_asymptotic curve queries adversary resources hardness
 
 -- A caller built by the new constructor is accepted by the same public theorem.

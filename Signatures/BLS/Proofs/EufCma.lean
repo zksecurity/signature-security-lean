@@ -1,9 +1,9 @@
-import Signatures.BLS.Game
+import Signatures.BLS.Proofs.ROM
 import VCVio.OracleComp.Constructions.SampleableType.MeasureCompatibility
 import VCVio.EvalDist.Monad.Measure
 
-/-! The readable BLS game `rom` and the standard EUF-CMA experiment `eufCma` have
-the same distribution. `rom`'s oracle draws a hash exponent `ρ` and answers
+/-! The exponent-keeping game `ROM.game` and the standard EUF-CMA experiment `eufCma`
+have the same distribution. `ROM.game`'s oracle draws a hash exponent `ρ` and answers
 `ρ • g₁`; the standard oracle draws the point itself. The two agree because `g₁`
 generates (`curve.generates`), so the coupling is the bijection `ρ ↦ ρ • g₁`,
 applied once per fresh hash through a state projection from the standard
@@ -267,7 +267,7 @@ theorem readable_transcript (adversary : EufCma.Adversary (signature curve secur
 
 /-- The standard experiment and the readable exponent-keeping game have the same distribution. -/
 theorem eufCma_eq_rom (adversary : EufCma.Adversary (signature curve securityParameter (Message := Message))) :
-    𝒟[eufCma curve securityParameter adversary] = 𝒟[rom curve securityParameter adversary.main] := by
+    𝒟[eufCma curve securityParameter adversary] = 𝒟[ROM.game curve securityParameter adversary.main] := by
   classical
   have keygen : (signature curve securityParameter (Message := Message)).keygen =
       liftM ($ᵗ 𝔽 : ProbComp 𝔽) >>= fun secret => pure (secret • g₂, secret) := rfl
@@ -278,16 +278,16 @@ theorem eufCma_eq_rom (adversary : EufCma.Adversary (signature curve securityPar
       (simulateQ (standard curve securityParameter secret) (transcript curve securityParameter adversary secret)).run (∅, []) >>=
         fun result => pure (!result.2.2.wasQueried result.1.1 && decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.1 g₂ =
           BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.2 (secret • g₂))) := by
-    simp only [eufCma_eq_game, EufCma.game, SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def,
+    simp only [eufCma, EufCma.game_eq_unforgeableExperiment, SignatureAlg.unforgeableExperiment, SignatureAlg.runWithSigningOracle_def,
       RandomOracle.run, keygen, verify, bind_assoc, pure_bind, simulateQ_bind, simulateQ_pure, StateT.run'_eq,
       StateT.run_bind, StateT.run_pure, simulateQ_romImpl_liftM_run, map_bind, map_pure, bind_map_left, standard_run,
       standard_transcript]
     congr!
-  have rhs : rom curve securityParameter adversary.main = ($ᵗ 𝔽 : ProbComp 𝔽) >>= fun secret =>
+  have rhs : ROM.game curve securityParameter adversary.main = ($ᵗ 𝔽 : ProbComp 𝔽) >>= fun secret =>
       (simulateQ (ROM.oracle (F := 𝔽) g₁ (secret • g₁)) (transcript curve securityParameter adversary secret)).run ROM.State.empty >>=
         fun result => pure (decide (BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.1 g₂ =
           BilinearGroup.pairing (F := 𝔽) (Gₜ := 𝔾ₜ) result.1.2.2 (secret • g₂)) && decide (result.1.1 ∉ result.2.signedMessages)) := by
-    simp only [rom, readable_transcript, simulateQ_bind, simulateQ_pure, StateT.run_bind, StateT.run_pure, bind_assoc, pure_bind]
+    simp only [ROM.game, readable_transcript, simulateQ_bind, simulateQ_pure, StateT.run_bind, StateT.run_pure, bind_assoc, pure_bind]
   rw [lhs, rhs]
   let : MeasurableSpace 𝔽 := ⊤
   let : MeasurableSpace ((Message × 𝔾₁ × 𝔾₁) × ROM.State 𝔽 Message) := ⊤

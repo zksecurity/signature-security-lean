@@ -136,8 +136,9 @@ The **non-AGM BLS game** uses the scheme-level
 [ordinary ROM interface](../Signatures/BLS/Spec/ROM.lean): `BLS.ROM.oracle` handles
 the named requests `Request.random`, `Request.hash`, and `Request.sign`.
 Its `State` structure has `hashExponents` and `signedMessages` fields; `hashScalar`
-maintains the private lazy hash-exponent cache. In
-[`BLS.Game.rom`](../Signatures/BLS/Game.lean), the attacker returns a message and signature,
+maintains the private lazy hash-exponent cache. In the proof-side
+[`BLS.ROM.game`](../Signatures/BLS/Proofs/ROM.lean) (the public game is `BLS.Game.eufCma`,
+equal in distribution by `BLS.Game.eufCma_eq_rom`), the attacker returns a message and signature,
 then the verifier explicitly calls `ROM.hash message` and checks the pairing equation.
 This query is needed even when the attacker never hashed its proposed message.
 `simulateQ` uses the same handler for the attacker and verification, and `.run` supplies

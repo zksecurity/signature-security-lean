@@ -46,10 +46,12 @@ theorem rom_eq_eufCma (curve : Model.CyclicCurve) (securityParameter : Nat)
     {Message : Type} [DecidableEq Message]
     (adversary : ROM.Adversary (F := curve.Scalar securityParameter) (M := Message)
       (curve.generator securityParameter)) :
-    rom curve securityParameter adversary.main = Model.EufCma.game adversary := by
+    rom curve securityParameter adversary.main =
+      Model.EufCma.game (Schnorr.signature (curve.Scalar securityParameter) (curve.Group securityParameter)
+        (curve.generator securityParameter) Message) adversary := by
   classical
   rw [rom_eq_source]
-  simp only [ROM.game, Model.EufCma.game, Model.RandomOracle.run]
+  simp only [ROM.game, Model.EufCma.game_eq_unforgeableExperiment, Model.RandomOracle.run]
   congr!
 
 /-- The readable nonzero-nonce game is the shared EUF-CMA experiment at `NonzeroNonce.signature`. -/
@@ -57,10 +59,12 @@ theorem nonzeroRom_eq_eufCma (curve : Model.CyclicCurve) (securityParameter : Na
     {Message : Type} [DecidableEq Message]
     (adversary : NonzeroNonce.Adversary (F := curve.Scalar securityParameter) (M := Message)
       (curve.generator securityParameter)) :
-    nonzeroRom curve securityParameter adversary.main = Model.EufCma.game adversary := by
+    nonzeroRom curve securityParameter adversary.main =
+      Model.EufCma.game (NonzeroNonce.signature (F := curve.Scalar securityParameter) (M := Message)
+        (curve.generator securityParameter)) adversary := by
   classical
   rw [nonzeroRom_eq_source]
-  simp only [NonzeroNonce.game, Model.EufCma.game, Model.RandomOracle.run]
+  simp only [NonzeroNonce.game, Model.EufCma.game_eq_unforgeableExperiment, Model.RandomOracle.run]
   congr!
 
 end Schnorr.Game
