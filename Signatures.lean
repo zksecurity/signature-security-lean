@@ -27,6 +27,7 @@ import Signatures.BLS.Spec.ROMInterface
 import Signatures.BLS.Spec.ROMInternal
 import Signatures.BLS.Statement
 import Signatures.Model.AlgebraicOracle
+import Signatures.Model.AlgebraicRepresentation
 import Signatures.Model.BilinearGroup
 import Signatures.Model.CoCDH
 import Signatures.Model.CyclicCurve
@@ -35,6 +36,7 @@ import Signatures.Model.CyclicCurveSampling
 import Signatures.Model.DLog11
 import Signatures.Model.DirectAGM
 import Signatures.Model.EufCma
+import Signatures.Model.LazyAGM
 import Signatures.Model.PairingCurve
 import Signatures.Model.RandomOracle
 import Signatures.Model.SignatureInteraction

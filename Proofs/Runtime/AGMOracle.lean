@@ -1,6 +1,6 @@
 import Proofs.Runtime.Machine
 import Proofs.Runtime.GrowingState
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-! Closed-machine adaptive AGM oracle procedures. Reply computations are first-order
 expressions; only primitive randomness and store effects remain in the compiled program.

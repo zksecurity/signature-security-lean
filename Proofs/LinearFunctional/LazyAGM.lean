@@ -1,4 +1,4 @@
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 import Signatures.Model.CoCDH
 import Proofs.LinearFunctional.Adaptive
 import Proofs.BLS.CoCDH.LazyCoin

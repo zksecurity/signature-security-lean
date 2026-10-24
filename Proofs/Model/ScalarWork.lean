@@ -1,4 +1,4 @@
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-!
 # Scalar extraction in an explicit unit-operation model

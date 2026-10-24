@@ -1,4 +1,4 @@
-import Proofs.AlgebraicGroupModel.Spec.Representation
+import Signatures.Model.AlgebraicRepresentation
 import Lean.Elab.Command
 
 /-! Token-output utilities remain independent of oracle execution and signature games. -/

@@ -1,7 +1,7 @@
 import Proofs.Runtime.Arithmetic
 import Proofs.Runtime.Weakening
 import Proofs.Runtime.BackendWeakeningSize
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-! First-order local syntax for lazy BLS AGM replies. The persistent store
 contains the public challenge configuration, a private finite cache, and two

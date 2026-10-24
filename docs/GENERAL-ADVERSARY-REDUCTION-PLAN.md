@@ -352,7 +352,7 @@ target coefficient, via
 [`fresh_coefficient`](../Proofs/BLS/Nondegeneracy.lean). Sparsity alone
 does not establish the extraction success bound.
 
-The [eager mathematical definitions](../Proofs/Model/LazyAGM.lean) may remain
+The [eager mathematical definitions](../Signatures/Model/LazyAGM.lean) may remain
 private proof helpers so the existing probability theorem can be reused. They
 need not remain executable implementations or public efficiency endpoints.
 Alternatively, prove security directly for the lazy reductions. Avoid deleting

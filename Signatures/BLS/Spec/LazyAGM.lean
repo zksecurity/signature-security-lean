@@ -1,4 +1,4 @@
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-! # BLS with query-only random-oracle access and an algebraic output -/
 

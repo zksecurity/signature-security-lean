@@ -1,4 +1,4 @@
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 import AlgebraicGroupModel.Interaction
 
 /-! The signature adapter preserves source interactions and the full winning experiment. -/

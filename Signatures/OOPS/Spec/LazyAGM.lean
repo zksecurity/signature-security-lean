@@ -1,4 +1,4 @@
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-! # Degree-bounded OOPS with lazily sampled topic/degree bases
 

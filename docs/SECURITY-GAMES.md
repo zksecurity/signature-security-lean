@@ -139,14 +139,14 @@ The minimal generic interface and its tests live in the pinned, public
 
 ## Query-only lazy AGM
 
-[Token-indexed outputs](../Proofs/AlgebraicGroupModel/Spec/Representation.lean)
+[Token-indexed outputs](../Signatures/Model/AlgebraicRepresentation.lean)
 define coefficients, their evaluation on a finite list of supplied inputs, and output
 materialization. These signature-adapter utilities import no oracle computations and are
 not part of the generic AGM library. The enclosing game chooses the available inputs;
 the utilities do not implement a group-operation machine or certify coefficient costs.
 
 [SignatureInterface.lean](../Signatures/Model/SignatureInterface.lean) defines the internal
-grouped coefficient view; [Model/LazyAGM.lean](../Proofs/Model/LazyAGM.lean) contains
+grouped coefficient view; [Model/LazyAGM.lean](../Signatures/Model/LazyAGM.lean) contains
 its proof-side experiment and named reductions. The public attacker is the shared
 interactive adversary described above, with adaptive private-randomness, base, and
 signing queries.

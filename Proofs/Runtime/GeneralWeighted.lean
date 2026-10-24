@@ -1,5 +1,5 @@
 import Proofs.Runtime.GeneralCallerBudget
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-! General callers for weighted signatures use separate hash-index and signing-
 message types. Only the randomness arity is bounded by the request interface;

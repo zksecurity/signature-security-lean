@@ -2,7 +2,6 @@ import Proofs.AlgebraicGroupModel.Extraction
 import Proofs.AlgebraicGroupModel.ForgeryGame
 import Proofs.AlgebraicGroupModel.PairingExtraction
 import Proofs.AlgebraicGroupModel.Spec.AffineForm
-import Proofs.AlgebraicGroupModel.Spec.Representation
 import Proofs.BLS.CaliperAGM
 import Proofs.BLS.CaliperAGMFamily
 import Proofs.BLS.CaliperCoCDH
@@ -60,7 +59,6 @@ import Proofs.Model.FiniteDomain
 import Proofs.Model.ForkingLoss
 import Proofs.Model.ForkingNegligible
 import Proofs.Model.Hardness
-import Proofs.Model.LazyAGM
 import Proofs.Model.NonzeroFieldGrowth
 import Proofs.Model.OperationCost
 import Proofs.Model.ScalarWork

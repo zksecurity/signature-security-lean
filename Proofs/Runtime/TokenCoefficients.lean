@@ -1,5 +1,5 @@
 import Proofs.Runtime.AttachTable
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-! Attach adversary coefficients to the chronological explicit-query transcript. Simulator
 logs are stored backwards; reversal and indexed coefficient lookup are executed and charged.

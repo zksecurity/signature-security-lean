@@ -1,4 +1,4 @@
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 import Signatures.Model.RandomOracle
 
 /-! The algebraic oracle shared by BLS, OOPS, and Proximity.

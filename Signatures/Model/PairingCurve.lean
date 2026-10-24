@@ -1,4 +1,4 @@
-import Proofs.Model.LazyAGM
+import Signatures.Model.LazyAGM
 
 /-! The mathematical curve data used by pairing-based signature statements.
 The security parameter selects the scalar field, groups, pairing, and generators.
