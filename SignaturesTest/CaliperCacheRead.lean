@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.CacheReadMemory
+import Proofs.Runtime.Caliper.CacheReadMemory
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend

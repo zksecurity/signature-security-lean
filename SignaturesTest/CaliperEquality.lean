@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.EncodedEquality
+import Proofs.Runtime.Caliper.EncodedEquality
 import Lean
 
 open Caliper Signatures.Runtime.CaliperBackend

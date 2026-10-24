@@ -1,5 +1,5 @@
-import Signatures.Runtime.PrimeFieldOps
-import Signatures.Runtime.WordCircuit
+import Proofs.Runtime.PrimeFieldOps
+import Proofs.Runtime.WordCircuit
 import Lean.Util.CollectAxioms
 
 open Std.Sat Std.Tactic.BVDecide BVExpr.bitblast

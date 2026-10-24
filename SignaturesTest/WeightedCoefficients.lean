@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendWeightedCoefficients
-import Signatures.Runtime.BackendWeightedEvaluateEncoding
-import Signatures.Runtime.BackendWeightedCoefficientBudget
+import Proofs.Runtime.BackendWeightedCoefficients
+import Proofs.Runtime.BackendWeightedEvaluateEncoding
+import Proofs.Runtime.BackendWeightedCoefficientBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

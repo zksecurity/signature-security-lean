@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.CoronResponseMemory
+import Proofs.Runtime.Caliper.CoronResponseMemory
 import Lean
 
 /-! Exercise both Coron branches with distinct encoded challenge points and

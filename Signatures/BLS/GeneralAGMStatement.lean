@@ -1,5 +1,5 @@
 import Signatures.BLS.GeneralAGMParameters
-import Signatures.Model.Proofs.DirectAGM
+import Proofs.Model.DirectAGM
 
 /-! BLS AGM security for general realized attackers at explicit resource/query
 allowances. The supporting parameters fix the curve, backend, primitive prices,

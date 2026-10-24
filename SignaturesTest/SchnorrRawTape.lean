@@ -1,8 +1,8 @@
-import Signatures.Runtime.SchnorrRawFork
-import Signatures.Runtime.SchnorrRawTapeBounds
-import Signatures.Runtime.BackendSchnorrRawUniformPolynomial
-import Signatures.Runtime.BackendSchnorrRawChallengeBudget
-import Signatures.Runtime.BackendSchnorrRawResetBudget
+import Proofs.Runtime.SchnorrRawFork
+import Proofs.Runtime.SchnorrRawTapeBounds
+import Proofs.Runtime.BackendSchnorrRawUniformPolynomial
+import Proofs.Runtime.BackendSchnorrRawChallengeBudget
+import Proofs.Runtime.BackendSchnorrRawResetBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -208,7 +208,7 @@ run_meta do
   let securityType := (← getConstInfo ``RawTape.security).type
   if (securityType.find? (fun e => e.isConstOf ``instEvalDistSemanticsOfMonadLiftTSPMF)).isSome then
     throwError "raw finite-list security must use native measures"
-  for forbidden in #[``OracleComp.IsPerIndexQueryBound, `Signatures.Runtime.Program,
+  for forbidden in #[``OracleComp.IsPerIndexQueryBound, `Proofs.Runtime.Program,
       `Signatures.Runtime.Schnorr.SourceCertificate] do
     if (securityType.find? (fun e => e.isConstOf forbidden)).isSome then
       throwError "raw finite-list security must not restrict source syntax or require a seed cover"

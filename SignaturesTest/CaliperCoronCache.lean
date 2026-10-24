@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.CoronCache
-import Signatures.Runtime.CoronPairedCache
+import Proofs.Runtime.Caliper.CoronCache
+import Proofs.Runtime.CoronPairedCache
 import Lean
 
 /-! Execute Coron's paired cache on empty, partially filled and full tables.

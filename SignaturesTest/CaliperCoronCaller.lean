@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.CoronFullSource
-import Signatures.Runtime.Caliper.CoronCallerPresentation
+import Proofs.Runtime.Caliper.CoronFullSource
+import Proofs.Runtime.Caliper.CoronCallerPresentation
 import Lean
 
 /-! Execute the complete Coron caller/service/extractor with actual local

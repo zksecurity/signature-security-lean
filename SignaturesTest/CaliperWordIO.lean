@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.OracleCall
-import Signatures.Runtime.Caliper.Words
+import Proofs.Runtime.Caliper.OracleCall
+import Proofs.Runtime.Caliper.Words
 import Lean
 
 open Caliper Signatures.Runtime.CaliperBackend

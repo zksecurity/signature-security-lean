@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrROMTapeCallerMemory
-import Signatures.Runtime.Caliper.SchnorrROMTapeCallerSource
+import Proofs.Runtime.Caliper.SchnorrROMTapeCallerMemory
+import Proofs.Runtime.Caliper.SchnorrROMTapeCallerSource
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

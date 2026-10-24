@@ -34,15 +34,27 @@ every group element they output). For ordinary attackers it is VCVio's
 `unforgeableExperiment`. Each `Signatures/<Scheme>/Game.lean` is that experiment
 at the scheme, written out once more as a theorem so the file reads as the
 paper's figure; the proof-side games that reductions start from are related to it
-by equalities in `Proofs/` (e.g. [`BLS.Game.eufCma_eq_rom`](Signatures/BLS/Proofs/EufCma.lean)).
+by equalities in `Proofs/` (e.g. [`BLS.Game.eufCma_eq_rom`](Proofs/BLS/EufCma.lean)).
 
 ## Layout
 
-- `Signatures/Model/` — shared notions: random oracle, EUF-CMA experiment, algebraic group model, hardness.
-- `Signatures/{BLS,OOPS,Proximity,Schnorr}/` — `Game.lean`, `Statement.lean`, `Spec/`, `Proofs/`, model records.
-- `Signatures/Runtime/` — executed reductions and their resource accounting (`Runtime/Caliper/` for the Caliper word machine).
-- `SignaturesTest/` — regression tests and audit guards (module location, explicit arguments, axioms of every public theorem).
-- `docs/` — [review guide](docs/review-guide.md), [security games](docs/SECURITY-GAMES.md), [computational-security status](docs/COMPUTATIONAL-SECURITY.md), [Schnorr review path](docs/SCHNORR.md), [Caliper backend](docs/CALIPER-BACKEND-PLAN.md), [API migration](docs/API-MIGRATION.md), and the retired long-form [development notes](docs/DEVELOPMENT-NOTES.md).
+Two libraries, split by what a reviewer has to read.
+
+- `Signatures/` — **the review surface**: everything a public statement's meaning depends on.
+  `Model/` (random oracle, EUF-CMA experiment, curves, algebraic group model, hardness suprema) and,
+  per scheme, `Game.lean`, `Statement.lean`, the `*FamilyStatement.lean` corollaries, `Spec/`
+  (the scheme and its oracles), `QueryAllowance`, and the `*SecurityModel`/`*Parameters`/`*Resources`
+  records that fix the execution model and derived budgets, and `Runtime/` with the
+  hardness-family hypotheses of the asymptotic statements. 100 modules.
+- `Proofs/` — everything else: the proofs of the statements (`Proofs/<Scheme>/`), the executed
+  reductions and their resource accounting (`Proofs/Runtime/`, `Proofs/Runtime/Caliper/`), and
+  supporting lemmas (`Proofs/Model/`). Nothing here needs to be read to know what is claimed.
+- `SignaturesTest/` — regression tests and audit guards (module location, explicit arguments,
+  axioms of every public theorem, and that statements mention only review-surface definitions).
+- `docs/` — [review guide](docs/review-guide.md), [security games](docs/SECURITY-GAMES.md),
+  [computational-security status](docs/COMPUTATIONAL-SECURITY.md), [Schnorr review path](docs/SCHNORR.md),
+  [Caliper backend](docs/CALIPER-BACKEND-PLAN.md), [API migration](docs/API-MIGRATION.md), and the
+  retired long-form [development notes](docs/DEVELOPMENT-NOTES.md).
 
 ## Build
 
@@ -50,7 +62,7 @@ Lean `v4.34.0` (from `lean-toolchain`, via elan).
 
 ```sh
 lake exe cache get
-lake build Signatures SignaturesTest
+lake build Signatures Proofs SignaturesTest
 ```
 
 CI runs exactly this. Pinned upstreams:

@@ -1,7 +1,7 @@
-import Signatures.Runtime.Caliper.SchnorrAGMHashDispatchMemory
-import Signatures.Runtime.Caliper.SchnorrAGMExtractionMemory
-import Signatures.Runtime.Caliper.SchnorrAGMCallerFinishBounds
-import Signatures.Runtime.Caliper.SchnorrAGMCallerFinishSource
+import Proofs.Runtime.Caliper.SchnorrAGMHashDispatchMemory
+import Proofs.Runtime.Caliper.SchnorrAGMExtractionMemory
+import Proofs.Runtime.Caliper.SchnorrAGMCallerFinishBounds
+import Proofs.Runtime.Caliper.SchnorrAGMCallerFinishSource
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

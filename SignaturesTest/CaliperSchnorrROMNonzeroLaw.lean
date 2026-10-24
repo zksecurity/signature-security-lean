@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningBranch
+import Proofs.Runtime.Caliper.SchnorrROMNonzeroSigningBranch
 import Lean
 
 /-! A concrete nonzero-nonce handler on an actual module: points are `ZMod 7`

@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrROMDescriptionPolynomial
-import Signatures.Runtime.BackendSchnorrROMSecurity
+import Proofs.Runtime.BackendSchnorrROMDescriptionPolynomial
+import Proofs.Runtime.BackendSchnorrROMSecurity
 import Lean.Util.CollectAxioms
 
 /-! Guard the complete general ROM resource/security connection. Polynomial

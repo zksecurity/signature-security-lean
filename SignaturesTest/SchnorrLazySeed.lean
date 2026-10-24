@@ -1,4 +1,4 @@
-import Signatures.Runtime.SchnorrLazySeedLog
+import Proofs.Runtime.SchnorrLazySeedLog
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

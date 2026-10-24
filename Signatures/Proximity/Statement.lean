@@ -1,4 +1,4 @@
-import Signatures.Proximity.Proofs.GeneralSecurity
+import Proofs.Proximity.GeneralSecurity
 
 /-! Proximity security. Fix the curve, security parameter, query allowances and
 execution model, then quantify over the attacker. `Game.lean` contains the game

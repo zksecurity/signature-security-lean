@@ -1,5 +1,5 @@
-import Signatures.Schnorr.CaliperAGMSource
-import Signatures.Schnorr.Proofs.CaliperAGM
+import Proofs.Schnorr.CaliperAGMSource
+import Proofs.Schnorr.CaliperAGM
 import Lean.Util.CollectAxioms
 
 /-! Rejected source replies stop immediately; represented replies preserve the

@@ -1,5 +1,5 @@
-import Signatures.Runtime.HeapProgram
-import Signatures.Runtime.HeapLoopRefinement
+import Proofs.Runtime.HeapProgram
+import Proofs.Runtime.HeapLoopRefinement
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

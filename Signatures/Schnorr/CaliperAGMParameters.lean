@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrAGMFullSecurity
+import Proofs.Runtime.Caliper.SchnorrAGMFullSecurity
 import Signatures.Schnorr.QueryAllowance
 
 /-! Fixed Caliper components and local attacker allowances for Schnorr AGM.

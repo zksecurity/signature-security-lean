@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMTapeReplyBounds
+import Proofs.Runtime.Caliper.SchnorrROMTapeReplyBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -1,9 +1,9 @@
-import Signatures.Runtime.BackendWeightedOracle
-import Signatures.Runtime.BackendWeightedReplyDescription
-import Signatures.Runtime.BackendWeightedReplyCost
-import Signatures.Runtime.BackendWeightedReplySize
-import Signatures.Runtime.BackendWeightedHashBudget
-import Signatures.Runtime.BackendWeightedSignBudget
+import Proofs.Runtime.BackendWeightedOracle
+import Proofs.Runtime.BackendWeightedReplyDescription
+import Proofs.Runtime.BackendWeightedReplyCost
+import Proofs.Runtime.BackendWeightedReplySize
+import Proofs.Runtime.BackendWeightedHashBudget
+import Proofs.Runtime.BackendWeightedSignBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

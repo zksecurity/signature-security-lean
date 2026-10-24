@@ -1,6 +1,6 @@
-import Signatures.Runtime.Caliper.CoronServiceBounds
-import Signatures.Runtime.Caliper.CoronServiceSource
-import Signatures.Runtime.Caliper.CoronCallerFinishBounds
+import Proofs.Runtime.Caliper.CoronServiceBounds
+import Proofs.Runtime.Caliper.CoronServiceSource
+import Proofs.Runtime.Caliper.CoronCallerFinishBounds
 import Lean
 
 /-! Whole-service execution with real sampling and word arithmetic. These are

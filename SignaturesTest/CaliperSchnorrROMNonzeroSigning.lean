@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningHandlerBounds
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningBranch
+import Proofs.Runtime.Caliper.SchnorrROMNonzeroSigningHandlerBounds
+import Proofs.Runtime.Caliper.SchnorrROMNonzeroSigningBranch
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -1,8 +1,8 @@
-import Signatures.Runtime.AGMTable
-import Signatures.Runtime.TableRefinement
-import Signatures.Runtime.KeyEquality
-import Signatures.Runtime.AffineTable
-import Signatures.Runtime.Weights
+import Proofs.Runtime.AGMTable
+import Proofs.Runtime.TableRefinement
+import Proofs.Runtime.KeyEquality
+import Proofs.Runtime.AffineTable
+import Proofs.Runtime.Weights
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

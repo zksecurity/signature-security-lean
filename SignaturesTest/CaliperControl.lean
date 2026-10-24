@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper
+import Proofs.Runtime.Caliper
 import Lean
 
 open Caliper Signatures.Runtime.CaliperBackend

@@ -1,5 +1,5 @@
-import Signatures.Schnorr.Proofs.GeneralAGM
-import Signatures.Runtime.BackendSchnorrAGMPolynomial
+import Proofs.Schnorr.GeneralAGM
+import Proofs.Runtime.BackendSchnorrAGMPolynomial
 import Signatures.Runtime.BackendSchnorrAGMDLogFamily
 
 /-! Polynomial resources for general Schnorr AGM attackers in one fixed

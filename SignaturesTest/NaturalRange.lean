@@ -1,4 +1,4 @@
-import Signatures.Runtime.NaturalRange
+import Proofs.Runtime.NaturalRange
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

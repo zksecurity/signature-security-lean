@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendSchnorrNonzeroPassPolynomial
-import Signatures.Runtime.BackendSchnorrNonzeroPassDescription
-import Signatures.Runtime.BackendSchnorrRawFork
+import Proofs.Runtime.BackendSchnorrNonzeroPassPolynomial
+import Proofs.Runtime.BackendSchnorrNonzeroPassDescription
+import Proofs.Runtime.BackendSchnorrRawFork
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

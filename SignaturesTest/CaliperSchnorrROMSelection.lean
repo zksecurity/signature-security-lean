@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMPassSelectionBounds
+import Proofs.Runtime.Caliper.SchnorrROMPassSelectionBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

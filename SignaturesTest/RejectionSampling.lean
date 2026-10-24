@@ -1,4 +1,4 @@
-import Signatures.Runtime.RejectionSampling
+import Proofs.Runtime.RejectionSampling
 import Lean.Util.CollectAxioms
 
 open Signatures.Runtime.RejectionSampling

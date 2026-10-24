@@ -20,7 +20,7 @@ run_meta do
   for name in #[``BLS.Proofs.agm_security, ``BLS.Proofs.agm_security_common_budget,
       ``BLS.dlogSuccessBound_mono, ``BLS.Proofs.cocdh_security,
       ``BLS.agmEufCmaGame_eq, ``BLS.cocdhEufCmaGame_eq] do
-    unless (← findModuleOf? name) == some `Signatures.BLS.Proofs.GeneralSecurity do
+    unless (← findModuleOf? name) == some `Proofs.BLS.GeneralSecurity do
       throwError "{name}: supporting proof must stay in the separate proof file"
 
 -- Keep both lower-level wrappers small, and the public theorem aligned with

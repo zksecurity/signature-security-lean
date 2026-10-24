@@ -1,4 +1,4 @@
-import Signatures.Runtime.HeapDLog
+import Proofs.Runtime.HeapDLog
 
 open Signatures.Runtime
 

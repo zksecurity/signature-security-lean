@@ -1,4 +1,4 @@
-import Signatures.Runtime.SchnorrAGMSecurity
+import Proofs.Runtime.SchnorrAGMSecurity
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.BLSRecordBounds
-import Signatures.Runtime.Caliper.BLSRecordReachability
+import Proofs.Runtime.Caliper.BLSRecordBounds
+import Proofs.Runtime.Caliper.BLSRecordReachability
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend

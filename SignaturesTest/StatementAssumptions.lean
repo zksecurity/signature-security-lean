@@ -1,4 +1,5 @@
 import Signatures
+import Proofs
 import Lean.Util.CollectAxioms
 
 -- Boolean predicate notation elaborates to the original signing-query selector exactly.

@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrAGMSetup
-import Signatures.Runtime.Caliper.SchnorrAGMReachability
+import Proofs.Runtime.Caliper.SchnorrAGMSetup
+import Proofs.Runtime.Caliper.SchnorrAGMReachability
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

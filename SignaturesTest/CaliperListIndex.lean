@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.ListIndexBounds
+import Proofs.Runtime.Caliper.ListIndexBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

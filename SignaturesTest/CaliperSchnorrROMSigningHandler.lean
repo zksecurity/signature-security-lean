@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMSigningHandlerMemory
+import Proofs.Runtime.Caliper.SchnorrROMSigningHandlerMemory
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

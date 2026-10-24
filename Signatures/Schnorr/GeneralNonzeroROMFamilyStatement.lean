@@ -1,4 +1,4 @@
-import Signatures.Schnorr.Proofs.GeneralNonzeroROMFamily
+import Proofs.Schnorr.GeneralNonzeroROMFamily
 
 /-! Nonzero-nonce Schnorr ROM security for polynomial unrestricted attacker
 families. One backend and cost/description convention is fixed across parameters.

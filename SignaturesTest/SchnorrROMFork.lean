@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrROMForkDescription
-import Signatures.Runtime.BackendSchnorrROMForkPolynomial
+import Proofs.Runtime.BackendSchnorrROMForkDescription
+import Proofs.Runtime.BackendSchnorrROMForkPolynomial
 import Lean.Util.CollectAxioms
 
 /-! Scope and axiom regressions for the installed general ROM fork. Its source

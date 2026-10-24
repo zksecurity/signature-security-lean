@@ -1,6 +1,6 @@
 import Signatures.Schnorr.Statement
 import Signatures.Schnorr.GeneralExecutionModel
-import Signatures.Schnorr.Proofs.GeneralAGM
+import Proofs.Schnorr.GeneralAGM
 import Lean.Util.CollectAxioms
 
 /-! Guard the public Schnorr AGM interface, source-game correspondence and
@@ -18,7 +18,7 @@ run_meta do
     throwError "The public Schnorr theorem must stay in Statement.lean"
   for name in #[``Schnorr.Proofs.agm_security, ``Schnorr.agmEufCmaGame_eq,
       ``Schnorr.dlogSuccessBound_mono, ``Schnorr.AlgebraicAdversary.query_allowances] do
-    unless (← findModuleOf? name) == some `Signatures.Schnorr.Proofs.GeneralSecurity do
+    unless (← findModuleOf? name) == some `Proofs.Schnorr.GeneralSecurity do
       throwError "{name}: supporting proof must stay in the separate proof file"
   forallTelescope (← getConstInfo ``Schnorr.agm_security).type fun params _ => do
     unless params.size == 5 do

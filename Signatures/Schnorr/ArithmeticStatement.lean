@@ -1,6 +1,6 @@
-import Signatures.Schnorr.Proofs.ROM
-import Signatures.Runtime.SchnorrReduction
-import Signatures.Model.Hardness
+import Proofs.Schnorr.ROM
+import Proofs.Runtime.SchnorrReduction
+import Proofs.Model.Hardness
 
 /-! Arithmetic-source Schnorr EUF-CMA security in the programmable ROM, with a
 complete replay-machine certificate. No AGM restriction or constant-cost

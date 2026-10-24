@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendSchnorrAGMSigningBudget
+import Proofs.Runtime.BackendSchnorrAGMSigningBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

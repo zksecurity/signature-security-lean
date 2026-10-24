@@ -1,7 +1,7 @@
 import Signatures.BLS.Statement
 import Signatures.OOPS.Statement
 import Signatures.Proximity.Statement
-import Signatures.Model.Proofs.DirectAGM
+import Proofs.Model.DirectAGM
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

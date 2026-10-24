@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMHandlerInvariant
+import Proofs.Runtime.Caliper.SchnorrROMHandlerInvariant
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrAGMHistoriesBounds
+import Proofs.Runtime.Caliper.SchnorrAGMHistoriesBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

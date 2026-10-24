@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrRawForkDescription
-import Signatures.Runtime.BackendSchnorrRawForkBudget
+import Proofs.Runtime.BackendSchnorrRawForkDescription
+import Proofs.Runtime.BackendSchnorrRawForkBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

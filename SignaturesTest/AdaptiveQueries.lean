@@ -1,4 +1,4 @@
-import Signatures.Model.LazyAGM
+import Proofs.Model.LazyAGM
 import Signatures.BLS.Spec.ROMInternal
 
 /-! Reply-dependent queries, stopping, and outputs in both lazy oracle interfaces.

@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrAGMHandlerDescription
-import Signatures.Runtime.BackendSchnorrAGMHandlerPrimitiveBudget
+import Proofs.Runtime.BackendSchnorrAGMHandlerDescription
+import Proofs.Runtime.BackendSchnorrAGMHandlerPrimitiveBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

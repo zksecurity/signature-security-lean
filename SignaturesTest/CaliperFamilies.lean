@@ -65,7 +65,7 @@ run_meta do
 run_meta do
   unless (← findModuleOf? ``BLS.agm_security_asymptotic) == some `Signatures.BLS.CaliperAGMFamilyStatement do
     throwError "keep the public Caliper family statement in its statement file"
-  unless (← findModuleOf? ``BLS.CaliperAGM.Family.Proofs.security) == some `Signatures.BLS.Proofs.CaliperAGMFamily do
+  unless (← findModuleOf? ``BLS.CaliperAGM.Family.Proofs.security) == some `Proofs.BLS.CaliperAGMFamily do
     throwError "keep the family proof in its separate proof file"
   let info ← getConstInfo ``BLS.CaliperAGM.Family.Proofs.security
   let proof := (info.value? true).getD info.type
@@ -104,7 +104,7 @@ run_meta do
       throwError "Schnorr polynomial components omit {required}"
   unless (← findModuleOf? ``Schnorr.agm_security_asymptotic) == some `Signatures.Schnorr.CaliperAGMFamilyStatement do
     throwError "keep the Schnorr family statement separate"
-  unless (← findModuleOf? ``Schnorr.CaliperAGM.Family.Proofs.security) == some `Signatures.Schnorr.Proofs.CaliperAGMFamily do
+  unless (← findModuleOf? ``Schnorr.CaliperAGM.Family.Proofs.security) == some `Proofs.Schnorr.CaliperAGMFamily do
     throwError "keep the Schnorr family proof separate"
   let info ← getConstInfo ``Schnorr.CaliperAGM.Family.Proofs.security
   let proof := (info.value? true).getD info.type

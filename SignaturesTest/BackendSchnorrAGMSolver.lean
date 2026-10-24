@@ -1,7 +1,7 @@
-import Signatures.Runtime.BackendSchnorrAGMSolverCorrectness
-import Signatures.Runtime.BackendSchnorrAGMSolverDescription
-import Signatures.Runtime.BackendSchnorrAGMSolverSetup
-import Signatures.Runtime.BackendSchnorrAGMSecurity
+import Proofs.Runtime.BackendSchnorrAGMSolverCorrectness
+import Proofs.Runtime.BackendSchnorrAGMSolverDescription
+import Proofs.Runtime.BackendSchnorrAGMSolverSetup
+import Proofs.Runtime.BackendSchnorrAGMSecurity
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

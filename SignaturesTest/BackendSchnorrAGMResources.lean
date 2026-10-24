@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendSchnorrAGMOutputSize
+import Proofs.Runtime.BackendSchnorrAGMOutputSize
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec PFunctor

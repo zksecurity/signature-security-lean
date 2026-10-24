@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrROMSolverDescription
-import Signatures.Runtime.BackendSchnorrROMSolverPolynomial
+import Proofs.Runtime.BackendSchnorrROMSolverDescription
+import Proofs.Runtime.BackendSchnorrROMSolverPolynomial
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

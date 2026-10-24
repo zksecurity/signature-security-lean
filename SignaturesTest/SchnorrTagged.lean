@@ -1,4 +1,4 @@
-import Signatures.Runtime.SchnorrTagged
+import Proofs.Runtime.SchnorrTagged
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

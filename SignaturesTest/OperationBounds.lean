@@ -1,4 +1,5 @@
 import Signatures
+import Proofs
 import Mathlib.Algebra.Field.ZMod
 
 /-! Operation-ledger regressions. These do not assert machine-time or PPT adequacy. -/

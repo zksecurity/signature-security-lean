@@ -1,4 +1,4 @@
-import Signatures.Runtime.HeapProbability
+import Proofs.Runtime.HeapProbability
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,6 +1,6 @@
-import Signatures.Schnorr.Proofs.ROM
-import Signatures.Runtime.SchnorrSeededBits
-import Signatures.Model.Hardness
+import Proofs.Schnorr.ROM
+import Proofs.Runtime.SchnorrSeededBits
+import Proofs.Model.Hardness
 
 /-! Fixed-private-tape Schnorr security against the concrete bit-heap machine. The reduction is
 compiled from the certified source, its full online budget is proved, and the

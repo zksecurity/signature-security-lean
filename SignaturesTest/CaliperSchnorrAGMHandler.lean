@@ -1,11 +1,11 @@
-import Signatures.Runtime.Caliper.SchnorrAGMHandlerMemory
-import Signatures.Runtime.Caliper.SchnorrAGMCallerMemory
-import Signatures.Runtime.Caliper.SchnorrAGMCallerResources
-import Signatures.Runtime.Caliper.UniformSamplingBounds
-import Signatures.Runtime.Caliper.EncodedConstant
-import Signatures.Runtime.Caliper.SchnorrAGMCallerExtractionBounds
-import Signatures.Runtime.Caliper.SchnorrAGMFullSecurity
-import Signatures.Runtime.Caliper.SchnorrAGMCallerReplyEncoding
+import Proofs.Runtime.Caliper.SchnorrAGMHandlerMemory
+import Proofs.Runtime.Caliper.SchnorrAGMCallerMemory
+import Proofs.Runtime.Caliper.SchnorrAGMCallerResources
+import Proofs.Runtime.Caliper.UniformSamplingBounds
+import Proofs.Runtime.Caliper.EncodedConstant
+import Proofs.Runtime.Caliper.SchnorrAGMCallerExtractionBounds
+import Proofs.Runtime.Caliper.SchnorrAGMFullSecurity
+import Proofs.Runtime.Caliper.SchnorrAGMCallerReplyEncoding
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

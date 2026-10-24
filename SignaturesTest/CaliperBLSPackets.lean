@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.BLSCallerResources
-import Signatures.Runtime.Caliper.BLSInitialization
+import Proofs.Runtime.Caliper.BLSCallerResources
+import Proofs.Runtime.Caliper.BLSInitialization
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

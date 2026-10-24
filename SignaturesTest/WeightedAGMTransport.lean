@@ -1,5 +1,5 @@
-import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics
-import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
+import Proofs.OOPS.LazyAGMArbitraryTopics
+import Proofs.Proximity.LazyAGMArbitrarySlots
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

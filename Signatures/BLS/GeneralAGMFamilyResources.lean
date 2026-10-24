@@ -1,5 +1,5 @@
 import Signatures.BLS.GeneralAGMStatement
-import Signatures.Runtime.BackendLazyAGMPolynomial
+import Proofs.Runtime.BackendLazyAGMPolynomial
 import Signatures.Runtime.BackendLazyAGMDLogFamily
 
 /-! Polynomial resources and fixed-backend composition for BLS AGM families.

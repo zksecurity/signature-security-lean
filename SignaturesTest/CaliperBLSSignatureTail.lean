@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.BLSSignatureTailAcceptance
-import Signatures.Runtime.Caliper.BLSSignatureTailSource
+import Proofs.Runtime.Caliper.BLSSignatureTailAcceptance
+import Proofs.Runtime.Caliper.BLSSignatureTailSource
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

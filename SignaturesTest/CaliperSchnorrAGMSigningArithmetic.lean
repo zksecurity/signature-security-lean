@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrAGMSigningArithmeticBounds
-import Signatures.Runtime.Caliper.EncodedConstant
+import Proofs.Runtime.Caliper.SchnorrAGMSigningArithmeticBounds
+import Proofs.Runtime.Caliper.EncodedConstant
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

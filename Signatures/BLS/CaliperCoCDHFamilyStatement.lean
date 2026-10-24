@@ -1,4 +1,4 @@
-import Signatures.BLS.Proofs.CaliperCoCDHFamily
+import Proofs.BLS.CaliperCoCDHFamily
 
 /-! Asymptotic BLS co-CDH security in the fixed Caliper model. The complete
 reduction's polynomial time, stored code and total memory follow from component

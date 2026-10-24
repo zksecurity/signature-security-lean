@@ -1,5 +1,5 @@
-import Signatures.BLS.Proofs.LazyAGMArbitraryMessages
-import Signatures.BLS.Proofs.LazyAGMList
+import Proofs.BLS.LazyAGMArbitraryMessages
+import Proofs.BLS.LazyAGMList
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec Model.LazyAGM BLS.LazyAGM.MessageTransport

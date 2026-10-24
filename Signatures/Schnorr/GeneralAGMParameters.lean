@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrAGMSecurity
-import Signatures.Model.AdvantageBound
+import Proofs.Runtime.BackendSchnorrAGMSecurity
+import Proofs.Model.AdvantageBound
 import Signatures.Schnorr.QueryAllowance
 
 /-! Concrete contracts for general Schnorr AGM attackers. The parameters fix

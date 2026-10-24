@@ -1,274 +1,375 @@
+import Signatures.AlgebraicGroupModel.Spec.AffineForm
+import Signatures.AlgebraicGroupModel.Spec.DLog11
+import Signatures.AlgebraicGroupModel.Spec.Representation
+import Signatures.BLS.ArithmeticStatement
+import Signatures.BLS.CaliperAGMFamilyResources
+import Signatures.BLS.CaliperAGMFamilyStatement
+import Signatures.BLS.CaliperAGMParameters
+import Signatures.BLS.CaliperCoCDHFamilyResources
+import Signatures.BLS.CaliperCoCDHFamilyStatement
+import Signatures.BLS.CaliperCoCDHParameters
+import Signatures.BLS.CoCDH.Spec.Assumption
+import Signatures.BLS.CoCDH.Spec.Coron
+import Signatures.BLS.CoCDH.Spec.LazyGame
+import Signatures.BLS.Game
+import Signatures.BLS.GeneralAGMFamilyResources
+import Signatures.BLS.GeneralAGMFamilyStatement
+import Signatures.BLS.GeneralAGMParameters
+import Signatures.BLS.GeneralAGMStatement
+import Signatures.BLS.GeneralCoCDHParameters
+import Signatures.BLS.GeneralExecutionModel
+import Signatures.BLS.GeneralSecurityModel
+import Signatures.BLS.QueryAllowance
+import Signatures.BLS.Security
+import Signatures.BLS.SecurityModel
+import Signatures.BLS.Spec.LazyAGM
+import Signatures.BLS.Spec.LazyAGMList
+import Signatures.BLS.Spec.LazyAGMReduction
+import Signatures.BLS.Spec.ROM
+import Signatures.BLS.Spec.ROMInterface
+import Signatures.BLS.Spec.ROMInternal
+import Signatures.BLS.Statement
+import Signatures.LinearFunctional.Spec.Handle
+import Signatures.LinearFunctional.Spec.LazyAGMReduction
+import Signatures.Model.AlgebraicOracle
+import Signatures.Model.BilinearGroup
+import Signatures.Model.CoCDH
+import Signatures.Model.CyclicCurve
+import Signatures.Model.CyclicCurveNonzeroSampling
+import Signatures.Model.CyclicCurveSampling
+import Signatures.Model.DirectAGM
+import Signatures.Model.EufCma
+import Signatures.Model.PairingCurve
+import Signatures.Model.RandomOracle
+import Signatures.Model.SignatureInteraction
+import Signatures.Model.SignatureInterface
+import Signatures.OOPS.ArithmeticStatement
+import Signatures.OOPS.CaliperAGMFamilyStatement
+import Signatures.OOPS.CaliperAGMParameters
+import Signatures.OOPS.Game
+import Signatures.OOPS.GeneralAGMFamilyStatement
+import Signatures.OOPS.GeneralAGMParameters
+import Signatures.OOPS.GeneralSecurityModel
+import Signatures.OOPS.Spec.LazyAGM
+import Signatures.OOPS.Statement
+import Signatures.PaperStatements
+import Signatures.Proximity.ArithmeticStatement
+import Signatures.Proximity.CaliperAGMFamilyStatement
+import Signatures.Proximity.CaliperAGMParameters
+import Signatures.Proximity.Game
+import Signatures.Proximity.GeneralAGMFamilyStatement
+import Signatures.Proximity.GeneralAGMParameters
+import Signatures.Proximity.GeneralSecurityModel
+import Signatures.Proximity.Spec.DirectAGM
+import Signatures.Proximity.Spec.LazyAGM
+import Signatures.Proximity.Statement
+import Signatures.Runtime.BackendLazyAGMDLogFamily
+import Signatures.Runtime.BackendSchnorrAGMDLogFamily
+import Signatures.Runtime.BackendSchnorrROMDLogFamily
+import Signatures.Runtime.BackendWeightedDLogFamily
+import Signatures.Schnorr.ArithmeticStatement
+import Signatures.Schnorr.BitStatement
+import Signatures.Schnorr.CaliperAGMFamilyResources
+import Signatures.Schnorr.CaliperAGMFamilyStatement
+import Signatures.Schnorr.CaliperAGMParameters
+import Signatures.Schnorr.CaliperNonzeroROMFamilyStatement
+import Signatures.Schnorr.CaliperNonzeroROMParameters
+import Signatures.Schnorr.CaliperROMFamilyResources
+import Signatures.Schnorr.CaliperROMFamilyStatement
+import Signatures.Schnorr.CaliperROMParameters
+import Signatures.Schnorr.Game
+import Signatures.Schnorr.GeneralAGMFamilyResources
+import Signatures.Schnorr.GeneralAGMFamilyStatement
+import Signatures.Schnorr.GeneralAGMParameters
+import Signatures.Schnorr.GeneralExecutionModel
+import Signatures.Schnorr.GeneralNonzeroROMFamilyResources
+import Signatures.Schnorr.GeneralNonzeroROMFamilyStatement
+import Signatures.Schnorr.GeneralNonzeroROMParameters
+import Signatures.Schnorr.GeneralNonzeroROMSecurityModel
+import Signatures.Schnorr.GeneralROMFamilyResources
+import Signatures.Schnorr.GeneralROMFamilyStatement
+import Signatures.Schnorr.GeneralROMParameters
+import Signatures.Schnorr.GeneralROMSecurityModel
+import Signatures.Schnorr.GeneralSecurityModel
+import Signatures.Schnorr.QueryAllowance
+import Signatures.Schnorr.SeededBitStatement
+import Signatures.Schnorr.Spec.AGM
+import Signatures.Schnorr.Spec.NonzeroNonce
+import Signatures.Schnorr.Spec.Oracle
+import Signatures.Schnorr.Spec.ROM
+import Signatures.Schnorr.Statement
+
 /-
 Copyright (c) 2026 zkSecurity. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
-import AlgebraicGroupModel
-import Signatures.Runtime.Caliper
-import Signatures.Model.CoCDH
-import Signatures.Model.LazyAGM
-import Signatures.BLS.Statement
-import Signatures.BLS.GeneralAGMFamilyStatement
-import Signatures.BLS.Proofs.LazyAGMArbitraryMessages
-import Signatures.BLS.Proofs.EufCma
-import Signatures.Model.SimulationProjection
-import Signatures.BLS.Proofs.LazyAGMList
-import Signatures.BLS.Proofs.LazyAGMCacheBound
-import Signatures.Runtime.Caliper.BLSCache
-import Signatures.Runtime.Caliper.BLSCacheReachability
-import Signatures.Runtime.Caliper.BLSCachePairs
-import Signatures.Runtime.Caliper.BLSResponseMemory
-import Signatures.Runtime.Caliper.BLSRecordBounds
-import Signatures.Runtime.Caliper.BLSRecordReachability
-import Signatures.Runtime.Caliper.BLSOracleSchemes
-import Signatures.Runtime.Caliper.BLSCallerPacketBounds
-import Signatures.Runtime.Caliper.BLSCallerResources
-import Signatures.Runtime.Caliper.BLSSetupResources
-import Signatures.Runtime.Caliper.BLSChronological
-import Signatures.Runtime.Caliper.ListIndexBounds
-import Signatures.Runtime.Caliper.TokenRowsSource
-import Signatures.Runtime.Caliper.BLSPrivateAccumulateOracle
-import Signatures.Runtime.Caliper.BLSRowsOracle
-import Signatures.Runtime.Caliper.BLSFinalTargetOracle
-import Signatures.Runtime.Caliper.BLSTokensSource
-import Signatures.Runtime.Caliper.BLSFinalFrameNames
-import Signatures.Runtime.Caliper.BLSSignatureTailSource
-import Signatures.Runtime.Caliper.BLSSignatureTailAcceptance
-import Signatures.Runtime.Caliper.BLSExtractorFrameBounds
-import Signatures.Runtime.Caliper.BLSExtractorSource
-import Signatures.Runtime.Caliper.BLSExtractorAcceptance
-import Signatures.Runtime.Caliper.BLSExtractionExitSource
-import Signatures.Runtime.Caliper.BLSCallerFinishService
-import Signatures.Runtime.Caliper.BLSCallerExtractionResources
-import Signatures.Runtime.Caliper.BLSCallerExtractionSource
-import Signatures.Runtime.Caliper.BLSFullResources
-import Signatures.Runtime.Caliper.BLSFullEquivalence
-import Signatures.Runtime.Caliper.BLSFullSecurity
-import Signatures.Runtime.Caliper.RowFoldPostcondition
-import Signatures.Runtime.Caliper.OOPSTermsBounds
-import Signatures.Runtime.Caliper.GeneratedWeightedBounds
-import Signatures.Runtime.Caliper.GeneratedWeightedOracle
-import Signatures.Runtime.Caliper.WeightedRecord
-import Signatures.Runtime.Caliper.WeightedSignBounds
-import Signatures.Runtime.Caliper.WeightedHashBounds
-import Signatures.Runtime.Caliper.WeightedCapacity
-import Signatures.Runtime.Caliper.WeightedOracleMemory
-import Signatures.Runtime.Caliper.WeightedOracleOriginal
-import Signatures.Runtime.Caliper.WeightedOracleInvariant
-import Signatures.Runtime.Caliper.WeightedCallerResources
-import Signatures.Runtime.Caliper.WeightedCoefficientBounds
-import Signatures.Runtime.Caliper.WeightedExtractionMemory
-import Signatures.Runtime.Caliper.WeightedTargetSource
-import Signatures.Runtime.Caliper.WeightedTargetBounds
-import Signatures.Runtime.Caliper.WeightedSignatureTailSource
-import Signatures.Runtime.Caliper.WeightedSignatureTailMemory
-import Signatures.Runtime.Caliper.WeightedExtractorSource
-import Signatures.Runtime.Caliper.WeightedExtractorMemory
-import Signatures.Runtime.Caliper.WeightedCallerProgramResources
-import Signatures.Runtime.Caliper.WeightedCallerReduction
-import Signatures.Runtime.Caliper.WeightedInitialization
-import Signatures.Runtime.Caliper.WeightedGood
-import Signatures.Runtime.Caliper.WeightedBad
-import Signatures.Runtime.Caliper.WeightedCallerOriginal
-import Signatures.Runtime.Caliper.WeightedSharedLayouts
-import Signatures.Runtime.Caliper.WeightedSharedCaller
-import Signatures.Runtime.Caliper.WeightedParameters
-import Signatures.Runtime.Caliper.WeightedSecurity
-import Signatures.Runtime.Caliper.WeightedFamilyResources
-import Signatures.Runtime.Caliper.SchnorrROMTapeRestart
-import Signatures.Runtime.Caliper.SchnorrROMTapeCallerMemory
-import Signatures.Runtime.Caliper.SchnorrROMTapeCallerSource
-import Signatures.Runtime.Caliper.SchnorrROMPrivatePairBounds
-import Signatures.Runtime.Caliper.SchnorrROMSigningSource
-import Signatures.Runtime.Caliper.SchnorrROMSigningHandlerMemory
-import Signatures.Runtime.Caliper.SchnorrROMEnumeratedSigning
-import Signatures.Runtime.Caliper.SchnorrROMEnumeratedReplay
-import Signatures.Runtime.Caliper.SchnorrROMHashCacheSource
-import Signatures.Runtime.Caliper.SchnorrROMCallerResources
-import Signatures.Runtime.Caliper.SchnorrROMTerminalSource
-import Signatures.Runtime.Caliper.SchnorrROMPassPresentation
-import Signatures.Runtime.Caliper.SchnorrROMReplayAdmission
-import Signatures.Runtime.Caliper.SchnorrROMPassSelectionBounds
-import Signatures.Runtime.Caliper.SchnorrROMReplaySecondSource
-import Signatures.Runtime.Caliper.SchnorrROMReplaySecondSelectionBounds
-import Signatures.Runtime.Caliper.SchnorrROMFreshGuardBounds
-import Signatures.Runtime.Caliper.SchnorrROMReplayFirstChoice
-import Signatures.Runtime.Caliper.SchnorrROMReplayChallengeChecked
-import Signatures.Runtime.Caliper.SchnorrROMReplayForkSource
-import Signatures.Runtime.Caliper.SchnorrROMReplayInitializedBounds
-import Signatures.Runtime.Caliper.SchnorrROMReplayForkCorrectness
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractLayout
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractArithmetic
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractArithmeticBounds
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractClassify
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtract
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractSource
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractFull
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractBounds
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractCodeBounds
-import Signatures.Runtime.Caliper.SchnorrROMReplayExtractFullBounds
-import Signatures.Runtime.Caliper.SchnorrROMFullShape
-import Signatures.Runtime.Caliper.SchnorrROMFullSecurity
-import Signatures.Schnorr.CaliperROMParameters
-import Signatures.Schnorr.Proofs.CaliperROM
-import Signatures.Schnorr.CaliperROMFamilyResources
-import Signatures.Schnorr.Proofs.CaliperROMFamily
-import Signatures.Schnorr.CaliperROMFamilyStatement
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroFullSecurity
-import Signatures.Schnorr.CaliperNonzeroROMParameters
-import Signatures.Schnorr.Proofs.CaliperNonzeroROMFamily
-import Signatures.Schnorr.CaliperNonzeroROMFamilyStatement
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningSampler
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningSamplerBounds
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningUnits
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningLayout
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningRoutes
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningCore
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningCoreBounds
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningHandlerRoute
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningHandler
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningSource
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningHandlerBounds
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroSigningBranch
-import Signatures.OOPS.CaliperAGMParameters
-import Signatures.OOPS.Proofs.CaliperAGMFamily
-import Signatures.OOPS.CaliperAGMFamilyStatement
-import Signatures.Proximity.CaliperAGMParameters
-import Signatures.Proximity.Proofs.CaliperAGMFamily
-import Signatures.Proximity.CaliperAGMFamilyStatement
-import Signatures.OOPS.Statement
-import Signatures.OOPS.GeneralAGMFamilyStatement
-import Signatures.OOPS.Proofs.LazyAGMArbitraryTopics
-import Signatures.Proximity.Statement
-import Signatures.Proximity.GeneralAGMFamilyStatement
-import Signatures.Proximity.Proofs.LazyAGMArbitrarySlots
-import Signatures.LinearFunctional.Proofs.LazyAGMCacheBound
-import Signatures.Schnorr.Statement
-import Signatures.Schnorr.GeneralAGMFamilyStatement
-import Signatures.Schnorr.GeneralROMFamilyStatement
-import Signatures.Schnorr.GeneralNonzeroROMFamilyStatement
-import Signatures.Schnorr.BitStatement
-import Signatures.Schnorr.SeededBitStatement
-import Signatures.Schnorr.Proofs.NonzeroSecurity
-import Signatures.Schnorr.Proofs.NonzeroLazyROM
-import Signatures.Model.NonzeroFieldGrowth
-import Signatures.Runtime.BackendSchnorrNonzeroSigningSource
-import Signatures.Runtime.BackendSchnorrNonzeroRepairCost
-import Signatures.Runtime.BackendSchnorrNonzeroSigningBudget
-import Signatures.Runtime.SchnorrNonzeroListReduction
-import Signatures.Runtime.SchnorrNonzeroListGrowth
-import Signatures.Runtime.BackendSchnorrNonzeroPassPolynomial
-import Signatures.Runtime.BackendSchnorrNonzeroPassDescription
-import Signatures.Runtime.BackendSchnorrNonzeroSecurity
-import Signatures.Runtime.BackendSchnorrNonzeroSolverPolynomial
-import Signatures.Runtime.BackendSchnorrNonzeroDescriptionPolynomial
-import Signatures.Runtime.BackendSchnorrNonzeroDescriptionAllowance
-import Signatures.Schnorr.Proofs.AGMSecurity
-import Signatures.Runtime.SchnorrAGMSecurity
-import Signatures.Runtime.BackendSchnorrAGMReadBudget
-import Signatures.Runtime.BackendSchnorrAGMFlattenBudget
-import Signatures.Runtime.BackendSchnorrAGMHashBudget
-import Signatures.Runtime.BackendListSingleton
-import Signatures.Runtime.BackendSchnorrAGMHashDispatchBudget
-import Signatures.Runtime.BackendListSnoc
-import Signatures.Runtime.BackendSchnorrAGMProgramming
-import Signatures.Runtime.BackendSchnorrAGMSigningBudget
-import Signatures.Runtime.BackendSchnorrAGMSigningDispatchBudget
-import Signatures.Runtime.BackendSchnorrAGMRandomBudget
-import Signatures.Runtime.BackendSchnorrAGMHandlerDescription
-import Signatures.Runtime.BackendSchnorrAGMHandlerPrimitiveBudget
-import Signatures.Runtime.BackendSchnorrAGMCallerBudget
-import Signatures.Runtime.BackendSchnorrAGMOutputSize
-import Signatures.Runtime.BackendSchnorrAGMExtractionDescription
-import Signatures.Runtime.BackendSchnorrAGMExtractionBudget
-import Signatures.Runtime.BackendSchnorrAGMExtractionResources
-import Signatures.Runtime.BackendSchnorrAGMSolverOutput
-import Signatures.Runtime.BackendSchnorrAGMSolverCorrectness
-import Signatures.Runtime.BackendSchnorrAGMSolverDescription
-import Signatures.Runtime.BackendSchnorrAGMSolverSetup
-import Signatures.Runtime.BackendSchnorrAGMSecurity
-import Signatures.Runtime.SchnorrSeededSecurity
-import Signatures.Runtime.SchnorrSeededPassBudget
-import Signatures.Runtime.SeedTapeReset
-import Signatures.Runtime.SchnorrLazySeedLog
-import Signatures.Runtime.SeededDeferredTrace
-import Signatures.Runtime.SeededSuffixSampling
-import Signatures.Runtime.SeededForkReachability
-import Signatures.Runtime.SchnorrLazyFork
-import Signatures.Schnorr.Proofs.LazyROM
-import Signatures.Runtime.SchnorrRawFork
-import Signatures.Runtime.SchnorrRawTapeBounds
-import Signatures.Runtime.BackendSchnorrRawUniformPolynomial
-import Signatures.Runtime.BackendSchnorrRawChallengeBudget
-import Signatures.Runtime.BackendSchnorrRawResetBudget
-import Signatures.Runtime.BackendSchnorrRawLookupCost
-import Signatures.Runtime.BackendSchnorrRawForkDescription
-import Signatures.Runtime.BackendSchnorrRawForkBudget
-import Signatures.Runtime.SchnorrROMListReduction
-import Signatures.Runtime.SchnorrROMListGrowth
-import Signatures.Runtime.BackendSchnorrROMCache
-import Signatures.Runtime.BackendSchnorrROMLiveBudget
-import Signatures.Runtime.BackendSchnorrROMProgrammingCost
-import Signatures.Runtime.BackendSchnorrROMPrivateBudget
-import Signatures.Runtime.BackendSchnorrROMHandlerDescription
-import Signatures.Runtime.BackendSchnorrROMHandlerPrimitiveBudget
-import Signatures.Runtime.BackendSchnorrROMHandlerPolynomial
-import Signatures.Runtime.BackendSchnorrROMHandlerReserve
-import Signatures.Runtime.BackendSchnorrROMCallerPolynomial
-import Signatures.Runtime.BackendSchnorrROMCallerOutput
-import Signatures.Runtime.BackendSchnorrROMPassSource
-import Signatures.Runtime.BackendSchnorrROMPassDescription
-import Signatures.Runtime.BackendSchnorrROMPassPolynomial
-import Signatures.Runtime.BackendSchnorrROMSelectionPolynomial
-import Signatures.Runtime.BackendSchnorrROMForkDescription
-import Signatures.Runtime.BackendSchnorrROMForkPolynomial
-import Signatures.Runtime.BackendSchnorrROMSolverDescription
-import Signatures.Runtime.BackendSchnorrROMSolverPolynomial
-import Signatures.Runtime.BackendSchnorrROMDescriptionPolynomial
-import Signatures.Runtime.BackendSchnorrROMSecurity
-import Signatures.Runtime.BackendSchnorrPrivateSamplingDescription
-import Signatures.Runtime.BackendSchnorrPrivateSamplingBudget
-import Signatures.Runtime.BackendSchnorrPrivateSamplingResources
-import Signatures.Runtime.BackendStateSimulationResources
-import Signatures.Runtime.BackendStateSimulationRouting
-import Signatures.Runtime.BackendCoronSecurity
-import Signatures.Runtime.BackendCoronPolynomial
-import Signatures.Runtime.BackendCoronFamilySecurity
-import Signatures.Runtime.BackendWeightedTerms
-import Signatures.Runtime.BackendWeightedKeyEquality
-import Signatures.Runtime.BackendWeightedCache
-import Signatures.Runtime.BackendWeightedReadBudget
-import Signatures.Runtime.BackendWeightedEvaluateDescription
-import Signatures.Runtime.BackendWeightedGoodEvaluate
-import Signatures.Runtime.BackendWeightedBadEvaluate
-import Signatures.Runtime.BackendWeightedEvaluateEncoding
-import Signatures.Runtime.BackendWeightedCoefficients
-import Signatures.Runtime.BackendWeightedCoefficientBudget
-import Signatures.Runtime.BackendWeightedHandlerBudget
-import Signatures.Runtime.BackendWeightedHandlerDescription
-import Signatures.Runtime.BackendWeightedOracle
-import Signatures.Runtime.BackendWeightedReplyDescription
-import Signatures.Runtime.BackendWeightedReplyCost
-import Signatures.Runtime.BackendWeightedReplySize
-import Signatures.Runtime.BackendWeightedHashBudget
-import Signatures.Runtime.BackendWeightedSignBudget
-import Signatures.Runtime.BackendWeightedOracleCallerBudget
-import Signatures.Runtime.BackendWeightedOracleCallerResources
-import Signatures.Runtime.BackendWeightedExtractionOutput
-import Signatures.Runtime.BackendWeightedExtractionEntry
-import Signatures.Runtime.BackendWeightedOracleCache
-import Signatures.Runtime.BackendWeightedOracleDescription
-import Signatures.Runtime.BackendWeightedExtractionDescription
-import Signatures.Runtime.BackendWeightedExtractionState
-import Signatures.Runtime.BackendWeightedSigningExtraction
-import Signatures.Runtime.BackendWeightedHashExtraction
-import Signatures.Runtime.BackendWeightedTargetExtraction
-import Signatures.Runtime.BackendWeightedGoodExtractionBudget
-import Signatures.Runtime.BackendWeightedBadExtractionBudget
-import Signatures.Runtime.BackendWeightedSolverWithin
-import Signatures.Runtime.BackendWeightedScale
-import Signatures.OperationBounds
-import Signatures.PaperStatements
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /-!
 # Signature security: lazy games and security proofs

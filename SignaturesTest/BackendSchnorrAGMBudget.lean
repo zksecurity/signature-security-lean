@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendSchnorrAGMCallerBudget
+import Proofs.Runtime.BackendSchnorrAGMCallerBudget
 import Lean.Util.CollectAxioms
 
 open Signatures.Runtime Signatures.Runtime.BackendProgram Signatures.Runtime.SchnorrAGM.Native

@@ -1,4 +1,4 @@
-import Signatures.Runtime.EllipticCurveScale
+import Proofs.Runtime.EllipticCurveScale
 import Lean.Util.CollectAxioms
 
 open Std.Sat Std.Tactic.BVDecide BVExpr.bitblast

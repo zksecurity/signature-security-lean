@@ -26,6 +26,9 @@ require caliper from "vendor/caliper"
 @[default_target]
 lean_lib «Signatures» where
 
+@[default_target]
+lean_lib Proofs where
+
 lean_lib SignaturesTest where
   globs := #[.submodules `SignaturesTest]
   allowNonModules := true

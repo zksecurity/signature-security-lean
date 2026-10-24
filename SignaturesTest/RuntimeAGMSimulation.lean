@@ -1,5 +1,5 @@
-import Signatures.Runtime.AGMSimulation
-import Signatures.Runtime.KeyEquality
+import Proofs.Runtime.AGMSimulation
+import Proofs.Runtime.KeyEquality
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

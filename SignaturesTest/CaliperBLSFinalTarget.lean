@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.BLSFinalTargetOracle
-import Signatures.Runtime.Caliper.EncodedConstant
+import Proofs.Runtime.Caliper.BLSFinalTargetOracle
+import Proofs.Runtime.Caliper.EncodedConstant
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -1,6 +1,6 @@
-import Signatures.Runtime.Arithmetic
-import Signatures.Runtime.Lookup
-import Signatures.Runtime.Sampling
+import Proofs.Runtime.Arithmetic
+import Proofs.Runtime.Lookup
+import Proofs.Runtime.Sampling
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

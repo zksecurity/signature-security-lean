@@ -1,4 +1,5 @@
 import Signatures
+import Proofs
 import SignaturesTest.FiniteMessages
 import Lean.Util.CollectAxioms
 

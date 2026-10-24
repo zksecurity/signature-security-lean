@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrAGMReadMemory
-import Signatures.Runtime.Caliper.SchnorrAGMExtractionReadMemory
+import Proofs.Runtime.Caliper.SchnorrAGMReadMemory
+import Proofs.Runtime.Caliper.SchnorrAGMExtractionReadMemory
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

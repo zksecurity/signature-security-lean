@@ -1,6 +1,6 @@
-import Signatures.Runtime.Caliper.SchnorrROMPassPresentation
-import Signatures.Runtime.Caliper.SchnorrROMReplayForkSource
-import Signatures.Runtime.Caliper.SchnorrROMReplayInitializedBounds
+import Proofs.Runtime.Caliper.SchnorrROMPassPresentation
+import Proofs.Runtime.Caliper.SchnorrROMReplayForkSource
+import Proofs.Runtime.Caliper.SchnorrROMReplayInitializedBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

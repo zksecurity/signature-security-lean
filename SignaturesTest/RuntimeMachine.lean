@@ -1,4 +1,4 @@
-import Signatures.Runtime.Machine
+import Proofs.Runtime.Machine
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

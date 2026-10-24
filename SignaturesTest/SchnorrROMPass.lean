@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendSchnorrROMPassSource
-import Signatures.Runtime.BackendSchnorrROMPassDescription
-import Signatures.Runtime.BackendSchnorrROMPassPolynomial
+import Proofs.Runtime.BackendSchnorrROMPassSource
+import Proofs.Runtime.BackendSchnorrROMPassDescription
+import Proofs.Runtime.BackendSchnorrROMPassPolynomial
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

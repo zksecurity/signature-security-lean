@@ -1,4 +1,4 @@
-import Signatures.Schnorr.Proofs.CaliperAGMFamily
+import Proofs.Schnorr.CaliperAGMFamily
 
 /-! Asymptotic security for the public Schnorr AGM Caliper model. Polynomial
 component allowances give polynomial reductions. DLog hardness and negligible

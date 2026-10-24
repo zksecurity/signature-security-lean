@@ -1,5 +1,5 @@
 import Signatures.Schnorr.CaliperROMParameters
-import Signatures.Runtime.Caliper.SchnorrROMNonzeroFullSecurity
+import Proofs.Runtime.Caliper.SchnorrROMNonzeroFullSecurity
 
 /-! The nonzero-nonce attacker over the same fixed Caliper components. Only the
 signing branch's source law differs: it simulates the nonzero-nonce list

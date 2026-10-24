@@ -1,7 +1,7 @@
-import Signatures.Runtime.BackendSchnorrNonzeroSecurity
-import Signatures.Runtime.BackendSchnorrNonzeroSolverPolynomial
-import Signatures.Runtime.BackendSchnorrNonzeroDescriptionPolynomial
-import Signatures.Runtime.BackendSchnorrNonzeroDescriptionAllowance
+import Proofs.Runtime.BackendSchnorrNonzeroSecurity
+import Proofs.Runtime.BackendSchnorrNonzeroSolverPolynomial
+import Proofs.Runtime.BackendSchnorrNonzeroDescriptionPolynomial
+import Proofs.Runtime.BackendSchnorrNonzeroDescriptionAllowance
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMFullSecurity
+import Proofs.Runtime.Caliper.SchnorrROMFullSecurity
 import Signatures.Schnorr.QueryAllowance
 
 /-! Fixed Caliper components and local attacker allowances for ordinary-ROM

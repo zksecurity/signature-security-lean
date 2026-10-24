@@ -1,4 +1,4 @@
-import Signatures.Runtime.SchnorrCacheRefinement
+import Proofs.Runtime.SchnorrCacheRefinement
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

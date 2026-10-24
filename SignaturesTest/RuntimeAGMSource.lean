@@ -1,9 +1,9 @@
 import Signatures.BLS.Statement
 import Signatures.OOPS.Statement
 import Signatures.Proximity.Statement
-import Signatures.Runtime.AGMBadMachine
-import Signatures.Runtime.KeyEquality
-import Signatures.Runtime.ProximityWeight
+import Proofs.Runtime.AGMBadMachine
+import Proofs.Runtime.KeyEquality
+import Proofs.Runtime.ProximityWeight
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

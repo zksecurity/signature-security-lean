@@ -1,4 +1,4 @@
-import Signatures.BLS.Proofs.GeneralAGMFamily
+import Proofs.BLS.GeneralAGMFamily
 
 /-! Asymptotic BLS AGM security for general realized attackers. The concrete
 parameters select groups, encodings, query allowances and caller resources at

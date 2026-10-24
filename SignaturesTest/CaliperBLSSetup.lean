@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.BLSSetupResources
-import Signatures.Runtime.Caliper.UniformQuery
+import Proofs.Runtime.Caliper.BLSSetupResources
+import Proofs.Runtime.Caliper.UniformQuery
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

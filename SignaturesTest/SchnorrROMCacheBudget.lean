@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendSchnorrROMLiveBudget
-import Signatures.Runtime.BackendSchnorrROMProgrammingCost
-import Signatures.Runtime.BackendSchnorrRawFork
+import Proofs.Runtime.BackendSchnorrROMLiveBudget
+import Proofs.Runtime.BackendSchnorrROMProgrammingCost
+import Proofs.Runtime.BackendSchnorrRawFork
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

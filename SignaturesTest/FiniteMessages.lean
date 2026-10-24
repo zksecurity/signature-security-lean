@@ -1,4 +1,4 @@
-import Signatures.BLS.CoCDH.Proofs.FiniteMessages
+import Proofs.BLS.CoCDH.FiniteMessages
 import Lean.Util.CollectAxioms
 
 open BLS.ROM

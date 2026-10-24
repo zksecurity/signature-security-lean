@@ -1,4 +1,4 @@
-import Signatures.Schnorr.Proofs.GeneralAGMFamily
+import Proofs.Schnorr.GeneralAGMFamily
 
 /-! Asymptotic Schnorr AGM security for general realized attackers in one
 fixed backend. The actual reduction's polynomial time and stored-code bounds

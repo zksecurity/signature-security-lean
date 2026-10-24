@@ -1,5 +1,5 @@
-import Signatures.Runtime.SeededDeferredTrace
-import Signatures.Runtime.SeededSuffixSampling
+import Proofs.Runtime.SeededDeferredTrace
+import Proofs.Runtime.SeededSuffixSampling
 import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
 import Lean.Util.CollectAxioms
 

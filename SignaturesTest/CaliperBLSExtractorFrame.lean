@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.BLSExtractorFrameBounds
+import Proofs.Runtime.Caliper.BLSExtractorFrameBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

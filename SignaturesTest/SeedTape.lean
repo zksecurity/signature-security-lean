@@ -1,5 +1,5 @@
-import Signatures.Runtime.SchnorrSeededPassBudget
-import Signatures.Runtime.SeedTapeReset
+import Proofs.Runtime.SchnorrSeededPassBudget
+import Proofs.Runtime.SeedTapeReset
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

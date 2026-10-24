@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.BLSPrivateAccumulateOracle
+import Proofs.Runtime.Caliper.BLSPrivateAccumulateOracle
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

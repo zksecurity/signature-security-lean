@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrAGMHashMemory
+import Proofs.Runtime.Caliper.SchnorrAGMHashMemory
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -1,4 +1,4 @@
-import Signatures.Runtime.OracleCircuit
+import Proofs.Runtime.OracleCircuit
 import Lean.Util.CollectAxioms
 
 open OracleComp Signatures.Runtime Signatures.Runtime.OracleCircuit

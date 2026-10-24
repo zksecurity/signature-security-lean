@@ -1,4 +1,4 @@
-import Signatures.Schnorr.Proofs.GeneralROMFamily
+import Proofs.Schnorr.GeneralROMFamily
 
 /-! Ordinary-ROM Schnorr security for polynomial unrestricted attacker
 families. One backend and cost/description convention is fixed across parameters.

@@ -1,4 +1,5 @@
 import Signatures
+import Proofs
 import Lean.Util.CollectAxioms
 
 open Signatures.Runtime Signatures.Runtime.BackendProgram

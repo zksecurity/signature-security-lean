@@ -1,7 +1,7 @@
-import Signatures.Runtime.CoronReduction
-import Signatures.Runtime.CoronRefinement
-import Signatures.Runtime.CoronErasure
-import Signatures.Runtime.CoronMachine
+import Proofs.Runtime.CoronReduction
+import Proofs.Runtime.CoronRefinement
+import Proofs.Runtime.CoronErasure
+import Proofs.Runtime.CoronMachine
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

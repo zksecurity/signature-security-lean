@@ -1,4 +1,4 @@
-import Signatures.Runtime.ReplayFork
+import Proofs.Runtime.ReplayFork
 import Lean.Util.CollectAxioms
 
 /-! Recorded-prefix replay. Compiled tape-cost regressions live in MixedReplay. -/

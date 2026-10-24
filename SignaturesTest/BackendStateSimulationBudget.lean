@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendSchnorrPrivateSamplingResources
+import Proofs.Runtime.BackendSchnorrPrivateSamplingResources
 import Lean.Util.CollectAxioms
 
 /-! Resource regressions for sequential replay-store growth and total native

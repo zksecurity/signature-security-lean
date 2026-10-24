@@ -1,11 +1,11 @@
-import Signatures.Runtime.Caliper.BLSCallerExtractionResources
-import Signatures.Runtime.Caliper.BLSCallerExtractionSource
-import Signatures.Runtime.Caliper.BLSExtractorAcceptance
-import Signatures.Runtime.Caliper.BLSExtractorSource
-import Signatures.Runtime.Caliper.BLSInitialization
-import Signatures.Runtime.Caliper.BLSFullResources
-import Signatures.Runtime.Caliper.BLSFullEquivalence
-import Signatures.Runtime.Caliper.BLSFullSecurity
+import Proofs.Runtime.Caliper.BLSCallerExtractionResources
+import Proofs.Runtime.Caliper.BLSCallerExtractionSource
+import Proofs.Runtime.Caliper.BLSExtractorAcceptance
+import Proofs.Runtime.Caliper.BLSExtractorSource
+import Proofs.Runtime.Caliper.BLSInitialization
+import Proofs.Runtime.Caliper.BLSFullResources
+import Proofs.Runtime.Caliper.BLSFullEquivalence
+import Proofs.Runtime.Caliper.BLSFullSecurity
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

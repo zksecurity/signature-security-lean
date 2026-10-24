@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.CoronSampling
+import Proofs.Runtime.Caliper.CoronSampling
 import Lean
 
 /-! Execute the constructed sampler at both ends of the full Word8 domain.

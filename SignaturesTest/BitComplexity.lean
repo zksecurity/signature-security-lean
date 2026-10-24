@@ -1,6 +1,6 @@
-import Signatures.Runtime.PrimeFieldCircuit
-import Signatures.Runtime.BitSampling
-import Signatures.Runtime.Schnorr
+import Proofs.Runtime.PrimeFieldCircuit
+import Proofs.Runtime.BitSampling
+import Proofs.Runtime.Schnorr
 import Lean.Util.CollectAxioms
 
 open Std.Sat Std.Tactic.BVDecide BVExpr.bitblast

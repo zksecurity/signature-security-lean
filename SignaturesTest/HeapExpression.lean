@@ -1,4 +1,4 @@
-import Signatures.Runtime.HeapExpressionCost
+import Proofs.Runtime.HeapExpressionCost
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

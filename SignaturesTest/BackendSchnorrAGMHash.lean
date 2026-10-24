@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrAGMHashBudget
-import Signatures.Runtime.BackendListSingleton
+import Proofs.Runtime.BackendSchnorrAGMHashBudget
+import Proofs.Runtime.BackendListSingleton
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

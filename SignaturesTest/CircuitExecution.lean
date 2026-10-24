@@ -1,5 +1,5 @@
-import Signatures.Runtime.CircuitExecution
-import Signatures.Runtime.PrimeFieldCircuit
+import Proofs.Runtime.CircuitExecution
+import Proofs.Runtime.PrimeFieldCircuit
 import Lean.Util.CollectAxioms
 
 open Std.Sat

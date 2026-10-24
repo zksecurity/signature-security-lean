@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.BLSCache
-import Signatures.Runtime.Caliper.BLSCacheReachability
+import Proofs.Runtime.Caliper.BLSCache
+import Proofs.Runtime.Caliper.BLSCacheReachability
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend

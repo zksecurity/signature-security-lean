@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendSchnorrNonzeroSigningBudget
+import Proofs.Runtime.BackendSchnorrNonzeroSigningBudget
 import Lean.Util.CollectAxioms
 
 /-! The nonzero signer must derive its complete runtime from original samplers

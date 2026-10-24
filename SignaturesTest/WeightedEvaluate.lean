@@ -1,8 +1,8 @@
-import Signatures.Runtime.BackendWeightedEvaluateDescription
-import Signatures.Runtime.BackendWeightedReadBudget
-import Signatures.Runtime.BackendWeightedGoodEvaluate
-import Signatures.Runtime.BackendWeightedBadEvaluate
-import Signatures.LinearFunctional.Proofs.LazyAGMCache
+import Proofs.Runtime.BackendWeightedEvaluateDescription
+import Proofs.Runtime.BackendWeightedReadBudget
+import Proofs.Runtime.BackendWeightedGoodEvaluate
+import Proofs.Runtime.BackendWeightedBadEvaluate
+import Proofs.LinearFunctional.LazyAGMCache
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,4 +1,4 @@
-import Signatures.BLS.CoCDH.Proofs.QueryBound
+import Proofs.BLS.CoCDH.QueryBound
 
 /-! Signing-only budgets must ignore randomness, hash queries, and the final verification hash. -/
 

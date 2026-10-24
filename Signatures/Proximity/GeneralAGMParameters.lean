@@ -1,5 +1,5 @@
-import Signatures.Proximity.Proofs.GeneralAGMEncoding
-import Signatures.Model.Proofs.DirectAGM
+import Proofs.Proximity.GeneralAGMEncoding
+import Proofs.Model.DirectAGM
 
 /-! General implemented algebraic attackers for the original Proximity game.
 The source uses function vectors and optional-coordinate indices. Its native

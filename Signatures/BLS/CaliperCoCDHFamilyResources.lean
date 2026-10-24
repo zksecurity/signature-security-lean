@@ -1,6 +1,6 @@
-import Signatures.BLS.Proofs.CaliperCoCDH
-import Signatures.Runtime.Caliper.CoCDHFamily
-import Signatures.Runtime.Caliper.PolynomialBounds
+import Proofs.BLS.CaliperCoCDH
+import Proofs.Runtime.Caliper.CoCDHFamily
+import Proofs.Runtime.Caliper.PolynomialBounds
 
 /-! Polynomial complete Coron resources follow from polynomial component
 costs, encoding widths, capacities and caller allowances. No bound on the

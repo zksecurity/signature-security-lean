@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendLazyAGMReplyDescription
-import Signatures.Runtime.BackendLazyAGMStateSize
-import Signatures.Runtime.BackendLazyAGMReplyBudget
+import Proofs.Runtime.BackendLazyAGMReplyDescription
+import Proofs.Runtime.BackendLazyAGMStateSize
+import Proofs.Runtime.BackendLazyAGMReplyBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendWeightedCache
+import Proofs.Runtime.BackendWeightedCache
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

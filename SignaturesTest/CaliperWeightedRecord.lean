@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.WeightedRecord
+import Proofs.Runtime.Caliper.WeightedRecord
 import Lean
 
 /-! Different hash/sign request widths and capacities, with no finite-domain

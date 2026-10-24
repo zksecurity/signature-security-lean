@@ -119,13 +119,13 @@ that every outgoing point has an exact-length explanation over its own group's r
 inputs, on every reply path. Ordinary message/index types must not conceal additional
 group inputs.
 
-The [internal proof view](../Signatures/Model/Proofs/DirectAGM.lean) derives the grouped
+The [internal proof view](../Proofs/Model/DirectAGM.lean) derives the grouped
 `β`, `γ`, and `ξ` coefficients from every shared attacker. `run_eq` preserves its
 message, actual signature, signing history and signing coefficients, and
 `adversary_query_bound` preserves the query allowances. `game_le` transfers the existing
 security bounds: the native game additionally rejects malformed protocol messages.
 Proximity's [collision event](../Signatures/Proximity/Spec/DirectAGM.lean) is preserved
-[exactly](../Signatures/Proximity/Proofs/DirectAGM.lean), including malformed attempts.
+[exactly](../Proofs/Proximity/DirectAGM.lean), including malformed attempts.
 
 The concrete and family statements also use this shared source attacker. Their backend
 realization contract implements the derived coefficient encoding, and its caller budget
@@ -146,7 +146,7 @@ not part of the generic AGM library. The enclosing game chooses the available in
 the utilities do not implement a group-operation machine or certify coefficient costs.
 
 [SignatureInterface.lean](../Signatures/Model/SignatureInterface.lean) defines the internal
-grouped coefficient view; [Model/LazyAGM.lean](../Signatures/Model/LazyAGM.lean) contains
+grouped coefficient view; [Model/LazyAGM.lean](../Proofs/Model/LazyAGM.lean) contains
 its proof-side experiment and named reductions. The public attacker is the shared
 interactive adversary described above, with adaptive private-randomness, base, and
 signing queries.
@@ -167,7 +167,7 @@ Internal lookups create no visible tokens. Materialization happens before final 
 lookups. Extra coefficients are ignored; missing coefficients are zero. Freshness uses the
 complete actual signing transcript.
 
-[The lazy bridge](../Signatures/LinearFunctional/Proofs/LazyAGM.lean) proves exact probability
+[The lazy bridge](../Proofs/LinearFunctional/LazyAGM.lean) proves exact probability
 and transcript correspondence with a hidden-table simulator. These private finite tables are
 still needed by the proof and the explicit AGM solvers; they are never given to the source
 adversary. Lazy source games do not establish efficient lazy reductions.

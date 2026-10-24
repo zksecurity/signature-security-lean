@@ -4,13 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
 import Signatures.Model.CoCDH
-import Signatures.Model.Hardness
-import Signatures.BLS.Proofs.LazyAGM
-import Signatures.BLS.CoCDH.Proofs.ArbitraryMessages
-import Signatures.Runtime.CoronCertificate
-import Signatures.Runtime.AGMBadMachine
-import Signatures.Runtime.KeyEquality
-import Signatures.Runtime.ProximityWeight
+import Proofs.Model.Hardness
+import Proofs.BLS.LazyAGM
+import Proofs.BLS.CoCDH.ArbitraryMessages
+import Proofs.Runtime.CoronCertificate
+import Proofs.Runtime.AGMBadMachine
+import Proofs.Runtime.KeyEquality
+import Proofs.Runtime.ProximityWeight
 
 /-! Detailed arithmetic-source BLS co-CDH security.
 

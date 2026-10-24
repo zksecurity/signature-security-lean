@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.BLSOracleSchemes
+import Proofs.Runtime.Caliper.BLSOracleSchemes
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend

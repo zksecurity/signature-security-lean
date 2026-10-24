@@ -1,6 +1,6 @@
-import Signatures.Schnorr.Proofs.GeneralSecurity
-import Signatures.Schnorr.Proofs.GeneralROMSecurity
-import Signatures.Schnorr.Proofs.GeneralNonzeroROMSecurity
+import Proofs.Schnorr.GeneralSecurity
+import Proofs.Schnorr.GeneralROMSecurity
+import Proofs.Schnorr.GeneralNonzeroROMSecurity
 import Signatures.Schnorr.ArithmeticStatement
 import Signatures.Schnorr.CaliperAGMFamilyStatement
 import Signatures.Schnorr.CaliperROMFamilyStatement

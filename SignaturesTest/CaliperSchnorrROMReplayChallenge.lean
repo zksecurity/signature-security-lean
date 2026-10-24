@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMReplayChallengeChecked
+import Proofs.Runtime.Caliper.SchnorrROMReplayChallengeChecked
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

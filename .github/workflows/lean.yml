@@ -31,6 +31,6 @@ jobs:
       - name: Fetch public dependency cache
         run: lake exe cache get
       - name: Build proofs, regression tests, and axiom guards
-        run: lake build Signatures SignaturesTest
+        run: lake build Signatures Proofs SignaturesTest
       - name: Check dependency pins stayed unchanged
         run: git diff --exit-code -- lakefile.lean lake-manifest.json lean-toolchain

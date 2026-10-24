@@ -1,4 +1,5 @@
 import Signatures
+import Proofs
 import VCVio.OracleComp.QueryTracking.QueryBound
 
 /-! Hardness cannot be applied outside its certified class, and query bounds are not time bounds. -/

@@ -1,10 +1,10 @@
-import Signatures.Runtime.BackendWeightedExtractionDescription
-import Signatures.Runtime.BackendWeightedExtractionState
-import Signatures.Runtime.BackendWeightedSigningExtraction
-import Signatures.Runtime.BackendWeightedHashExtraction
-import Signatures.Runtime.BackendWeightedTargetExtraction
-import Signatures.Runtime.BackendWeightedGoodExtractionBudget
-import Signatures.Runtime.BackendWeightedBadExtractionBudget
+import Proofs.Runtime.BackendWeightedExtractionDescription
+import Proofs.Runtime.BackendWeightedExtractionState
+import Proofs.Runtime.BackendWeightedSigningExtraction
+import Proofs.Runtime.BackendWeightedHashExtraction
+import Proofs.Runtime.BackendWeightedTargetExtraction
+import Proofs.Runtime.BackendWeightedGoodExtractionBudget
+import Proofs.Runtime.BackendWeightedBadExtractionBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

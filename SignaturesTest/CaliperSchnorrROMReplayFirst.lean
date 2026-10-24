@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrROMPassPresentation
-import Signatures.Runtime.Caliper.SchnorrROMReplayFirstChoice
+import Proofs.Runtime.Caliper.SchnorrROMPassPresentation
+import Proofs.Runtime.Caliper.SchnorrROMReplayFirstChoice
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -1,7 +1,7 @@
-import Signatures.BLS.Proofs.GeneralSecurity
+import Proofs.BLS.GeneralSecurity
 import Signatures.BLS.CaliperAGMFamilyStatement
 import Signatures.BLS.CaliperCoCDHFamilyStatement
-import Signatures.BLS.CaliperCoCDHCaller
+import Proofs.BLS.CaliperCoCDHCaller
 import Signatures.BLS.ArithmeticStatement
 
 /-! BLS security. Fix the curve, security parameter, query allowances and

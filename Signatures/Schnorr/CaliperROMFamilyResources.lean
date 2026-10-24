@@ -1,6 +1,6 @@
-import Signatures.Schnorr.Proofs.CaliperROM
-import Signatures.Runtime.Caliper.CyclicDLogFamily
-import Signatures.Runtime.Caliper.PolynomialBounds
+import Proofs.Schnorr.CaliperROM
+import Proofs.Runtime.Caliper.CyclicDLogFamily
+import Proofs.Runtime.Caliper.PolynomialBounds
 
 /-! Polynomial bounds on the fixed ordinary-ROM Caliper components imply
 polynomial code, total memory and runtime for the complete replaying solver.

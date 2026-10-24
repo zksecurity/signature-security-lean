@@ -1,12 +1,12 @@
-import Signatures.Runtime.Caliper.WeightedCallerProgramResources
-import Signatures.Runtime.Caliper.WeightedCallerReduction
-import Signatures.Runtime.Caliper.WeightedInitialization
-import Signatures.Runtime.Caliper.WeightedGood
-import Signatures.Runtime.Caliper.WeightedBad
-import Signatures.Runtime.Caliper.OOPSTermsBounds
-import Signatures.Runtime.Caliper.BLSExtractArithmeticNames
-import Signatures.Runtime.Caliper.BLSResponseNames
-import Signatures.Runtime.Caliper.UniformSamplingBounds
+import Proofs.Runtime.Caliper.WeightedCallerProgramResources
+import Proofs.Runtime.Caliper.WeightedCallerReduction
+import Proofs.Runtime.Caliper.WeightedInitialization
+import Proofs.Runtime.Caliper.WeightedGood
+import Proofs.Runtime.Caliper.WeightedBad
+import Proofs.Runtime.Caliper.OOPSTermsBounds
+import Proofs.Runtime.Caliper.BLSExtractArithmeticNames
+import Proofs.Runtime.Caliper.BLSResponseNames
+import Proofs.Runtime.Caliper.UniformSamplingBounds
 import Mathlib.Data.BitVec
 import Lean
 

@@ -1,4 +1,4 @@
-import Signatures.Schnorr.Proofs.LazyROM
+import Proofs.Schnorr.LazyROM
 import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
@@ -138,7 +138,7 @@ run_meta do
               throwError "{name}: must not restrict the message universe"
   let securityType := (← getConstInfo ``Schnorr.LazyROM.security).type
   for forbidden in #[``OracleComp.IsPerIndexQueryBound, ``Schnorr.FixedTape.finiteBounds,
-      `Signatures.Runtime.Program] do
+      `Proofs.Runtime.Program] do
     if (securityType.find? (fun e => e.isConstOf forbidden)).isSome then
       throwError "lazy security must derive its seed cover without a source-language premise"
   for required in #[``Schnorr.ROM.game, ``Schnorr.LazyROM.dlogReduction,

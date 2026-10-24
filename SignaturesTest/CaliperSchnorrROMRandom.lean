@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMRandomBounds
+import Proofs.Runtime.Caliper.SchnorrROMRandomBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

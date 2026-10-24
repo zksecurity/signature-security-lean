@@ -108,7 +108,7 @@ The BLS, OOPS, and Proximity AGM games accept the shared library's
    lazy cache serves the complete experiment. The public `Game.lean` files show key
    generation, attacker execution, final hashing, verification and freshness. OOPS
    also shows its distinct-message condition; Proximity exposes collisions separately.
-3. [Internal extraction view](../Signatures/Model/Proofs/DirectAGM.lean): every certified
+3. [Internal extraction view](../Proofs/Model/DirectAGM.lean): every certified
    attacker has a derived grouped coefficient view. `run_eq` preserves the candidate
    and signing history; `adversary_query_bound` preserves query allowances. `game_le`
    transfers the old extraction bound because malformed attempts cannot win the native
@@ -137,14 +137,14 @@ The **non-AGM BLS game** uses the scheme-level
 the named requests `Request.random`, `Request.hash`, and `Request.sign`.
 Its `State` structure has `hashExponents` and `signedMessages` fields; `hashScalar`
 maintains the private lazy hash-exponent cache. In the proof-side
-[`BLS.ROM.game`](../Signatures/BLS/Proofs/ROM.lean) (the public game is `BLS.Game.eufCma`,
+[`BLS.ROM.game`](../Proofs/BLS/ROM.lean) (the public game is `BLS.Game.eufCma`,
 equal in distribution by `BLS.Game.eufCma_eq_rom`), the attacker returns a message and signature,
 then the verifier explicitly calls `ROM.hash message` and checks the pairing equation.
 This query is needed even when the attacker never hashed its proposed message.
 `simulateQ` uses the same handler for the attacker and verification, and `.run` supplies
 `State.empty`. The public game reads no cached exponent and uses no cache wrapper.
 This adversary returns a raw candidate signature without an algebraic explanation.
-An [exact state-encoding proof](../Signatures/BLS/Proofs/ROM.lean) connects this readable
+An [exact state-encoding proof](../Proofs/BLS/ROM.lean) connects this readable
 handler to the tuple representation used internally by the co-CDH reduction proofs.
 
 The [Schnorr interfaces](../Signatures/Schnorr/Spec/Oracle.lean) use named requests and
@@ -153,7 +153,7 @@ the signing log; the AGM interface also retains the signed-message state and mal
 flag. Both ROM nonce conventions and the AGM game display the equation
 `response • generator = commitment + challenge • publicKey` in
 [`Schnorr.Game`](../Signatures/Schnorr/Game.lean). Their
-[exact game equalities](../Signatures/Schnorr/Proofs/Game.lean) preserve the existing source games.
+[exact game equalities](../Proofs/Schnorr/Game.lean) preserve the existing source games.
 
 ## Results
 
@@ -181,7 +181,7 @@ Schnorr endpoints retain their distinct implementation scopes.
 - [Statement](../Signatures/BLS/ArithmeticStatement.lean): `BLS.Statement.bls_eufcma_of_cocdh_machine_hardness`.
 - [Source game](../Signatures/BLS/CoCDH/Spec/LazyGame.lean): `blsEufLazyPK`.
 - [Coron reduction](../Signatures/BLS/CoCDH/Spec/Coron.lean) and
-  [query-budget proof](../Signatures/BLS/CoCDH/Proofs/QueryBound.lean).
+  [query-budget proof](../Proofs/BLS/CoCDH/QueryBound.lean).
 - Bound: `Adv_ROM <= coronFactor(qS) * epsilon`, assuming co-CDH hardness at the derived solver budget.
 - Arbitrary message types. The budget counts all signing calls,
   including repeats, on every generated key. The source certificate additionally bounds all
@@ -190,7 +190,7 @@ Schnorr endpoints retain their distinct implementation scopes.
 ### BLS: query-only lazy AGM
 
 - [Statement](../Signatures/BLS/Statement.lean): `BLS.agm_security` (two separate budgets: `BLS.Proofs.agm_security`).
-- [Source game](../Signatures/BLS/Spec/LazyAGM.lean) and [proof](../Signatures/BLS/Proofs/LazyAGM.lean).
+- [Source game](../Signatures/BLS/Spec/LazyAGM.lean) and [proof](../Proofs/BLS/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F|`, with hardness at each derived solver budget.
 - Arbitrary message types; measured all-path execution, encoding and coefficient-size bounds.
   Only explicit base and signing replies supply representation tokens.
@@ -202,7 +202,7 @@ Schnorr endpoints retain their distinct implementation scopes.
 
 - [General-caller statement](../Signatures/OOPS/Statement.lean): `OOPS.agm_security`, with arbitrary topics and complete lazy solver budgets.
 - [Source game and degree rule](../Signatures/OOPS/Spec/LazyAGM.lean) and
-  [proof](../Signatures/OOPS/Proofs/LazyAGM.lean).
+  [proof](../Proofs/OOPS/LazyAGM.lean).
 - Same two-reduction bound and oracle-derived topic bases. The retired eager implementation required a finite topic type.
 - At most `d` distinct signed scalar messages on the eventual forgery topic. Repetitions and
   other topics do not consume this cap. Freshness concerns the entire message/topic pair.
@@ -215,7 +215,7 @@ Schnorr endpoints retain their distinct implementation scopes.
 
 - [General-caller statement](../Signatures/Proximity/Statement.lean): `Proximity.agm_security`, with arbitrary slots and complete lazy solver budgets.
 - [Source game and collision event](../Signatures/Proximity/Spec/LazyAGM.lean) and
-  [proof](../Signatures/Proximity/Proofs/LazyAGM.lean).
+  [proof](../Proofs/Proximity/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F| + Pr[fresh collision]`.
   Oracle-derived coordinate bases; the retired eager implementation required a finite slot type.
 - `Collision out signed` means the full vector/slot output is fresh and its vector equals
@@ -229,24 +229,24 @@ Schnorr endpoints retain their distinct implementation scopes.
 ## Conditional hardness bounds
 
 Public endpoints bound forgery using resource-indexed DLog/co-CDH success
-suprema. Their supporting theorems apply [`Model.HardWithin`](../Signatures/Model/Hardness.lean)
+suprema. Their supporting theorems apply [`Model.HardWithin`](../Proofs/Model/Hardness.lean)
 to actual solver witnesses constructed from the original contracts and attacker
 resources. AGM retains both reduction branches and `1/|F|`; Proximity additionally
 retains collision probability. Co-CDH preserves the Coron factor.
 
 **Concrete operation bounds now cover all four routes**, including both AGM branches; see
-[`OperationBounds.lean`](../Signatures/OperationBounds.lean). Erasing the ledgers gives the
+[`OperationBounds.lean`](../Proofs/OperationBounds.lean). Erasing the ledgers gives the
 original solvers. Review the `qH`/`qS`, coefficient-size, finite-domain, and weight-cost factors.
 **The arithmetic-source BLS co-CDH endpoint** in [BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean) uses
-the [Coron source certificate](../Signatures/Runtime/CoronCertificate.lean).
+the [Coron source certificate](../Proofs/Runtime/CoronCertificate.lean).
 Review its source certificate, all-key trace equality,
 adaptive source budget, and charged fixed data. The compiler proves the exact named solver's
 budget; no `hbudget` premise is required. Primitive operation/sampling prices are explicit
 contracts, not bit-runtime proofs.
 
 **The eager AGM resource lemmas** remain in the
-[good package](../Signatures/Runtime/AGMGoodMachine.lean) and
-[bad package](../Signatures/Runtime/AGMBadMachine.lean). They charge full-domain
+[good package](../Proofs/Runtime/AGMGoodMachine.lean) and
+[bad package](../Proofs/Runtime/AGMBadMachine.lean). They charge full-domain
 tables, canonical-enumeration loading, simulation and extraction. These are
 reference implementations with explicit domain-size costs; their superseded
 public security wrappers have been removed. The current public AGM statements
@@ -348,9 +348,9 @@ the [source file](../Signatures/BLS/ArithmeticStatement.lean) contains the full 
 ### The machine and local time
 
 The **machine** is a small abstract computer defined in Lean, not the computer running
-Lean. Its [programming language](../Signatures/Runtime/Program.lean) has variables,
+Lean. Its [programming language](../Proofs/Runtime/Program.lean) has variables,
 branches, bounded loops, and oracle requests; its
-[arithmetic instructions](../Signatures/Runtime/Arithmetic.lean) include field and group
+[arithmetic instructions](../Proofs/Runtime/Arithmetic.lean) include field and group
 operations and comparisons. The interpreter records both the result and its cost,
 charging for control flow and data handling as well as the priced primitive operations.
 
@@ -359,7 +359,7 @@ excludes the cost of servicing randomness, hash, and signing requests, but inclu
 preparing their arguments and processing their replies. For example, 100 local cost
 units before a hash request and 50 afterward use 150 local units; the hash handler's
 work is charged separately. `cert` must establish the bound on every allowed execution
-path, not just on average. Formally, [SourceBudget](../Signatures/Runtime/SourceBudget.lean)
+path, not just on average. Formally, [SourceBudget](../Proofs/Runtime/SourceBudget.lean)
 isolates local work by setting all request-service prices to zero. The reduction's
 total bound then adds query-service costs and setup, cache, and extraction overhead.
 
@@ -377,20 +377,20 @@ machine steps; relating them to bit-level runtime would require a separate proof
    from [the signature protocol](../Signatures/Model/DirectAGM.lean). The generic
    layer accepts arbitrary oracles; only the signature layer mandates base/signing channels.
    Check adaptive continuations, the shared cache, and exact reply transcripts.
-   [Direct execution preservation](../Signatures/Model/Proofs/DirectAGM.lean) derives the
+   [Direct execution preservation](../Proofs/Model/DirectAGM.lean) derives the
    grouped coefficient view from every shared attacker. `run_eq` preserves the actual
    candidate and signing history; `game_le` accounts for protocol-shape rejection.
-3. Check [the lazy-to-private-table bridge](../Signatures/LinearFunctional/Proofs/LazyAGM.lean).
+3. Check [the lazy-to-private-table bridge](../Proofs/LinearFunctional/LazyAGM.lean).
    Distribution equality and transcript correspondence are proved, not assumptions.
-4. Follow [both adaptive DLog branches](../Signatures/LinearFunctional/Proofs/Adaptive.lean).
+4. Follow [both adaptive DLog branches](../Proofs/LinearFunctional/Adaptive.lean).
    The zero-denominator branch is essential; its remaining independent-slope collision costs `1/|F|`.
 5. Check scheme-specific nondegeneracy:
-   [BLS freshness](../Signatures/BLS/Proofs/Nondegeneracy.lean),
-   [OOPS Vandermonde](../Signatures/OOPS/Proofs/SignatureHandle.lean), and
-   [Proximity's conditional extraction](../Signatures/Proximity/Proofs/Adaptive.lean).
-6. For co-CDH, inspect [lazy cache coupling](../Signatures/BLS/CoCDH/Proofs/LazyCoin.lean),
-   [Coron counting and extraction](../Signatures/BLS/CoCDH/Proofs/Coron.lean), and
-   [signing-call accounting](../Signatures/BLS/CoCDH/Proofs/QueryBound.lean).
+   [BLS freshness](../Proofs/BLS/Nondegeneracy.lean),
+   [OOPS Vandermonde](../Proofs/OOPS/SignatureHandle.lean), and
+   [Proximity's conditional extraction](../Proofs/Proximity/Adaptive.lean).
+6. For co-CDH, inspect [lazy cache coupling](../Proofs/BLS/CoCDH/LazyCoin.lean),
+   [Coron counting and extraction](../Proofs/BLS/CoCDH/Coron.lean), and
+   [signing-call accounting](../Proofs/BLS/CoCDH/QueryBound.lean).
 
 The former public-table source variants are removed, not relabeled as lazy.
 Private tables remain proof/simulator machinery and are never supplied to the source adversary.
@@ -446,8 +446,8 @@ premises, and test applications using only their explicit arguments.
   for all declarations in the generic AGM namespace.
 - [Direct shared attackers](../SignaturesTest/DirectSharedAGM.lean): an attacker built in
   the shared library, interleaved and repeated replies, distinct group bases, malformed
-  requests/outputs, and public game aliases. The [general proof](../Signatures/Model/Proofs/DirectAGM.lean)
-  covers every certified attacker; [Proximity](../Signatures/Proximity/Proofs/DirectAGM.lean)
+  requests/outputs, and public game aliases. The [general proof](../Proofs/Model/DirectAGM.lean)
+  covers every certified attacker; [Proximity](../Proofs/Proximity/DirectAGM.lean)
   proves exact collision preservation. The old signature execution bridge remains an
   internal supporting theorem for the grouped view.
 - [Reply-dependent queries and stopping](../SignaturesTest/AdaptiveQueries.lean).

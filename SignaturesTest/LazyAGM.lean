@@ -1,4 +1,4 @@
-import Signatures.BLS.Proofs.LazyAGM
+import Proofs.BLS.LazyAGM
 import Signatures.OOPS.Spec.LazyAGM
 import Mathlib.Algebra.Field.ZMod
 

@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrAGMRandomMemory
-import Signatures.Runtime.Caliper.SchnorrAGMRandomSource
+import Proofs.Runtime.Caliper.SchnorrAGMRandomMemory
+import Proofs.Runtime.Caliper.SchnorrAGMRandomSource
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

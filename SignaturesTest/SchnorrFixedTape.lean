@@ -1,5 +1,5 @@
-import Signatures.Schnorr.Proofs.FixedTapeROM
-import Signatures.Runtime.SchnorrSeededSecurity
+import Proofs.Schnorr.FixedTapeROM
+import Proofs.Runtime.SchnorrSeededSecurity
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec

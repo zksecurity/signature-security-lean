@@ -1,6 +1,6 @@
-import Signatures.Schnorr.Proofs.GeneralNonzeroROM
-import Signatures.Runtime.BackendSchnorrNonzeroSolverPolynomial
-import Signatures.Runtime.BackendSchnorrNonzeroDescriptionPolynomial
+import Proofs.Schnorr.GeneralNonzeroROM
+import Proofs.Runtime.BackendSchnorrNonzeroSolverPolynomial
+import Proofs.Runtime.BackendSchnorrNonzeroDescriptionPolynomial
 import Signatures.Runtime.BackendSchnorrROMDLogFamily
 
 /-! Polynomial resources for unrestricted nonzero-nonce Schnorr ROM attackers in one fixed

@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendListSnoc
-import Signatures.Runtime.BackendSchnorrAGMProgramming
+import Proofs.Runtime.BackendListSnoc
+import Proofs.Runtime.BackendSchnorrAGMProgramming
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

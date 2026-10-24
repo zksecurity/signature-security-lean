@@ -104,7 +104,7 @@ run_meta do
           if resource.getAppFn.isConstOf ``BLS.CaliperCoCDH.Parameters.randomBound then
             throwError "polynomial sampling-range cardinality required"
   for (name, moduleName) in #[( ``BLS.cocdh_security_asymptotic, `Signatures.BLS.CaliperCoCDHFamilyStatement),
-      (``BLS.CaliperCoCDH.Family.Proofs.security, `Signatures.BLS.Proofs.CaliperCoCDHFamily)] do
+      (``BLS.CaliperCoCDH.Family.Proofs.security, `Proofs.BLS.CaliperCoCDHFamily)] do
     unless (← findModuleOf? name) == some moduleName do
       throwError "{name}: keep the statement and proof in their separate files"
 

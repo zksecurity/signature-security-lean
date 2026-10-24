@@ -1,4 +1,4 @@
-import Signatures.Runtime.PrimitiveCode
+import Proofs.Runtime.PrimitiveCode
 import Lean.Util.CollectAxioms
 
 open Std.Sat Signatures.Runtime CircuitWires FixedPorts WeierstrassCurve

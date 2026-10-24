@@ -1,7 +1,7 @@
-import Signatures.Runtime.BackendSchnorrROMHandlerDescription
-import Signatures.Runtime.BackendSchnorrROMHandlerPolynomial
-import Signatures.Runtime.BackendSchnorrROMHandlerReserve
-import Signatures.Runtime.BackendSchnorrRawFork
+import Proofs.Runtime.BackendSchnorrROMHandlerDescription
+import Proofs.Runtime.BackendSchnorrROMHandlerPolynomial
+import Proofs.Runtime.BackendSchnorrROMHandlerReserve
+import Proofs.Runtime.BackendSchnorrRawFork
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

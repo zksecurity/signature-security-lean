@@ -1,4 +1,4 @@
-import Signatures.Runtime.MixedReplay
+import Proofs.Runtime.MixedReplay
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

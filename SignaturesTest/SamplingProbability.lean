@@ -1,4 +1,4 @@
-import Signatures.Runtime.HeapProbability
+import Proofs.Runtime.HeapProbability
 
 open Signatures.Runtime OracleComp
 open scoped ENNReal

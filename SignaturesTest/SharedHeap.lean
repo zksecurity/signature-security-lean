@@ -1,4 +1,4 @@
-import Signatures.Runtime.HeapPrimitive
+import Proofs.Runtime.HeapPrimitive
 import Lean.Util.CollectAxioms
 
 open Signatures.Runtime HeapBits SharedHeap FixedPorts WeierstrassCurve

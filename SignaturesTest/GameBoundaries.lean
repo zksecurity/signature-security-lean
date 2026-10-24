@@ -1,7 +1,7 @@
 import Signatures.OOPS.Spec.LazyAGM
-import Signatures.OOPS.Proofs.Adaptive
-import Signatures.BLS.Proofs.Nondegeneracy
-import Signatures.Proximity.Proofs.LazyAGM
+import Proofs.OOPS.Adaptive
+import Proofs.BLS.Nondegeneracy
+import Proofs.Proximity.LazyAGM
 import Mathlib.Algebra.Field.ZMod
 
 /-! Degree, freshness, token, and collision-event boundaries of the lazy games. -/

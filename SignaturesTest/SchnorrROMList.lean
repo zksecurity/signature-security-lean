@@ -1,7 +1,7 @@
-import Signatures.Runtime.BackendSchnorrROMCache
-import Signatures.Runtime.SchnorrROMListReduction
-import Signatures.Runtime.SchnorrROMListGrowth
-import Signatures.Runtime.BackendSchnorrRawFork
+import Proofs.Runtime.BackendSchnorrROMCache
+import Proofs.Runtime.SchnorrROMListReduction
+import Proofs.Runtime.SchnorrROMListGrowth
+import Proofs.Runtime.BackendSchnorrRawFork
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

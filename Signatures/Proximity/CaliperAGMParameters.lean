@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.WeightedSecurity
+import Proofs.Runtime.Caliper.WeightedSecurity
 import Signatures.Proximity.Spec.LazyAGM
 
 /-! Caliper parameters specialized to the original Proximity index and message types.

@@ -1,4 +1,4 @@
-import Signatures.Runtime.SchnorrSelection
+import Proofs.Runtime.SchnorrSelection
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

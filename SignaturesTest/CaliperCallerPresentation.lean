@@ -1,6 +1,6 @@
 import Signatures.BLS.CaliperAGMParameters
-import Signatures.Runtime.Caliper.CallerQueryBounds
-import Signatures.Schnorr.CaliperAGMCaller
+import Proofs.Runtime.Caliper.CallerQueryBounds
+import Proofs.Schnorr.CaliperAGMCaller
 import Lean.Util.CollectAxioms
 
 /-! A stateless caller may select different queries. Its source is constructed

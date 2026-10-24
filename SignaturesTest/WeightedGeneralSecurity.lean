@@ -2,10 +2,10 @@ import Signatures.OOPS.Statement
 import Signatures.Proximity.Statement
 import Signatures.OOPS.CaliperAGMFamilyStatement
 import Signatures.Proximity.CaliperAGMFamilyStatement
-import Signatures.OOPS.Proofs.GeneralAGM
-import Signatures.Proximity.Proofs.GeneralAGM
-import Signatures.Runtime.WeightedSecurityModel
-import Signatures.Runtime.BackendConfiguration
+import Proofs.OOPS.GeneralAGM
+import Proofs.Proximity.GeneralAGM
+import Proofs.Runtime.WeightedSecurityModel
+import Proofs.Runtime.BackendConfiguration
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -57,10 +57,10 @@ run_meta do
         if expected != `inst && decl.binderInfo != .default then
           throwError "{name}: public input {expected} must be explicit"
   for (name, moduleName) in #[
-      (``OOPS.Proofs.agm_security, `Signatures.OOPS.Proofs.GeneralSecurity),
-      (``OOPS.Proofs.agm_security_common_budget, `Signatures.OOPS.Proofs.GeneralSecurity),
-      (``Proximity.Proofs.agm_security, `Signatures.Proximity.Proofs.GeneralSecurity),
-      (``Proximity.Proofs.agm_security_common_budget, `Signatures.Proximity.Proofs.GeneralSecurity)] do
+      (``OOPS.Proofs.agm_security, `Proofs.OOPS.GeneralSecurity),
+      (``OOPS.Proofs.agm_security_common_budget, `Proofs.OOPS.GeneralSecurity),
+      (``Proximity.Proofs.agm_security, `Proofs.Proximity.GeneralSecurity),
+      (``Proximity.Proofs.agm_security_common_budget, `Proofs.Proximity.GeneralSecurity)] do
     unless (← findModuleOf? name) == some moduleName do
       throwError "{name}: proof must remain in its separate proof file"
 
@@ -145,8 +145,8 @@ run_meta do
   for (name, moduleName) in #[
       (``OOPS.agm_security_asymptotic, `Signatures.OOPS.CaliperAGMFamilyStatement),
       (``Proximity.agm_security_asymptotic, `Signatures.Proximity.CaliperAGMFamilyStatement),
-      (``OOPS.CaliperAGM.Family.Proofs.security, `Signatures.OOPS.Proofs.CaliperAGMFamily),
-      (``Proximity.CaliperAGM.Family.Proofs.security, `Signatures.Proximity.Proofs.CaliperAGMFamily)] do
+      (``OOPS.CaliperAGM.Family.Proofs.security, `Proofs.OOPS.CaliperAGMFamily),
+      (``Proximity.CaliperAGM.Family.Proofs.security, `Proofs.Proximity.CaliperAGMFamily)] do
     unless (← findModuleOf? name) == some moduleName do
       throwError "{name}: family statements and proofs must remain separate"
 

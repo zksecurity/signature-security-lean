@@ -19,7 +19,7 @@ run_meta do
   for name in #[``Schnorr.Proofs.rom_security, ``Schnorr.romEufCmaGame_eq,
       ``Schnorr.romDLogSuccessBound_eq, ``Schnorr.romDLogSuccessBound_mono,
       ``Schnorr.UnrestrictedAdversary.query_allowances] do
-    unless (← findModuleOf? name) == some `Signatures.Schnorr.Proofs.GeneralROMSecurity do
+    unless (← findModuleOf? name) == some `Proofs.Schnorr.GeneralROMSecurity do
       throwError "{name}: supporting proofs must stay separate from the public statement"
   forallTelescope (← getConstInfo ``Schnorr.rom_security).type fun params conclusion => do
     unless params.size == 5 do
@@ -128,7 +128,7 @@ run_meta do
       throwError "Conclude negligible success in the original ordinary-ROM game"
   unless (← findModuleOf? name) == some `Signatures.Schnorr.GeneralROMFamilyStatement do
     throwError "Keep the family statement in its statement file"
-  unless (← findModuleOf? ``Schnorr.GeneralROM.Family.Proofs.security) == some `Signatures.Schnorr.Proofs.GeneralROMFamily do
+  unless (← findModuleOf? ``Schnorr.GeneralROM.Family.Proofs.security) == some `Proofs.Schnorr.GeneralROMFamily do
     throwError "Keep the family proof separate"
   for name in #[``Schnorr.romDLogSuccessBound, ``Schnorr.romEufCmaGame,
       ``Schnorr.GeneralROM.Parameters.descriptions, ``Schnorr.GeneralROM.Parameters.solverTime,

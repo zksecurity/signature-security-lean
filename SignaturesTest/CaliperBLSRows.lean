@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.BLSRowsOracle
-import Signatures.Runtime.Caliper.RowFoldPostcondition
+import Proofs.Runtime.Caliper.BLSRowsOracle
+import Proofs.Runtime.Caliper.RowFoldPostcondition
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

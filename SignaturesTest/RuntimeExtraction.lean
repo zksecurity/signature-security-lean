@@ -1,6 +1,6 @@
-import Signatures.Runtime.Extraction
-import Signatures.Runtime.KeyEquality
-import Signatures.Runtime.Weights
+import Proofs.Runtime.Extraction
+import Proofs.Runtime.KeyEquality
+import Proofs.Runtime.Weights
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

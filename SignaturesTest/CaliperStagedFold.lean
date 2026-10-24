@@ -1,8 +1,8 @@
-import Signatures.Runtime.Caliper.ExpressionCompilation
-import Signatures.Runtime.Caliper.StagedFoldBounds
-import Signatures.Runtime.Caliper.StructuralBudgets
-import Signatures.Runtime.Caliper.ExpressionBounds
-import Signatures.Runtime.Caliper.ExpressionMemory
+import Proofs.Runtime.Caliper.ExpressionCompilation
+import Proofs.Runtime.Caliper.StagedFoldBounds
+import Proofs.Runtime.Caliper.StructuralBudgets
+import Proofs.Runtime.Caliper.ExpressionBounds
+import Proofs.Runtime.Caliper.ExpressionMemory
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend

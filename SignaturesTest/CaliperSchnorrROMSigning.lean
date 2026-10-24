@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMSigningSource
+import Proofs.Runtime.Caliper.SchnorrROMSigningSource
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

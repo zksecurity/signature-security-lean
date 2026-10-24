@@ -1,4 +1,4 @@
-import Signatures.OOPS.Proofs.GeneralAGMFamily
+import Proofs.OOPS.GeneralAGMFamily
 
 /-! OOPS family security for general implemented algebraic attackers in one fixed
 backend. Polynomial degree and component bounds imply polynomial reduction time

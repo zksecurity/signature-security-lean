@@ -1,4 +1,4 @@
-import Signatures.Runtime.SchnorrRandomness
+import Proofs.Runtime.SchnorrRandomness
 
 /-! A private primitive may have multiple internal queries. Forking must retain their
 joint result across the shared prefix rather than sampling it separately in each run. -/

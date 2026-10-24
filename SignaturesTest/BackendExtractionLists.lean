@@ -1,7 +1,7 @@
-import Signatures.Runtime.BackendIndexCost
-import Signatures.Runtime.BackendReverseCost
-import Signatures.Runtime.BackendLazyAGMOutputSize
-import Signatures.Runtime.BackendTokenRows
+import Proofs.Runtime.BackendIndexCost
+import Proofs.Runtime.BackendReverseCost
+import Proofs.Runtime.BackendLazyAGMOutputSize
+import Proofs.Runtime.BackendTokenRows
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

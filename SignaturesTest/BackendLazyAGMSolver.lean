@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendLazyAGMSolverCorrectness
-import Signatures.Runtime.BackendLazyAGMSolverWithin
+import Proofs.Runtime.BackendLazyAGMSolverCorrectness
+import Proofs.Runtime.BackendLazyAGMSolverWithin
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

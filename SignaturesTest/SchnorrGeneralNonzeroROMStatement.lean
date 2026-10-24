@@ -19,7 +19,7 @@ run_meta do
   for name in #[``Schnorr.NonzeroNonce.Proofs.rom_security, ``Schnorr.NonzeroNonce.romEufCmaGame_eq,
       ``Schnorr.NonzeroNonce.romDLogSuccessBound_eq, ``Schnorr.NonzeroNonce.romDLogSuccessBound_mono,
       ``Schnorr.NonzeroNonce.UnrestrictedAdversary.query_allowances] do
-    unless (← findModuleOf? name) == some `Signatures.Schnorr.Proofs.GeneralNonzeroROMSecurity do
+    unless (← findModuleOf? name) == some `Proofs.Schnorr.GeneralNonzeroROMSecurity do
       throwError "{name}: supporting proofs must stay separate from the public statement"
   forallTelescope (← getConstInfo ``Schnorr.NonzeroNonce.rom_security).type fun params conclusion => do
     unless params.size == 5 do
@@ -127,7 +127,7 @@ run_meta do
       throwError "Conclude negligible success in the original nonzero-nonce ROM game"
   unless (← findModuleOf? name) == some `Signatures.Schnorr.GeneralNonzeroROMFamilyStatement do
     throwError "Keep the family statement in its statement file"
-  unless (← findModuleOf? ``Schnorr.NonzeroNonce.GeneralROM.Family.Proofs.security) == some `Signatures.Schnorr.Proofs.GeneralNonzeroROMFamily do
+  unless (← findModuleOf? ``Schnorr.NonzeroNonce.GeneralROM.Family.Proofs.security) == some `Proofs.Schnorr.GeneralNonzeroROMFamily do
     throwError "Keep the family proof separate"
   for name in #[``Schnorr.NonzeroNonce.romDLogSuccessBound, ``Schnorr.NonzeroNonce.romEufCmaGame,
       ``Schnorr.NonzeroNonce.GeneralROM.Parameters.descriptions, ``Schnorr.NonzeroNonce.GeneralROM.Parameters.solverTime,

@@ -1,4 +1,4 @@
-import Signatures.Runtime.ProximityWeight
+import Proofs.Runtime.ProximityWeight
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

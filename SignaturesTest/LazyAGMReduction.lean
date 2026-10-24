@@ -1,6 +1,6 @@
-import Signatures.BLS.Proofs.LazyAGMSecurity
-import Signatures.BLS.Proofs.LazyAGMList
-import Signatures.BLS.Proofs.LazyAGMCacheBound
+import Proofs.BLS.LazyAGMSecurity
+import Proofs.BLS.LazyAGMList
+import Proofs.BLS.LazyAGMCacheBound
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

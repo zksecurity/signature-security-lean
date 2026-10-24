@@ -1,9 +1,9 @@
-import Signatures.Schnorr.Proofs.NonzeroLazyROM
-import Signatures.Model.NonzeroFieldGrowth
-import Signatures.Runtime.BackendSchnorrNonzeroSigningSource
-import Signatures.Runtime.BackendSchnorrNonzeroRepairCost
-import Signatures.Runtime.SchnorrNonzeroListReduction
-import Signatures.Runtime.SchnorrNonzeroListGrowth
+import Proofs.Schnorr.NonzeroLazyROM
+import Proofs.Model.NonzeroFieldGrowth
+import Proofs.Runtime.BackendSchnorrNonzeroSigningSource
+import Proofs.Runtime.BackendSchnorrNonzeroRepairCost
+import Proofs.Runtime.SchnorrNonzeroListReduction
+import Proofs.Runtime.SchnorrNonzeroListGrowth
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

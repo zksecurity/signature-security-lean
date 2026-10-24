@@ -74,7 +74,7 @@ run_meta do
       throwError "{name}: must conclude negligible success in the actual BLS game"
   unless (← findModuleOf? name) == some `Signatures.BLS.GeneralAGMFamilyStatement do
     throwError "family statement moved out of its statement file"
-  unless (← findModuleOf? ``BLS.GeneralAGM.Family.Proofs.security) == some `Signatures.BLS.Proofs.GeneralAGMFamily do
+  unless (← findModuleOf? ``BLS.GeneralAGM.Family.Proofs.security) == some `Proofs.BLS.GeneralAGMFamily do
     throwError "family proof must stay in its separate proof file"
 
 -- Zero query allowances still leave initialization/extraction costs. Their

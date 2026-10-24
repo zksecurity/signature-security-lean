@@ -1,6 +1,6 @@
-import Signatures.LinearFunctional.Proofs.LazyAGMCacheBound
-import Signatures.OOPS.Proofs.LazyAGMSecurity
-import Signatures.Proximity.Proofs.LazyAGMSecurity
+import Proofs.LinearFunctional.LazyAGMCacheBound
+import Proofs.OOPS.LazyAGMSecurity
+import Proofs.Proximity.LazyAGMSecurity
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

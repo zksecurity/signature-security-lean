@@ -1,6 +1,6 @@
-import Signatures.BLS.Proofs.CaliperAGM
-import Signatures.Runtime.Caliper.DLogFamily
-import Signatures.Runtime.Caliper.PolynomialBounds
+import Proofs.BLS.CaliperAGM
+import Proofs.Runtime.Caliper.DLogFamily
+import Proofs.Runtime.Caliper.PolynomialBounds
 
 /-! Polynomial resources for the concrete Caliper BLS AGM implementation.
 Only primitive costs, caller limits, base encoding widths and capacities are

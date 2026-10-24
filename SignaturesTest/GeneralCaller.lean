@@ -1,7 +1,7 @@
-import Signatures.Runtime.GeneralCoronCorrectness
-import Signatures.Runtime.GeneralCallerTrace
-import Signatures.Runtime.GeneralCallerOutput
-import Signatures.Runtime.GeneralCallerResources
+import Proofs.Runtime.GeneralCoronCorrectness
+import Proofs.Runtime.GeneralCallerTrace
+import Proofs.Runtime.GeneralCallerOutput
+import Proofs.Runtime.GeneralCallerResources
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec PFunctor Signatures.Runtime

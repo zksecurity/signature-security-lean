@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMFreshGuardBounds
+import Proofs.Runtime.Caliper.SchnorrROMFreshGuardBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -14,7 +14,7 @@ proof derives that coefficient view internally for every shared attacker. Backen
 realizations implement its encoded program and charge producing the encoding,
 including regrouping, in the caller budget. Query allowances refer to the native
 source requests' `value.data`. See the [direct attacker regression](../SignaturesTest/DirectSharedAGM.lean)
-and [preservation proofs](../Signatures/Model/Proofs/DirectAGM.lean).
+and [preservation proofs](../Proofs/Model/DirectAGM.lean).
 
 The public security statements now use general implemented attackers and lazy
 reductions with proved runtime and stored-code bounds. The three eager-table AGM

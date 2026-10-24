@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMPrivatePairBounds
+import Proofs.Runtime.Caliper.SchnorrROMPrivatePairBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

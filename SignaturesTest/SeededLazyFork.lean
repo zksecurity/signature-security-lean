@@ -1,5 +1,5 @@
-import Signatures.Runtime.SeededForkReachability
-import Signatures.Runtime.SchnorrLazyFork
+import Proofs.Runtime.SeededForkReachability
+import Proofs.Runtime.SchnorrLazyFork
 import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
 import Lean.Util.CollectAxioms
 

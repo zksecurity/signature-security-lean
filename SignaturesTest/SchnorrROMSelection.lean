@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendSchnorrROMSelectionPolynomial
+import Proofs.Runtime.BackendSchnorrROMSelectionPolynomial
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,4 +1,4 @@
-import Signatures.OOPS.Proofs.GeneralSecurity
+import Proofs.OOPS.GeneralSecurity
 
 /-! OOPS security. Fix the curve, security parameter, query allowances and
 execution model, then quantify over the attacker. `Game.lean` contains the game

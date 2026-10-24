@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrPrivateSamplingDescription
-import Signatures.Runtime.BackendSchnorrPrivateSamplingBudget
+import Proofs.Runtime.BackendSchnorrPrivateSamplingDescription
+import Proofs.Runtime.BackendSchnorrPrivateSamplingBudget
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

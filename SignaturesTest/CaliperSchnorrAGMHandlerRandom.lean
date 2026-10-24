@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.SchnorrAGMHandlerRandomMemory
-import Signatures.Runtime.Caliper.SchnorrAGMHandlerRandomSource
+import Proofs.Runtime.Caliper.SchnorrAGMHandlerRandomMemory
+import Proofs.Runtime.Caliper.SchnorrAGMHandlerRandomSource
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

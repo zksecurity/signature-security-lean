@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendLazyAGMCallerResources
-import Signatures.Runtime.BackendLazyAGMCallerOutput
-import Signatures.Runtime.BackendLazyAGMHandlerDescription
+import Proofs.Runtime.BackendLazyAGMCallerResources
+import Proofs.Runtime.BackendLazyAGMCallerOutput
+import Proofs.Runtime.BackendLazyAGMHandlerDescription
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMReplaySecondSelectionBounds
+import Proofs.Runtime.Caliper.SchnorrROMReplaySecondSelectionBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

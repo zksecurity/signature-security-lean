@@ -1,6 +1,6 @@
-import Signatures.Schnorr.Proofs.CaliperAGM
-import Signatures.Runtime.Caliper.CyclicDLogFamily
-import Signatures.Runtime.Caliper.PolynomialBounds
+import Proofs.Schnorr.CaliperAGM
+import Proofs.Runtime.Caliper.CyclicDLogFamily
+import Proofs.Runtime.Caliper.PolynomialBounds
 
 /-! Polynomial bounds on the original caller, layouts and primitive routines
 imply polynomial code, total memory and runtime for the constructed Schnorr

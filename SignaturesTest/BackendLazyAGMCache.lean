@@ -1,4 +1,4 @@
-import Signatures.Runtime.BackendLazyAGMCache
+import Proofs.Runtime.BackendLazyAGMCache
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.CacheBounds
+import Proofs.Runtime.Caliper.CacheBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend

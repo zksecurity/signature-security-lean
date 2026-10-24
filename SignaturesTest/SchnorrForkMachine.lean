@@ -1,4 +1,4 @@
-import Signatures.Runtime.SchnorrForkCorrectness
+import Proofs.Runtime.SchnorrForkCorrectness
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

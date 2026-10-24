@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMHashCacheSource
+import Proofs.Runtime.Caliper.SchnorrROMHashCacheSource
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

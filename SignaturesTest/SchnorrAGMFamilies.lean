@@ -76,7 +76,7 @@ run_meta do
       throwError "{name}: must conclude negligible success in the actual Schnorr AGM game"
   unless (← findModuleOf? name) == some `Signatures.Schnorr.GeneralAGMFamilyStatement do
     throwError "Family statement must stay in its statement file"
-  unless (← findModuleOf? ``Schnorr.GeneralAGM.Family.Proofs.security) == some `Signatures.Schnorr.Proofs.GeneralAGMFamily do
+  unless (← findModuleOf? ``Schnorr.GeneralAGM.Family.Proofs.security) == some `Proofs.Schnorr.GeneralAGMFamily do
     throwError "Family proof must stay in its separate proof file"
 
 private def linearTimes (n : Nat) : Handler.Times := ⟨n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n⟩

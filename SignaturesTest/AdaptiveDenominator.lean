@@ -1,5 +1,5 @@
 import Mathlib.Algebra.Field.ZMod
-import Signatures.AlgebraicGroupModel.Proofs.ForgeryGame
+import Proofs.AlgebraicGroupModel.ForgeryGame
 
 /-!
 # Adaptive zero-denominator regression

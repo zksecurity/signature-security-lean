@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendWeightedHandlerBudget
-import Signatures.Runtime.BackendWeightedHandlerDescription
+import Proofs.Runtime.BackendWeightedHandlerBudget
+import Proofs.Runtime.BackendWeightedHandlerDescription
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec PFunctor

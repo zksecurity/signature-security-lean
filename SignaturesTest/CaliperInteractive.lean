@@ -1,7 +1,7 @@
-import Signatures.Runtime.Caliper.SourceAcceptance
-import Signatures.Runtime.Caliper.CapacityBounds
-import Signatures.Runtime.Caliper.InteractiveDescription
-import Signatures.Runtime.Caliper.Words
+import Proofs.Runtime.Caliper.SourceAcceptance
+import Proofs.Runtime.Caliper.CapacityBounds
+import Proofs.Runtime.Caliper.InteractiveDescription
+import Proofs.Runtime.Caliper.Words
 import Lean
 
 open Caliper OracleComp OracleSpec PFunctor Signatures.Runtime Signatures.Runtime.CaliperBackend

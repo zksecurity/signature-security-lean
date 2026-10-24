@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendWeightedSolverCorrectness
-import Signatures.Runtime.BackendWeightedSolverWithin
+import Proofs.Runtime.BackendWeightedSolverCorrectness
+import Proofs.Runtime.BackendWeightedSolverWithin
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

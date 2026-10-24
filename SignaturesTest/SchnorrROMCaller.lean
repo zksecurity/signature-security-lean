@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrROMCallerOutput
-import Signatures.Runtime.BackendSchnorrROMCallerPolynomial
+import Proofs.Runtime.BackendSchnorrROMCallerOutput
+import Proofs.Runtime.BackendSchnorrROMCallerPolynomial
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

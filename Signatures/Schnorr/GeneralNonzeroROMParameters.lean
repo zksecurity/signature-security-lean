@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendSchnorrNonzeroSecurity
-import Signatures.Runtime.BackendSchnorrNonzeroDescriptionAllowance
-import Signatures.Model.AdvantageBound
+import Proofs.Runtime.BackendSchnorrNonzeroSecurity
+import Proofs.Runtime.BackendSchnorrNonzeroDescriptionAllowance
+import Proofs.Model.AdvantageBound
 import Signatures.Schnorr.QueryAllowance
 
 /-! Original component contracts and attacker allowances for nonzero-nonce ROM

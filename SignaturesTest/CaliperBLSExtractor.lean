@@ -1,7 +1,7 @@
-import Signatures.Runtime.Caliper.BLSExtractorAcceptance
-import Signatures.Runtime.Caliper.BLSExtractorSource
-import Signatures.Runtime.Caliper.BLSExtractionExitSource
-import Signatures.Runtime.Caliper.BLSCallerFinishService
+import Proofs.Runtime.Caliper.BLSExtractorAcceptance
+import Proofs.Runtime.Caliper.BLSExtractorSource
+import Proofs.Runtime.Caliper.BLSExtractionExitSource
+import Proofs.Runtime.Caliper.BLSCallerFinishService
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

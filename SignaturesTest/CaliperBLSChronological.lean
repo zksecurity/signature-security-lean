@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.BLSChronological
+import Proofs.Runtime.Caliper.BLSChronological
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

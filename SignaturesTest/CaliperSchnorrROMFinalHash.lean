@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMFinalHashBounds
+import Proofs.Runtime.Caliper.SchnorrROMFinalHashBounds
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

@@ -1,8 +1,8 @@
-import Signatures.Runtime.Arithmetic
-import Signatures.Runtime.Cache
-import Signatures.Runtime.Coron
-import Signatures.Runtime.GrowingState
-import Signatures.Runtime.Sampling
+import Proofs.Runtime.Arithmetic
+import Proofs.Runtime.Cache
+import Proofs.Runtime.Coron
+import Proofs.Runtime.GrowingState
+import Proofs.Runtime.Sampling
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

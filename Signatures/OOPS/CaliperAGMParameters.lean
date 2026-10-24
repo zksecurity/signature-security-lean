@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.WeightedSecurity
+import Proofs.Runtime.Caliper.WeightedSecurity
 import Signatures.OOPS.Spec.LazyAGM
 
 /-! Caliper parameters specialized to the original OOPS index and message types.

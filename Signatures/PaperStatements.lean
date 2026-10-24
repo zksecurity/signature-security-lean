@@ -1,5 +1,5 @@
 import Signatures.OOPS.Spec.LazyAGM
-import Signatures.LinearFunctional.Proofs.LazyAGM
+import Proofs.LinearFunctional.LazyAGM
 
 /-! OOPS game comparison for the paper's fixed-degree signing-call convention, including repeats.
 Compose callGame_le_game with the machine-bounded OOPS statement for a security bound. -/

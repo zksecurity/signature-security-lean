@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendLazyAGMSecurity
-import Signatures.Model.AdvantageBound
+import Proofs.Runtime.BackendLazyAGMSecurity
+import Proofs.Model.AdvantageBound
 import Signatures.BLS.QueryAllowance
 import Signatures.Model.DirectAGM
 

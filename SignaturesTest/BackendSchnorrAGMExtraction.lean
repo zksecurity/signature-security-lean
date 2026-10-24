@@ -1,7 +1,7 @@
-import Signatures.Runtime.BackendSchnorrAGMExtractionDescription
-import Signatures.Runtime.BackendSchnorrAGMExtractionBudget
-import Signatures.Runtime.BackendSchnorrAGMExtractionResources
-import Signatures.Runtime.BackendSchnorrAGMSolverOutput
+import Proofs.Runtime.BackendSchnorrAGMExtractionDescription
+import Proofs.Runtime.BackendSchnorrAGMExtractionBudget
+import Proofs.Runtime.BackendSchnorrAGMExtractionResources
+import Proofs.Runtime.BackendSchnorrAGMSolverOutput
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

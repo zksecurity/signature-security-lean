@@ -1,6 +1,6 @@
-import Signatures.Runtime.Caliper.SchnorrAGMSamplingMemory
-import Signatures.Runtime.Caliper.SchnorrAGMSamplingSource
-import Signatures.Runtime.Caliper.EncodedConstant
+import Proofs.Runtime.Caliper.SchnorrAGMSamplingMemory
+import Proofs.Runtime.Caliper.SchnorrAGMSamplingSource
+import Proofs.Runtime.Caliper.EncodedConstant
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

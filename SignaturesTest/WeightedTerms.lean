@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendWeightedTerms
-import Signatures.Runtime.BackendWeightedTermsContext
-import Signatures.Runtime.BackendWeightedKeyEquality
+import Proofs.Runtime.BackendWeightedTerms
+import Proofs.Runtime.BackendWeightedTermsContext
+import Proofs.Runtime.BackendWeightedKeyEquality
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

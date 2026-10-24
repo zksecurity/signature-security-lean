@@ -1,5 +1,5 @@
-import Signatures.Runtime.Caliper.CoronFullCoCDH
-import Signatures.Runtime.Caliper.CoronFullLimits
+import Proofs.Runtime.Caliper.CoronFullCoCDH
+import Proofs.Runtime.Caliper.CoronFullLimits
 import Signatures.BLS.QueryAllowance
 
 /-! Fixed Caliper components and caller allowances for BLS co-CDH security.

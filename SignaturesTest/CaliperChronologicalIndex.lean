@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.ChronologicalIndex
+import Proofs.Runtime.Caliper.ChronologicalIndex
 import Lean
 
 open Caliper Signatures.Runtime.CaliperBackend BoundedSource

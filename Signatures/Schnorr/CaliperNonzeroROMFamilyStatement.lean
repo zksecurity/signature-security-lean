@@ -1,4 +1,4 @@
-import Signatures.Schnorr.Proofs.CaliperNonzeroROMFamily
+import Proofs.Schnorr.CaliperNonzeroROMFamily
 
 /-! Asymptotic security for the public nonzero-nonce Schnorr ROM Caliper model. -/
 namespace Schnorr.NonzeroNonce

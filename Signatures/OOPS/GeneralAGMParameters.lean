@@ -1,5 +1,5 @@
-import Signatures.Runtime.GeneralWeightedParameters
-import Signatures.Model.Proofs.DirectAGM
+import Proofs.Runtime.GeneralWeightedParameters
+import Proofs.Model.DirectAGM
 
 /-! General implemented algebraic attackers for OOPS. Hash indices contain a
 topic and degree; signing inputs contain a scalar and topic. Query counts and

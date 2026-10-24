@@ -1,6 +1,6 @@
-import Signatures.Schnorr.Proofs.ROM
-import Signatures.Runtime.SchnorrBits
-import Signatures.Model.Hardness
+import Proofs.Schnorr.ROM
+import Proofs.Runtime.SchnorrBits
+import Proofs.Model.Hardness
 
 /-! Schnorr security against the concrete bit-heap machine. The reduction is
 compiled from the certified source, its full online budget is proved, and the

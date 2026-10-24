@@ -1,6 +1,6 @@
-import Signatures.Runtime.Caliper.CallerExecution
-import Signatures.Runtime.Caliper.UniformQuery
-import Signatures.Runtime.Caliper.Words
+import Proofs.Runtime.Caliper.CallerExecution
+import Proofs.Runtime.Caliper.UniformQuery
+import Proofs.Runtime.Caliper.Words
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend

@@ -1,4 +1,4 @@
-import Signatures.Proximity.Proofs.GeneralAGMFamily
+import Proofs.Proximity.GeneralAGMFamily
 
 /-! Family security for general implemented algebraic attackers in one fixed
 backend. Polynomial component bounds imply polynomial reduction time and code.

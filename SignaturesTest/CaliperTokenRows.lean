@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.TokenRowsSource
+import Proofs.Runtime.Caliper.TokenRowsSource
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

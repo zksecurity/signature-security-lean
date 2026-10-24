@@ -1,6 +1,6 @@
-import Signatures.Runtime.Caliper.SchnorrAGMSigningDispatchMemory
-import Signatures.Runtime.Caliper.SchnorrAGMSigningDispatchSource
-import Signatures.Runtime.Caliper.EncodedConstant
+import Proofs.Runtime.Caliper.SchnorrAGMSigningDispatchMemory
+import Proofs.Runtime.Caliper.SchnorrAGMSigningDispatchSource
+import Proofs.Runtime.Caliper.EncodedConstant
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

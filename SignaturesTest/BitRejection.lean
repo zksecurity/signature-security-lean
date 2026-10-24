@@ -1,4 +1,4 @@
-import Signatures.Runtime.BitRejectionDistribution
+import Proofs.Runtime.BitRejectionDistribution
 import Lean.Util.CollectAxioms
 
 open Signatures.Runtime HeapBits SharedHeap BitRejection PrimeFieldCircuit OracleComp

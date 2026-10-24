@@ -20,8 +20,8 @@ output, a malformed interaction losing). For ordinary attackers it is VCVio's
 [pairing-family scheme](../Signatures/Model/DirectAGM.lean) with their hash-term families (OOPS adds
 its degree rule as the admissibility restriction), and [Schnorr](../Signatures/Schnorr/Game.lean)
 `rom`/`nonzeroRom`/`agm` at `Schnorr.signature`/`NonzeroNonce.signature`. The co-CDH proof's
-exponent-keeping game ([`BLS.ROM.game`](../Signatures/BLS/Proofs/ROM.lean)) has the
-[same distribution](../Signatures/BLS/Proofs/EufCma.lean) as the real game because the generator
+exponent-keeping game ([`BLS.ROM.game`](../Proofs/BLS/ROM.lean)) has the
+[same distribution](../Proofs/BLS/EufCma.lean) as the real game because the generator
 identifies exponents with hash points.
 
 The general-attacker statements derive complete reduction runtime and stored-code
@@ -50,7 +50,7 @@ The DLog time allowance is the maximum of the two derived reduction times
 (`Proofs.agm_security` keeps them separate).
 The [model and game definitions](../Signatures/BLS/GeneralSecurityModel.lean) expose
 attacker resources, primitive/encoding contracts, and explicit hardness suprema.
-The [proofs](../Signatures/BLS/Proofs/GeneralSecurity.lean) combine the original
+The [proofs](../Proofs/BLS/GeneralSecurity.lean) combine the original
 probability reductions with derived solver certificates. The public AGM theorem
 now uses actual Caliper programs with stored-code, runtime and total-memory bounds.
 Its [parameters](../Signatures/BLS/CaliperAGMParameters.lean) fix layouts, implemented
@@ -68,8 +68,8 @@ cardinality and numerical sampling ranges need not. The earlier
 [abstract-backend family theorem](../Signatures/BLS/GeneralAGMFamilyStatement.lean)
 remains a separate result.
 OOPS and Proximity now use the same
-[weighted Caliper parameters](../Signatures/Runtime/Caliper/WeightedParameters.lean)
-and [complete solver certificates](../Signatures/Runtime/Caliper/WeightedSecurity.lean).
+[weighted Caliper parameters](../Proofs/Runtime/Caliper/WeightedParameters.lean)
+and [complete solver certificates](../Proofs/Runtime/Caliper/WeightedSecurity.lean).
 One attacker caller is reused in both reductions; the bad reduction derives paired
 sampling from the scalar sampler. Challenge coverage follows from the local routine
 contracts. The [OOPS family corollary](../Signatures/OOPS/CaliperAGMFamilyStatement.lean)
@@ -89,7 +89,7 @@ derives negligible forgery from polynomial component resources, Caliper DLog
 hardness and negligible inverse field size. The
 [parameters](../Signatures/Schnorr/CaliperAGMParameters.lean) fix the layouts,
 implemented primitives, sampler and caller limits before choosing the attacker.
-The [local caller constructor](../Signatures/Schnorr/CaliperAGMSource.lean) derives the
+The [local caller constructor](../Proofs/Schnorr/CaliperAGMSource.lean) derives the
 shared AGM source, source machine, capacity invariant and source query bounds
 from local Caliper code, branchwise query allowances and algebraicity.
 No separate source program or proof identifying it with that code is required.
@@ -101,9 +101,9 @@ nonce signing/forking losses and a square-root DLog bound. Its DLog term ranges 
 the fixed Caliper class at the budgets of the actual executed replaying solver:
 the [parameters](../Signatures/Schnorr/CaliperROMParameters.lean) fix the enumerated
 handler, point operations, extractor field primitives, caller shape and allowances;
-the [shape-level budgets](../Signatures/Runtime/Caliper/SchnorrROMFullShape.lean) are
+the [shape-level budgets](../Proofs/Runtime/Caliper/SchnorrROMFullShape.lean) are
 attacker-independent and agree with the caller-indexed ones by `rfl`; the
-[solver certificate](../Signatures/Runtime/Caliper/SchnorrROMFullSecurity.lean) derives
+[solver certificate](../Proofs/Runtime/Caliper/SchnorrROMFullSecurity.lean) derives
 class membership, challenge coverage and the forking bound. Its
 [polynomial-family corollary](../Signatures/Schnorr/CaliperROMFamilyStatement.lean)
 derives negligible forgery from polynomial component resources and nonuniform
@@ -111,17 +111,17 @@ Caliper DLog hardness; the earlier
 [abstract-backend family theorem](../Signatures/Schnorr/GeneralROMFamilyStatement.lean)
 remains separate. The same file now exposes `Schnorr.NonzeroNonce.rom_security`, with
 signing denominator `|F|-1`, over the same Caliper solver: the executed handler is
-generic in an [executed signing branch](../Signatures/Runtime/Caliper/SchnorrROMHandler.lean)
-whose [source law](../Signatures/Runtime/Caliper/SchnorrROMHandlerSource.lean) may target
+generic in an [executed signing branch](../Proofs/Runtime/Caliper/SchnorrROMHandler.lean)
+whose [source law](../Proofs/Runtime/Caliper/SchnorrROMHandlerSource.lean) may target
 the full-field or the nonzero-nonce list backend, so the caller, pass, replaying fork
 and extractor laws are proved once for `passWith law.target`; the
-[nonzero-nonce certificate](../Signatures/Runtime/Caliper/SchnorrROMNonzeroFullSecurity.lean)
+[nonzero-nonce certificate](../Proofs/Runtime/Caliper/SchnorrROMNonzeroFullSecurity.lean)
 and [parameters](../Signatures/Schnorr/CaliperNonzeroROMParameters.lean) instantiate it, with a
 [family corollary](../Signatures/Schnorr/CaliperNonzeroROMFamilyStatement.lean) reusing the
 full-field polynomial resources. The abstract-backend
 [nonuniform family corollary](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean)
 remains separate; both family proofs need the same negligible inverse-field-size assumption.
-The [executed nonzero-nonce signing branch](../Signatures/Runtime/Caliper/SchnorrROMNonzeroSigningBranch.lean)
+The [executed nonzero-nonce signing branch](../Proofs/Runtime/Caliper/SchnorrROMNonzeroSigningBranch.lean)
 (two replayed field draws, a replayed nonzero draw through the enumerated index with the
 zero index skipped, the executed zero test and repair, cache programming) is a
 `SigningBranch` with its `SigningLaw` to the nonzero-nonce list backend, so the
@@ -161,7 +161,7 @@ Pinned upstreams:
 ## Scope
 
 - The source games use lazy random oracles.
-- The separate [Caliper execution layer](../Signatures/Runtime/Caliper.lean) supplies
+- The separate [Caliper execution layer](../Proofs/Runtime/Caliper.lean) supplies
   word programs, encoded field/group routine contracts, concrete local quantitative
   realizers, bounded layouts and local control, charged saved-state composition,
   mailbox transfers and tape replay. Bounded local loops have proved linear time
@@ -349,25 +349,25 @@ Pinned upstreams:
   the final hash and extraction. Hash/sign reply arithmetic now has executed
   coin tests, branches and argument handling, with resource bounds derived from
   implemented group scaling and addition. These components now form the complete
-  random/hash/sign [Coron service](../Signatures/Runtime/Caliper/CoronService.lean),
+  random/hash/sign [Coron service](../Proofs/Runtime/Caliper/CoronService.lean),
   with derived time, code and total-memory bounds and exact correspondence to
   the original oracle, including its caches and signing set. Cache/log capacity
-  preservation is proved. The [terminal cache read and extraction](../Signatures/Runtime/Caliper/CoronTerminalBounds.lean)
+  preservation is proved. The [terminal cache read and extraction](../Proofs/Runtime/Caliper/CoronTerminalBounds.lean)
   now also have actual code and complete resource bounds. A source equality
   fuses the final verification hash and extraction into this paired read and
   `signature - scalar • challenge`, preserving both draws on a miss.
-  [Caller termination](../Signatures/Runtime/Caliper/CoronCallerFinishBounds.lean)
+  [Caller termination](../Proofs/Runtime/Caliper/CoronCallerFinishBounds.lean)
   now routes the ordinary forgery and full store into that extractor using
   executed copies and return/cutoff dispatch, with complete resource bounds.
   Starting with an empty cache, capacity `q + 1` suffices after at most `q`
   caller queries for this final read; no spare transcript slot is required.
-  The [complete Coron program](../Signatures/Runtime/Caliper/CoronFullSource.lean)
+  The [complete Coron program](../Proofs/Runtime/Caliper/CoronFullSource.lean)
   now executes initialization, the caller/controller, oracle service and
   extraction, with derived time, code and total-memory bounds. It implements
   the original lazy co-CDH reduction under local caller correspondence and
   termination proofs. The public co-CDH concrete theorem now uses this
-  [constructed Caliper witness](../Signatures/BLS/Proofs/CaliperCoCDH.lean).
-  [Challenge coverage](../Signatures/Runtime/Caliper/CoronFullChallenges.lean)
+  [constructed Caliper witness](../Proofs/BLS/CaliperCoCDH.lean).
+  [Challenge coverage](../Proofs/Runtime/Caliper/CoronFullChallenges.lean)
   follows from the scalar sampler and implemented scaling; changing the input's
   mathematical view preserves exactly the stored bytes. Layouts, primitive
   implementations and numeric caller allowances are fixed before the attacker.
@@ -377,7 +377,7 @@ Pinned upstreams:
   It does not require polynomial message-space or sampling-range cardinality.
   Both BLS public routes now use Caliper; ordinary co-CDH attackers still return
   a plain message/signature pair, without algebraic output requirements.
-  The [ordinary caller constructor](../Signatures/BLS/CaliperCoCDHCaller.lean)
+  The [ordinary caller constructor](../Proofs/BLS/CaliperCoCDHCaller.lean)
   builds that attacker from local Caliper code and local resource/query bounds.
   It derives termination, the controller invariant, source tree, machine
   correspondence and source query allowances. The source tree is a mathematical
@@ -385,106 +385,106 @@ Pinned upstreams:
   The shared reply presentation is also used by the BLS AGM caller.
   Cryptographic routines require Caliper code and proofs; encoded values remain
   inspectable by bit operations.
-  Schnorr AGM now has [bounded store layouts](../Signatures/Runtime/Caliper/SchnorrAGMLayout.lean),
-  [executed initialization](../Signatures/Runtime/Caliper/SchnorrAGMSetup.lean), and
-  [adaptive source invariants](../Signatures/Runtime/Caliper/SchnorrAGMReachability.lean).
+  Schnorr AGM now has [bounded store layouts](../Proofs/Runtime/Caliper/SchnorrAGMLayout.lean),
+  [executed initialization](../Proofs/Runtime/Caliper/SchnorrAGMSetup.lean), and
+  [adaptive source invariants](../Proofs/Runtime/Caliper/SchnorrAGMReachability.lean).
   Setup copies the runtime challenge and writes the initial affine basis and
   empty stores, with code/time bounds and complete memory accounting. The
   invariants reserve one final cache entry and permit infinite source message
   types. Its complete Caliper handler, extractor and public theorem are described below.
-  The [stateful cache reader](../Signatures/Runtime/Caliper/StatefulCacheRead.lean)
+  The [stateful cache reader](../Proofs/Runtime/Caliper/StatefulCacheRead.lean)
   now executes lookup, hit/miss selection, saved-state handling and insertion
   with derived time, code and complete memory bounds. The
-  [Schnorr cache](../Signatures/Runtime/Caliper/SchnorrAGMCache.lean) now supplies
+  [Schnorr cache](../Proofs/Runtime/Caliper/SchnorrAGMCache.lean) now supplies
   an executed fresh-entry routine: it retains the runtime affine explanation,
   samples the challenge, computes the exceptional-challenge test and updates
   the bad flag. Only local scalar sampling and addition implementations supply
   budgets; the remaining cache overhead and complete memory bounds are derived.
-  The [complete read](../Signatures/Runtime/Caliper/SchnorrAGMRead.lean) now also
+  The [complete read](../Proofs/Runtime/Caliper/SchnorrAGMRead.lean) now also
   executes metadata packing and restoration, with exact original-read
   correspondence and derived time, stored-code and complete memory bounds.
   Its overhead above the cache is linear in the declared storage width.
-  The [affine flattener](../Signatures/Runtime/Caliper/SchnorrAGMFlatten.lean)
+  The [affine flattener](../Proofs/Runtime/Caliper/SchnorrAGMFlatten.lean)
   also executes positional coefficient attachment and both coordinate sums,
   with exact source equality and derived full resource bounds. Missing
   coefficients default to zero; surplus coefficients add no basis entries.
-  The [hash core](../Signatures/Runtime/Caliper/SchnorrAGMHash.lean) now composes
+  The [hash core](../Proofs/Runtime/Caliper/SchnorrAGMHash.lean) now composes
   flattening with the complete read, physically retaining the original input.
   It has exact original-game correspondence and derived time, stored-code and
-  complete memory bounds. The [complete hash dispatcher](../Signatures/Runtime/Caliper/SchnorrAGMHashDispatch.lean)
+  complete memory bounds. The [complete hash dispatcher](../Proofs/Runtime/Caliper/SchnorrAGMHashDispatch.lean)
   now tests both stored list lengths, routes singleton requests, and rejects
   malformed requests without sampling. Its exact original-handler law and
   complete resource bounds cover every represented request shape.
-  [Signing arithmetic](../Signatures/Runtime/Caliper/SchnorrAGMSigningArithmetic.lean)
+  [Signing arithmetic](../Proofs/Runtime/Caliper/SchnorrAGMSigningArithmetic.lean)
   now computes the commitment and affine explanation from the runtime scalars
   and points, retaining the original state and constructing the source work
   frame. Its time, stored-code and complete memory bounds include every copy.
-  [Signing histories](../Signatures/Runtime/Caliper/SchnorrAGMHistories.lean) now
+  [Signing histories](../Proofs/Runtime/Caliper/SchnorrAGMHistories.lean) now
   append both the affine explanation and signed message in chronological order,
   with the original source function as their specification and complete resource
   bounds. The existing query reservation supplies the required free slots.
-  [Signing cache programming](../Signatures/Runtime/Caliper/SchnorrAGMProgramming.lean)
+  [Signing cache programming](../Proofs/Runtime/Caliper/SchnorrAGMProgramming.lean)
   now reuses the verified bounded cache and rebuilds the final signature/state
   result with charged retention and copying. Full-table hits preserve existing
   answers and explanations; reachable query reservations admit misses. Its
-  [complete resource bounds](../Signatures/Runtime/Caliper/SchnorrAGMProgrammingBounds.lean)
+  [complete resource bounds](../Proofs/Runtime/Caliper/SchnorrAGMProgrammingBounds.lean)
   cover the same source-correct execution.
-  [Complete accepted signing](../Signatures/Runtime/Caliper/SchnorrAGMSampling.lean)
+  [Complete accepted signing](../Proofs/Runtime/Caliper/SchnorrAGMSampling.lean)
   now draws the challenge and response in order and executes all three signing
-  stages. Its [source theorem](../Signatures/Runtime/Caliper/SchnorrAGMSamplingSource.lean)
+  stages. Its [source theorem](../Proofs/Runtime/Caliper/SchnorrAGMSamplingSource.lean)
   matches the original signing oracle, including collisions, and its complete
   resource bounds include both sampler calls and all retained state.
-  The [complete signing dispatcher](../Signatures/Runtime/Caliper/SchnorrAGMSigningDispatch.lean)
+  The [complete signing dispatcher](../Proofs/Runtime/Caliper/SchnorrAGMSigningDispatch.lean)
   now accepts empty group lists, allows arbitrary represented coefficient
   rows, and returns the encoded scalar/singleton-point reply. Malformed requests
   return a zero/empty reply without sampling, even with full stores. Its source
   theorem matches the original handler, and its resource bounds charge selection,
   routing, both stored branches and reply encoding.
-  [Randomness handling](../Signatures/Runtime/Caliper/SchnorrAGMRandom.lean) now
+  [Randomness handling](../Proofs/Runtime/Caliper/SchnorrAGMRandom.lean) now
   forwards one query with the runtime range on every request, including malformed
   requests. It preserves full stores, updates the malformed flag, and returns
   the sampled index with an empty group list. Original-handler correspondence
   and complete resource bounds are proved. Its
-  [common-store wrapper](../Signatures/Runtime/Caliper/SchnorrAGMHandlerRandom.lean)
+  [common-store wrapper](../Proofs/Runtime/Caliper/SchnorrAGMHandlerRandom.lean)
   now saves and restores the runtime generator/public key with actual copying,
   charging their storage throughout the query. Shared layouts derive the
   randomness, hash and signing encodings from one set of capacities. The
-  [common-store hash wrapper](../Signatures/Runtime/Caliper/SchnorrAGMHandlerHash.lean)
+  [common-store hash wrapper](../Proofs/Runtime/Caliper/SchnorrAGMHandlerHash.lean)
   likewise preserves that configuration across cache hits, fresh sampling and
   malformed rejection, with exact source correspondence and complete resource
-  bounds. The [common-store signing wrapper](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSigning.lean)
+  bounds. The [common-store signing wrapper](../Proofs/Runtime/Caliper/SchnorrAGMHandlerSigning.lean)
   now uses and preserves that configuration across both scalar draws and all
   state updates. It has the original joint reply/state law and complete time,
   code-size and total-memory bounds. The
-  [complete handler](../Signatures/Runtime/Caliper/SchnorrAGMHandler.lean) now assembles
+  [complete handler](../Proofs/Runtime/Caliper/SchnorrAGMHandler.lean) now assembles
   all three components with executed request copying and stored-tag dispatch.
   Its replies retain the original request, including coefficient rows, and its
-  [source theorem](../Signatures/Runtime/Caliper/SchnorrAGMHandlerSource.lean) proves
+  [source theorem](../Proofs/Runtime/Caliper/SchnorrAGMHandlerSource.lean) proves
   the original dependent handler's joint reply/state law. Complete resource
   bounds include those copies and all stored branches. The
-  [caller-facing service](../Signatures/Runtime/Caliper/SchnorrAGMCallerHandler.lean)
+  [caller-facing service](../Proofs/Runtime/Caliper/SchnorrAGMCallerHandler.lean)
   now executes conversion between independent request/reply packets and the
   handler's private-store format. Its source correspondence and complete
   resource bounds are proved, including copying across tagged-union padding.
-  The [generated caller](../Signatures/Runtime/Caliper/SchnorrAGMCaller.lean) now
+  The [generated caller](../Proofs/Runtime/Caliper/SchnorrAGMCaller.lean) now
   composes local caller routines with that service, preserving separate hash
-  and signing allowances. Its [execution theorem](../Signatures/Runtime/Caliper/SchnorrAGMCallerExecution.lean)
+  and signing allowances. Its [execution theorem](../Proofs/Runtime/Caliper/SchnorrAGMCallerExecution.lean)
   matches the original oracle machine and retains extraction space at every
   return or cutoff. Complete caller time, stored-code and memory bounds are
-  derived. The [terminal read and scalar extraction](../Signatures/Runtime/Caliper/SchnorrAGMExtractionRead.lean)
+  derived. The [terminal read and scalar extraction](../Proofs/Runtime/Caliper/SchnorrAGMExtractionRead.lean)
   now preserve the full cached explanation, execute the quotient, and retain
   the updated private state with proved source correspondence and resource
-  bounds. The [complete final-forgery terminal](../Signatures/Runtime/Caliper/SchnorrAGMExtraction.lean)
+  bounds. The [complete final-forgery terminal](../Proofs/Runtime/Caliper/SchnorrAGMExtraction.lean)
   now executes shape dispatch and coefficient flattening before that extraction,
   preserving the original joint scalar/state law. Malformed final forgeries
   return zero without changing either flag or requesting randomness.
-  The [caller and terminal](../Signatures/Runtime/Caliper/SchnorrAGMCallerExtraction.lean)
+  The [caller and terminal](../Proofs/Runtime/Caliper/SchnorrAGMCallerExtraction.lean)
   now compose with derived extraction room, exact original-machine semantics,
   and complete time, code and total-memory bounds. The
-  [complete program](../Signatures/Runtime/Caliper/SchnorrAGMFullProgram.lean)
+  [complete program](../Proofs/Runtime/Caliper/SchnorrAGMFullProgram.lean)
   now executes initialization and exactly realizes the named DLog reduction;
   its resource witness includes stored code, initial input and every visited
-  memory state. The [concrete security bridge](../Signatures/Runtime/Caliper/SchnorrAGMFullSecurity.lean)
+  memory state. The [concrete security bridge](../Proofs/Runtime/Caliper/SchnorrAGMFullSecurity.lean)
   applies the original Schnorr probability bound to this constructed Caliper
   witness. The public [Schnorr AGM model](../Signatures/Schnorr/GeneralSecurityModel.lean)
   and [family theorem](../Signatures/Schnorr/CaliperAGMFamilyStatement.lean) now use
@@ -495,263 +495,263 @@ Pinned upstreams:
   before dependent tagging, so distinct stored answers cannot be identified by
   modulo conversion. The implemented handler proves this property on every
   supported reply; local caller code can inspect the original stored words.
-  Its [source constructor](../Signatures/Schnorr/CaliperAGMSource.lean) now also proves
+  Its [source constructor](../Proofs/Schnorr/CaliperAGMSource.lean) now also proves
   shared-AGM algebraicity directly from the local caller's outgoing explanations.
   Unrepresented source inputs/replies stop with an empty-group output valid at
   every basis. Every related implemented reply preserves the exact continuation,
   so the same Caliper program and complete resource bounds apply.
   The weighted migration now has executed
-  [Proximity term generation](../Signatures/Runtime/Caliper/ProximityTerms.lean) and
-  [OOPS term generation](../Signatures/Runtime/Caliper/OOPSTermsBounds.lean).
+  [Proximity term generation](../Proofs/Runtime/Caliper/ProximityTerms.lean) and
+  [OOPS term generation](../Proofs/Runtime/Caliper/OOPSTermsBounds.lean).
   Fixed vectors retain the source function type; all coordinates, repeated labels,
   tags and scalar powers have charged instructions and stored code. Exact source
   identities and complete memory bounds cover both generators, including degree
-  or dimension zero. The [generated weighted evaluator](../Signatures/Runtime/Caliper/GeneratedWeightedBounds.lean)
+  or dimension zero. The [generated weighted evaluator](../Proofs/Runtime/Caliper/GeneratedWeightedBounds.lean)
   now composes term generation with the executed lazy scalar/pair cache fold.
   It charges saved-state copying and proves exact ordered evaluation, final cache,
   cache growth, time, stored code and total visited memory.
-  Its [source oracle bridge](../Signatures/Runtime/Caliper/GeneratedWeightedOracle.lean)
+  Its [source oracle bridge](../Proofs/Runtime/Caliper/GeneratedWeightedOracle.lean)
   preserves the original games' `evalTerms` computation and complete cache under
   key conversion, including shadowed entries. The
-  [reply-log updates](../Signatures/Runtime/Caliper/WeightedRecord.lean) support
+  [reply-log updates](../Proofs/Runtime/Caliper/WeightedRecord.lean) support
   different hash-index and signing-message types, widths and capacities,
   with charged retention of the other log. The
-  [complete weighted signing handler](../Signatures/Runtime/Caliper/WeightedSign.lean)
+  [complete weighted signing handler](../Proofs/Runtime/Caliper/WeightedSign.lean)
   now executes term generation, lazy evaluation, the group response and recording
   of that same response. Its source theorem preserves the configuration, complete
   cache and both logs in the original key types.
-  [Derived resource bounds](../Signatures/Runtime/Caliper/WeightedSignBounds.lean)
+  [Derived resource bounds](../Proofs/Runtime/Caliper/WeightedSignBounds.lean)
   charge all routing and saved-state copies, stored code and every visited
-  memory state. The [complete hash handler](../Signatures/Runtime/Caliper/WeightedHashBounds.lean)
+  memory state. The [complete hash handler](../Proofs/Runtime/Caliper/WeightedHashBounds.lean)
   now has the same source and resource guarantees, permits full-cache hits,
   and preserves the separately typed signing log. Proved
-  [state growth and reservations](../Signatures/Runtime/Caliper/WeightedCapacity.lean)
+  [state growth and reservations](../Proofs/Runtime/Caliper/WeightedCapacity.lean)
   supply the capacity steps for caller composition. The
-  [combined random/hash/sign service](../Signatures/Runtime/Caliper/WeightedOracle.lean)
+  [combined random/hash/sign service](../Proofs/Runtime/Caliper/WeightedOracle.lean)
   now executes all three branches with one shared store. Its
-  [source theorem](../Signatures/Runtime/Caliper/WeightedOracleOriginal.lean)
+  [source theorem](../Proofs/Runtime/Caliper/WeightedOracleOriginal.lean)
   preserves the original oracle's complete reply/state distribution, and its
-  [resource bounds](../Signatures/Runtime/Caliper/WeightedOracleMemory.lean)
+  [resource bounds](../Proofs/Runtime/Caliper/WeightedOracleMemory.lean)
   include dispatch, saved-state copies, stored code and every visited memory state.
-  [Per-query invariants](../Signatures/Runtime/Caliper/WeightedOracleInvariant.lean)
+  [Per-query invariants](../Proofs/Runtime/Caliper/WeightedOracleInvariant.lean)
   derive signing readiness and preserve the capacity reservation.
-  The [caller interface](../Signatures/Runtime/Caliper/WeightedCallerHandler.lean)
+  The [caller interface](../Proofs/Runtime/Caliper/WeightedCallerHandler.lean)
   executes the request/reply conversions, and the
-  [generated caller](../Signatures/Runtime/Caliper/WeightedCaller.lean)
+  [generated caller](../Proofs/Runtime/Caliper/WeightedCaller.lean)
   composes that service with actual local initialization and continuation code.
-  Its [source correspondence](../Signatures/Runtime/Caliper/WeightedCallerExecution.lean)
+  Its [source correspondence](../Proofs/Runtime/Caliper/WeightedCallerExecution.lean)
   retains the full private store and the random reply's requested range.
-  [Complete caller resources](../Signatures/Runtime/Caliper/WeightedCallerResources.lean)
+  [Complete caller resources](../Proofs/Runtime/Caliper/WeightedCallerResources.lean)
   include controller overhead and all stored iterations.
-  [Completion bounds](../Signatures/Runtime/Caliper/WeightedCallerPostcondition.lean)
+  [Completion bounds](../Proofs/Runtime/Caliper/WeightedCallerPostcondition.lean)
   cover early return and cutoff and provide cache headroom for later extraction.
-  [Streaming extraction identities](../Signatures/Runtime/WeightedBatching.lean)
+  [Streaming extraction identities](../Proofs/Runtime/WeightedBatching.lean)
   preserve the original query computation and full cache while bounding reads
   by term capacity times transcript length.
-  [One weighted occurrence](../Signatures/Runtime/Caliper/WeightedCoefficient.lean)
+  [One weighted occurrence](../Proofs/Runtime/Caliper/WeightedCoefficient.lean)
   now executes term generation/evaluation and the final coefficient update,
-  with [derived resources](../Signatures/Runtime/Caliper/WeightedCoefficientBounds.lean).
+  with [derived resources](../Proofs/Runtime/Caliper/WeightedCoefficientBounds.lean).
   Zero coefficients retain every read.
-  [Chronological signing extraction](../Signatures/Runtime/Caliper/WeightedExtraction.lean)
+  [Chronological signing extraction](../Proofs/Runtime/Caliper/WeightedExtraction.lean)
   now executes transcript reversal, coefficient attachment and the outer fold.
-  Its [source correspondence](../Signatures/Runtime/Caliper/WeightedExtractionSource.lean)
+  Its [source correspondence](../Proofs/Runtime/Caliper/WeightedExtractionSource.lean)
   matches the original scaled signing terms and complete cache, including under
-  index encoding. [Resources](../Signatures/Runtime/Caliper/WeightedExtractionMemory.lean)
+  index encoding. [Resources](../Proofs/Runtime/Caliper/WeightedExtractionMemory.lean)
   include the full traversal and retained tails.
-  [Final-target extraction](../Signatures/Runtime/Caliper/WeightedTarget.lean)
+  [Final-target extraction](../Proofs/Runtime/Caliper/WeightedTarget.lean)
   evaluates the forged message using the shared cache, then executes the scalar
   extraction arithmetic with the retained numerator and signing contribution.
-  [Source equality](../Signatures/Runtime/Caliper/WeightedTargetSource.lean) preserves
-  the complete cache; [resources](../Signatures/Runtime/Caliper/WeightedTargetBounds.lean)
+  [Source equality](../Proofs/Runtime/Caliper/WeightedTargetSource.lean) preserves
+  the complete cache; [resources](../Proofs/Runtime/Caliper/WeightedTargetBounds.lean)
   include the actual copying and local arithmetic.
-  [The composed signing/target tail](../Signatures/Runtime/Caliper/WeightedSignatureTail.lean)
+  [The composed signing/target tail](../Proofs/Runtime/Caliper/WeightedSignatureTail.lean)
   retains the forgery context and passes the same cache between both stages.
-  Its [source theorem](../Signatures/Runtime/Caliper/WeightedSignatureTailSource.lean)
-  and [resource bounds](../Signatures/Runtime/Caliper/WeightedSignatureTailMemory.lean)
+  Its [source theorem](../Proofs/Runtime/Caliper/WeightedSignatureTailSource.lean)
+  and [resource bounds](../Proofs/Runtime/Caliper/WeightedSignatureTailMemory.lean)
   cover the whole composed execution.
-  [Complete weighted extraction](../Signatures/Runtime/Caliper/WeightedExtractor.lean)
+  [Complete weighted extraction](../Proofs/Runtime/Caliper/WeightedExtractor.lean)
   now adds the hash prefix and executed runtime numerator addition, with independent
   hash/signing types and coefficient capacities. Its
-  [source identity](../Signatures/Runtime/Caliper/WeightedExtractorSource.lean) and
-  [resource bounds](../Signatures/Runtime/Caliper/WeightedExtractorMemory.lean) preserve
+  [source identity](../Proofs/Runtime/Caliper/WeightedExtractorSource.lean) and
+  [resource bounds](../Proofs/Runtime/Caliper/WeightedExtractorMemory.lean) preserve
   the shared cache and account for the full good/bad extractor.
-  [Caller and extraction programs](../Signatures/Runtime/Caliper/WeightedCallerProgram.lean)
+  [Caller and extraction programs](../Proofs/Runtime/Caliper/WeightedCallerProgram.lean)
   now execute the terminal dispatch, remove stored configuration and padding,
   run the constructed extractor and project its scalar; cutoff constructs the
   fallback. The caller growth theorem supplies extraction capacity, and
-  [combined resources](../Signatures/Runtime/Caliper/WeightedCallerProgramResources.lean)
+  [combined resources](../Proofs/Runtime/Caliper/WeightedCallerProgramResources.lean)
   derive time, code and every visited memory bound from local routines.
-  [Source correspondence](../Signatures/Runtime/Caliper/WeightedCallerProgramSourceEquiv.lean)
+  [Source correspondence](../Proofs/Runtime/Caliper/WeightedCallerProgramSourceEquiv.lean)
   recovers the original caller and private-list extraction, including the original
-  key domain. [Reduction identities](../Signatures/Runtime/Caliper/WeightedCallerReduction.lean)
+  key domain. [Reduction identities](../Proofs/Runtime/Caliper/WeightedCallerReduction.lean)
   connect the result to the existing good reduction and the bad branch at a fixed
-  scalar. [Store initialization](../Signatures/Runtime/Caliper/WeightedInitialization.lean)
+  scalar. [Store initialization](../Proofs/Runtime/Caliper/WeightedInitialization.lean)
   writes the empty cache/logs and establishes query/extraction reservations.
-  [Initialized programs](../Signatures/Runtime/Caliper/WeightedFullProgram.lean)
+  [Initialized programs](../Proofs/Runtime/Caliper/WeightedFullProgram.lean)
   now compose runtime challenge setup with the caller and extractor.
-  [The good reduction](../Signatures/Runtime/Caliper/WeightedGood.lean) has exact
+  [The good reduction](../Proofs/Runtime/Caliper/WeightedGood.lean) has exact
   source equality and a complete Caliper DLog resource certificate, conditional
   on the stated local routines, caller correspondence and challenge coverage.
-  [The bad reduction](../Signatures/Runtime/Caliper/WeightedBad.lean) now also has
+  [The bad reduction](../Proofs/Runtime/Caliper/WeightedBad.lean) now also has
   exact source equality and a complete Caliper DLog resource certificate.
   Its executed setup samples the scalar, computes the public key, and initializes
   the pair-valued cache before running the caller and extractor. Both certificates
   derive complete costs from local implementations.
-  [Shared layouts and caller reuse](../Signatures/Runtime/Caliper/WeightedSharedCaller.lean)
+  [Shared layouts and caller reuse](../Proofs/Runtime/Caliper/WeightedSharedCaller.lean)
   now join these certificates to the public OOPS/Proximity models. Their
-  [challenge-coverage proof](../Signatures/Runtime/Caliper/WeightedSecurity.lean) covers
+  [challenge-coverage proof](../Proofs/Runtime/Caliper/WeightedSecurity.lean) covers
   every scalar from the uniform source, including zero.
-  [Polynomial resources](../Signatures/Runtime/Caliper/WeightedFamilyResources.lean)
+  [Polynomial resources](../Proofs/Runtime/Caliper/WeightedFamilyResources.lean)
   are derived for both full reductions, with no completed-solver budget premise.
-  Schnorr ROM now has an [executed tape reset](../Signatures/Runtime/Caliper/SchnorrROMTapeResetBounds.lean)
+  Schnorr ROM now has an [executed tape reset](../Proofs/Runtime/Caliper/SchnorrROMTapeResetBounds.lean)
   matching `RawTape.restart`, with derived time, code and complete memory bounds.
   It preserves every private family, retains the selected challenge prefix and
   charges both copies of the installed replay tape. The
-  [complete restart](../Signatures/Runtime/Caliper/SchnorrROMTapeRestart.lean)
+  [complete restart](../Proofs/Runtime/Caliper/SchnorrROMTapeRestart.lean)
   also executes input preparation from the selected slot, scalar and old state,
   including construction of the replacement challenge cell. Its resource bound
   includes stored code, initial data and every visited memory state.
-  Its [constructed replay-cell handler](../Signatures/Runtime/Caliper/SchnorrROMTapeQuery.lean)
+  Its [constructed replay-cell handler](../Proofs/Runtime/Caliper/SchnorrROMTapeQuery.lean)
   executes first-family lookup, hit consumption and chronological miss recording.
   Private draws forward a runtime range through the uniform word interface;
-  [fresh-cell construction](../Signatures/Runtime/Caliper/SchnorrROMTapeFresh.lean)
+  [fresh-cell construction](../Proofs/Runtime/Caliper/SchnorrROMTapeFresh.lean)
   executes family routing, range subtraction and reply-packet assembly.
   Only the local scalar sampler supplies an implementation contract.
   Source equality recovers the original raw oracle's answer and both tapes,
   with derived time, stored-code and visited-state memory bounds.
-  [Caller reply decoders](../Signatures/Runtime/Caliper/SchnorrROMTapeReplyBounds.lean)
+  [Caller reply decoders](../Proofs/Runtime/Caliper/SchnorrROMTapeReplyBounds.lean)
   also execute scalar projection, private range/remainder decoding and copies of
   both tapes, with linear time/code bounds and complete memory accounting.
-  [Composed caller queries](../Signatures/Runtime/Caliper/SchnorrROMTapeCallerMemory.lean)
+  [Composed caller queries](../Proofs/Runtime/Caliper/SchnorrROMTapeCallerMemory.lean)
   now prepare requests, retain private ranges across replay, and execute the
-  decoders. [Source equality](../Signatures/Runtime/Caliper/SchnorrROMTapeCallerSource.lean)
+  decoders. [Source equality](../Proofs/Runtime/Caliper/SchnorrROMTapeCallerSource.lean)
   connects each private and challenge call to the original raw oracle, including
   both tapes. Their full time/code/memory bounds require only the local scalar
   sampler's resources. The handler requires one reserved saved-tape slot.
-  [Adaptive private sampling](../Signatures/Runtime/Caliper/SchnorrROMPrivateSamplerBounds.lean)
+  [Adaptive private sampling](../Proofs/Runtime/Caliper/SchnorrROMPrivateSamplerBounds.lean)
   now runs a sampler's local transitions through a fully constructed private
   replay handler, with exact source correspondence and full execution bounds.
   Every internal uniform query retains its original range and family order;
   no single-query scalar sampler is assumed. Only the sampler's local code,
   termination and exact source correspondence remain explicit contracts.
-  The [private scalar service](../Signatures/Runtime/Caliper/SchnorrROMPrivateServiceBounds.lean)
+  The [private scalar service](../Proofs/Runtime/Caliper/SchnorrROMPrivateServiceBounds.lean)
   also executes the output conversion, returns the scalar and both shared tapes,
   and preserves reserved space for later calls. Its full execution agrees with
   the original private sampler, including internal query chronology.
-  [Two private draws](../Signatures/Runtime/Caliper/SchnorrROMPrivatePairBounds.lean)
+  [Two private draws](../Proofs/Runtime/Caliper/SchnorrROMPrivatePairBounds.lean)
   now compose on the same tape, saving the first scalar through executed copies.
   They match signing's two ordered source draws under the local sampler contract,
   with complete time, code and memory bounds. Scratch-buffer names depend on
   the local caller code rather than the query allowance.
-  The [deterministic signing core](../Signatures/Runtime/Caliper/SchnorrROMSigningSource.lean)
+  The [deterministic signing core](../Proofs/Runtime/Caliper/SchnorrROMSigningSource.lean)
   computes the commitment and programs the managed cache using executed local
   code, preserving existing cached answers. Its resource bounds include all
-  copies and cache work. The [complete signing wrapper](../Signatures/Runtime/Caliper/SchnorrROMSigningHandlerSource.lean)
+  copies and cache work. The [complete signing wrapper](../Proofs/Runtime/Caliper/SchnorrROMSigningHandlerSource.lean)
   connects both draws to that core and preserves LIVE and the updated tapes
   through charged copies. It matches the original shared-tape signing oracle
   under the local sampler contract, with bounds for the same execution's time,
   stored code, names and every visited memory state.
-  [Canonical scalar sampling](../Signatures/Runtime/Caliper/SchnorrROMFinEnumSampler.lean)
+  [Canonical scalar sampling](../Proofs/Runtime/Caliper/SchnorrROMFinEnumSampler.lean)
   now has a constructed caller for scalars encoded by finite indices. It matches
   VCVio's existing `FinEnum` sampler as a query program, with 16 initialization
   steps and 38 reply-transition steps independent of the field size. The
-  [signing construction](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedSigning.lean)
+  [signing construction](../Proofs/Runtime/Caliper/SchnorrROMEnumeratedSigning.lean)
   supplies its sampler code, termination and resource proofs internally.
-  The [direct challenge sampler](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedDraw.lean)
+  The [direct challenge sampler](../Proofs/Runtime/Caliper/SchnorrROMEnumeratedDraw.lean)
   also implements the canonical finite-index draw, with 26 local steps and 125
   stored-code words independent of the field size. The
-  [complete replay queries](../Signatures/Runtime/Caliper/SchnorrROMEnumeratedReplay.lean)
+  [complete replay queries](../Proofs/Runtime/Caliper/SchnorrROMEnumeratedReplay.lean)
   use this code without an assumed scalar sampler. They match the original raw
   oracle and have complete resource certificates. A fresh public challenge
   records one scalar cell; its internal uniform draw creates no private cell.
-  The [replay-backed hash cache](../Signatures/Runtime/Caliper/SchnorrROMHashCacheSource.lean)
+  The [replay-backed hash cache](../Proofs/Runtime/Caliper/SchnorrROMHashCacheSource.lean)
   now composes lookup and insertion with that draw, with complete execution
   resource bounds. Hits preserve both tapes; misses may consume the final
-  reserved tape slot. The [complete final-hash handler](../Signatures/Runtime/Caliper/SchnorrROMFinalHashSource.lean)
+  reserved tape slot. The [complete final-hash handler](../Proofs/Runtime/Caliper/SchnorrROMFinalHashSource.lean)
   retains the public configuration and managed table through executed copies,
   reads and updates LIVE, and matches the original shared-tape final lookup.
   Its complete resource bounds include these copies and every visited state.
-  The [normal hash handler](../Signatures/Runtime/Caliper/SchnorrROMHashSource.lean)
+  The [normal hash handler](../Proofs/Runtime/Caliper/SchnorrROMHashSource.lean)
   now checks managed first, calls final hashing only on a miss, and inserts the
   answer into managed. Its checked resource bounds charge the copied key and
   shared store. Managed hits need no LIVE or replay-tape reservation.
-  The [private random-query handler](../Signatures/Runtime/Caliper/SchnorrROMRandomSource.lean)
+  The [private random-query handler](../Proofs/Runtime/Caliper/SchnorrROMRandomSource.lean)
   retains both tables and the public configuration while replaying or sampling
   the requested finite range. Its resource bounds charge that retention and
   do not enumerate the range. Random queries and both hash handlers have proved
   one-cell saved-tape growth bounds for the caller's capacity invariant.
-  The [complete ROM service](../Signatures/Runtime/Caliper/SchnorrROMHandlerSource.lean)
+  The [complete ROM service](../Proofs/Runtime/Caliper/SchnorrROMHandlerSource.lean)
   dispatches randomness, hashing and signing with executed request/reply tags.
   Its joint reply/store law matches the original CMA oracle. Combined time,
   stored-code and visited-memory bounds charge every branch and copy; only
   scalar multiplication and group subtraction remain implementation parameters.
-  A [decreasing capacity invariant](../Signatures/Runtime/Caliper/SchnorrROMHandlerInvariant.lean)
+  A [decreasing capacity invariant](../Proofs/Runtime/Caliper/SchnorrROMHandlerInvariant.lean)
   preserves room for the remaining calls and final LIVE hash.
-  The [caller-facing interface](../Signatures/Runtime/Caliper/SchnorrROMCallerSource.lean)
+  The [caller-facing interface](../Proofs/Runtime/Caliper/SchnorrROMCallerSource.lean)
   separates requests and replies from the private state. Its executed packet
   conversions preserve the joint oracle law and capacity invariant; the
-  [resource theorem](../Signatures/Runtime/Caliper/SchnorrROMCallerMemory.lean)
+  [resource theorem](../Proofs/Runtime/Caliper/SchnorrROMCallerMemory.lean)
   charges both conversions in the same execution's time and memory bounds.
-  The [adaptive caller loop](../Signatures/Runtime/Caliper/SchnorrROMCallerExecution.lean)
+  The [adaptive caller loop](../Proofs/Runtime/Caliper/SchnorrROMCallerExecution.lean)
   now executes local initialization and continuation routines and agrees with
   the original attacker program. Its
-  [exit postcondition](../Signatures/Runtime/Caliper/SchnorrROMCallerPostcondition.lean)
+  [exit postcondition](../Proofs/Runtime/Caliper/SchnorrROMCallerPostcondition.lean)
   preserves public configuration and final-hash space, including early returns
-  and fuel cutoff. [Whole-loop resources](../Signatures/Runtime/Caliper/SchnorrROMCallerResources.lean)
+  and fuel cutoff. [Whole-loop resources](../Proofs/Runtime/Caliper/SchnorrROMCallerResources.lean)
   include stored loop bodies and every state-retention copy.
-  The [terminal handler](../Signatures/Runtime/Caliper/SchnorrROMTerminalSource.lean)
+  The [terminal handler](../Proofs/Runtime/Caliper/SchnorrROMTerminalSource.lean)
   retains the complete forgery during its final LIVE hash and distinguishes
   fuel cutoff without changing the oracle state. Its
-  [resource bounds](../Signatures/Runtime/Caliper/SchnorrROMTerminalBounds.lean)
+  [resource bounds](../Proofs/Runtime/Caliper/SchnorrROMTerminalBounds.lean)
   charge all copies, both stored branches and every visited memory state.
-  The [complete initialized pass](../Signatures/Runtime/Caliper/SchnorrROMPass.lean)
+  The [complete initialized pass](../Proofs/Runtime/Caliper/SchnorrROMPass.lean)
   now joins setup, the adaptive caller and terminal, with exact correspondence
-  to the original replay-aware ROM pass. [Whole-pass resources](../Signatures/Runtime/Caliper/SchnorrROMPassBounds.lean)
+  to the original replay-aware ROM pass. [Whole-pass resources](../Proofs/Runtime/Caliper/SchnorrROMPassBounds.lean)
   include initialization and all visited memory. The
-  [source constructor](../Signatures/Runtime/Caliper/SchnorrROMPassPresentation.lean)
+  [source constructor](../Proofs/Runtime/Caliper/SchnorrROMPassPresentation.lean)
   derives the source machine/program from local transitions and termination.
-  [Tape-growth bounds](../Signatures/Runtime/Caliper/SchnorrROMPassGrowth.lean)
+  [Tape-growth bounds](../Proofs/Runtime/Caliper/SchnorrROMPassGrowth.lean)
   limit each pass to `2*fuel + 1` additional saved cells, including early return
-  and cutoff. [Replay admission](../Signatures/Runtime/Caliper/SchnorrROMReplayAdmission.lean)
+  and cutoff. [Replay admission](../Proofs/Runtime/Caliper/SchnorrROMReplayAdmission.lean)
   derives enough room for the second pass from `4*fuel + 3` cells per tape when
-  starting empty. The [bounded restart](../Signatures/Runtime/Caliper/SchnorrROMReplayRestart.lean)
+  starting empty. The [bounded restart](../Proofs/Runtime/Caliper/SchnorrROMReplayRestart.lean)
   executes and charges removal of the extra padding in both reset tapes.
-  The [executed fork-point selector](../Signatures/Runtime/Caliper/SchnorrROMSelectionSource.lean)
+  The [executed fork-point selector](../Proofs/Runtime/Caliper/SchnorrROMSelectionSource.lean)
   verifies the signature and finds its chronological LIVE position, with exact
   agreement to the original selector. Its charged scan traverses only stored
   entries and needs no finite message domain. The
-  [pass-output wrapper](../Signatures/Runtime/Caliper/SchnorrROMPassSelectionBounds.lean)
+  [pass-output wrapper](../Proofs/Runtime/Caliper/SchnorrROMPassSelectionBounds.lean)
   handles both returned forgeries and cutoff, including union-padding copies,
   time, stored code and every visited memory state.
-  The [restart and second pass](../Signatures/Runtime/Caliper/SchnorrROMReplaySecondSource.lean)
+  The [restart and second pass](../Proofs/Runtime/Caliper/SchnorrROMReplaySecondSource.lean)
   now execute together, retaining the complete first result. Their
-  [resource bounds](../Signatures/Runtime/Caliper/SchnorrROMReplaySecondBounds.lean)
+  [resource bounds](../Proofs/Runtime/Caliper/SchnorrROMReplaySecondBounds.lean)
   charge reset, public-point initialization and every retained copy; the output
   agrees with the original ROM pass on the original restart tapes.
-  [Second-pass matching](../Signatures/Runtime/Caliper/SchnorrROMReplayMatchSource.lean)
+  [Second-pass matching](../Proofs/Runtime/Caliper/SchnorrROMReplayMatchSource.lean)
   now executes the selector and compares its optional result with the saved slot,
   retaining both pass outputs. Cutoff, failed verification and missing LIVE entries
-  cannot match slot zero. The [composed second branch](../Signatures/Runtime/Caliper/SchnorrROMReplaySecondSelectionBounds.lean)
+  cannot match slot zero. The [composed second branch](../Proofs/Runtime/Caliper/SchnorrROMReplaySecondSelectionBounds.lean)
   includes restart, replay, selection and comparison in the same resource account.
-  The [fresh-challenge rejection guard](../Signatures/Runtime/Caliper/SchnorrROMFreshGuardBounds.lean)
+  The [fresh-challenge rejection guard](../Proofs/Runtime/Caliper/SchnorrROMFreshGuardBounds.lean)
   now executes the original saved-tape comparison, counting only public cells.
   Encoded scalar equality and all scan copies have explicit polynomial time,
   stored-code and visited-memory bounds. The
-  [initialized first pass and retained selector](../Signatures/Runtime/Caliper/SchnorrROMReplayFirstBounds.lean)
+  [initialized first pass and retained selector](../Proofs/Runtime/Caliper/SchnorrROMReplayFirstBounds.lean)
   now execute together and derive replay admission from the initial reservation.
-  An [identical-byte branch view](../Signatures/Runtime/Caliper/SchnorrROMReplayFirstChoice.lean)
+  An [identical-byte branch view](../Proofs/Runtime/Caliper/SchnorrROMReplayFirstChoice.lean)
   retains the selected slot and first result under both selector outcomes.
-  The [fresh-draw and guard phase](../Signatures/Runtime/Caliper/SchnorrROMReplayChallengeChecked.lean)
+  The [fresh-draw and guard phase](../Proofs/Runtime/Caliper/SchnorrROMReplayChallengeChecked.lean)
   preserves those bytes, proves the new scalar uniform, and charges the oracle
   call, saved-tape scan and all retained copies. The
-  [complete conditional controller](../Signatures/Runtime/Caliper/SchnorrROMReplayForkMemory.lean)
+  [complete conditional controller](../Proofs/Runtime/Caliper/SchnorrROMReplayForkMemory.lean)
   now joins both passes: first failure skips the fresh draw, a repeated challenge
   skips replay, and second-selection mismatch returns failure. Its time, stored
   code and every visited memory state are accounted for together.
-  The [initialized controller](../Signatures/Runtime/Caliper/SchnorrROMReplayInitializedBounds.lean)
+  The [initialized controller](../Proofs/Runtime/Caliper/SchnorrROMReplayInitializedBounds.lean)
   starts from runtime generator/public-key inputs alone and charges construction
   of both empty tapes, including reserved padding. Its
-  [whole-fork source correspondence](../Signatures/Runtime/Caliper/SchnorrROMReplayForkCorrectness.lean)
+  [whole-fork source correspondence](../Proofs/Runtime/Caliper/SchnorrROMReplayForkCorrectness.lean)
   proves the executed initialized controller observes exactly `RawTape.fork` of
   the original list-cache pass, derived from the caller's local source witness.
   Extraction and public FULL/NONZERO ROM statement migration remain unfinished.
@@ -771,7 +771,7 @@ Pinned upstreams:
 - ArkLib's representation API is compatibility-tested, not proved equivalent to the local model.
 - BLS, OOPS, and Proximity accept the shared `agm-lean` interactive adversary directly.
   It supplies actual group outputs and chronological explanations; the games run it directly.
-  [Internal regrouping](../Signatures/Model/Proofs/DirectAGM.lean) transfers the existing
+  [Internal regrouping](../Proofs/Model/DirectAGM.lean) transfers the existing
   extraction proofs and query bounds. Backend caller budgets include producing the derived
   coefficient encoding. Hash/signing access and security proofs remain here.
 - `Spec/` and `Model/` contain definitions; `Statement.lean` exposes the bounds; `Proofs/`

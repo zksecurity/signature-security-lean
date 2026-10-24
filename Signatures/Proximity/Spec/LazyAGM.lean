@@ -1,4 +1,4 @@
-import Signatures.Model.LazyAGM
+import Proofs.Model.LazyAGM
 
 /-! # Proximity with lazily sampled slot/coordinate bases
 

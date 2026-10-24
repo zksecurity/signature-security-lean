@@ -1,4 +1,4 @@
-import Signatures.Runtime.ReplayScan
+import Proofs.Runtime.ReplayScan
 import Lean.Util.CollectAxioms
 
 open OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.Schnorr

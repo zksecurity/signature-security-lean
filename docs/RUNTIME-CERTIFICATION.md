@@ -11,9 +11,9 @@ Its general caller uses actual quantitative init/head/update code; `RunsWithin`
 derives the caller invariants and budgets. Initialization, native handlers,
 extraction, adapters, copying, and stored code have proved bounds in the same
 fixed backend used by hardness. See
-[`BackendCoronSecurity`](../Signatures/Runtime/BackendCoronSecurity.lean) and
-[`BackendCoronPolynomial`](../Signatures/Runtime/BackendCoronPolynomial.lean).
-[`BackendCoronFamilySecurity`](../Signatures/Runtime/BackendCoronFamilySecurity.lean)
+[`BackendCoronSecurity`](../Proofs/Runtime/BackendCoronSecurity.lean) and
+[`BackendCoronPolynomial`](../Proofs/Runtime/BackendCoronPolynomial.lean).
+[`BackendCoronFamilySecurity`](../Proofs/Runtime/BackendCoronFamilySecurity.lean)
 connects those derived bounds to negligible forgery success for polynomial-time,
 polynomial-code/advice nonuniform families. The backend remains fixed; group
 types and representations may vary with the security parameter. This result is
@@ -34,78 +34,78 @@ For BLS AGM, both new lazy solvers now have exact probability correspondence and
 a proved finite-list cache representation, with the same success bound over
 arbitrary message types. Their query/transcript/cache-entry
 bounds depend on attacker queries; no message-domain enumeration is performed.
-Both [native private caches](../Signatures/Runtime/BackendLazyAGMCache.lean) now
+Both [native private caches](../Proofs/Runtime/BackendLazyAGMCache.lean) now
 have complete access-time, encoded-output, and stored-description bounds. The
 bad branch's pair sampler is derived from two implemented scalar samplers,
 with retention and construction charged. Exact semantics preserve the answer,
 list update, and surrounding store; hits preserve the full costed run under
-sampler replacement. The [native hash/sign replies](../Signatures/Runtime/BackendLazyAGMReply.lean)
+sampler replacement. The [native hash/sign replies](../Proofs/Runtime/BackendLazyAGMReply.lean)
 preserve the joint adaptive output, cache, and transcript law. Their stored
-descriptions, [encoded-store bounds](../Signatures/Runtime/BackendLazyAGMStateSize.lean),
-and [complete runtime bounds](../Signatures/Runtime/BackendLazyAGMReplyBudget.lean)
+descriptions, [encoded-store bounds](../Proofs/Runtime/BackendLazyAGMStateSize.lean),
+and [complete runtime bounds](../Proofs/Runtime/BackendLazyAGMReplyBudget.lean)
 are proved. Cache and reply-list lengths are counted separately; the cache scan
 charges retention of the complete original argument environment. The runtime
 bounds include initialization, sampling, arithmetic, transcript construction,
 copying, and control, with no finite-message premise or assumed whole-reply
-budget. Native [chronological coefficient matching](../Signatures/Runtime/BackendTokenRows.lean)
+budget. Native [chronological coefficient matching](../Proofs/Runtime/BackendTokenRows.lean)
 now composes the actual transcript reversal, zero initialization, positional
 attachment, and final row reversal with complete time, stored-code, and output-size
 bounds. Its coefficient scans charge the entire list, including surplus entries,
 and every retained context contributes to the encoded-size cost. The
-[output-size recovery](../Signatures/Runtime/BackendLazyAGMOutputSize.lean)
+[output-size recovery](../Proofs/Runtime/BackendLazyAGMOutputSize.lean)
 bounds these list lengths under an explicit positive-cell encoding law.
-The [native row evaluators](../Signatures/Runtime/BackendLazyAGMEvaluate.lean)
-and [complete good/bad extractors](../Signatures/Runtime/BackendLazyAGMExtraction.lean)
+The [native row evaluators](../Proofs/Runtime/BackendLazyAGMEvaluate.lean)
+and [complete good/bad extractors](../Proofs/Runtime/BackendLazyAGMExtraction.lean)
 now have exact joint output/cache correspondence. Their source phases are the
 suffixes of the established lazy solvers, and
-[cache growth](../Signatures/Runtime/BackendLazyAGMExtractionGrowth.lean) is bounded
+[cache growth](../Proofs/Runtime/BackendLazyAGMExtractionGrowth.lean) is bounded
 by processed rows plus the final target. The actual
-[length fold](../Signatures/Runtime/BackendLengthCost.lean) has runtime and code
+[length fold](../Proofs/Runtime/BackendLengthCost.lean) has runtime and code
 bounds. Private extraction reads have
-[complete derived runtime](../Signatures/Runtime/BackendLazyAGMReadBudget.lean)
-and [stored-description bounds](../Signatures/Runtime/BackendLazyAGMReadDescription.lean),
+[complete derived runtime](../Proofs/Runtime/BackendLazyAGMReadBudget.lean)
+and [stored-description bounds](../Proofs/Runtime/BackendLazyAGMReadDescription.lean),
 including routing, fallback construction, scanning, sampling, and copying.
-Whole-evaluator/extractor [stored-code bounds](../Signatures/Runtime/BackendLazyAGMExtractionDescription.lean)
-are now proved. Complete [good](../Signatures/Runtime/BackendLazyAGMGoodEvaluate.lean)
-and [bad](../Signatures/Runtime/BackendLazyAGMBadEvaluate.lean) evaluator runtime
+Whole-evaluator/extractor [stored-code bounds](../Proofs/Runtime/BackendLazyAGMExtractionDescription.lean)
+are now proved. Complete [good](../Proofs/Runtime/BackendLazyAGMGoodEvaluate.lean)
+and [bad](../Proofs/Runtime/BackendLazyAGMBadEvaluate.lean) evaluator runtime
 bounds instantiate the component and remaining-indexed loop certificates. They
 charge count computation, initialization, row/cache scans, sampling, arithmetic,
 retained context, loop tests, and projection. Bounds depend on actual row/cache
 capacities and encodings, not the message universe. The only cost assumptions
 are individual primitive, sampler, and control-instruction contracts. Complete
-chronological [good](../Signatures/Runtime/BackendLazyAGMGoodTokens.lean) and
-[bad](../Signatures/Runtime/BackendLazyAGMBadTokens.lean) preparation/evaluation
+chronological [good](../Proofs/Runtime/BackendLazyAGMGoodTokens.lean) and
+[bad](../Proofs/Runtime/BackendLazyAGMBadTokens.lean) preparation/evaluation
 calls now have combined runtime/encoding bounds and key-validity/cache-growth
-invariants. Complete [good](../Signatures/Runtime/BackendLazyAGMGoodExtractionBudget.lean)
-and [bad](../Signatures/Runtime/BackendLazyAGMBadExtractionBudget.lean) extractor
+invariants. Complete [good](../Proofs/Runtime/BackendLazyAGMGoodExtractionBudget.lean)
+and [bad](../Proofs/Runtime/BackendLazyAGMBadExtractionBudget.lean) extractor
 runtime bounds now compose all chronological calls, default creation, final
 target access, and field arithmetic. The bounds charge retained caller frames,
 including all attacker output and both transcripts, and preserve cache growth
 and key-size invariants. No finished-call or extractor runtime budget is assumed.
-Both native general-request [dispatchers](../Signatures/Runtime/BackendLazyAGMHandler.lean)
-now have derived [runtime](../Signatures/Runtime/BackendLazyAGMHandlerBudget.lean)
-and [stored-code](../Signatures/Runtime/BackendLazyAGMHandlerDescription.lean)
+Both native general-request [dispatchers](../Proofs/Runtime/BackendLazyAGMHandler.lean)
+now have derived [runtime](../Proofs/Runtime/BackendLazyAGMHandlerBudget.lean)
+and [stored-code](../Proofs/Runtime/BackendLazyAGMHandlerDescription.lean)
 bounds, including decoding, request retention, dependent reply tags, and one
 dynamic random sampler. The native general-caller phase preserves adaptive source
-semantics. Its [runtime/resource bounds](../Signatures/Runtime/BackendLazyAGMCallerResources.lean)
+semantics. Its [runtime/resource bounds](../Proofs/Runtime/BackendLazyAGMCallerResources.lean)
 and complete stored-code bounds are now derived for both branches. Measured
 attacker resources supply request/return sizes, reachability, local/query budgets,
-and termination. The [AGM output bound](../Signatures/Runtime/BackendLazyAGMCallerOutput.lean)
+and termination. The [AGM output bound](../Proofs/Runtime/BackendLazyAGMCallerOutput.lean)
 covers the message and both coefficient lists, including surplus coefficients,
 using the canonical output encoding and an explicit positive-cell list law.
-Complete [native solver programs](../Signatures/Runtime/BackendLazyAGMSolver.lean)
+Complete [native solver programs](../Proofs/Runtime/BackendLazyAGMSolver.lean)
 now assemble setup, caller execution, output adaptation, and extraction. Their
-[exact source correspondence](../Signatures/Runtime/BackendLazyAGMSolverCorrectness.lean)
+[exact source correspondence](../Proofs/Runtime/BackendLazyAGMSolverCorrectness.lean)
 is proved, including resource-derived termination. The complete
-[setup bounds](../Signatures/Runtime/BackendLazyAGMSolverSetup.lean),
-[terminal bounds](../Signatures/Runtime/BackendLazyAGMSolverTerminal.lean), and
-[solver runtime composition](../Signatures/Runtime/BackendLazyAGMSolverBudget.lean)
+[setup bounds](../Proofs/Runtime/BackendLazyAGMSolverSetup.lean),
+[terminal bounds](../Proofs/Runtime/BackendLazyAGMSolverTerminal.lean), and
+[solver runtime composition](../Proofs/Runtime/BackendLazyAGMSolverBudget.lean)
 are now proved from primitive contracts and the attacker's own resources.
-Both complete [stored-code bounds](../Signatures/Runtime/BackendLazyAGMSolverDescription.lean)
+Both complete [stored-code bounds](../Proofs/Runtime/BackendLazyAGMSolverDescription.lean)
 charge all sampler, handler, extractor, adaptation, and cutoff code. The
-[resource certificates](../Signatures/Runtime/BackendLazyAGMSolverWithin.lean)
+[resource certificates](../Proofs/Runtime/BackendLazyAGMSolverWithin.lean)
 construct actual executables for both named list reductions, and the
-[security endpoint](../Signatures/Runtime/BackendLazyAGMSecurity.lean) supplies
+[security endpoint](../Proofs/Runtime/BackendLazyAGMSecurity.lean) supplies
 them to DLog hardness in the same fixed backend. No finite-message or
 finished-solver budget premise is added. The
 [public statement](../Signatures/BLS/Statement.lean) names the curve, security
@@ -115,7 +115,7 @@ the execution/resource model, actual forgery experiment, and DLog-success
 supremum. The separate proof combines the probability inequality, derived
 executable witnesses, and supremum inclusions. The main bound uses a common
 derived time allowance; `BLS.Proofs.agm_security` keeps the two times separate.
-[Polynomial-family closure](../Signatures/Runtime/BackendLazyAGMPolynomial.lean)
+[Polynomial-family closure](../Proofs/Runtime/BackendLazyAGMPolynomial.lean)
 now covers both full runtimes and stored-code bounds. The
 [family certificates](../Signatures/BLS/GeneralAGMFamilyResources.lean) use the
 pointwise implementations in one fixed backend and derive all challenge-input,
@@ -127,111 +127,111 @@ The [general adversary plan](GENERAL-ADVERSARY-REDUCTION-PLAN.md#lazy-bls-agm-pr
 tracks the completed route certificates and remaining integration verification and final audit.
 The complete AGM machine certificates documented below cover the older eager solvers.
 
-OOPS and Proximity now have [native term generators](../Signatures/Runtime/BackendWeightedTerms.lean)
+OOPS and Proximity now have [native term generators](../Proofs/Runtime/BackendWeightedTerms.lean)
 whose semantic indices are the original finite weighted term lists. Their
 runtime and stored-code bounds are derived from primitive and structural
 contracts, with explicit encoded-output bounds. They retain the constant term
 and every zero-weight term, and charge all retained frames. These are verified
 components. Proximity's tuple encoding is bounded from its coordinates, and
-[structured key equality](../Signatures/Runtime/BackendWeightedKeyEquality.lean)
+[structured key equality](../Proofs/Runtime/BackendWeightedKeyEquality.lean)
 has native runtime/code bounds for both schemes. The
-[native weighted private caches](../Signatures/Runtime/BackendWeightedCache.lean)
+[native weighted private caches](../Proofs/Runtime/BackendWeightedCache.lean)
 now charge both scalar and independent-pair sampling, the compiled comparison
 and its input adapter, finite-list scan/insertion, and retained state. Exact
 source-index encoding laws preserve Proximity's constant/coordinate distinction
 and both cache branches. Cache hits preserve the entire costed run under
 sampler replacement. No finite topic/slot premise or completed-cache budget is
-assumed. The [weighted private-read adapters](../Signatures/Runtime/BackendWeightedReadBudget.lean)
+assumed. The [weighted private-read adapters](../Proofs/Runtime/BackendWeightedReadBudget.lean)
 also have complete runtime and stored-code bounds, including zero fallback
 construction on hits and state routing. The
-[native weighted evaluator](../Signatures/Runtime/BackendWeightedEvaluate.lean)
+[native weighted evaluator](../Proofs/Runtime/BackendWeightedEvaluate.lean)
 preserves ordered source effects and the full value/cache distribution, and has
 complete stored-code bounds. Both complete evaluator runtime and encoded-output/cache
 bounds are now derived from primitive and control contracts, using a cache cap of
 `initialCacheCap + rowCap`. Injective index transport connects both complete
 evaluators to Proximity's original optional coordinates and preserves full cache
-states. Native [coefficient expansion](../Signatures/Runtime/BackendWeightedCoefficients.lean)
+states. Native [coefficient expansion](../Proofs/Runtime/BackendWeightedCoefficients.lean)
 has exact chronological source semantics, stored-code bounds, and output size at
 most `(6*N*(d+1)+1)*width` for signing cap `N` and degree/dimension `d`.
-The [complete expansion runtime](../Signatures/Runtime/BackendWeightedCoefficientBudget.lean)
+The [complete expansion runtime](../Proofs/Runtime/BackendWeightedCoefficientBudget.lean)
 now composes chronological matching, term generation, scaling, both expansion
 folds and final reversal. The retained transcript, coefficient list, current
 message and growing accumulator contribute to structural costs. Bounds depend
 on signing/coefficient caps, encoded widths and numerical degree/dimension;
 neither a message-domain enumeration nor a completed-generator budget is supplied.
-The [native weighted dispatcher](../Signatures/Runtime/BackendWeightedHandler.lean)
+The [native weighted dispatcher](../Proofs/Runtime/BackendWeightedHandler.lean)
 now separates hash-index and signing-message types. Its exact semantics preserve
 adaptive general-caller execution, complete private state, and fuel exhaustion.
-[Runtime bounds](../Signatures/Runtime/BackendWeightedHandlerBudget.lean) charge
+[Runtime bounds](../Proofs/Runtime/BackendWeightedHandlerBudget.lean) charge
 request decoding/retention, reply tagging, and branch selection from individual
-port and reply contracts. [Code bounds](../Signatures/Runtime/BackendWeightedHandlerDescription.lean)
+port and reply contracts. [Code bounds](../Proofs/Runtime/BackendWeightedHandlerDescription.lean)
 count both replies and one dynamic sampler, independently of domain cardinality.
-Both actual [weighted reply implementations](../Signatures/Runtime/BackendWeightedReply.lean)
-are now installed in the [native oracle](../Signatures/Runtime/BackendWeightedOracle.lean).
+Both actual [weighted reply implementations](../Proofs/Runtime/BackendWeightedReply.lean)
+are now installed in the [native oracle](../Proofs/Runtime/BackendWeightedOracle.lean).
 The good branch uses scalar masks and the bad branch uses independent paired masks.
 Hashing reads one private base; signing executes term generation and evaluation,
 then records one delivered signature. The exact adaptive source law preserves
 configuration, complete cache and reply logs. Complete stored-code bounds and
 local response/frame runtime and size bounds are checked. The complete
-[hash reply](../Signatures/Runtime/BackendWeightedHashBudget.lean) and
-[signing reply](../Signatures/Runtime/BackendWeightedSignBudget.lean) runtime
+[hash reply](../Proofs/Runtime/BackendWeightedHashBudget.lean) and
+[signing reply](../Proofs/Runtime/BackendWeightedSignBudget.lean) runtime
 bounds now compose the actual native operations, including generated terms,
 executed fallbacks, retained caches, group responses and transcript updates.
 They require no finished reply/evaluator efficiency assumption.
-[Reserved-state invariants](../Signatures/Runtime/BackendWeightedHandlerState.lean)
+[Reserved-state invariants](../Proofs/Runtime/BackendWeightedHandlerState.lean)
 preserve the challenge, encountered-key widths, and separate cache/log capacities
-through every reply. [Complete dispatcher bounds](../Signatures/Runtime/BackendWeightedOracleBudget.lean)
-and [general-caller composition](../Signatures/Runtime/BackendWeightedOracleCallerBudget.lean)
+through every reply. [Complete dispatcher bounds](../Proofs/Runtime/BackendWeightedOracleBudget.lean)
+and [general-caller composition](../Proofs/Runtime/BackendWeightedOracleCallerBudget.lean)
 now derive the full interaction cost from these reply bounds, primitive contracts,
 and the attacker's own resources and reachable encoding bounds.
-[Stored-code bounds](../Signatures/Runtime/BackendWeightedOracleDescription.lean)
+[Stored-code bounds](../Proofs/Runtime/BackendWeightedOracleDescription.lean)
 count the full dispatcher and caller phase.
-Both [native extractors](../Signatures/Runtime/BackendWeightedExtraction.lean) now
+Both [native extractors](../Proofs/Runtime/BackendWeightedExtraction.lean) now
 execute the source's ordered transcript and target evaluations in one cache.
-[Stored-code bounds](../Signatures/Runtime/BackendWeightedExtractionDescription.lean)
+[Stored-code bounds](../Proofs/Runtime/BackendWeightedExtractionDescription.lean)
 include all generators, matching, samplers, defaults and field arithmetic.
-[Cache invariants](../Signatures/Runtime/BackendWeightedExtractionState.lean) show
+[Cache invariants](../Proofs/Runtime/BackendWeightedExtractionState.lean) show
 that only final-target evaluation can add entries for a valid cached transcript,
 and preserve the old bindings and encountered-key widths. Complete
-[hash-transcript](../Signatures/Runtime/BackendWeightedHashExtraction.lean),
-[signing-transcript](../Signatures/Runtime/BackendWeightedSigningExtraction.lean), and
-[final-target](../Signatures/Runtime/BackendWeightedTargetExtraction.lean) call bounds
+[hash-transcript](../Proofs/Runtime/BackendWeightedHashExtraction.lean),
+[signing-transcript](../Proofs/Runtime/BackendWeightedSigningExtraction.lean), and
+[final-target](../Proofs/Runtime/BackendWeightedTargetExtraction.lean) call bounds
 now include actual preparation, evaluation, arguments and retained frames. These
 derive every component cost from primitive, sampler, encoding and control contracts.
-Complete [good](../Signatures/Runtime/BackendWeightedGoodExtractionBudget.lean) and
-[bad](../Signatures/Runtime/BackendWeightedBadExtractionBudget.lean) extractor runtime
+Complete [good](../Proofs/Runtime/BackendWeightedGoodExtractionBudget.lean) and
+[bad](../Proofs/Runtime/BackendWeightedBadExtractionBudget.lean) extractor runtime
 bounds now include all phases, default construction, final arithmetic and the
 retained full output/transcripts. All component budgets are discharged; cached
 transcript calls preserve the exact cache, so subsequent calls retain its original
-bounds. [General caller resources](../Signatures/Runtime/BackendWeightedOracleCallerResources.lean)
+bounds. [General caller resources](../Proofs/Runtime/BackendWeightedOracleCallerResources.lean)
 now derive the native interaction's reachability, request widths and local/query
-budget. [Output recovery](../Signatures/Runtime/BackendWeightedExtractionOutput.lean)
-and [entry bounds](../Signatures/Runtime/BackendWeightedExtractionEntry.lean) supply
+budget. [Output recovery](../Proofs/Runtime/BackendWeightedExtractionOutput.lean)
+and [entry bounds](../Proofs/Runtime/BackendWeightedExtractionEntry.lean) supply
 coefficient lengths and the full retained input frame. The
-[native cache laws](../Signatures/Runtime/BackendWeightedOracleCache.lean) derive the
+[native cache laws](../Proofs/Runtime/BackendWeightedOracleCache.lean) derive the
 cached-transcript condition from actual execution starting empty. Both
-[complete native solvers](../Signatures/Runtime/BackendWeightedSolver.lean) now
-have [exact source correspondence](../Signatures/Runtime/BackendWeightedSolverCorrectness.lean),
-[complete runtime bounds](../Signatures/Runtime/BackendWeightedSolverBudget.lean),
-[stored-code bounds](../Signatures/Runtime/BackendWeightedSolverDescription.lean),
-and [fixed-backend certificates](../Signatures/Runtime/BackendWeightedSolverWithin.lean).
+[complete native solvers](../Proofs/Runtime/BackendWeightedSolver.lean) now
+have [exact source correspondence](../Proofs/Runtime/BackendWeightedSolverCorrectness.lean),
+[complete runtime bounds](../Proofs/Runtime/BackendWeightedSolverBudget.lean),
+[stored-code bounds](../Proofs/Runtime/BackendWeightedSolverDescription.lean),
+and [fixed-backend certificates](../Proofs/Runtime/BackendWeightedSolverWithin.lean).
 The certificates derive setup, caller, adaptation, cutoff, and extraction costs
 from primitive contracts and measured attacker resources. They require no
 supplied complete component budget or cached-transcript invariant, and no finite
 topic/slot/message domain. Shared
-[weighted parameter contracts](../Signatures/Runtime/GeneralWeightedParameters.lean)
-and [certificate assembly](../Signatures/Runtime/GeneralWeightedCertificates.lean)
-now give the [OOPS](../Signatures/OOPS/Proofs/GeneralAGM.lean) and
-[Proximity](../Signatures/Proximity/Proofs/GeneralAGM.lean) concrete security
+[weighted parameter contracts](../Proofs/Runtime/GeneralWeightedParameters.lean)
+and [certificate assembly](../Proofs/Runtime/GeneralWeightedCertificates.lean)
+now give the [OOPS](../Proofs/OOPS/GeneralAGM.lean) and
+[Proximity](../Proofs/Proximity/GeneralAGM.lean) concrete security
 endpoints. The original source games, admissibility rule and collision term are
-preserved. [Proximity's original interface](../Signatures/Proximity/Proofs/GeneralAGMEncoding.lean)
+preserved. [Proximity's original interface](../Proofs/Proximity/GeneralAGMEncoding.lean)
 is transported exactly, including adaptive per-kind query counts. Short public
 statements live in [OOPS](../Signatures/OOPS/Statement.lean) and
 [Proximity](../Signatures/Proximity/Statement.lean), with proof bodies in separate
-files. [Polynomial family closure](../Signatures/Runtime/BackendWeightedPolynomial.lean)
+files. [Polynomial family closure](../Proofs/Runtime/BackendWeightedPolynomial.lean)
 now derives complete solver time and stored-code growth from primitive, caller,
 encoding and degree/dimension bounds. The
-[shared family interface](../Signatures/Runtime/GeneralWeightedFamilyResources.lean)
+[shared family interface](../Proofs/Runtime/GeneralWeightedFamilyResources.lean)
 fixes the backend and transports the pointwise certificates into polynomial
 nonuniform solver families. The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean)
 and [Proximity](../Signatures/Proximity/GeneralAGMFamilyStatement.lean) asymptotic
@@ -301,111 +301,111 @@ two-pass machine budget, and exact query-tree equality identifies that machine w
 VCVio's named DLog reduction. Retained randomness, reset/re-execution, cache/tape scans,
 verification, extraction, fallback, and fixed-data loading are all charged. See the
 [Schnorr review path](SCHNORR.md) and
-[`SourceCertificate.within`](../Signatures/Runtime/SchnorrReduction.lean).
+[`SourceCertificate.within`](../Proofs/Runtime/SchnorrReduction.lean).
 
-- [`Language.lean`](../Signatures/Runtime/Language.lean): de Bruijn stack variables, constructors,
+- [`Language.lean`](../Proofs/Runtime/Language.lean): de Bruijn stack variables, constructors,
   branches, local bindings, primitive instructions, and list folds. Erasure is proved, and pure
   expressions have positive runtime. There is no arbitrary host-function expression constructor.
-- [`Program.lean`](../Signatures/Runtime/Program.lean): first-order oracle calls, sequencing,
+- [`Program.lean`](../Proofs/Runtime/Program.lean): first-order oracle calls, sequencing,
   branches, bounded loops, and first-order procedure calls. Call arguments and stack frames
   are evaluated and charged. The interpreter charges local computation as well as handler
   work. Erasure and a per-iteration runtime bound are proved. This intermediate interface is
   open; the final `Machine.Within` certificates close it with implemented handlers and only
   the fixed primitive sampling/store effects.
-- [`Arithmetic.lean`](../Signatures/Runtime/Arithmetic.lean): a fixed instruction family for
+- [`Arithmetic.lean`](../Proofs/Runtime/Arithmetic.lean): a fixed instruction family for
   scalar/group arithmetic, scalar/group/key/message equality, and natural-number operations.
   Public-key equality permits key-dependent branching. No whole solver
   or adversary is an instruction. Named primitive prices are explicit contracts of this arithmetic
   model, not proved bit costs for arbitrary Lean typeclass instances.
-- [`Lookup.lean`](../Signatures/Runtime/Lookup.lean): compiled first-match association-list lookup,
+- [`Lookup.lean`](../Proofs/Runtime/Lookup.lean): compiled first-match association-list lookup,
   with a presence flag distinguishing a cached zero from absence. Correctness and the bound
   `length * (equalityCost + 19) + 9` are proved. This replaces a random-access assumption for this
   component. The persistent-cache handler below uses this implementation.
-- [`Sampling.lean`](../Signatures/Runtime/Sampling.lean): compiled table initialization with one
+- [`Sampling.lean`](../Proofs/Runtime/Sampling.lean): compiled table initialization with one
   scalar draw per cell, list allocation, and a charged final reversal. The total bound is
   `n * (scalarSampleCost + 17) + 10`. Its erased program is **exactly** the native vector sampler
   mapped to a list, so no independent probability argument or guessed whole-table price is used.
   The scalar sampler's bound is a primitive premise. Its exact output length is also proved.
-- [`SamplingState.lean`](../Signatures/Runtime/SamplingState.lean),
-  [`Table.lean`](../Signatures/Runtime/Table.lean), and
-  [`AGMTable.lean`](../Signatures/Runtime/AGMTable.lean): embed that sampler in the closed machine
+- [`SamplingState.lean`](../Proofs/Runtime/SamplingState.lean),
+  [`Table.lean`](../Proofs/Runtime/Table.lean), and
+  [`AGMTable.lean`](../Proofs/Runtime/AGMTable.lean): embed that sampler in the closed machine
   while preserving ambient state and cost. Erasing the list representation gives exactly the
   native finite-function sampler, in its canonical enumeration order. The function view is
   proof-only, never an executable free lookup.
-- [`Index.lean`](../Signatures/Runtime/Index.lean) and
-  [`Weakening.lean`](../Signatures/Runtime/Weakening.lean): charged full-scan indexing, including
+- [`Index.lean`](../Proofs/Runtime/Index.lean) and
+  [`Weakening.lean`](../Proofs/Runtime/Weakening.lean): charged full-scan indexing, including
   missing entries and stored zeroes, and cost-preserving reuse of expressions in trailing frames.
-- [`Weights.lean`](../Signatures/Runtime/Weights.lean): executable BLS, OOPS, and Proximity weights
+- [`Weights.lean`](../Proofs/Runtime/Weights.lean): executable BLS, OOPS, and Proximity weights
   with exact native-value theorems. OOPS powers execute field operations and degree tests;
   Proximity coordinates execute list indexing. The encoded Proximity key is injective.
-- [`Tuple.lean`](../Signatures/Runtime/Tuple.lean) and
-  [`ProximityWeight.lean`](../Signatures/Runtime/ProximityWeight.lean): fixed-size first-order
+- [`Tuple.lean`](../Proofs/Runtime/Tuple.lean) and
+  [`ProximityWeight.lean`](../Proofs/Runtime/ProximityWeight.lean): fixed-size first-order
   vectors equivalent to the paper's `Fin ell -> F` messages. Coordinate access executes tuple
   projections and natural operations, with a uniform bound for every typed message. The
   structural type enforces the dimension; no extra source message-length premise is needed.
   Loading a scalar vector costs exactly `2*ell+1` steps.
-- [`AttachTable.lean`](../Signatures/Runtime/AttachTable.lean),
-  [`WeightedSum.lean`](../Signatures/Runtime/WeightedSum.lean),
-  [`LookupExpr.lean`](../Signatures/Runtime/LookupExpr.lean), and
-  [`KeyEquality.lean`](../Signatures/Runtime/KeyEquality.lean): executable ordered table
+- [`AttachTable.lean`](../Proofs/Runtime/AttachTable.lean),
+  [`WeightedSum.lean`](../Proofs/Runtime/WeightedSum.lean),
+  [`LookupExpr.lean`](../Proofs/Runtime/LookupExpr.lean), and
+  [`KeyEquality.lean`](../Proofs/Runtime/KeyEquality.lean): executable ordered table
   construction, scalar-weighted sums, and structured-key scans. Only ordinary arithmetic,
   list, and stack instructions are used. Key equality is compiled for all three families.
-  [`TableRefinement.lean`](../Signatures/Runtime/TableRefinement.lean) proves exact correspondence
+  [`TableRefinement.lean`](../Proofs/Runtime/TableRefinement.lean) proves exact correspondence
   to native table access and finite sums for canonical encoded keys. The canonical key list is
   fixed data; both complete AGM packages load it and charge its structural size.
 - [`Runtime.lean` tests](../SignaturesTest/Runtime.lean): pure computations with equal values but
   different runtimes, absent/cached-zero/duplicate-key lookups, empty and nonempty sampling runs,
   native sampler correspondence, concrete bounds, and standard-axiom checks.
-- [`Composition.lean`](../Signatures/Runtime/Composition.lean) and
-  [`SourceBudget.lean`](../Signatures/Runtime/SourceBudget.lean): support-wise runtime substitution
+- [`Composition.lean`](../Proofs/Runtime/Composition.lean) and
+  [`SourceBudget.lean`](../Proofs/Runtime/SourceBudget.lean): support-wise runtime substitution
   through adaptive branches, continuations, and loops. A source certificate prices every request
   uniformly over all nonnegative capability tariffs and includes local computation. Reply
   contracts require nonempty responses; impossible response types cannot vacuously certify code.
-- [`GrowingState.lean`](../Signatures/Runtime/GrowingState.lean) and
-  [`Refinement.lean`](../Signatures/Runtime/Refinement.lean): storage growth and quadratic total
+- [`GrowingState.lean`](../Proofs/Runtime/GrowingState.lean) and
+  [`Refinement.lean`](../Proofs/Runtime/Refinement.lean): storage growth and quadratic total
   bounds for handlers whose cost grows linearly with storage. A proof-only call counter is erased
   with exact cost preservation. The implementation does not receive a free counter operation.
   Representation refinement and native oracle simulation commute with adaptive program execution.
-- [`Cache.lean`](../Signatures/Runtime/Cache.lean) and
-  [`CacheRefinement.lean`](../Signatures/Runtime/CacheRefinement.lean): compiled persistent cache,
+- [`Cache.lean`](../Proofs/Runtime/Cache.lean) and
+  [`CacheRefinement.lean`](../Proofs/Runtime/CacheRefinement.lean): compiled persistent cache,
   length growth, and `length*(equalityCost+19)+drawCost+36` handler cost. Hits do not draw again.
   Exact bridges to the existing BLS scalar cache and VCVio coin cache are proved. Function-valued
   cache abstractions are used only in proofs, never as uncharged executable lookups.
-- [`CoronSimulation.lean`](../Signatures/Runtime/CoronSimulation.lean): implemented hash/sign
+- [`CoronSimulation.lean`](../Proofs/Runtime/CoronSimulation.lean): implemented hash/sign
   handlers with two lazy caches, signed-message list, scalar/coin sampling, default initialization,
   bounded-coin conversion, group arithmetic, and explicitly priced fixed adapter frames.
-  [`CoronRefinement.lean`](../Signatures/Runtime/CoronRefinement.lean) proves exact adaptive
+  [`CoronRefinement.lean`](../Proofs/Runtime/CoronRefinement.lean) proves exact adaptive
   simulation correspondence, retaining both caches and the original signing set.
-- [`CoronReduction.lean`](../Signatures/Runtime/CoronReduction.lean): executes the final forgery
+- [`CoronReduction.lean`](../Proofs/Runtime/CoronReduction.lean): executes the final forgery
   hash, charged extraction lookup, and group extraction. Its evaluator bound is derived from
   the source budget, not assumed for the finished solver. The initial input environment is
   supplied to this intermediate evaluator. The closed-machine certificate below additionally
   constructs the input and charges its complete setup.
-- [`CoronErasure.lean`](../Signatures/Runtime/CoronErasure.lean): exact equality from the full
+- [`CoronErasure.lean`](../Proofs/Runtime/CoronErasure.lean): exact equality from the full
   evaluator, including the final hash and extraction, to
   `coronReductionLazyPK qS (cacheForgeryPK adv)`. This is a semantic theorem, not a premise
   assuming that the finished solver satisfies its target budget.
-- [`Inlining.lean`](../Signatures/Runtime/Inlining.lean): compiles capabilities into ordinary
+- [`Inlining.lean`](../Proofs/Runtime/Inlining.lean): compiles capabilities into ordinary
   first-order procedure calls. Both behavior and runtime are preserved exactly, with three
   extra call-frame steps relative to a source query node.
-- [`Machine.lean`](../Signatures/Runtime/Machine.lean): a general closed implementation class.
+- [`Machine.lean`](../Proofs/Runtime/Machine.lean): a general closed implementation class.
   The only effects are primitive scalar/bounded-uniform sampling and typed store reads/writes.
   Initial storage is an expression over actual input registers, not an arbitrary initializer.
   `Within` requires exact behavior and a pathwise budget for code in this language; inhabited
   input types cannot certify zero-cost algorithms. There is no reduction-specific instruction.
-- [`Data.lean`](../Signatures/Runtime/Data.lean): fixed first-order data loading and input-frame
+- [`Data.lean`](../Proofs/Runtime/Data.lean): fixed first-order data loading and input-frame
   construction. Tuple/list structure is fully traversed, natural literals pay unary load cost,
   and atomic values are primitive words. `Machine.Package` fixes its data independently of
   the challenge and pays these costs before executing its code. No arbitrary initializer is
   accepted. This is not a bit-encoding theorem for abstract message atoms.
-- [`CoronMachine.lean`](../Signatures/Runtime/CoronMachine.lean): compiled hash/sign/private-random
+- [`CoronMachine.lean`](../Proofs/Runtime/CoronMachine.lean): compiled hash/sign/private-random
   procedures, with both caches and signing log in the explicit store. Exact instruction counts
   derive the adapter overhead. The inlined adaptive simulation has a proved total bound and
   exact result/state correspondence to the existing evaluator.
-- [`CoronMachineReduction.lean`](../Signatures/Runtime/CoronMachineReduction.lean): compiled
+- [`CoronMachineReduction.lean`](../Proofs/Runtime/CoronMachineReduction.lean): compiled
   final verification hash, scalar-cache scan, extraction, and initial store construction.
   The complete target program has a derived bound and exact evaluator equivalence.
-- [`CoronCertificate.lean`](../Signatures/Runtime/CoronCertificate.lean): source code and
+- [`CoronCertificate.lean`](../Proofs/Runtime/CoronCertificate.lean): source code and
   fixed-data certificate, exact trace semantics at the actual public key for every challenge,
   and an all-path source budget. The target package pays for all data and input preparation.
   `SourceCertificate.within` certifies the exact named solver in the general `Machine.Within`
@@ -424,29 +424,29 @@ verification, extraction, fallback, and fixed-data loading are all charged. See 
   zero-degree/short-coordinate cases, empty tables, state-preserving sampling, exact native
   sampler equivalence, ordered construction, first-match cached zeroes, finite sums, concrete
   cost fixtures, and standard-axiom guards for the new load-bearing proofs.
-- [`GroupWeightedSum.lean`](../Signatures/Runtime/GroupWeightedSum.lean) and
-  [`AffineTable.lean`](../Signatures/Runtime/AffineTable.lean): executed group-valued sums
+- [`GroupWeightedSum.lean`](../Proofs/Runtime/GroupWeightedSum.lean) and
+  [`AffineTable.lean`](../Proofs/Runtime/AffineTable.lean): executed group-valued sums
   and affine bases `a_i * X + b_i * g` for the bad branch, with exact native finite-table
   equalities. Every scalar multiplication, addition, list allocation, and reversal is charged.
-- [`AGMReplies.lean`](../Signatures/Runtime/AGMReplies.lean): actual good/bad hash and signing
+- [`AGMReplies.lean`](../Proofs/Runtime/AGMReplies.lean): actual good/bad hash and signing
   expressions. Hashes execute compiled table lookup; signing executes scalar or group-valued
   weighted sums. Canonical-table correctness and concrete expression bounds are proved.
-- [`AGMOracle.lean`](../Signatures/Runtime/AGMOracle.lean) and
-  [`AGMSimulation.lean`](../Signatures/Runtime/AGMSimulation.lean): closed-machine oracle
+- [`AGMOracle.lean`](../Proofs/Runtime/AGMOracle.lean) and
+  [`AGMSimulation.lean`](../Proofs/Runtime/AGMSimulation.lean): closed-machine oracle
   procedures, inlining into arbitrary adaptive source programs, immutable private configuration,
   and persistent reverse-order transcripts. Source-budget substitution derives both simulator
   bounds without assuming whole-reply or whole-simulator budgets.
-- [`AGMOracleRefinement.lean`](../Signatures/Runtime/AGMOracleRefinement.lean): exact adaptive
+- [`AGMOracleRefinement.lean`](../Proofs/Runtime/AGMOracleRefinement.lean): exact adaptive
   equivalence to the original `Model.LazyAGM.fixedImpl`, with decoded query representations
   and chronological transcripts, including nonempty initial logs. Decoding/reversal in the
   representation proof is not a free instruction in the eventual extractor.
 - [`RuntimeAGMSimulation.lean`](../SignaturesTest/RuntimeAGMSimulation.lean): hash-answer-dependent
   signing/hash choices, exact execution costs, private randomness forwarding, unchanged tables,
   chronological token order, both source-derived simulator budgets, and standard-axiom guards.
-- [`TokenCoefficients.lean`](../Signatures/Runtime/TokenCoefficients.lean),
-  [`ExtractionWeights.lean`](../Signatures/Runtime/ExtractionWeights.lean),
-  [`ExtractionCore.lean`](../Signatures/Runtime/ExtractionCore.lean), and
-  [`Extraction.lean`](../Signatures/Runtime/Extraction.lean): both compiled final extractors,
+- [`TokenCoefficients.lean`](../Proofs/Runtime/TokenCoefficients.lean),
+  [`ExtractionWeights.lean`](../Proofs/Runtime/ExtractionWeights.lean),
+  [`ExtractionCore.lean`](../Proofs/Runtime/ExtractionCore.lean), and
+  [`Extraction.lean`](../Proofs/Runtime/Extraction.lean): both compiled final extractors,
   starting with the actual reversed simulator logs and structured source output. They execute
   chronological reversal, coefficient attachment with zero defaults, nested scalar sums, and
   total field division. Core native-formula theorems and complete expression bounds are proved.
@@ -456,30 +456,30 @@ verification, extraction, fallback, and fixed-data loading are all charged. See 
   every coordinate, uniform Proximity bounds, chronological repeated tokens, missing/surplus
   coefficients, both extraction outputs, zero-denominator behavior, concrete bounds, and
   standard-axiom guards.
-- [`AGMSource.lean`](../Signatures/Runtime/AGMSource.lean): source implementation certificates
+- [`AGMSource.lean`](../Proofs/Runtime/AGMSource.lean): source implementation certificates
   at every public key, with fixed first-order data, adaptive source budgets, and coefficient
   length bounds on every allowed reply path. The source receives only its public key and data.
   `machineSimulation_supported` transports output-size evidence to actual simulator runs;
   the decoded source/output/transcript semantics equal the native fixed-run experiment.
-- [`AGMExecution.lean`](../Signatures/Runtime/AGMExecution.lean),
-  [`AGMExtractionRefinement.lean`](../Signatures/Runtime/AGMExtractionRefinement.lean), and
-  [`AGMExecutionRefinement.lean`](../Signatures/Runtime/AGMExecutionRefinement.lean): both
+- [`AGMExecution.lean`](../Proofs/Runtime/AGMExecution.lean),
+  [`AGMExtractionRefinement.lean`](../Proofs/Runtime/AGMExtractionRefinement.lean), and
+  [`AGMExecutionRefinement.lean`](../Proofs/Runtime/AGMExecutionRefinement.lean): both
   simulation-plus-extraction programs, exact native behavior through representation equivalences,
   and source-derived total phase bounds. Source call frames do not expose private tables.
-- [`AGMInitialization.lean`](../Signatures/Runtime/AGMInitialization.lean): a compiled full-domain
+- [`AGMInitialization.lean`](../Proofs/Runtime/AGMInitialization.lean): a compiled full-domain
   sampler followed by ordered keyed-table construction, preserving ambient state. Its erased
   output is exactly the native function sampler mapped to canonical keyed rows, not merely
   an equal distribution assumed for a whole-table opcode.
-- [`AGMGoodMachine.lean`](../Signatures/Runtime/AGMGoodMachine.lean): complete good-branch
+- [`AGMGoodMachine.lean`](../Proofs/Runtime/AGMGoodMachine.lean): complete good-branch
   setup, initialized store, compiled execution, fixed-data/canonical-enumeration loading,
   exact `Model.LazyAGM.goodReduction` erasure, and `SourceCertificate.goodWithin` in the general
   closed-machine resource class. Local equality/weight semantics and bounds are parameters;
   no whole-reduction budget is assumed.
-- [`MaskedBases.lean`](../Signatures/Runtime/MaskedBases.lean): pairs independently sampled
+- [`MaskedBases.lean`](../Proofs/Runtime/MaskedBases.lean): pairs independently sampled
   keyed tables using charged compiled lookup, then executes affine group construction. The
   output preserves canonical order and equals the native masked bases. Bounds also cover
   reordered, missing, duplicate, and zero-valued rows; canonical keys are injective.
-- [`AGMBadMachine.lean`](../Signatures/Runtime/AGMBadMachine.lean): samples kappa, then the full
+- [`AGMBadMachine.lean`](../Proofs/Runtime/AGMBadMachine.lean): samples kappa, then the full
   a table, then the full b table; constructs masked bases and computes the source key `kappa*g2`.
   Both sampling passes, key construction, initialized store, adaptive execution, extraction,
   and fixed-data loading are charged. Exact `Model.LazyAGM.badReduction` erasure and

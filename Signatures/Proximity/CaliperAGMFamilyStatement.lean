@@ -1,4 +1,4 @@
-import Signatures.Proximity.Proofs.CaliperAGMFamily
+import Proofs.Proximity.CaliperAGMFamily
 
 /-! Public nonuniform security in the fixed Caliper family. Only local resource
 growth is assumed; complete reduction resources are derived. Conventional CPU

@@ -1,5 +1,6 @@
 import ArkLib.AGM.Basic
 import Signatures
+import Proofs
 import Lean.Util.CollectAxioms
 
 /-! Upstream representation compatibility and the seven general-attacker security endpoints. -/

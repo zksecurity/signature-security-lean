@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrROMEnumeratedSigning
+import Proofs.Runtime.Caliper.SchnorrROMEnumeratedSigning
 import Lean
 
 open Caliper OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

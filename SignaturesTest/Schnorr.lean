@@ -1,5 +1,5 @@
-import Signatures.Schnorr.Proofs.ROM
-import Signatures.Runtime.Schnorr
+import Proofs.Schnorr.ROM
+import Proofs.Runtime.Schnorr
 import VCVio.CryptoFoundations.ReplayForkCost
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms

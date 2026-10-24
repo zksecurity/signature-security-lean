@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrROMDLog
-import Signatures.Runtime.BackendConfiguration
+import Proofs.Runtime.BackendSchnorrROMDLog
+import Proofs.Runtime.BackendConfiguration
 
 /-! Nonuniform DLog hardness in one fixed backend for ordinary-ROM Schnorr.
 One executable per security parameter handles every challenge; stored code/advice,

@@ -1,4 +1,4 @@
-import Signatures.Runtime.Caliper.SchnorrAGMFlattenBounds
+import Proofs.Runtime.Caliper.SchnorrAGMFlattenBounds
 import Lean
 
 open Caliper Signatures.Runtime Signatures.Runtime.CaliperBackend BoundedSource

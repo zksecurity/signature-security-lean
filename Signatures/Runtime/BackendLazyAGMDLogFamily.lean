@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendLazyAGMDLog
-import Signatures.Runtime.BackendConfiguration
+import Proofs.Runtime.BackendLazyAGMDLog
+import Proofs.Runtime.BackendConfiguration
 
 /-! Nonuniform `(1,1)`-DLog hardness in one fixed backend. A single polynomial
 bounds code/advice and time over the security parameter. Encodings and a

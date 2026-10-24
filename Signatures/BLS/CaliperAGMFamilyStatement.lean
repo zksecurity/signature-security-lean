@@ -1,4 +1,4 @@
-import Signatures.BLS.Proofs.CaliperAGMFamily
+import Proofs.BLS.CaliperAGMFamily
 
 /-! Asymptotic security for the public BLS AGM Caliper model. Polynomial bounds
 on the original component resources imply polynomial reductions. Their DLog

@@ -1,6 +1,6 @@
-import Signatures.Runtime.BackendSchnorrROMSecurity
-import Signatures.Runtime.BackendSchnorrROMDescriptionAllowance
-import Signatures.Model.AdvantageBound
+import Proofs.Runtime.BackendSchnorrROMSecurity
+import Proofs.Runtime.BackendSchnorrROMDescriptionAllowance
+import Proofs.Model.AdvantageBound
 import Signatures.Schnorr.QueryAllowance
 
 /-! Original component contracts and attacker allowances for ordinary-ROM

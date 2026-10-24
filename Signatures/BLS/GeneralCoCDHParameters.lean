@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendCoronSecurity
-import Signatures.Model.AdvantageBound
+import Proofs.Runtime.BackendCoronSecurity
+import Proofs.Model.AdvantageBound
 import Signatures.BLS.QueryAllowance
 
 /-! Resources for unrestricted BLS attackers and the native Coron co-CDH reduction.

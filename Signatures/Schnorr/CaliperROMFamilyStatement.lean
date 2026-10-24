@@ -1,4 +1,4 @@
-import Signatures.Schnorr.Proofs.CaliperROMFamily
+import Proofs.Schnorr.CaliperROMFamily
 
 /-! Asymptotic security for the public ordinary-ROM Schnorr Caliper model.
 Polynomial component allowances give a polynomial replaying reduction. Caliper

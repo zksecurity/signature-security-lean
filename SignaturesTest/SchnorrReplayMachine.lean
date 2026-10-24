@@ -1,4 +1,4 @@
-import Signatures.Runtime.ReplayCacheRefinement
+import Proofs.Runtime.ReplayCacheRefinement
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 

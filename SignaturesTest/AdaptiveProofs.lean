@@ -1,5 +1,5 @@
-import Signatures.LinearFunctional.Proofs.Adaptive
-import Signatures.OOPS.Proofs.SignatureHandle
+import Proofs.LinearFunctional.Adaptive
+import Proofs.OOPS.SignatureHandle
 
 /-! The recovered adaptive proof must not acquire admitted axioms during migration. -/
 

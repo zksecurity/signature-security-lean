@@ -1,5 +1,5 @@
-import Signatures.Runtime.BackendSchnorrAGMDLog
-import Signatures.Runtime.BackendConfiguration
+import Proofs.Runtime.BackendSchnorrAGMDLog
+import Proofs.Runtime.BackendConfiguration
 
 /-! Nonuniform DLog hardness in one fixed backend. Each parameter selects one
 program for every challenge. Stored code/advice, input size and runtime have

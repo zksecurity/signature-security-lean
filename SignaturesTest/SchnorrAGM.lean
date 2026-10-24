@@ -1,5 +1,5 @@
 import Signatures.Schnorr.Spec.AGM
-import Signatures.Schnorr.Proofs.AGM
+import Proofs.Schnorr.AGM
 import Signatures.Schnorr.Spec.NonzeroNonce
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
