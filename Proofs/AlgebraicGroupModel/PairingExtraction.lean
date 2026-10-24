@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
 import Signatures.Model.BilinearGroup
-import Signatures.AlgebraicGroupModel.Spec.AffineForm
+import Proofs.AlgebraicGroupModel.Spec.AffineForm
 
 /-!
 # Pairing verification and the affine discrete-log relation

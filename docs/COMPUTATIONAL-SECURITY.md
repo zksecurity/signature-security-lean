@@ -135,7 +135,7 @@ The existing AGM machine certificates
 below still concern the eager implementations.
 
 OOPS and Proximity now have shared
-[weighted lazy solver programs](../Signatures/LinearFunctional/Spec/LazyAGMReduction.lean),
+[weighted lazy solver programs](../Proofs/LinearFunctional/Spec/LazyAGMReduction.lean),
 [joint eager/lazy distribution correspondence](../Proofs/LinearFunctional/LazyAGMCoupling.lean),
 and probability bounds using those solvers for arbitrary topic/slot types. Their
 complete program caches have at most `qH + (qS + 1) * L` entries, where `L = d + 1`

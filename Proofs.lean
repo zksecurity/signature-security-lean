@@ -1,6 +1,8 @@
 import Proofs.AlgebraicGroupModel.Extraction
 import Proofs.AlgebraicGroupModel.ForgeryGame
 import Proofs.AlgebraicGroupModel.PairingExtraction
+import Proofs.AlgebraicGroupModel.Spec.AffineForm
+import Proofs.AlgebraicGroupModel.Spec.Representation
 import Proofs.BLS.CaliperAGM
 import Proofs.BLS.CaliperAGMFamily
 import Proofs.BLS.CaliperCoCDH
@@ -48,6 +50,8 @@ import Proofs.LinearFunctional.LazyAGMReduction
 import Proofs.LinearFunctional.LazyAGMTransport
 import Proofs.LinearFunctional.OperationCost
 import Proofs.LinearFunctional.PerfectSim
+import Proofs.LinearFunctional.Spec.Handle
+import Proofs.LinearFunctional.Spec.LazyAGMReduction
 import Proofs.Model.AdvantageBound
 import Proofs.Model.AlgebraicOracle
 import Proofs.Model.CoronLoss
@@ -1742,10 +1746,6 @@ import Proofs.Schnorr.NonzeroSampling
 import Proofs.Schnorr.NonzeroSecurity
 import Proofs.Schnorr.Oracle
 import Proofs.Schnorr.ROM
-import Signatures.Runtime.BackendLazyAGMDLogFamily
-import Signatures.Runtime.BackendSchnorrAGMDLogFamily
-import Signatures.Runtime.BackendSchnorrROMDLogFamily
-import Signatures.Runtime.BackendWeightedDLogFamily
 
 /-! Everything that is not the review surface: the proofs of the public statements,
 the executed reductions and their resource accounting. `Signatures` is the review

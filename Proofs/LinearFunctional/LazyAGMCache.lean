@@ -1,4 +1,4 @@
-import Signatures.LinearFunctional.Spec.LazyAGMReduction
+import Proofs.LinearFunctional.Spec.LazyAGMReduction
 import Proofs.BLS.LazyAGMList
 
 /-! Encountered-base cache invariants for weighted reduction phases. Existing

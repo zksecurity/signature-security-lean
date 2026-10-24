@@ -1,6 +1,3 @@
-import Signatures.AlgebraicGroupModel.Spec.AffineForm
-import Signatures.AlgebraicGroupModel.Spec.DLog11
-import Signatures.AlgebraicGroupModel.Spec.Representation
 import Signatures.BLS.ArithmeticStatement
 import Signatures.BLS.CaliperAGMFamilyResources
 import Signatures.BLS.CaliperAGMFamilyStatement
@@ -29,14 +26,13 @@ import Signatures.BLS.Spec.ROM
 import Signatures.BLS.Spec.ROMInterface
 import Signatures.BLS.Spec.ROMInternal
 import Signatures.BLS.Statement
-import Signatures.LinearFunctional.Spec.Handle
-import Signatures.LinearFunctional.Spec.LazyAGMReduction
 import Signatures.Model.AlgebraicOracle
 import Signatures.Model.BilinearGroup
 import Signatures.Model.CoCDH
 import Signatures.Model.CyclicCurve
 import Signatures.Model.CyclicCurveNonzeroSampling
 import Signatures.Model.CyclicCurveSampling
+import Signatures.Model.DLog11
 import Signatures.Model.DirectAGM
 import Signatures.Model.EufCma
 import Signatures.Model.PairingCurve

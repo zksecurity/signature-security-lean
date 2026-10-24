@@ -368,7 +368,7 @@ verification and the final audit.
 ## OOPS and Proximity extensions
 
 Checkpoint, 2026-10-14: the shared
-[`WeightedReduction` programs](../Signatures/LinearFunctional/Spec/LazyAGMReduction.lean)
+[`WeightedReduction` programs](../Proofs/LinearFunctional/Spec/LazyAGMReduction.lean)
 now use separate index/message types and one persistent scalar/pair cache.
 Signing evaluates each message's finite weighted base list. Extraction expands
 only actual signing-reply occurrences, keeps repeated replies, zero-extends

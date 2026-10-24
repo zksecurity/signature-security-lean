@@ -1,6 +1,6 @@
 import Signatures.Model.CoCDH
 import Signatures.Model.BilinearGroup
-import Signatures.AlgebraicGroupModel.Spec.Representation
+import Proofs.AlgebraicGroupModel.Spec.Representation
 import Mathlib.Data.List.Indexes
 import VCVio.OracleComp.QueryTracking.RandomOracle.Simulation
 

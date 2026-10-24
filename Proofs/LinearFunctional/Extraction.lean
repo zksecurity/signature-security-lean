@@ -6,7 +6,7 @@ Authors: Kobi Gurkan
 import Proofs.LinearFunctional.PerfectSim
 import Proofs.AlgebraicGroupModel.ForgeryGame
 import Proofs.AlgebraicGroupModel.PairingExtraction
-import Signatures.AlgebraicGroupModel.Spec.DLog11
+import Signatures.Model.DLog11
 import VCVio.OracleComp.QueryTracking.RandomOracle.DeferredSampling
 
 /-!

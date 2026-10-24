@@ -1,6 +1,6 @@
 import Proofs.Runtime.WeightedTerms
 import Proofs.Runtime.TokenCoefficients
-import Signatures.LinearFunctional.Spec.LazyAGMReduction
+import Proofs.LinearFunctional.Spec.LazyAGMReduction
 
 /-! Executable expansion of chronological signing coefficients into weighted
 base terms. Each reply occurrence keeps its own coefficient. Zero coefficients

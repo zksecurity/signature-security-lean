@@ -3,7 +3,7 @@ Copyright (c) 2026 zkSecurity. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
-import Signatures.LinearFunctional.Spec.Handle
+import Proofs.LinearFunctional.Spec.Handle
 import VCVio.OracleComp.Constructions.SampleableType
 
 /-!

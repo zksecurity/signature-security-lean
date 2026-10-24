@@ -1,4 +1,4 @@
-import Signatures.LinearFunctional.Spec.LazyAGMReduction
+import Proofs.LinearFunctional.Spec.LazyAGMReduction
 import Proofs.BLS.LazyAGMExtraction
 
 /-! Fixed-table semantics and finite-sum extraction identities for the weighted

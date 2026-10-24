@@ -139,7 +139,7 @@ The minimal generic interface and its tests live in the pinned, public
 
 ## Query-only lazy AGM
 
-[Token-indexed outputs](../Signatures/AlgebraicGroupModel/Spec/Representation.lean)
+[Token-indexed outputs](../Proofs/AlgebraicGroupModel/Spec/Representation.lean)
 define coefficients, their evaluation on a finite list of supplied inputs, and output
 materialization. These signature-adapter utilities import no oracle computations and are
 not part of the generic AGM library. The enclosing game chooses the available inputs;

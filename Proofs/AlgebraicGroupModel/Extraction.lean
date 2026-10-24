@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
 import Mathlib.Tactic.LinearCombination
-import Signatures.AlgebraicGroupModel.Spec.AffineForm
+import Proofs.AlgebraicGroupModel.Spec.AffineForm
 
 /-!
 # Algebraic Group Model — secret-key extraction (field-algebra core)
