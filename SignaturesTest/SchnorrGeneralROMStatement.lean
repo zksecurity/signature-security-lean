@@ -34,7 +34,7 @@ run_meta do
           throwError "The execution model must be a declared instance"
     for required in #[``Schnorr.romEufCmaGame, ``Schnorr.romDLogSuccessBound,
         ``Schnorr.romReductionTime, ``Model.CyclicCurve.order,
-        ``Schnorr.QueryAllowance.hash, ``Schnorr.QueryAllowance.sign] do
+        ``Model.QueryAllowance.hash, ``Model.QueryAllowance.sign] do
       unless (conclusion.find? (fun e => e.isConstOf required)).isSome do
         throwError "Keep the game, DLog budget and original query losses visible"
     if (conclusion.find? (fun e => match e with | .letE .. => true | _ => false)).isSome then

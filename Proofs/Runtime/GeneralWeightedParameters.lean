@@ -1,3 +1,4 @@
+import Signatures.Model.QueryAllowance
 import Proofs.Runtime.BackendWeightedDLog
 import Proofs.Model.AdvantageBound
 
@@ -17,12 +18,10 @@ open Signatures.Runtime.WeightedAGM.NativeSolver
 
 namespace Signatures.Runtime.WeightedAGM.General
 
-structure QueryAllowance where
-  random : Nat
-  hash : Nat
-  sign : Nat
+/-- The shared allowance, see `Model.QueryAllowance`. -/
+abbrev QueryAllowance := Model.QueryAllowance
 
-def QueryAllowance.total (q : QueryAllowance) : Nat := q.random + q.hash + q.sign
+abbrev QueryAllowance.total (q : QueryAllowance) : Nat := Model.QueryAllowance.total q
 
 def queryKind {I N : Type} : (Nat ⊕ I) ⊕ N → Fin 3
   | .inl (.inl _) => 0

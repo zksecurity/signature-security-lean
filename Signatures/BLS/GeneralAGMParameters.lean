@@ -25,7 +25,7 @@ namespace BLS.GeneralAGM
 
 abbrev QueryAllowance := BLS.QueryAllowance
 
-def QueryAllowance.total (q : QueryAllowance) : Nat := q.random + q.hash + q.sign
+abbrev QueryAllowance.total (q : QueryAllowance) : Nat := Model.QueryAllowance.total q
 
 def queryKind {M : Type} : (Nat ⊕ M) ⊕ M → Fin 3
   | .inl (.inl _) => 0

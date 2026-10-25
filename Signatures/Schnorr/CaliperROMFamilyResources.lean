@@ -61,9 +61,9 @@ variable {parameters} (resources : PolynomialResources parameters)
 include resources
 
 theorem hashQueries : PolynomiallyBounded (fun n => (queries n).hash) :=
-  resources.queries.of_le (fun n => by unfold QueryAllowance.total; omega)
+  resources.queries.of_le (fun n => by unfold QueryAllowance.total Model.QueryAllowance.total; omega)
 theorem signingQueries : PolynomiallyBounded (fun n => (queries n).sign) :=
-  resources.queries.of_le (fun n => by unfold QueryAllowance.total; omega)
+  resources.queries.of_le (fun n => by unfold QueryAllowance.total Model.QueryAllowance.total; omega)
 
 theorem rawInputWidth : PolynomiallyBounded (fun n => (SchnorrROM.ReplaySecond.rawInput (parameters n).config).encoding.words) := by
   have hashBound := resources.hashQueries

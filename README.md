@@ -41,11 +41,12 @@ by equalities in `Proofs/` (e.g. [`BLS.Game.eufCma_eq_rom`](Proofs/BLS/EufCma.le
 Two libraries, split by what a reviewer has to read.
 
 - `Signatures/` — **the review surface**: everything a public statement's meaning depends on.
-  `Model/` (random oracle, EUF-CMA experiment, curves, algebraic group model, hardness suprema) and,
+  `Model/` (random oracle, EUF-CMA experiment, curves, algebraic group model, hardness suprema,
+  the attacker's query allowance) and,
   per scheme, `Game.lean`, `Statement.lean`, the `*FamilyStatement.lean` corollaries, `Spec/`
   (the scheme and its oracles), `QueryAllowance`, and the `*SecurityModel`/`*Parameters`/`*Resources`
   records that fix the execution model and derived budgets, and `Runtime/` with the
-  hardness-family hypotheses of the asymptotic statements. 98 modules.
+  hardness-family hypotheses of the asymptotic statements. 99 modules.
 - `Proofs/` — everything else: the proofs of the statements (`Proofs/<Scheme>/`), the executed
   reductions and their resource accounting (`Proofs/Runtime/`, `Proofs/Runtime/Caliper/`), and
   supporting lemmas (`Proofs/Model/`). Nothing here needs to be read to know what is claimed.

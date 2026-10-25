@@ -70,7 +70,7 @@ run_meta do
   let type := (← getConstInfo ``Schnorr.agm_security).type
   for visible in #[``Schnorr.agmEufCmaGame, ``Schnorr.dlogSuccessBound,
       ``Schnorr.agmReductionTime, ``Model.CyclicCurve.order,
-      ``Schnorr.QueryAllowance.hash, ``Schnorr.QueryAllowance.sign] do
+      ``Model.QueryAllowance.hash, ``Model.QueryAllowance.sign] do
     unless (type.find? (fun e => e.isConstOf visible)).isSome do
       throwError "Public statement must display {visible}"
   if (type.find? (fun e => match e with | .letE .. => true | _ => false)).isSome then

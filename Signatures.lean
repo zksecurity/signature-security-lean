@@ -38,6 +38,7 @@ import Signatures.Model.DirectAGM
 import Signatures.Model.EufCma
 import Signatures.Model.LazyAGM
 import Signatures.Model.PairingCurve
+import Signatures.Model.QueryAllowance
 import Signatures.Model.RandomOracle
 import Signatures.Model.SignatureInteraction
 import Signatures.Model.SignatureInterface

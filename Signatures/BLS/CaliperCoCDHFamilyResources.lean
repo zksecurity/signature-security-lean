@@ -48,7 +48,7 @@ include resources
 
 omit [∀ n, DecidableEq (M n)] in
 theorem signingQueries : PolynomiallyBounded (fun n => (queries n).sign) :=
-  resources.queries.of_le (fun n => by unfold QueryAllowance.total; omega)
+  resources.queries.of_le (fun n => by unfold QueryAllowance.total Model.QueryAllowance.total; omega)
 
 omit [∀ n, DecidableEq (M n)] in
 theorem inputWidth : PolynomiallyBounded (fun n => (parameters n).layout.input.encoding.words) := by

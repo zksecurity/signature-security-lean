@@ -1,13 +1,12 @@
+import Signatures.Model.QueryAllowance
 /-! Query allowances shared by the BLS AGM and unrestricted co-CDH routes. -/
 
 namespace BLS
 
-structure QueryAllowance where
-  random : Nat
-  hash : Nat
-  sign : Nat
+/-- The shared allowance, see `Model.QueryAllowance`. -/
+abbrev QueryAllowance := Model.QueryAllowance
 
-def QueryAllowance.total (q : QueryAllowance) : Nat := q.random + q.hash + q.sign
+abbrev QueryAllowance.total (q : QueryAllowance) : Nat := Model.QueryAllowance.total q
 
 def queryKind {HashInput SignInput : Type} : (Nat ⊕ HashInput) ⊕ SignInput → Fin 3
   | .inl (.inl _) => 0

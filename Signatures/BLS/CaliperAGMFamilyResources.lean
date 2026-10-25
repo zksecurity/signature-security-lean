@@ -60,15 +60,15 @@ include resources
 
 omit [∀ n, DecidableEq (M n)] in
 theorem randomQueries : PolynomiallyBounded (fun n => (queries n).random) :=
-  resources.queries.of_le (fun n => by unfold QueryAllowance.total; omega)
+  resources.queries.of_le (fun n => by unfold QueryAllowance.total Model.QueryAllowance.total; omega)
 
 omit [∀ n, DecidableEq (M n)] in
 theorem hashQueries : PolynomiallyBounded (fun n => (queries n).hash) :=
-  resources.queries.of_le (fun n => by unfold QueryAllowance.total; omega)
+  resources.queries.of_le (fun n => by unfold QueryAllowance.total Model.QueryAllowance.total; omega)
 
 omit [∀ n, DecidableEq (M n)] in
 theorem signingQueries : PolynomiallyBounded (fun n => (queries n).sign) :=
-  resources.queries.of_le (fun n => by unfold QueryAllowance.total; omega)
+  resources.queries.of_le (fun n => by unfold QueryAllowance.total Model.QueryAllowance.total; omega)
 
 omit [∀ n, DecidableEq (M n)] in
 theorem setupWidth : PolynomiallyBounded (fun n => (parameters n).layout.setup.width) := by
