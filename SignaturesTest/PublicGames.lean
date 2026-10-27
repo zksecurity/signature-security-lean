@@ -2,6 +2,8 @@ import Signatures.BLS.Statement
 import Signatures.OOPS.Statement
 import Signatures.Proximity.Statement
 import Signatures.Schnorr.Statement
+import Signatures.PS.Game
+import Signatures.SynchronizedPS.Game
 import Lean.Util.CollectAxioms
 
 /-! The mathematical games are independent of machine contracts. The public
@@ -19,7 +21,9 @@ run_meta do
     (``Proximity.Game.collision, `Signatures.Proximity.Game),
     (``Schnorr.Game.agm, `Signatures.Schnorr.Game),
     (``Schnorr.Game.rom, `Signatures.Schnorr.Game),
-    (``Schnorr.Game.nonzeroRom, `Signatures.Schnorr.Game)]
+    (``Schnorr.Game.nonzeroRom, `Signatures.Schnorr.Game),
+    (``PS.Game.agm, `Signatures.PS.Game), (``PS.Game.eufCma, `Signatures.PS.Game),
+    (``SynchronizedPS.Game.eufCma, `Signatures.SynchronizedPS.Game)]
   for (name, moduleName) in games do
     unless (← findModuleOf? name) == some moduleName do
       throwError "{name}: keep the mathematical game separate from execution contracts"

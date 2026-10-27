@@ -51,6 +51,7 @@ import Signatures.OOPS.GeneralAGMParameters
 import Signatures.OOPS.GeneralSecurityModel
 import Signatures.OOPS.Spec.LazyAGM
 import Signatures.OOPS.Statement
+import Signatures.PS.Game
 import Signatures.PaperStatements
 import Signatures.Proximity.ArithmeticStatement
 import Signatures.Proximity.CaliperAGMFamilyStatement
@@ -97,6 +98,7 @@ import Signatures.Schnorr.Spec.NonzeroNonce
 import Signatures.Schnorr.Spec.Oracle
 import Signatures.Schnorr.Spec.ROM
 import Signatures.Schnorr.Statement
+import Signatures.SynchronizedPS.Game
 
 /-
 Copyright (c) 2026 zkSecurity. All rights reserved.

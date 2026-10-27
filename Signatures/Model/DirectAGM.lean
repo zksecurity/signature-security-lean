@@ -202,4 +202,68 @@ theorem eufCma_game_eq {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ] [Biline
   congr! 7
   simp [Bool.decide_and, Bool.and_comm, Bool.and_left_comm]
 
+/-! ### Several group elements per key and per signature -/
+
+/-- `Positions.sign` for a reply that delivers `count` group elements. -/
+def Positions.signMany (positions : Positions) (count : Nat) : Positions :=
+  { positions with
+    next := positions.next + count
+    signatures := positions.signatures ++ (List.range count).map (positions.next + ·) }
+
+/-- `oracle` for signers whose reply is a list of signature-group elements. -/
+def oracleTuple {N : Type → Type} [Monad N]
+    (random : QueryImpl unifSpec N) (hash : Index → N G₁) (sign : Message → N (List G₁)) :
+    QueryImpl (plainSpec (Group G₁ G₂) (Query Index Message) Reply)
+      (StateT (State Message) N) := by
+  intro ⟨request, groups⟩
+  rcases request with ((n | index) | message)
+  · exact do
+      modify fun state => { state with positions := state.positions.request (Index := Index) (Message := Message) ⟨.inl (.inl n), groups⟩ }
+      return ⟨← liftM (random n), fun _ => []⟩
+  · exact do
+      let point ← liftM (hash index)
+      modify fun state => { state with
+        positions := (state.positions.request (Index := Index) (Message := Message) ⟨.inl (.inr index), groups⟩).hash }
+      return ⟨(), groupLists [point] []⟩
+  · exact do
+      let points ← liftM (sign message)
+      modify fun state => { state with
+        positions := (state.positions.request (Index := Index) (Message := Message) ⟨.inr message, groups⟩).signMany points.length
+        signedMessages := state.signedMessages ++ [message] }
+      return ⟨(), groupLists points []⟩
+
+structure TupleResult (Message G₁ : Type) where
+  message : Message
+  signature : List G₁
+  signedMessages : List Message
+  wellFormed : Bool
+
+def tupleResult (output : Explained F Message (Group G₁ G₂)) (state : State Message) : TupleResult Message G₁ where
+  message := output.value.data
+  signature := output.value.groups .signature
+  signedMessages := state.signedMessages
+  wellFormed := state.positions.wellFormed && (output.value.groups .verification).isEmpty
+
+/-- Execute the certified attacker from the generator and the public key's `𝔾₂` components,
+with a signer that returns several `𝔾₁` elements per signature. -/
+def runTuple (sign : Message → RandomOracle.Computation Index G₁ (List G₁))
+    (adversary : Adversary F Index Message G₁ G₂) (generator : G₁) (keys : List G₂) :
+    RandomOracle.Computation Index G₁ (TupleResult Message G₁) := do
+  let ((output, _received), state) ←
+    (adversary.run (oracleTuple RandomOracle.random RandomOracle.hash sign) ⟨(), groupLists [generator] keys⟩).run {}
+  return tupleResult output state
+
+/-- The algebraic attacker model for schemes whose keys and signatures are tuples of group
+elements: the generator and the key's `𝔾₂` components are the received inputs, each signing
+reply delivers the signature's `𝔾₁` components, and the forgery is decoded from the explained
+`𝔾₁` outputs — a wrong shape is no forgery. -/
+@[instance_reducible]
+def attackerTuple {PK S : Type} (generator : G₁) (keys : PK → List G₂) (encode : S → List G₁)
+    (decode : List G₁ → Option S) :
+    EufCma.Attacker (Adversary F Index Message G₁ G₂) Index G₁ Message PK S where
+  run adversary sign publicKey :=
+    (fun forgery => (decode forgery.signature).map fun s =>
+      ((forgery.message, s), forgery.signedMessages, forgery.wellFormed)) <$>
+      runTuple (fun message => encode <$> sign message) adversary generator (keys publicKey)
+
 end Model.DirectAGM

@@ -35,6 +35,11 @@ every group element they output). For ordinary attackers it is VCVio's
 at the scheme, written out once more as a theorem so the file reads as the
 paper's figure; the proof-side games that reductions start from are related to it
 by equalities in `Proofs/` (e.g. [`BLS.Game.eufCma_eq_rom`](Proofs/BLS/EufCma.lean)).
+Two further schemes are defined but not yet proved: [Pointcheval–Sanders](Signatures/PS/Game.lean)
+(`eufCma`, `agm`; no hash, two-element signatures via the tuple attacker model) and
+[synchronized Pointcheval–Sanders](Signatures/SynchronizedPS/Game.lean) (`eufCma` with the
+one-signature-per-period rule as the admissibility restriction; its algebraic game awaits the
+key-registration rule for co-signers).
 
 ## Layout
 
@@ -46,7 +51,7 @@ Two libraries, split by what a reviewer has to read.
   per scheme, `Game.lean`, `Statement.lean`, the `*FamilyStatement.lean` corollaries, `Spec/`
   (the scheme and its oracles), `QueryAllowance`, and the `*SecurityModel`/`*Parameters`/`*Resources`
   records that fix the execution model and derived budgets, and `Runtime/` with the
-  hardness-family hypotheses of the asymptotic statements. 99 modules.
+  hardness-family hypotheses of the asymptotic statements. 101 modules.
 - `Proofs/` — everything else: the proofs of the statements (`Proofs/<Scheme>/`), the executed
   reductions and their resource accounting (`Proofs/Runtime/`, `Proofs/Runtime/Caliper/`), and
   supporting lemmas (`Proofs/Model/`). Nothing here needs to be read to know what is claimed.
