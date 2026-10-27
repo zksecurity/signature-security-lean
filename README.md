@@ -18,11 +18,16 @@ on `propext`, `Classical.choice` and `Quot.sound`.
 | Schnorr | ordinary (ROM) | [`Schnorr.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound, full-field nonces |
 | Schnorr | ordinary (ROM) | [`Schnorr.NonzeroNonce.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound, nonzero nonces |
 | Schnorr | algebraic | [`Schnorr.agm_security`](Signatures/Schnorr/Statement.lean) | `εDL + (qH+1)/p + qS(qS+qH)/p` |
+| Synchronized PS | algebraic | [`SynchronizedPS.agm_security`](Signatures/SynchronizedPS/Statement.lean) | `εX + εY + εH + 1/p`, one honest signature per period |
 
 `εDL`/`εcoCDH` are DLog/co-CDH success suprema at the proved reduction budget in
 the same execution model; `p` is the group order. Each statement has a
 polynomial-family corollary (`*FamilyStatement.lean`) and the two-budget form
-of each AGM bound is its scheme's `Proofs.agm_security`.
+of each AGM bound is its scheme's `Proofs.agm_security`. Synchronized
+Pointcheval–Sanders is newer: `εX`, `εY`, `εH` are the DLog successes of its
+[three named solvers](Signatures/SynchronizedPS/Spec/Reduction.lean) (challenge as
+the first key, as the second key, or in the period hashes), stated for a finite
+period type and not yet costed in an execution model.
 
 ## Games
 
@@ -35,11 +40,12 @@ every group element they output). For ordinary attackers it is VCVio's
 at the scheme, written out once more as a theorem so the file reads as the
 paper's figure; the proof-side games that reductions start from are related to it
 by equalities in `Proofs/` (e.g. [`BLS.Game.eufCma_eq_rom`](Proofs/BLS/EufCma.lean)).
-Two further schemes are defined but not yet proved: [Pointcheval–Sanders](Signatures/PS/Game.lean)
-(`eufCma`, `agm`; no hash, two-element signatures via the tuple attacker model) and
-[synchronized Pointcheval–Sanders](Signatures/SynchronizedPS/Game.lean) (`eufCma` with the
-one-signature-per-period rule as the admissibility restriction; its algebraic game awaits the
-key-registration rule for co-signers).
+[Synchronized Pointcheval–Sanders](Signatures/SynchronizedPS/Game.lean) attacks one honest key
+in the certified-key model: a forgery names the co-signers' key pairs and messages with the
+aggregate, and the one-signature-per-period rule is the admissibility restriction. Its base is a
+hash, so every element the attacker sees is bilinear in the secrets and the hash exponents, and the
+AGM proof stays linear like OOPS's; plain [Pointcheval–Sanders](Signatures/PS/Game.lean), whose
+base is attacker-chosen, is defined (`eufCma`, `agm`) but not proved.
 
 ## Layout
 
@@ -51,7 +57,7 @@ Two libraries, split by what a reviewer has to read.
   per scheme, `Game.lean`, `Statement.lean`, the `*FamilyStatement.lean` corollaries, `Spec/`
   (the scheme and its oracles), `QueryAllowance`, and the `*SecurityModel`/`*Parameters`/`*Resources`
   records that fix the execution model and derived budgets, and `Runtime/` with the
-  hardness-family hypotheses of the asymptotic statements. 101 modules.
+  hardness-family hypotheses of the asymptotic statements. 103 modules.
 - `Proofs/` — everything else: the proofs of the statements (`Proofs/<Scheme>/`), the executed
   reductions and their resource accounting (`Proofs/Runtime/`, `Proofs/Runtime/Caliper/`), and
   supporting lemmas (`Proofs/Model/`). Nothing here needs to be read to know what is claimed.

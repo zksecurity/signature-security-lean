@@ -99,6 +99,8 @@ import Signatures.Schnorr.Spec.Oracle
 import Signatures.Schnorr.Spec.ROM
 import Signatures.Schnorr.Statement
 import Signatures.SynchronizedPS.Game
+import Signatures.SynchronizedPS.Spec.Reduction
+import Signatures.SynchronizedPS.Statement
 
 /-
 Copyright (c) 2026 zkSecurity. All rights reserved.

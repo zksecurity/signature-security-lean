@@ -1744,6 +1744,10 @@ import Proofs.Schnorr.NonzeroSampling
 import Proofs.Schnorr.NonzeroSecurity
 import Proofs.Schnorr.Oracle
 import Proofs.Schnorr.ROM
+import Proofs.SynchronizedPS.Adaptive
+import Proofs.SynchronizedPS.Game
+import Proofs.SynchronizedPS.LazyGame
+import Proofs.SynchronizedPS.Security
 
 /-! Everything that is not the review surface: the proofs of the public statements,
 the executed reductions and their resource accounting. `Signatures` is the review

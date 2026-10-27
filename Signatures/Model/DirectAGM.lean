@@ -155,14 +155,16 @@ noncomputable def game {Gₜ : Type} [AddCommGroup Gₜ] [Module F Gₜ]
 
 namespace ProofView
 
-/-- Interpret the protocol in ordinary signature queries, retaining chronological positions. -/
-def program
+/-- Interpret the protocol in ordinary signature queries, retaining chronological positions.
+`Out` is whatever the attacker reports besides its group outputs; for the plain pairing family
+it is the forged message. -/
+def program {Out : Type}
     (attack : OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
-      (Explained F Message (Group G₁ G₂))) (positions : Positions) :
-    OracleComp (LazyAGM.advSpec Index Message G₁) (LazyAGM.Output F Message) :=
+      (Explained F Out (Group G₁ G₂))) (positions : Positions) :
+    OracleComp (LazyAGM.advSpec Index Message G₁) (LazyAGM.Output F Out) :=
   OracleComp.recOn
     (motive := fun _ => Positions → OracleComp (LazyAGM.advSpec Index Message G₁)
-      (LazyAGM.Output F Message)) attack
+      (LazyAGM.Output F Out)) attack
     (fun output positions => pure (grouped output positions))
     (fun request _ next positions => by
       rcases request with ⟨⟨request, groups⟩, explanations⟩
@@ -265,5 +267,63 @@ def attackerTuple {PK S : Type} (generator : G₁) (keys : PK → List G₂) (en
     (fun forgery => (decode forgery.signature).map fun s =>
       ((forgery.message, s), forgery.signedMessages, forgery.wellFormed)) <$>
       runTuple (fun message => encode <$> sign message) adversary generator (keys publicKey)
+
+/-! ### Forgeries that report data beyond the message
+
+Aggregate schemes report the co-signers with the forgery; the attacker's final `Out` carries
+that data and one `𝔾₁` element, and the key may have several `𝔾₂` components. -/
+
+/-- The shared AGM adversary whose final report is a value of `Out` with its group outputs. -/
+abbrev AdversaryWith (F Index Message Out G₁ G₂ : Type)
+    [Zero F] [AddCommMonoid G₁] [SMul F G₁] [AddMonoid G₂] [SMul F G₂] :=
+  AlgebraicGroupModel.Interaction.Adversary F (Group G₁ G₂) Unit
+    (Query Index Message) (Reply (ι := Index) (M := Message)) Out
+
+structure ResultWith (Out Message G₁ : Type) where
+  data : Out
+  signature : G₁
+  signedMessages : List Message
+  wellFormed : Bool
+
+def resultWith {Out : Type} (output : Explained F Out (Group G₁ G₂)) (state : State Message) :
+    ResultWith Out Message G₁ where
+  data := output.value.data
+  signature := (output.value.groups .signature).headD 0
+  signedMessages := state.signedMessages
+  wellFormed := state.positions.wellFormed &&
+    ((output.value.groups .signature).length == 1) &&
+    (output.value.groups .verification).isEmpty
+
+/-- Execute the certified attacker from the generator and the key's `𝔾₂` components. -/
+def runWithData {Out : Type} (sign : Message → RandomOracle.Computation Index G₁ G₁)
+    (adversary : AdversaryWith F Index Message Out G₁ G₂) (generator : G₁) (keys : List G₂) :
+    RandomOracle.Computation Index G₁ (ResultWith Out Message G₁) := do
+  let ((output, _received), state) ←
+    (adversary.run (oracle RandomOracle.random RandomOracle.hash sign) ⟨(), groupLists [generator] keys⟩).run {}
+  return resultWith output state
+
+/-- The attacker model for schemes whose signature is one `𝔾₁` element (`encode`) with further
+data: the generator and the key's `𝔾₂` components are the received inputs, and the forgery is
+decoded from the reported data and the explained `𝔾₁` output. -/
+@[instance_reducible]
+def attackerWith {Out PK S : Type} (generator : G₁) (keys : PK → List G₂) (encode : S → G₁)
+    (decode : Out → G₁ → Option (Message × S)) :
+    EufCma.Attacker (AdversaryWith F Index Message Out G₁ G₂) Index G₁ Message PK S where
+  run adversary sign publicKey :=
+    (fun forgery => (decode forgery.data forgery.signature).map fun forged =>
+      (forged, forgery.signedMessages, forgery.wellFormed)) <$>
+      runWithData (fun message => encode <$> sign message) adversary generator (keys publicKey)
+
+namespace ProofView
+
+/-- The grouped proof view of a data-carrying attacker, run from its key's components. -/
+structure View (F Index Message Out G₁ PK : Type) where
+  main : PK → OracleComp (LazyAGM.advSpec Index Message G₁) (LazyAGM.Output F Out)
+
+def adversaryWith {Out PK : Type} (generator : G₁) (keys : PK → List G₂)
+    (attack : AdversaryWith F Index Message Out G₁ G₂) : View F Index Message Out G₁ PK where
+  main publicKey := program (attack.main ⟨(), groupLists [generator] (keys publicKey)⟩) {}
+
+end ProofView
 
 end Model.DirectAGM

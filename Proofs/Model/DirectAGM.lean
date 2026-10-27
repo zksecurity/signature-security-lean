@@ -132,31 +132,31 @@ def observe (generator : G₁) (value : LazyAGM.Output F Message ×
   signedMessages := value.2.2.map Prod.fst
   signingCoefficients := value.1.ξ
 
-def execute {N : Type → Type} [Monad N]
+def execute {Out : Type} {N : Type → Type} [Monad N]
     (random : QueryImpl unifSpec N) (hash : Index → N G₁) (sign : Message → N G₁)
     (attack : OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
-      (Explained F Message (Group G₁ G₂)))
+      (Explained F Out (Group G₁ G₂)))
     (basis : Groups (Group G₁ G₂)) (state : State Message) :
-    N ((Explained F Message (Group G₁ G₂) × Groups (Group G₁ G₂)) × State Message) :=
+    N ((Explained F Out (Group G₁ G₂) × Groups (Group G₁ G₂)) × State Message) :=
   ((simulateQ (fun request : Explained F (Query Index Message) (Group G₁ G₂) =>
     StateT.mk fun received => do
     let reply ← oracle random hash sign request.value
     pure (reply, extend received reply.groups)) attack).run basis).run state
 
 omit [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
-theorem execute_pure {N : Type → Type} [Monad N] [LawfulMonad N]
+theorem execute_pure {Out : Type} {N : Type → Type} [Monad N] [LawfulMonad N]
     (random : QueryImpl unifSpec N) (hash : Index → N G₁) (sign : Message → N G₁)
-    (output : Explained F Message (Group G₁ G₂))
+    (output : Explained F Out (Group G₁ G₂))
     (basis : Groups (Group G₁ G₂)) (state : State Message) :
     execute random hash sign (pure output) basis state = pure ((output, basis), state) := rfl
 
 omit [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
-theorem execute_query {N : Type → Type} [Monad N] [LawfulMonad N]
+theorem execute_query {Out : Type} {N : Type → Type} [Monad N] [LawfulMonad N]
     (random : QueryImpl unifSpec N) (hash : Index → N G₁) (sign : Message → N G₁)
     (request : Explained F (Query Index Message) (Group G₁ G₂))
     (next : AlgebraicGroupModel.Interaction.Message (Reply request.value.data) (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
-        (Explained F Message (Group G₁ G₂)))
+        (Explained F Out (Group G₁ G₂)))
     (basis : Groups (Group G₁ G₂)) (state : State Message) :
     execute random hash sign (OracleComp.queryBind request next) basis state =
       (oracle random hash sign request.value).run state >>= fun (reply, state) =>
@@ -164,33 +164,33 @@ theorem execute_query {N : Type → Type} [Monad N] [LawfulMonad N]
   simp [execute, simulateQ, PFunctor.FreeM.liftM, StateT.run_bind, StateT.run_mk]
 
 omit [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
-theorem program_random (n : Nat) (groups : Groups (Group G₁ G₂))
+theorem program_random {Out : Type} (n : Nat) (groups : Groups (Group G₁ G₂))
     (explanations : GroupSort → List (List F))
     (next : AlgebraicGroupModel.Interaction.Message (Fin (n + 1)) (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
-        (Explained F Message (Group G₁ G₂))) (positions : Positions) :
+        (Explained F Out (Group G₁ G₂))) (positions : Positions) :
     program (OracleComp.queryBind ⟨⟨.inl (.inl n), groups⟩, explanations⟩ next) positions =
       OracleComp.queryBind (.inl (.inl n)) (fun number =>
         program (next ⟨number, fun _ => []⟩)
           (positions.request (Index := Index) (Message := Message) ⟨.inl (.inl n), groups⟩)) := rfl
 
 omit [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
-theorem program_hash (index : Index) (groups : Groups (Group G₁ G₂))
+theorem program_hash {Out : Type} (index : Index) (groups : Groups (Group G₁ G₂))
     (explanations : GroupSort → List (List F))
     (next : AlgebraicGroupModel.Interaction.Message Unit (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
-        (Explained F Message (Group G₁ G₂))) (positions : Positions) :
+        (Explained F Out (Group G₁ G₂))) (positions : Positions) :
     program (OracleComp.queryBind ⟨⟨.inl (.inr index), groups⟩, explanations⟩ next) positions =
       OracleComp.queryBind (.inl (.inr index)) (fun point =>
         program (next ⟨(), groupLists [point] []⟩)
           (positions.request (Message := Message) ⟨.inl (.inr index), groups⟩).hash) := rfl
 
 omit [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
-theorem program_sign (message : Message) (groups : Groups (Group G₁ G₂))
+theorem program_sign {Out : Type} (message : Message) (groups : Groups (Group G₁ G₂))
     (explanations : GroupSort → List (List F))
     (next : AlgebraicGroupModel.Interaction.Message Unit (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
-        (Explained F Message (Group G₁ G₂))) (positions : Positions) :
+        (Explained F Out (Group G₁ G₂))) (positions : Positions) :
     program (OracleComp.queryBind ⟨⟨.inr message, groups⟩, explanations⟩ next) positions =
       OracleComp.queryBind (.inr message) (fun point =>
         program (next ⟨(), groupLists [point] []⟩)
@@ -283,6 +283,98 @@ theorem adversary_query_bound (generator : G₁) (attack : Adversary F Index Mes
   program_query_bound _ _ _ _ bound
 
 end ProofView
+
+/-- The plain content of a data-carrying result. -/
+def ResultWith.plain {Out : Type} (result : ResultWith Out Message G₁) : Out × G₁ × List Message :=
+  (result.data, result.signature, result.signedMessages)
+
+namespace ProofView
+
+/-- The reported data, the materialized `𝔾₁` output and the signed messages. -/
+def observeWith {Out : Type} (generator : G₁)
+    (value : LazyAGM.Output F Out × LazyAGM.Transcript Index Message G₁) : Out × G₁ × List Message :=
+  (value.1.mstar,
+    value.1.β • generator + LazyAGM.weightedReplies value.1.γ value.2.1 +
+      LazyAGM.weightedReplies value.1.ξ value.2.2,
+    value.2.2.map Prod.fst)
+
+omit [AddCommGroup G₂] [Module F G₂] in
+theorem aligned_initial_keys (generator : G₁) (keys : List G₂) :
+    Aligned (F := F) (Index := Index) (Message := Message) generator {}
+      (groupLists [generator] keys) ([], []) := by
+  constructor <;> simp [groupLists, evaluate, LazyAGM.weightedReplies, LazyAGM.tokenCoeff]
+
+/-- `execute_eq` for attackers reporting data beyond the message. -/
+theorem executeWith_eq {Out : Type} {N : Type → Type} [Monad N] [LawfulMonad N]
+    (random : QueryImpl unifSpec N) (hash : Index → N G₁) (sign : Message → N G₁)
+    (attack : OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
+      (Explained F Out (Group G₁ G₂)))
+    (generator : G₁) (basis : Groups (Group G₁ G₂)) (state : State Message)
+    (transcript : LazyAGM.Transcript Index Message G₁)
+    (algebraic : IsAlgebraic basis attack)
+    (aligned : Aligned (F := F) generator state.positions basis transcript)
+    (signed : state.signedMessages = transcript.2.map Prod.fst) :
+    (fun value => (resultWith value.1.1 value.2).plain) <$>
+      execute random hash sign attack basis state =
+    observeWith generator <$>
+      (simulateQ (LazyAGM.handler random hash sign) (program attack state.positions)).run transcript := by
+  induction attack using OracleComp.recOn generalizing basis state transcript with
+  | pure output =>
+      change (fun value => (resultWith value.1.1 value.2).plain) <$>
+        pure ((output, basis), state) = observeWith generator <$> pure (grouped output state.positions, transcript)
+      simp only [map_pure]
+      congr 1
+      simp only [resultWith, observeWith, ResultWith.plain, grouped]
+      rw [← head_evaluate output basis algebraic, aligned.evaluate_eq (coefficients output), signed]
+  | queryBind request next ih =>
+      obtain ⟨_, algebraicNext⟩ := (isAlgebraic_query basis request next).mp algebraic
+      rcases request with ⟨⟨request, groups⟩, explanations⟩
+      rcases request with ((n | index) | message)
+      all_goals
+        rw [execute_query]
+        first
+        | rw [program_random n groups explanations next state.positions]
+        | rw [program_hash index groups explanations next state.positions]
+        | rw [program_sign message groups explanations next state.positions]
+        simp only [simulate_queryBind, StateT.run_bind, StateT.run_mk,
+          oracle, LazyAGM.handler, StateT.run_modify, StateT.run_monadLift,
+          bind_assoc, pure_bind, map_bind, StateT.run_pure, monadLift_self]
+      · apply bind_congr
+        intro number
+        apply ih
+        · exact algebraicNext ⟨number, fun _ => []⟩
+        · have empty : extend basis (fun _ => []) = basis := by funext s; simp [extend]
+          rw [empty]
+          exact aligned.request ⟨.inl (.inl n), groups⟩
+        · exact signed
+      · apply bind_congr
+        intro point
+        apply ih
+        · exact algebraicNext ⟨(), groupLists [point] []⟩
+        · exact (aligned.request ⟨.inl (.inr index), groups⟩).hash index point
+        · exact signed
+      · apply bind_congr
+        intro signature
+        apply ih
+        · exact algebraicNext ⟨(), groupLists [signature] []⟩
+        · exact (aligned.request ⟨.inr message, groups⟩).sign message signature
+        · simpa using congrArg (· ++ [message]) signed
+
+end ProofView
+
+/-- Every data-carrying attacker has this exact grouped proof view. -/
+theorem runWithData_eq {Out : Type} (sign : Message → RandomOracle.Computation Index G₁ G₁)
+    (attack : AdversaryWith F Index Message Out G₁ G₂) (generator : G₁) (keys : List G₂) :
+    ResultWith.plain <$> runWithData sign attack generator keys =
+      ProofView.observeWith generator <$>
+        (simulateQ (LazyAGM.handler RandomOracle.random RandomOracle.hash sign)
+          (ProofView.program (attack.main ⟨(), groupLists [generator] keys⟩) {})).run ([], []) := by
+  have same := ProofView.executeWith_eq RandomOracle.random RandomOracle.hash sign
+    (attack.main ⟨(), groupLists [generator] keys⟩) generator (groupLists [generator] keys) {} ([], [])
+    (attack.algebraic _) (ProofView.aligned_initial_keys generator keys) rfl
+  simp only [runWithData, bind_pure_comp, Functor.map_map]
+  convert same using 1
+  rfl
 
 /-- Every shared-library attacker has this exact grouped proof view, without extra assumptions. -/
 theorem run_eq (terms : Message → List (Index × F)) (secret : F)
