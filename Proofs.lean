@@ -1344,6 +1344,7 @@ import Proofs.Runtime.Caliper.SyncWrapAdvance
 import Proofs.Runtime.Caliper.SyncWrapBounds
 import Proofs.Runtime.Caliper.SyncWrapCaller
 import Proofs.Runtime.Caliper.SyncWrapCorrespondence
+import Proofs.Runtime.Caliper.SyncWrapFamilyResources
 import Proofs.Runtime.Caliper.SyncWrapFinish
 import Proofs.Runtime.Caliper.SyncWrapFinishBounds
 import Proofs.Runtime.Caliper.SyncWrapKeyed
@@ -1766,6 +1767,7 @@ import Proofs.Schnorr.NonzeroSecurity
 import Proofs.Schnorr.Oracle
 import Proofs.Schnorr.ROM
 import Proofs.SynchronizedPS.Adaptive
+import Proofs.SynchronizedPS.CaliperAGMFamily
 import Proofs.SynchronizedPS.CaliperSecurity
 import Proofs.SynchronizedPS.Game
 import Proofs.SynchronizedPS.LazyGame

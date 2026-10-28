@@ -337,15 +337,29 @@ theorem good_eq (X : G₁) (α : F) :
     queries.total A.invariant A.correspondence (SynchronizedPS.Proofs.view A.source generator) A.source_eq correction final (keysOf s.val keyGenerator) corrLaw finLaw side.mulLaw
     P.fuelRoom ⟨keysOf s.val keyGenerator (α • keyGenerator), keysValid s α⟩ s (α • keyGenerator) rfl).symm]
 
+include postEq corrLaw finLaw keysValid in
+/-- At the curve's generators the wrapped-attacker good solver and the executed one have the same advantage. -/
+theorem good_advantage_eq :
+    Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
+      goodReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) =
+    Model.dlog11Advantage generator keyGenerator (A.caliperGood (terms := terms) side postFn) :=
+  BLS.LazyAGM.Reduction.dlog11Advantage_congr generator keyGenerator _ (A.caliperGood (terms := terms) side postFn)
+    (fun α => congrArg _ (A.good_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid (α • generator) α))
+
+include postLaw reserve in
+theorem caliperGood_within' (codeLe : P.goodWords side gs post.words ≤ P.solverCode)
+    (memoryLe : P.goodMemory side gs post.time post.words post.slots ≤ P.solverMemory) :
+    P.within (P.goodTime side gs post.time) (A.caliperGood (terms := terms) side postFn) :=
+  (A.caliperGood_within side reserve gs post postFn postLaw).mono codeLe memoryLe le_rfl
+
 include postEq corrLaw finLaw keysValid postLaw reserve in
 theorem good_advantage (codeLe : P.goodWords side gs post.words ≤ P.solverCode)
     (memoryLe : P.goodMemory side gs post.time post.words post.slots ≤ P.solverMemory) :
     Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
       goodReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) ≤
     P.dlogBound (P.goodTime side gs post.time) :=
-  (BLS.LazyAGM.Reduction.dlog11Advantage_congr generator keyGenerator _ (A.caliperGood (terms := terms) side postFn)
-    (fun α => congrArg _ (A.good_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid (α • generator) α))).trans_le
-    (Model.le_advantageBound _ _ _ ((A.caliperGood_within side reserve gs post postFn postLaw).mono codeLe memoryLe le_rfl))
+  (A.good_advantage_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid).trans_le
+    (Model.le_advantageBound _ _ _ (A.caliperGood_within' side reserve gs post postFn postLaw codeLe memoryLe))
 end Good
 
 section Bad
@@ -428,15 +442,28 @@ theorem bad_eq (X : G₁) (α : F) :
     queries.total A.invariant A.correspondence (SynchronizedPS.Proofs.view A.source generator) A.source_eq correction final (keysOf s.val keyGenerator) corrLaw finLaw side.mulLaw
     P.fuelRoom ⟨keysOf s.val keyGenerator (kappa.val • keyGenerator), keysValid s kappa.val⟩ s (kappa.val • keyGenerator) rfl).symm]
 
+include postEq corrLaw finLaw keysValid in
+theorem bad_advantage_eq :
+    Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
+      badReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) =
+    Model.dlog11Advantage generator keyGenerator (A.caliperBad (terms := terms) side postFn) :=
+  BLS.LazyAGM.Reduction.dlog11Advantage_congr generator keyGenerator _ (A.caliperBad (terms := terms) side postFn)
+    (fun α => A.bad_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid (α • generator) α)
+
+include postLaw reserve in
+theorem caliperBad_within' (codeLe : P.badWords side bs post.words ≤ P.solverCode)
+    (memoryLe : P.badMemory side bs post.time post.words post.slots ≤ P.solverMemory) :
+    P.within (P.badTime side bs post.time) (A.caliperBad (terms := terms) side postFn) :=
+  (A.caliperBad_within side reserve bs post postFn postLaw).mono codeLe memoryLe le_rfl
+
 include postEq corrLaw finLaw keysValid postLaw reserve in
 theorem bad_advantage (codeLe : P.badWords side bs post.words ≤ P.solverCode)
     (memoryLe : P.badMemory side bs post.time post.words post.slots ≤ P.solverMemory) :
     Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
       badReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) ≤
     P.dlogBound (P.badTime side bs post.time) :=
-  (BLS.LazyAGM.Reduction.dlog11Advantage_congr generator keyGenerator _ (A.caliperBad (terms := terms) side postFn)
-    (fun α => A.bad_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid (α • generator) α)).trans_le
-    (Model.le_advantageBound _ _ _ ((A.caliperBad_within side reserve bs post postFn postLaw).mono codeLe memoryLe le_rfl))
+  (A.bad_advantage_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid).trans_le
+    (Model.le_advantageBound _ _ _ (A.caliperBad_within' side reserve bs post postFn postLaw codeLe memoryLe))
 end Bad
 
 /-! ## The four solvers -/
@@ -469,6 +496,44 @@ theorem good₂_advantage : Model.dlog11Advantage generator keyGenerator (solver
 theorem bad₂_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₂ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.badTime₂ :=
   A.bad_advantage P.wrap₂ P.reserve₂ P.bad₂ P.postBad₂ KeyedSetup.swapValue (KeyedSetup.swapStage_source P.shape.badKeyed P.outer.port)
     correction₂ final₂ (fun x g₂ pk => (x • g₂, pk)) (fun _ _ _ _ _ => rfl) P.wrap₂.corrLaw finLaw₂ keysValid₂
+    (le_trans (le_max_right _ _) (le_max_right _ _)) (le_trans (le_max_right _ _) (le_max_right _ _))
+
+/-! ### The four executed solvers as a family -/
+
+/-- The executed good solver of scheme₁. -/
+noncomputable def caliperGood₁ : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ := A.caliperGood (terms := terms₁) P.wrap₁ (fun value => value)
+noncomputable def caliperBad₁ : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ := A.caliperBad (terms := terms₁) P.wrap₁ (fun value => value)
+noncomputable def caliperGood₂ : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ := A.caliperGood (terms := terms₂) P.wrap₂ KeyedSetup.swapValue
+noncomputable def caliperBad₂ : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ := A.caliperBad (terms := terms₂) P.wrap₂ KeyedSetup.swapValue
+
+theorem good₁_eq : Model.dlog11Advantage generator keyGenerator (solverGood₁ (SynchronizedPS.Proofs.view A.source generator)) =
+    Model.dlog11Advantage generator keyGenerator A.caliperGood₁ :=
+  A.good_advantage_eq (terms := terms₁) P.wrap₁ (fun value => value) correction₁ final₁ (fun y g₂ pk => (pk, y • g₂)) (fun _ _ _ _ _ => rfl)
+    P.wrap₁.corrLaw finLaw₁ keysValid₁
+theorem bad₁_eq : Model.dlog11Advantage generator keyGenerator (solverBad₁ (SynchronizedPS.Proofs.view A.source generator)) =
+    Model.dlog11Advantage generator keyGenerator A.caliperBad₁ :=
+  A.bad_advantage_eq (terms := terms₁) P.wrap₁ (fun value => value) correction₁ final₁ (fun y g₂ pk => (pk, y • g₂)) (fun _ _ _ _ _ => rfl)
+    P.wrap₁.corrLaw finLaw₁ keysValid₁
+theorem good₂_eq : Model.dlog11Advantage generator keyGenerator (solverGood₂ (SynchronizedPS.Proofs.view A.source generator)) =
+    Model.dlog11Advantage generator keyGenerator A.caliperGood₂ :=
+  A.good_advantage_eq (terms := terms₂) P.wrap₂ KeyedSetup.swapValue correction₂ final₂ (fun x g₂ pk => (x • g₂, pk)) (fun _ _ _ _ _ => rfl)
+    P.wrap₂.corrLaw finLaw₂ keysValid₂
+theorem bad₂_eq : Model.dlog11Advantage generator keyGenerator (solverBad₂ (SynchronizedPS.Proofs.view A.source generator)) =
+    Model.dlog11Advantage generator keyGenerator A.caliperBad₂ :=
+  A.bad_advantage_eq (terms := terms₂) P.wrap₂ KeyedSetup.swapValue correction₂ final₂ (fun x g₂ pk => (x • g₂, pk)) (fun _ _ _ _ _ => rfl)
+    P.wrap₂.corrLaw finLaw₂ keysValid₂
+
+theorem caliperGood₁_within : P.within P.goodTime₁ A.caliperGood₁ :=
+  A.caliperGood_within' P.wrap₁ P.reserve₁ P.good₁ P.postGood₁ (fun value => value) (KeyedSetup.keepStage_source P.shape.keyed P.outer.port)
+    (le_trans (le_max_left _ _) (le_max_left _ _)) (le_trans (le_max_left _ _) (le_max_left _ _))
+theorem caliperBad₁_within : P.within P.badTime₁ A.caliperBad₁ :=
+  A.caliperBad_within' P.wrap₁ P.reserve₁ P.bad₁ P.postBad₁ (fun value => value) (KeyedSetup.keepStage_source P.shape.badKeyed P.outer.port)
+    (le_trans (le_max_right _ _) (le_max_left _ _)) (le_trans (le_max_right _ _) (le_max_left _ _))
+theorem caliperGood₂_within : P.within P.goodTime₂ A.caliperGood₂ :=
+  A.caliperGood_within' P.wrap₂ P.reserve₂ P.good₂ P.postGood₂ KeyedSetup.swapValue (KeyedSetup.swapStage_source P.shape.keyed P.outer.port)
+    (le_trans (le_max_left _ _) (le_max_right _ _)) (le_trans (le_max_left _ _) (le_max_right _ _))
+theorem caliperBad₂_within : P.within P.badTime₂ A.caliperBad₂ :=
+  A.caliperBad_within' P.wrap₂ P.reserve₂ P.bad₂ P.postBad₂ KeyedSetup.swapValue (KeyedSetup.swapStage_source P.shape.badKeyed P.outer.port)
     (le_trans (le_max_right _ _) (le_max_right _ _)) (le_trans (le_max_right _ _) (le_max_right _ _))
 
 end AlgebraicAdversary

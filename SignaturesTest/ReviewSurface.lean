@@ -32,6 +32,8 @@ def executionModelInterface : List Name := [
   ``Signatures.Runtime.WeightedAGM.Index.oops, ``Signatures.Runtime.WeightedAGM.Index.proximity,
   ``Signatures.Runtime.WeightedCaliper.Family.dlogHardness,
   ``Signatures.Runtime.WeightedCaliper.Family.PolynomialResources,
+  ``Signatures.Runtime.SyncWrapCaliper.Family.dlogHardness,
+  ``Signatures.Runtime.SyncWrapCaliper.Family.PolynomialResources,
   ``Signatures.Runtime.WeightedAGM.General.Family.PolynomialResources,
   ``Signatures.Runtime.WeightedAGM.General.Parameters.configuration,
   ``Signatures.Runtime.WeightedAGM.General.Parameters.generator,

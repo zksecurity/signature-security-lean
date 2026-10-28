@@ -98,6 +98,7 @@ import Signatures.Schnorr.Spec.NonzeroNonce
 import Signatures.Schnorr.Spec.Oracle
 import Signatures.Schnorr.Spec.ROM
 import Signatures.Schnorr.Statement
+import Signatures.SynchronizedPS.CaliperAGMFamilyStatement
 import Signatures.SynchronizedPS.CaliperAGMParameters
 import Signatures.SynchronizedPS.Game
 import Signatures.SynchronizedPS.SecurityModel
