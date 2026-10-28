@@ -1748,6 +1748,10 @@ import Proofs.SynchronizedPS.Adaptive
 import Proofs.SynchronizedPS.Game
 import Proofs.SynchronizedPS.LazyGame
 import Proofs.SynchronizedPS.Security
+import Proofs.SynchronizedPS.Wrapped
+import Proofs.SynchronizedPS.WrappedAlgebra
+import Proofs.SynchronizedPS.WrappedBound
+import Proofs.SynchronizedPS.WrappedSecurity
 
 /-! Everything that is not the review surface: the proofs of the public statements,
 the executed reductions and their resource accounting. `Signatures` is the review
