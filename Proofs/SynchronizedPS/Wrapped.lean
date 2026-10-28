@@ -69,7 +69,7 @@ theorem signatures_append (sign : Period × F → G₁) (events more : List (Eve
   | nil => rfl
   | cons event rest ih => cases event <;> simp [signatures, ih]
 
-omit [AddCommGroup G₂] [Module F G₂] in
+omit [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
 /-- `Reduction.run` is the ordered run with the transcripts read off. -/
 theorem run_eq_ordered (V : Proofs.View F Period G₁ G₂)
     (publicKey : G₂ × G₂) (H : Period → G₁) (sign : Period × F → G₁) :
