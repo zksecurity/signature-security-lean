@@ -1339,6 +1339,7 @@ import Proofs.Runtime.Caliper.SumContext
 import Proofs.Runtime.Caliper.SumContextBounds
 import Proofs.Runtime.Caliper.SumContextMerge
 import Proofs.Runtime.Caliper.SumContextMergeBuffers
+import Proofs.Runtime.Caliper.SyncTerms
 import Proofs.Runtime.Caliper.SyncWrapAdvance
 import Proofs.Runtime.Caliper.SyncWrapBounds
 import Proofs.Runtime.Caliper.SyncWrapCaller
