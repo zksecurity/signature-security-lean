@@ -19,15 +19,19 @@ on `propext`, `Classical.choice` and `Quot.sound`.
 | Schnorr | ordinary (ROM) | [`Schnorr.NonzeroNonce.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound, nonzero nonces |
 | Schnorr | algebraic | [`Schnorr.agm_security`](Signatures/Schnorr/Statement.lean) | `εDL + (qH+1)/p + qS(qS+qH)/p` |
 | Synchronized PS | algebraic | [`SynchronizedPS.agm_security`](Signatures/SynchronizedPS/Statement.lean) | `εX + εY + εH + 1/p`, one honest signature per period |
+| Synchronized PS | algebraic | [`SynchronizedPS.agm_security_budgeted`](Signatures/SynchronizedPS/Statement.lean) | `4·εDL + 2/p`, single honest signer, Caliper-costed |
 
 `εDL`/`εcoCDH` are DLog/co-CDH success suprema at the proved reduction budget in
 the same execution model; `p` is the group order. Each statement has a
 polynomial-family corollary (`*FamilyStatement.lean`) and the two-budget form
 of each AGM bound is its scheme's `Proofs.agm_security`. Synchronized
-Pointcheval–Sanders is newer: `εX`, `εY`, `εH` are the DLog successes of its
-[three named solvers](Signatures/SynchronizedPS/Spec/Reduction.lean) (challenge as
-the first key, as the second key, or in the period hashes), stated for a finite
-period type and not yet costed in an execution model.
+Pointcheval–Sanders has two forms, both for a finite period type: `εX`, `εY`, `εH` are the DLog
+successes of its [three named solvers](Signatures/SynchronizedPS/Spec/Reduction.lean) (challenge as
+the first key, as the second key, or in the period hashes), uncosted; the budgeted form costs four
+executed solvers in Caliper by wrapping the attacker's caller for the two weighted schemes
+`x•H(t)` and `y•(m•H(t))` with the other key known
+([`SyncWrap*`](Proofs/Runtime/Caliper/SyncWrapParameters.lean)), and covers the attacker of the
+single honest signer who reports no co-signer keys.
 
 ## Games
 
