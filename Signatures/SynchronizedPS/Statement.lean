@@ -1,15 +1,17 @@
 import Proofs.SynchronizedPS.Security
 import Proofs.SynchronizedPS.CaliperSecurity
 
-/-! Synchronized Pointcheval–Sanders security. Fix the curve, security parameter and a finite
-set of periods, then quantify over the algebraic attacker. `Game.lean` contains the game;
-`Spec/Reduction.lean` the three `(1,1)`-DLog solvers, each a straight-line program that runs the
-attacker once. Below, `p` is the group order and `ε B` is the solver `B`'s DLog success at the
-curve's generators; a hardness assumption makes it small. The first statement names the three
-solvers without costing them. The second fixes an execution model (`SecurityModel.lean`) and
-bounds the attacker, who faces the single honest signer and reports no co-signer keys, by `εDL`,
-the DLog success supremum at the proved budget of four executed Caliper solvers: the two weighted
-schemes `x•H(t)` and `y•(m•H(t))` with the other key known, each with its good and bad branch. -/
+/-! Synchronized Pointcheval–Sanders security. Fix the curve and security parameter, then
+quantify over the algebraic attacker. `Game.lean` contains the game; `Spec/Reduction.lean` the
+three `(1,1)`-DLog solvers, each a straight-line program that runs the attacker once. Below, `p`
+is the group order and `ε B` is the solver `B`'s DLog success at the curve's generators; a
+hardness assumption makes it small. The first statement names the three solvers without costing
+them; they sample a hash table over the periods, so it is stated for a finite period type. The
+second fixes an execution model (`SecurityModel.lean`) and bounds the attacker, who faces the
+single honest signer and reports no co-signer keys, by `εDL`, the DLog success supremum at the
+proved budget of four executed Caliper solvers: the two weighted schemes `x•H(t)` and
+`y•(m•H(t))` with the other key known, each with its good and bad branch. Its period type only
+needs decidable equality, as for OOPS's topics. -/
 
 namespace SynchronizedPS
 

@@ -25,13 +25,14 @@ on `propext`, `Classical.choice` and `Quot.sound`.
 the same execution model; `p` is the group order. Each statement has a
 polynomial-family corollary (`*FamilyStatement.lean`) and the two-budget form
 of each AGM bound is its scheme's `Proofs.agm_security`. Synchronized
-Pointcheval–Sanders has two forms, both for a finite period type: `εX`, `εY`, `εH` are the DLog
-successes of its [three named solvers](Signatures/SynchronizedPS/Spec/Reduction.lean) (challenge as
-the first key, as the second key, or in the period hashes), uncosted; the budgeted form costs four
-executed solvers in Caliper by wrapping the attacker's caller for the two weighted schemes
-`x•H(t)` and `y•(m•H(t))` with the other key known
-([`SyncWrap*`](Proofs/Runtime/Caliper/SyncWrapParameters.lean)), and covers the attacker of the
-single honest signer who reports no co-signer keys.
+Pointcheval–Sanders has two forms: `εX`, `εY`, `εH` are the DLog successes of its
+[three named solvers](Signatures/SynchronizedPS/Spec/Reduction.lean) (challenge as the first key,
+as the second key, or in the period hashes), uncosted and for a finite period type since they
+sample a hash table; the budgeted form costs four executed solvers in Caliper by wrapping the
+attacker's caller for the two weighted schemes `x•H(t)` and `y•(m•H(t))` with the other key known
+([`SyncWrap*`](Proofs/Runtime/Caliper/SyncWrapParameters.lean)), covers the attacker of the single
+honest signer who reports no co-signer keys, and holds for any period type with decidable equality
+([transport](Proofs/SynchronizedPS/PeriodTransport.lean), as OOPS's topics).
 
 ## Games
 

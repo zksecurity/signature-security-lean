@@ -80,10 +80,9 @@ theorem outerAdversary_main (u : (K₀ × K₀) × scalar.Value base) :
 theorem proj_pair (pk : core.inner.key.Value) (s : core.scalar.Value) : proj (core := core) (pk.val, s.val) = s :=
   proj_val (core := core) ⟨(pk.val, s.val), ⟨pk.property, s.property⟩⟩
 
-variable (g₁ : G) (adversary : SynchronizedPS.Reduction.Adversary (scalar.Value base) (key.Value base) G K₀)
+variable (V : SynchronizedPS.Proofs.View (scalar.Value base) (key.Value base) G K₀)
   (sourceEq : ∀ pk : core.inner.key.Value,
-    embed <$> ((fun answer => WeightedCallerProgram.output answer.val) <$> witness.source pk.val) =
-      (SynchronizedPS.Proofs.view adversary g₁).main pk.val)
+    embed <$> ((fun answer => WeightedCallerProgram.output answer.val) <$> witness.source pk.val) = V.main pk.val)
   (correction : scalar.Value base → key.Value base × scalar.Value base → scalar.Value base)
   (final : scalar.Value base → SynchronizedPS.Forgery (scalar.Value base) (key.Value base) → scalar.Value base) (keys : K₀ → K₀ × K₀)
   (corrLaw : ∀ (d : core.scalar.Value) (m : core.message.Value), (routines.corrFn (d, m)).val = correction d.val m.val)
@@ -96,7 +95,7 @@ include sourceEq corrLaw finLaw mulLaw fuelRoom in
 representable known key `s`, the outer source is `Wrapped.wrap` around the attacker. -/
 theorem outerAdversary_main_eq (pk : core.inner.key.Value) (s : core.scalar.Value) (pk₀ : K₀) (hk : keys pk₀ = pk.val) :
     (wrapper.outerAdversary routines caller outLe finRoutines messageTotal fuel invariant witness).main (pk.val, s.val) =
-      (wrap (correction s.val) (final s.val) keys adversary g₁).main pk₀ := by
+      (wrap (correction s.val) (final s.val) keys V).main pk₀ := by
   have hproj : proj (core := core) (pk.val, s.val) = s := proj_pair pk s
   have bound := ((implementsWithin_iff_implements_and_bound _ _ _).mp witness.implements).2 pk.val
   have corrFun : corr routines messageTotal s = correction s.val := by

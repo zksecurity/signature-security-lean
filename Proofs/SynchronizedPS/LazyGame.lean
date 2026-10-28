@@ -47,9 +47,24 @@ theorem offset_smul (g₂ : G₂) (others : List ((F × F) × F)) :
       change _ = ((signer.1.1 + signer.1.2 * signer.2) + Reduction.offset rest) • g₂
       simp only [add_smul]
 
+/-- A grouped proof view of a synchronized PS attacker: one oracle program per key pair, reporting
+a forgery with its coefficients. The proof-side games and solvers use the attacker only through
+such a view, so they transport along period relabelings. -/
+abbrev View (F Period G₁ G₂ : Type) : Type :=
+  DirectAGM.ProofView.View F Period (Period × F) (Forgery F Period) G₁ (G₂ × G₂)
+
 /-- The attacker's grouped proof view from `g₁` and the key's two components. -/
-abbrev view (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) :=
+abbrev view (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) : View F Period G₁ G₂ :=
   DirectAGM.ProofView.adversaryWith g₁ (fun pk : G₂ × G₂ => [pk.1, pk.2]) adversary
+
+/-- `Reduction.run` on a view: fixed hash and signing tables, with transcripts. -/
+def runV (V : View F Period G₁ G₂) (publicKey : G₂ × G₂) (hash : Period → G₁) (sign : Period × F → G₁) :
+    ProbComp (Output F (Forgery F Period) × Transcript Period (Period × F) G₁) :=
+  (simulateQ (fixedImpl hash sign) (V.main publicKey)).run ([], [])
+
+theorem run_eq_runV (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) (publicKey : G₂ × G₂)
+    (hash : Period → G₁) (sign : Period × F → G₁) :
+    Reduction.run adversary g₁ publicKey hash sign = runV (view adversary g₁) publicKey hash sign := rfl
 
 /-! ## The coefficient game on the shared lazy base oracle -/
 
@@ -57,12 +72,12 @@ def signing (x y : F) (m : Period × F) : OracleComp (baseSpec Period G₁) G₁
   let H ← (liftM ((baseSpec Period G₁).query (.inr m.1)) : OracleComp (baseSpec Period G₁) G₁)
   pure ((x + y * m.2) • H)
 
-def lazyRun (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) (x y : F) (pk : G₂ × G₂) :
+def lazyRun (V : View F Period G₁ G₂) (x y : F) (pk : G₂ × G₂) :
     OracleComp (baseSpec Period G₁) (Output F (Forgery F Period) × Transcript Period (Period × F) G₁) :=
   (simulateQ (handler
     (fun n => (liftM ((baseSpec Period G₁).query (.inl n)) : OracleComp (baseSpec Period G₁) _))
     (fun i => (liftM ((baseSpec Period G₁).query (.inr i)) : OracleComp (baseSpec Period G₁) G₁))
-    (signing x y)) ((view adversary g₁).main pk)).run ([], [])
+    (signing x y)) (V.main pk)).run ([], [])
 
 /-- The readable game's checks on the attacker's report: a fresh period/message, one honest
 signature per period, and the pairing equation of the hash of the attacked period against the
@@ -78,28 +93,27 @@ def accepts (g₂ : G₂) (x y : F) (data : Forgery F Period) (aggregate : G₁)
 def aggregate (g₁ : G₁) (out : Output F (Forgery F Period)) (tr : Transcript Period (Period × F) G₁) : G₁ :=
   out.β • g₁ + weightedReplies out.γ tr.1 + weightedReplies out.ξ tr.2
 
-noncomputable def experiment (g₁ : G₁) (g₂ : G₂) (adversary : Reduction.Adversary F Period G₁ G₂) :
+noncomputable def experiment (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
     OracleComp (baseSpec Period G₁) Bool := do
   let x ← (liftM ($ᵗ F) : OracleComp (baseSpec Period G₁) F)
   let y ← (liftM ($ᵗ F) : OracleComp (baseSpec Period G₁) F)
-  let (out, tr) ← lazyRun adversary g₁ x y (x • g₂, y • g₂)
+  let (out, tr) ← lazyRun V x y (x • g₂, y • g₂)
   let hash ← (liftM ((baseSpec Period G₁).query (.inr out.mstar.1.1)) : OracleComp (baseSpec Period G₁) G₁)
   pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst) hash)
 
-noncomputable def lazyGame (g₁ : G₁) (g₂ : G₂) (adversary : Reduction.Adversary F Period G₁ G₂) :
+noncomputable def lazyGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
     ProbComp Bool :=
-  (simulateQ lazyImpl (experiment (Gₜ := Gₜ) g₁ g₂ adversary)).run' ∅
+  (simulateQ lazyImpl (experiment (Gₜ := Gₜ) g₁ g₂ V)).run' ∅
 
 /-! ## Fixing the base table -/
 
 omit [SampleableType F] [Fintype F] [DecidableEq F] [Fintype Period] [DecidableEq Period]
   [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ]
   [DecidableEq Gₜ] in
-theorem lazyRun_table (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) (x y : F)
-    (pk : G₂ × G₂) (H : Period → G₁) :
-    simulateQ (BLS.CoCDH.coinTableImpl H) (lazyRun adversary g₁ x y pk) =
-      Reduction.run adversary g₁ pk H (fun m => (x + y * m.2) • H m.1) := by
-  unfold lazyRun Reduction.run
+theorem lazyRun_table (V : View F Period G₁ G₂) (x y : F) (pk : G₂ × G₂) (H : Period → G₁) :
+    simulateQ (BLS.CoCDH.coinTableImpl H) (lazyRun V x y pk) =
+      runV V pk H (fun m => (x + y * m.2) • H m.1) := by
+  unfold lazyRun runV
   apply simulateQ_StateT_compose
   intro q tr
   rcases q with (n | i) | m <;>
@@ -107,12 +121,11 @@ theorem lazyRun_table (adversary : Reduction.Adversary F Period G₁ G₂) (g₁
       simulateQ_pure, signing, pure_bind, table_random, table_lookup]
 
 omit [Fintype F] [Fintype Period] [SampleableType G₁] [Fintype G₁] in
-theorem experiment_table (g₁ : G₁) (g₂ : G₂) (adversary : Reduction.Adversary F Period G₁ G₂)
-    (H : Period → G₁) :
-    simulateQ (BLS.CoCDH.coinTableImpl H) (experiment (Gₜ := Gₜ) g₁ g₂ adversary) = (do
+theorem experiment_table (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) (H : Period → G₁) :
+    simulateQ (BLS.CoCDH.coinTableImpl H) (experiment (Gₜ := Gₜ) g₁ g₂ V) = (do
       let x ← ($ᵗ F : ProbComp F)
       let y ← ($ᵗ F : ProbComp F)
-      let (out, tr) ← Reduction.run adversary g₁ (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
+      let (out, tr) ← runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
       pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst)
         (H out.mstar.1.1))) := by
   simp only [experiment, simulateQ_bind, simulateQ_pure, lazyRun_table, simulateQ_spec_query,
@@ -133,9 +146,8 @@ def toOffsetForgery (z : Output F (Forgery F Period) × Transcript Period (Perio
   ⟨toForgery (project z.1, z.2), Reduction.offset z.1.mstar.2⟩
 
 /-- The attacker as the core's representation producer. -/
-def extracted (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) :
-    AdaptiveAdv F (Period × F) Period G₁ G₂ :=
-  fun pk H signO => toOffsetForgery <$> Reduction.run adversary g₁ pk H signO
+def extracted (V : View F Period G₁ G₂) : AdaptiveAdv F (Period × F) Period G₁ G₂ :=
+  fun pk H signO => toOffsetForgery <$> runV V pk H signO
 
 omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] in
 theorem realSign_weight (x y : F) (H : Period → G₁) :
@@ -161,18 +173,18 @@ theorem verification_iff (g₁ : G₁) (g₂ : G₂) (x y : F) (out : Output F (
   rw [mul_comm out.mstar.1.2 y]
 
 omit [Fintype F] in
-theorem lazyGame_eq_realGame (g₁ : G₁) (g₂ : G₂) (adversary : Reduction.Adversary F Period G₁ G₂) :
-    𝒟[lazyGame (Gₜ := Gₜ) g₁ g₂ adversary] {true} =
+theorem lazyGame_eq_realGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
+    𝒟[lazyGame (Gₜ := Gₜ) g₁ g₂ V] {true} =
       Pr[fun z => valid z.1.rep ∧ succ (Gₜ := Gₜ) weight scalar g₁ g₂ z |
-        realGame weight scalar g₂ (extracted adversary g₁)] := by
+        realGame weight scalar g₂ (extracted V)] := by
   classical
-  have hd := BLS.CoCDH.evalSPMF_lazyCoin_eq_table (experiment (Gₜ := Gₜ) g₁ g₂ adversary) ∅
+  have hd := BLS.CoCDH.evalSPMF_lazyCoin_eq_table (experiment (Gₜ := Gₜ) g₁ g₂ V) ∅
   simp only [tableExtending_empty, experiment_table] at hd
-  change 𝒮[lazyGame (Gₜ := Gₜ) g₁ g₂ adversary] = _ at hd
+  change 𝒮[lazyGame (Gₜ := Gₜ) g₁ g₂ V] = _ at hd
   rw [DeferredSampling.evalSPMF_bind_comm] at hd
   rw [evalSPMF_bind_congr' _ fun x => DeferredSampling.evalSPMF_bind_comm ($ᵗ (Period → G₁)) ($ᵗ F)
     (fun H y => do
-      let (out, tr) ← Reduction.run adversary g₁ (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
+      let (out, tr) ← runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
       pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst)
         (H out.mstar.1.1)))] at hd
   rw [evalDist_apply_singleton, probOutput_congr rfl hd, ← probEvent_true_eq_probOutput]
@@ -186,10 +198,9 @@ theorem lazyGame_eq_realGame (g₁ : G₁) (g₂ : G₂) (adversary : Reduction.
   refine tsum_congr fun H => ?_
   congr 1
   refine tsum_congr fun z => ?_
-  by_cases hz : z ∈ support (Reduction.run adversary g₁ (x • g₂, y • g₂) H
-    (fun m => (x + y * m.2) • H m.1))
+  by_cases hz : z ∈ support (runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1))
   · have hc := fixed_consistent H (fun m => (x + y * m.2) • H m.1)
-      ((view adversary g₁).main (x • g₂, y • g₂)) ([], []) (by simp [Consistent]) z hz
+      (V.main (x • g₂, y • g₂)) ([], []) (by simp [Consistent]) z hz
     congr 1
     simp only [probEvent_pure]
     apply if_congr _ rfl rfl
@@ -312,7 +323,7 @@ omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGr
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem challengeInX_eq (Z₁ : G₁) (g₂ Z₂ : G₂) :
     Reduction.challengeInX adversary g₁ Z₁ g₂ Z₂ =
-      reductionX weight scalar (extracted adversary g₁) g₁ Z₁ g₂ Z₂ := by
+      reductionX weight scalar (extracted (view adversary g₁)) g₁ Z₁ g₂ Z₂ := by
   unfold Reduction.challengeInX reductionX extracted
   apply bind_congr
   intro y
@@ -331,7 +342,7 @@ omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGr
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem challengeInY_eq (Z₁ : G₁) (g₂ Z₂ : G₂) :
     Reduction.challengeInY adversary g₁ Z₁ g₂ Z₂ =
-      reductionY weight scalar (extracted adversary g₁) g₁ Z₁ g₂ Z₂ := by
+      reductionY weight scalar (extracted (view adversary g₁)) g₁ Z₁ g₂ Z₂ := by
   unfold Reduction.challengeInY reductionY extracted
   apply bind_congr
   intro x
@@ -350,7 +361,7 @@ omit [Fintype F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Modul
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem challengeInHashes_eq (Z₁ : G₁) (g₂ Z₂ : G₂) :
     Reduction.challengeInHashes adversary g₁ Z₁ g₂ Z₂ =
-      reductionBad weight scalar attacked (extracted adversary g₁) g₁ Z₁ g₂ Z₂ := by
+      reductionBad weight scalar attacked (extracted (view adversary g₁)) g₁ Z₁ g₂ Z₂ := by
   unfold Reduction.challengeInHashes reductionBad extracted
   apply bind_congr
   intro x
@@ -376,28 +387,28 @@ end Solvers
 theorem security (g₁ : G₁) (g₂ : G₂) (adversary : Reduction.Adversary F Period G₁ G₂)
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     (hpair : Function.Injective (fun c : F => c • (pairing (F := F) g₁ g₂ : Gₜ))) :
-    𝒟[lazyGame (Gₜ := Gₜ) g₁ g₂ adversary] {true} ≤
+    𝒟[lazyGame (Gₜ := Gₜ) g₁ g₂ (view adversary g₁)] {true} ≤
       Model.dlog11Advantage g₁ g₂ (Reduction.challengeInX adversary) +
       Model.dlog11Advantage g₁ g₂ (Reduction.challengeInY adversary) +
       Model.dlog11Advantage g₁ g₂ (Reduction.challengeInHashes adversary) +
       1 / (Fintype.card F : ENNReal) := by
   rw [lazyGame_eq_realGame]
-  have h := adaptive_security (Gₜ := Gₜ) weight scalar g₁ g₂ (extracted adversary g₁) valid attacked
+  have h := adaptive_security (Gₜ := Gₜ) weight scalar g₁ g₂ (extracted (view adversary g₁)) valid attacked
     hgen (fun fo hv hf => nondegenerate fo hv hf) hpair
   have hX : Model.dlog11Advantage g₁ g₂ (Reduction.challengeInX adversary) =
-      Pr[= true | dlog11Exp g₁ g₂ (reductionX weight scalar (extracted adversary g₁))] := by
+      Pr[= true | dlog11Exp g₁ g₂ (reductionX weight scalar (extracted (view adversary g₁)))] := by
     rw [Model.dlog11Advantage, evalDist_apply_singleton]
     congr 1
     unfold dlog11Exp
     exact bind_congr fun α => by rw [challengeInX_eq]
   have hY : Model.dlog11Advantage g₁ g₂ (Reduction.challengeInY adversary) =
-      Pr[= true | dlog11Exp g₁ g₂ (reductionY weight scalar (extracted adversary g₁))] := by
+      Pr[= true | dlog11Exp g₁ g₂ (reductionY weight scalar (extracted (view adversary g₁)))] := by
     rw [Model.dlog11Advantage, evalDist_apply_singleton]
     congr 1
     unfold dlog11Exp
     exact bind_congr fun α => by rw [challengeInY_eq]
   have hH : Model.dlog11Advantage g₁ g₂ (Reduction.challengeInHashes adversary) =
-      Pr[= true | dlog11Exp g₁ g₂ (reductionBad weight scalar attacked (extracted adversary g₁))] := by
+      Pr[= true | dlog11Exp g₁ g₂ (reductionBad weight scalar attacked (extracted (view adversary g₁)))] := by
     rw [Model.dlog11Advantage, evalDist_apply_singleton]
     congr 1
     unfold dlog11Exp

@@ -1768,6 +1768,7 @@ import Proofs.SynchronizedPS.Adaptive
 import Proofs.SynchronizedPS.CaliperSecurity
 import Proofs.SynchronizedPS.Game
 import Proofs.SynchronizedPS.LazyGame
+import Proofs.SynchronizedPS.PeriodTransport
 import Proofs.SynchronizedPS.Security
 import Proofs.SynchronizedPS.WrapMachine
 import Proofs.SynchronizedPS.Wrapped

@@ -35,10 +35,10 @@ def orderedImpl (H : Period → G₁) (sign : Period × F → G₁) :
   | .inl (.inr t) => StateT.mk fun events => pure (H t, events ++ [Event.hash t])
   | .inr m => StateT.mk fun events => pure (sign m, events ++ [Event.sign m])
 
-def orderedRun (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) (publicKey : G₂ × G₂)
+def orderedRun (V : Proofs.View F Period G₁ G₂) (publicKey : G₂ × G₂)
     (H : Period → G₁) (sign : Period × F → G₁) :
     ProbComp (Output F (Forgery F Period) × List (Event F Period)) :=
-  (simulateQ (orderedImpl H sign) ((Proofs.view adversary g₁).main publicKey)).run []
+  (simulateQ (orderedImpl H sign) (V.main publicKey)).run []
 
 /-- The two transcripts, read off the ordered events. -/
 def hashes (H : Period → G₁) : List (Event F Period) → List (Period × G₁)
@@ -70,18 +70,18 @@ theorem signatures_append (sign : Period × F → G₁) (events more : List (Eve
   | cons event rest ih => cases event <;> simp [signatures, ih]
 
 /-- `Reduction.run` is the ordered run with the transcripts read off. -/
-theorem run_eq_ordered (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁)
+theorem run_eq_ordered (V : Proofs.View F Period G₁ G₂)
     (publicKey : G₂ × G₂) (H : Period → G₁) (sign : Period × F → G₁) :
-    Reduction.run adversary g₁ publicKey H sign =
-      (fun z => (z.1, transcript H sign z.2)) <$> orderedRun adversary g₁ publicKey H sign := by
-  unfold Reduction.run orderedRun
+    Proofs.runV V publicKey H sign =
+      (fun z => (z.1, transcript H sign z.2)) <$> orderedRun V publicKey H sign := by
+  unfold Proofs.runV orderedRun
   have h := map_run_simulateQ_eq_of_query_map_eq (orderedImpl H sign) (fixedImpl H sign)
     (transcript H sign) (by
       intro q events
       rcases q with (n | t) | m <;>
         simp [orderedImpl, fixedImpl, handler, transcript, StateT.run_mk, hashes_append,
           signatures_append, hashes, signatures, Functor.map_map, Prod.map])
-    ((Proofs.view adversary g₁).main publicKey) []
+    (V.main publicKey) []
   exact h.symm
 
 /-! ## The wrapper -/
@@ -117,10 +117,10 @@ def remap (correction : Period × F → F) (γ ξ : List F) :
 /-- The attacker wrapped for a weighted scheme: `keys` builds its key pair from the weighted
 public key and the known key, `final` is the scalar on `H(t*)` subtracted from the forgery. -/
 def wrap (correction : Period × F → F) (final : Forgery F Period → F) (keys : G₂ → G₂ × G₂)
-    (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) :
+    (V : Proofs.View F Period G₁ G₂) :
     Model.LazyAGM.Adversary F Period (Period × F) G₁ G₂ where
   main publicKey := do
-    let (out, events) ← (simulateQ (translator correction) ((Proofs.view adversary g₁).main (keys publicKey))).run []
+    let (out, events) ← (simulateQ (translator correction) (V.main (keys publicKey))).run []
     let _ ← (liftM ((advSpec Period (Period × F) G₁).query (.inl (.inr out.mstar.1.1))) :
       OracleComp (advSpec Period (Period × F) G₁) G₁)
     pure ⟨out.mstar.1, out.β, remap correction out.γ out.ξ events 0 0 ++ [-(final out.mstar)], out.ξ⟩
@@ -174,14 +174,14 @@ private theorem translator_run {β : Type} (correction : Period × F → F) (H :
 /-- Running the wrapper against fixed tables is the attacker's ordered run against the corrected
 signer, followed by `wrapped`. -/
 theorem fixedRun_wrap (correction : Period × F → F) (final : Forgery F Period → F) (keys : G₂ → G₂ × G₂)
-    (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) (publicKey : G₂)
+    (V : Proofs.View F Period G₁ G₂) (publicKey : G₂)
     (H : Period → G₁) (signO : Period × F → G₁) :
-    fixedRun (wrap correction final keys adversary g₁) publicKey H signO =
+    fixedRun (wrap correction final keys V) publicKey H signO =
       wrapped correction final H signO <$>
-        orderedRun adversary g₁ (keys publicKey) H (fun m => signO m + correction m • H m.1) := by
+        orderedRun V (keys publicKey) H (fun m => signO m + correction m • H m.1) := by
   unfold fixedRun orderedRun wrap
   simp only [simulateQ_bind, StateT.run_bind, simulateQ_spec_query, simulateQ_pure, StateT.run_pure]
-  have := translator_run correction H signO ((Proofs.view adversary g₁).main (keys publicKey)) []
+  have := translator_run correction H signO (V.main (keys publicKey)) []
   simp only [wrappedHashes, signatures] at this
   rw [this]
   simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply]

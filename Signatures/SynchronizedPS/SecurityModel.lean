@@ -13,18 +13,18 @@ namespace SynchronizedPS
 
 abbrev QueryAllowance := WeightedCaliper.QueryAllowance
 
-/-- Caliper layouts, local implementations and caller allowances for a finite period type,
-fixed before choosing the attacker. The four reductions and their bounds are constructed from
-these components; no completed-solver contract or hardness assumption is a field. -/
+/-- Caliper layouts, local implementations and caller allowances for a period type with
+decidable equality, fixed before choosing the attacker. The four reductions and their bounds are
+constructed from these components; no completed-solver contract or hardness assumption is a
+field. -/
 class AGMSecurityModel (curve : Model.PairingCurve) where
   Period : Nat → Type
   [periodEquality : ∀ n, DecidableEq (Period n)]
-  [periodFinite : ∀ n, Fintype (Period n)]
   parameters : ∀ n q, CaliperAGM.Parameters
     (curve.Scalar n) (curve.SignatureGroup n) (curve.KeyGroup n) (Period n)
     q (curve.generator n) (curve.keyGenerator n)
 
-attribute [instance_reducible, instance] AGMSecurityModel.periodEquality AGMSecurityModel.periodFinite
+attribute [instance_reducible, instance] AGMSecurityModel.periodEquality
 
 variable (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
 

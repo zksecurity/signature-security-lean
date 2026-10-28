@@ -1,11 +1,11 @@
 import Signatures.SynchronizedPS.SecurityModel
 import Proofs.SynchronizedPS.Game
-import Proofs.SynchronizedPS.WrappedBound
+import Proofs.SynchronizedPS.PeriodTransport
 
 /-! Proofs for the budgeted synchronized PS statement. The native game is bounded by the
-coefficient game, which the four wrapped weighted solvers bound; each is, at the curve's
-generators, an executed Caliper solver within the derived budgets, so it belongs to the
-explicit DLog success supremum. -/
+coefficient game, which the four wrapped weighted solvers bound for any period type
+(`PeriodTransport.lean`); each is, at the curve's generators, an executed Caliper solver within
+the derived budgets, so it belongs to the explicit DLog success supremum. -/
 
 open OracleComp OracleSpec
 open Signatures.Runtime
@@ -25,7 +25,8 @@ theorem Proofs.agm_security_budgeted (securityParameter : Nat) (queries : QueryA
       2 / (curve.order securityParameter : ENNReal) := by
   intro resources
   have game := Game.agm_le curve securityParameter adversary.source
-  have wrapped := Wrapped.security_wrapped (Gₜ := curve.TargetGroup securityParameter) adversary.source
+  have wrapped := Transport.security_wrapped (Gₜ := curve.TargetGroup securityParameter)
+    (Proofs.view adversary.source (curve.generator securityParameter))
     (curve.generator securityParameter) (curve.keyGenerator securityParameter)
     (curve.generates securityParameter) (curve.pairingInjective securityParameter)
   have good₁ := adversary.good₁_advantage

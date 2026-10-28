@@ -49,53 +49,53 @@ def correction₂ (x : F) (_ : Period × F) : F := x
 def final₂ (x : F) (out : Forgery F Period) : F := x + Reduction.offset out.2
 
 /-- The attacker wrapped for scheme₁ with the known second key `y`. -/
-def wrap₁ (y : F) (g₂ : G₂) (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) :
+def wrap₁ (y : F) (g₂ : G₂) (V : Proofs.View F Period G₁ G₂) :
     Model.LazyAGM.Adversary F Period (Period × F) G₁ G₂ :=
-  wrap (correction₁ y) (final₁ y) (fun pk => (pk, y • g₂)) adversary g₁
+  wrap (correction₁ y) (final₁ y) (fun pk => (pk, y • g₂)) V
 
 /-- The attacker wrapped for scheme₂ with the known first key `x`. -/
-def wrap₂ (x : F) (g₂ : G₂) (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) :
+def wrap₂ (x : F) (g₂ : G₂) (V : Proofs.View F Period G₁ G₂) :
     Model.LazyAGM.Adversary F Period (Period × F) G₁ G₂ :=
-  wrap (correction₂ x) (final₂ x) (fun pk => (x • g₂, pk)) adversary g₁
+  wrap (correction₂ x) (final₂ x) (fun pk => (x • g₂, pk)) V
 
 /-- The four synchronized PS solvers: a weighted solver on the wrapped attacker, after sampling
 the known key. -/
-noncomputable def solverGood₁ (adversary : Reduction.Adversary F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
+noncomputable def solverGood₁ (V : Proofs.View F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
   fun g₁ Z₁ g₂ Z₂ => do
     let y ← ($ᵗ F : ProbComp F)
-    goodReductionList terms₁ (wrap₁ y g₂ adversary g₁) g₁ Z₁ g₂ Z₂
+    goodReductionList terms₁ (wrap₁ y g₂ V) g₁ Z₁ g₂ Z₂
 
-noncomputable def solverBad₁ (adversary : Reduction.Adversary F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
+noncomputable def solverBad₁ (V : Proofs.View F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
   fun g₁ Z₁ g₂ Z₂ => do
     let y ← ($ᵗ F : ProbComp F)
-    badReductionList terms₁ (wrap₁ y g₂ adversary g₁) g₁ Z₁ g₂ Z₂
+    badReductionList terms₁ (wrap₁ y g₂ V) g₁ Z₁ g₂ Z₂
 
-noncomputable def solverGood₂ (adversary : Reduction.Adversary F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
+noncomputable def solverGood₂ (V : Proofs.View F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
   fun g₁ Z₁ g₂ Z₂ => do
     let x ← ($ᵗ F : ProbComp F)
-    goodReductionList terms₂ (wrap₂ x g₂ adversary g₁) g₁ Z₁ g₂ Z₂
+    goodReductionList terms₂ (wrap₂ x g₂ V) g₁ Z₁ g₂ Z₂
 
-noncomputable def solverBad₂ (adversary : Reduction.Adversary F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
+noncomputable def solverBad₂ (V : Proofs.View F Period G₁ G₂) : DLog11Adversary F G₁ G₂ :=
   fun g₁ Z₁ g₂ Z₂ => do
     let x ← ($ᵗ F : ProbComp F)
-    badReductionList terms₂ (wrap₂ x g₂ adversary g₁) g₁ Z₁ g₂ Z₂
+    badReductionList terms₂ (wrap₂ x g₂ V) g₁ Z₁ g₂ Z₂
 
 /-! ## One run, three games -/
 
-variable (adversary : Reduction.Adversary F Period G₁ G₂) (g₁ : G₁) (g₂ : G₂)
+variable (V : Proofs.View F Period G₁ G₂) (g₁ : G₁) (g₂ : G₂)
 
 /-- The attacker's ordered run against the synchronized signer with keys `x, y` and table `ρ`. -/
 noncomputable def body (x y : F) :
     ProbComp ((Output F (Forgery F Period) × List (Event F Period)) × (Period → F)) := do
   let ρ ← ($ᵗ (Period → F) : ProbComp (Period → F))
-  let z ← orderedRun adversary g₁ (x • g₂, y • g₂) (fun i => ρ i • g₁) (fun m => (x + y * m.2) • (ρ m.1 • g₁))
+  let z ← orderedRun V (x • g₂, y • g₂) (fun i => ρ i • g₁) (fun m => (x + y * m.2) • (ρ m.1 • g₁))
   pure (z, ρ)
 
 /-- Keys first, then the run. -/
 noncomputable def pivot : ProbComp (((Output F (Forgery F Period) × List (Event F Period)) × (Period → F)) × F × F) := do
   let x ← ($ᵗ F : ProbComp F)
   let y ← ($ᵗ F : ProbComp F)
-  let w ← body adversary g₁ g₂ x y
+  let w ← body V g₁ g₂ x y
   pure (w, x, y)
 
 /-- The synchronized signer at keys `x, y` over the table `ρ`. -/
@@ -109,8 +109,8 @@ def syncForgery (x y : F) (w : (Output F (Forgery F Period) × List (Event F Per
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem scalarGame_eq :
-    scalarGame weight scalar g₁ g₂ (SynchronizedPS.Proofs.extracted adversary g₁) =
-      (fun t => (syncForgery g₁ t.2.1 t.2.2 t.1, (t.2.1, t.2.2), t.1.2)) <$> pivot adversary g₁ g₂ := by
+    scalarGame weight scalar g₁ g₂ (SynchronizedPS.Proofs.extracted V) =
+      (fun t => (syncForgery g₁ t.2.1 t.2.2 t.1, (t.2.1, t.2.2), t.1.2)) <$> pivot V g₁ g₂ := by
   unfold scalarGame SynchronizedPS.Proofs.extracted pivot body
   simp only [realSign_weight, run_eq_ordered, map_eq_bind_pure_comp, bind_assoc, pure_bind]
   rfl
@@ -152,9 +152,9 @@ def forgery₂ (x y : F) (w : (Output F (Forgery F Period) × List (Event F Peri
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem scalarGame₁_eq (y : F) :
-    scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ adversary g₁)) = (do
+    scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V)) = (do
       let x ← ($ᵗ F : ProbComp F)
-      let w ← body adversary g₁ g₂ x y
+      let w ← body V g₁ g₂ x y
       pure (forgery₁ g₁ x y w, x, w.2)) := by
   unfold scalarGameDynAdaptive Model.LazyAGM.Proofs.extracted wrap₁ body forgery₁
   simp only [fixedRun_wrap, correction₁, signing₁, map_eq_bind_pure_comp, bind_assoc, pure_bind,
@@ -163,9 +163,9 @@ theorem scalarGame₁_eq (y : F) :
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem scalarGame₂_eq (x : F) :
-    scalarGameDynAdaptive (scaled weight scalar) g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ adversary g₁)) = (do
+    scalarGameDynAdaptive (scaled weight scalar) g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V)) = (do
       let y ← ($ᵗ F : ProbComp F)
-      let w ← body adversary g₁ g₂ x y
+      let w ← body V g₁ g₂ x y
       pure (forgery₂ g₁ x y w, y, w.2)) := by
   unfold scalarGameDynAdaptive Model.LazyAGM.Proofs.extracted wrap₂ body forgery₂
   simp only [fixedRun_wrap, correction₂, signing₂, map_eq_bind_pure_comp, bind_assoc, pure_bind,

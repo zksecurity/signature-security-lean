@@ -324,7 +324,7 @@ include postEq corrLaw finLaw keysValid in
 /-- At the curve's generators, the wrapped-attacker good solver is the executed good solver. -/
 theorem good_eq (X : G₁) (α : F) :
     (($ᵗ F : ProbComp F) >>= fun y =>
-      goodReductionList terms (wrap (correction y) (final y) (keysOf y keyGenerator) A.source generator) generator X keyGenerator (α • keyGenerator)) =
+      goodReductionList terms (wrap (correction y) (final y) (keysOf y keyGenerator) (SynchronizedPS.Proofs.view A.source generator)) generator X keyGenerator (α • keyGenerator)) =
     A.caliperGood (terms := terms) side postFn generator X keyGenerator (α • keyGenerator) := by
   unfold caliperGood
   rw [← P.scalarLaw, bind_map_left]
@@ -334,14 +334,14 @@ theorem good_eq (X : G₁) (α : F) :
   rw [postEq]
   unfold goodReductionList AlgebraicAdversary.outerAdversary
   rw [goodProgram_congr terms generator X (Wrapper.outerAdversary_main_eq side.routines A.caller P.wrapper P.outLe side.finish P.messageTotal
-    queries.total A.invariant A.correspondence generator A.source A.source_eq correction final (keysOf s.val keyGenerator) corrLaw finLaw side.mulLaw
+    queries.total A.invariant A.correspondence (SynchronizedPS.Proofs.view A.source generator) A.source_eq correction final (keysOf s.val keyGenerator) corrLaw finLaw side.mulLaw
     P.fuelRoom ⟨keysOf s.val keyGenerator (α • keyGenerator), keysValid s α⟩ s (α • keyGenerator) rfl).symm]
 
 include postEq corrLaw finLaw keysValid postLaw reserve in
 theorem good_advantage (codeLe : P.goodWords side gs post.words ≤ P.solverCode)
     (memoryLe : P.goodMemory side gs post.time post.words post.slots ≤ P.solverMemory) :
     Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
-      goodReductionList terms (wrap (correction y) (final y) (keysOf y g₂) A.source g) g X g₂ Z₂) ≤
+      goodReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) ≤
     P.dlogBound (P.goodTime side gs post.time) :=
   (BLS.LazyAGM.Reduction.dlog11Advantage_congr generator keyGenerator _ (A.caliperGood (terms := terms) side postFn)
     (fun α => congrArg _ (A.good_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid (α • generator) α))).trans_le
@@ -411,7 +411,7 @@ include postEq corrLaw finLaw keysValid in
 distribution: the public-key sample and the known key are drawn in the other order. -/
 theorem bad_eq (X : G₁) (α : F) :
     𝒟[($ᵗ F : ProbComp F) >>= fun y =>
-      badReductionList terms (wrap (correction y) (final y) (keysOf y keyGenerator) A.source generator) generator X keyGenerator (α • keyGenerator)] =
+      badReductionList terms (wrap (correction y) (final y) (keysOf y keyGenerator) (SynchronizedPS.Proofs.view A.source generator)) generator X keyGenerator (α • keyGenerator)] =
     𝒟[A.caliperBad (terms := terms) side postFn generator X keyGenerator (α • keyGenerator)] := by
   unfold caliperBad badReductionList
   refine evalDist_eq_of_evalSPMF_eq _ _ ?_
@@ -425,14 +425,14 @@ theorem bad_eq (X : G₁) (α : F) :
   rw [postEq]
   unfold AlgebraicAdversary.outerAdversary
   rw [badProgram_congr terms generator X kappa.val (Wrapper.outerAdversary_main_eq side.routines A.caller P.wrapper P.outLe side.finish P.messageTotal
-    queries.total A.invariant A.correspondence generator A.source A.source_eq correction final (keysOf s.val keyGenerator) corrLaw finLaw side.mulLaw
+    queries.total A.invariant A.correspondence (SynchronizedPS.Proofs.view A.source generator) A.source_eq correction final (keysOf s.val keyGenerator) corrLaw finLaw side.mulLaw
     P.fuelRoom ⟨keysOf s.val keyGenerator (kappa.val • keyGenerator), keysValid s kappa.val⟩ s (kappa.val • keyGenerator) rfl).symm]
 
 include postEq corrLaw finLaw keysValid postLaw reserve in
 theorem bad_advantage (codeLe : P.badWords side bs post.words ≤ P.solverCode)
     (memoryLe : P.badMemory side bs post.time post.words post.slots ≤ P.solverMemory) :
     Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
-      badReductionList terms (wrap (correction y) (final y) (keysOf y g₂) A.source g) g X g₂ Z₂) ≤
+      badReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) ≤
     P.dlogBound (P.badTime side bs post.time) :=
   (BLS.LazyAGM.Reduction.dlog11Advantage_congr generator keyGenerator _ (A.caliperBad (terms := terms) side postFn)
     (fun α => A.bad_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid (α • generator) α)).trans_le
@@ -454,19 +454,19 @@ theorem finLaw₂ (d : P.core.scalar.Value) (m : Period × F) :
   rw [P.wrap₂.finLaw, P.wrap₂.negLaw]
   simp [final₂, SynchronizedPS.Reduction.offset]
 
-theorem good₁_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₁ A.source) ≤ P.dlogBound P.goodTime₁ :=
+theorem good₁_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₁ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.goodTime₁ :=
   A.good_advantage P.wrap₁ P.reserve₁ P.good₁ P.postGood₁ (fun value => value) (KeyedSetup.keepStage_source P.shape.keyed P.outer.port)
     correction₁ final₁ (fun y g₂ pk => (pk, y • g₂)) (fun _ _ _ _ _ => rfl) P.wrap₁.corrLaw finLaw₁ keysValid₁
     (le_trans (le_max_left _ _) (le_max_left _ _)) (le_trans (le_max_left _ _) (le_max_left _ _))
-theorem bad₁_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₁ A.source) ≤ P.dlogBound P.badTime₁ :=
+theorem bad₁_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₁ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.badTime₁ :=
   A.bad_advantage P.wrap₁ P.reserve₁ P.bad₁ P.postBad₁ (fun value => value) (KeyedSetup.keepStage_source P.shape.badKeyed P.outer.port)
     correction₁ final₁ (fun y g₂ pk => (pk, y • g₂)) (fun _ _ _ _ _ => rfl) P.wrap₁.corrLaw finLaw₁ keysValid₁
     (le_trans (le_max_right _ _) (le_max_left _ _)) (le_trans (le_max_right _ _) (le_max_left _ _))
-theorem good₂_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₂ A.source) ≤ P.dlogBound P.goodTime₂ :=
+theorem good₂_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₂ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.goodTime₂ :=
   A.good_advantage P.wrap₂ P.reserve₂ P.good₂ P.postGood₂ KeyedSetup.swapValue (KeyedSetup.swapStage_source P.shape.keyed P.outer.port)
     correction₂ final₂ (fun x g₂ pk => (x • g₂, pk)) (fun _ _ _ _ _ => rfl) P.wrap₂.corrLaw finLaw₂ keysValid₂
     (le_trans (le_max_left _ _) (le_max_right _ _)) (le_trans (le_max_left _ _) (le_max_right _ _))
-theorem bad₂_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₂ A.source) ≤ P.dlogBound P.badTime₂ :=
+theorem bad₂_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₂ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.badTime₂ :=
   A.bad_advantage P.wrap₂ P.reserve₂ P.bad₂ P.postBad₂ KeyedSetup.swapValue (KeyedSetup.swapStage_source P.shape.badKeyed P.outer.port)
     correction₂ final₂ (fun x g₂ pk => (x • g₂, pk)) (fun _ _ _ _ _ => rfl) P.wrap₂.corrLaw finLaw₂ keysValid₂
     (le_trans (le_max_right _ _) (le_max_right _ _)) (le_trans (le_max_right _ _) (le_max_right _ _))

@@ -37,14 +37,14 @@ theorem agm_eq_native (adversary : AlgebraicAdversary curve securityParameter (P
   congr!
 
 /-- Dropping only protocol-shape rejection gives exactly the coefficient game. -/
-theorem unchecked_eq [Fintype Period] (adversary : AlgebraicAdversary curve securityParameter (Period := Period)) :
+theorem unchecked_eq (adversary : AlgebraicAdversary curve securityParameter (Period := Period)) :
     RandomOracle.run (do
       let x ← RandomOracle.sample 𝔽
       let y ← RandomOracle.sample 𝔽
       let forgery ← DirectAGM.runWithData (sign curve securityParameter x y) adversary g₁ [x • g₂, y • g₂]
       let hash ← RandomOracle.hash forgery.data.1.1
       return Proofs.accepts (Gₜ := 𝔾ₜ) g₂ x y forgery.data forgery.signature forgery.signedMessages hash) =
-    Proofs.lazyGame (Gₜ := 𝔾ₜ) g₁ g₂ adversary := by
+    Proofs.lazyGame (Gₜ := 𝔾ₜ) g₁ g₂ (Proofs.view adversary g₁) := by
   have key (x y : 𝔽) :
       (DirectAGM.runWithData (sign curve securityParameter x y) adversary g₁ [x • g₂, y • g₂] >>=
         fun forgery => do
@@ -67,9 +67,9 @@ theorem unchecked_eq [Fintype Period] (adversary : AlgebraicAdversary curve secu
   exact key x y
 
 /-- Malformed interactions cannot win, so the native game is bounded by the coefficient game. -/
-theorem agm_le [Fintype Period] (adversary : AlgebraicAdversary curve securityParameter (Period := Period)) :
+theorem agm_le (adversary : AlgebraicAdversary curve securityParameter (Period := Period)) :
     𝒟[agm curve securityParameter adversary] {true} ≤
-      𝒟[Proofs.lazyGame (Gₜ := 𝔾ₜ) g₁ g₂ adversary] {true} := by
+      𝒟[Proofs.lazyGame (Gₜ := 𝔾ₜ) g₁ g₂ (Proofs.view adversary g₁)] {true} := by
   classical
   rw [agm_eq_native, ← unchecked_eq]
   simp only [RandomOracle.run, simulateQ_bind, simulateQ_pure, StateT.run'_eq, StateT.run_bind,
