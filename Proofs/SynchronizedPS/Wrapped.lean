@@ -69,6 +69,7 @@ theorem signatures_append (sign : Period × F → G₁) (events more : List (Eve
   | nil => rfl
   | cons event rest ih => cases event <;> simp [signatures, ih]
 
+omit [AddCommGroup G₂] [Module F G₂] in
 /-- `Reduction.run` is the ordered run with the transcripts read off. -/
 theorem run_eq_ordered (V : Proofs.View F Period G₁ G₂)
     (publicKey : G₂ × G₂) (H : Period → G₁) (sign : Period × F → G₁) :
@@ -171,6 +172,7 @@ private theorem translator_run {β : Type} (correction : Period × F → F) (H :
         simpa only [wrappedHashes_append, signatures_append, wrappedHashes, signatures,
           List.append_nil, fixedImpl] using this
 
+omit [AddCommGroup G₂] [Module F G₂] in
 /-- Running the wrapper against fixed tables is the attacker's ordered run against the corrected
 signer, followed by `wrapped`. -/
 theorem fixedRun_wrap (correction : Period × F → F) (final : Forgery F Period → F) (keys : G₂ → G₂ × G₂)
