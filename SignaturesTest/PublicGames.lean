@@ -2,7 +2,6 @@ import Signatures.BLS.Statement
 import Signatures.OOPS.Statement
 import Signatures.Proximity.Statement
 import Signatures.Schnorr.Statement
-import Signatures.PS.Game
 import Signatures.SynchronizedPS.Statement
 import Lean.Util.CollectAxioms
 
@@ -22,7 +21,6 @@ run_meta do
     (``Schnorr.Game.agm, `Signatures.Schnorr.Game),
     (``Schnorr.Game.rom, `Signatures.Schnorr.Game),
     (``Schnorr.Game.nonzeroRom, `Signatures.Schnorr.Game),
-    (``PS.Game.agm, `Signatures.PS.Game), (``PS.Game.eufCma, `Signatures.PS.Game),
     (``SynchronizedPS.Game.eufCma, `Signatures.SynchronizedPS.Game),
     (``SynchronizedPS.Game.agm, `Signatures.SynchronizedPS.Game)]
   for (name, moduleName) in games do

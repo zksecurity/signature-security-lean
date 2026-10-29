@@ -57,8 +57,8 @@ by equalities in `Proofs/` (e.g. [`BLS.Game.eufCma_eq_rom`](Proofs/BLS/EufCma.le
 in the certified-key model: a forgery names the co-signers' key pairs and messages with the
 aggregate, and the one-signature-per-period rule is the admissibility restriction. Its base is a
 hash, so every element the attacker sees is bilinear in the secrets and the hash exponents, and the
-AGM proof stays linear like OOPS's; plain [Pointcheval–Sanders](Signatures/PS/Game.lean), whose
-base is attacker-chosen, is defined (`eufCma`, `agm`) but not proved.
+AGM proof stays linear like OOPS's. Plain Pointcheval–Sanders, whose base is attacker-chosen, is
+not in scope.
 
 ## Layout
 

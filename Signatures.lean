@@ -51,7 +51,6 @@ import Signatures.OOPS.GeneralAGMParameters
 import Signatures.OOPS.GeneralSecurityModel
 import Signatures.OOPS.Spec.LazyAGM
 import Signatures.OOPS.Statement
-import Signatures.PS.Game
 import Signatures.PaperStatements
 import Signatures.Proximity.ArithmeticStatement
 import Signatures.Proximity.CaliperAGMFamilyStatement
