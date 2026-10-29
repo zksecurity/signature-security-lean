@@ -38,6 +38,7 @@ theorem evalDist_bind_apply_le_of_support
 variable {F G₁ G₂ : Type} [Field F] [SampleableType F] [DecidableEq F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
 
+omit [DecidableEq F] in
 /-- Drawing the known key first and running the corresponding fixed-key solver succeeds no
 better than the best fixed-key solver. -/
 theorem dlog11Advantage_sample_le (g₁ : G₁) (g₂ : G₂)
@@ -46,12 +47,13 @@ theorem dlog11Advantage_sample_le (g₁ : G₁) (g₂ : G₂)
     Model.dlog11Advantage g₁ g₂
       (fun g X h₂ Y => do let k ← ($ᵗ F : ProbComp F); solver k g X h₂ Y) ≤ ε := by
   unfold Model.dlog11Advantage at *
-  have hswap : 𝒮[AlgebraicGroupModel.dlog11Exp g₁ g₂
+  have hswap : 𝒟[AlgebraicGroupModel.dlog11Exp g₁ g₂
       (fun g X h₂ Y => do let k ← ($ᵗ F : ProbComp F); solver k g X h₂ Y)] =
-      𝒮[do let k ← ($ᵗ F : ProbComp F); AlgebraicGroupModel.dlog11Exp g₁ g₂ (solver k)] := by
-    simp only [AlgebraicGroupModel.dlog11Exp, bind_assoc]
-    exact DeferredSampling.evalSPMF_bind_comm _ _ _
-  rw [evalDist_eq_of_evalSPMF_eq _ _ hswap]
+      𝒟[do let k ← ($ᵗ F : ProbComp F); AlgebraicGroupModel.dlog11Exp g₁ g₂ (solver k)] :=
+    evalDist_eq_of_evalSPMF_eq _ _ (by
+      simp only [AlgebraicGroupModel.dlog11Exp, bind_assoc]
+      exact DeferredSampling.evalSPMF_bind_comm _ _ _)
+  rw [hswap]
   exact evalDist_bind_apply_le_of_support _ _ (measurableSet_singleton true) fun k _ => h k
 
 end Signatures.Runtime.SyncWrapGeneral

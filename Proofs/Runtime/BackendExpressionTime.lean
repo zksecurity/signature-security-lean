@@ -34,7 +34,7 @@ def frameFee (overhead : Nat → Nat) (W : Nat) : Nat := overhead (16 * W)
 
 include sizes
 
-omit mono in
+omit mono [Q.HasCategory] QP QS in
 /-- A variable's value is no larger than its environment. -/
 theorem var_size {Γ a} (v : Var Γ a) (env : Env base Γ) :
     Q.size (rep.ty a) (v.get env) ≤ Q.size (rep.env Γ) env := by
@@ -65,12 +65,14 @@ theorem var_time {Γ a} (v : Var Γ a) (env : Env base Γ) (W : Nat) (henv : Q.s
       (2 * v.depth + 1) * frameFee overhead W + 2 * frameFee overhead W := by ring
     omega
 
+omit [C.HasOption] sizes in
 theorem unit_time {Γ} (env : Env base Γ) (W : Nat) (henv : Q.size (rep.env Γ) env ≤ W)
     (hu : Q.size rep.data.unit () ≤ W) :
     (bound (.unit : Expr Op Γ .unit)).time env ≤ frameFee overhead W := by
   dsimp only [compileBound, DataCostLaws.unitBound, frameFee]
   exact mono (by omega)
 
+omit [C.HasOption] sizes in
 theorem bool_time {Γ} (b : Bool) (env : Env base Γ) (W : Nat) (henv : Q.size (rep.env Γ) env ≤ W)
     (hu : Q.size rep.data.unit () ≤ W) (hb : Q.size rep.data.bool b ≤ W) :
     (bound (.bool b : Expr Op Γ .bool)).time env ≤ 3 * frameFee overhead W := by
@@ -78,6 +80,7 @@ theorem bool_time {Γ} (b : Bool) (env : Env base Γ) (W : Nat) (henv : Q.size (
   dsimp only [compileBound, LocalBound.compose, DataCostLaws.unitBound, DataCostLaws.boolBound] at *
   grind only
 
+omit [C.HasOption] sizes in
 theorem nat_time {Γ} (n : Nat) (env : Env base Γ) (W : Nat) (henv : Q.size (rep.env Γ) env ≤ W)
     (hu : Q.size rep.data.unit () ≤ W) (hn : Q.size rep.data.nat n ≤ W) :
     (bound (.nat n : Expr Op Γ .nat)).time env ≤ 3 * frameFee overhead W := by
@@ -114,6 +117,7 @@ theorem snd_time {Γ a b} (p : Expr Op Γ (.pair a b)) (env : Env base Γ) (W Tp
   grind only
 
 include lists in
+omit [C.HasOption] sizes in
 theorem nil_time {Γ a} (env : Env base Γ) (W : Nat) (hh : header ≤ W) (henv : Q.size (rep.env Γ) env ≤ W)
     (hu : Q.size rep.data.unit () ≤ W) :
     (bound (.nil : Expr Op Γ (.list a))).time env ≤ 3 * frameFee overhead W := by
@@ -148,6 +152,7 @@ theorem letE_time {Γ a b} (e : Expr Op Γ a) (body : Expr Op (a :: Γ) b) (env 
     LanguageRepresentation.env, id] at *
   grind only
 
+omit [C.HasOption] sizes in
 theorem op_time {Γ a b} (instr : Op a b) (e : Expr Op Γ a) (env : Env base Γ) (W Te Ti : Nat)
     (henv : Q.size (rep.env Γ) env ≤ W) (he : Q.size (rep.ty a) (e.denote P env) ≤ W)
     (hres : Q.size (rep.ty b) (P.execute instr (e.denote P env)) ≤ W)

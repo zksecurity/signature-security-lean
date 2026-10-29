@@ -291,11 +291,11 @@ theorem signedCode_cost (s : R.machine.State) (hs : Q.size R.state s ≤ stateWi
   nz
   unfold signedCode
   apply CAST
-  have a1 := PAIR _ _ ((m, σ), (m, ((s, h, marks), idx))) tfed tmarked (by szg) (by first | exact hbind.trans (by szg) | szg)
+  have a1 := PAIR _ _ ((m, σ), (m, ((s, h, marks), idx))) tfed tmarked (by szg) (by exact hbind.trans (by szg))
   have a2 := BIND (readyAgainCode rep R) (R.machine.update? (s, tagSign (m, σ + correction m • h)), markSign correction m :: marks)
-    tagain (by first | exact hbind.trans (by szg) | szg) (by first | exact hval | exact hval2 | szg)
-  have := COMPOSE _ _ ((m, σ), (m, ((s, h, marks), idx))) a1 a2 (by szg) (by first | exact hbind.trans (by szg) | szg)
-    (by first | exact hval | exact hval2 | szg)
+    tagain (by exact hbind.trans (by szg)) (by first | exact hval | exact hval2)
+  have := COMPOSE _ _ ((m, σ), (m, ((s, h, marks), idx))) a1 a2 (by szg) (by exact hbind.trans (by szg))
+    (by first | exact hval | exact hval2)
   sz
 
 end Signatures.Runtime.SyncWrapGeneral

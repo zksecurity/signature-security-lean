@@ -182,17 +182,17 @@ theorem requestReady_continue_cost (s : R.machine.State) (hs : InnerState rep wi
     have hdist2 := inl_size S.sizes (prod boundedRep (readyCtx rep R)) (prod kRep (readyCtx rep R)) (n, ((s, marks), idx)) le_rfl
     nz
     have a1 := SND boundedRep (readyCtx rep R) (n, ((s, marks), idx)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
-    have a2 := COMPOSE _ _ (n, ((s, marks), idx)) a1 tkeep (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by (try dsimp only); set_option pp.explicit true in trace_state; (try simp only [hnext]); szg)
+    have a2 := COMPOSE _ _ (n, ((s, marks), idx)) a1 tkeep (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by (try dsimp only); (try simp only [hnext]); szg)
     have a3 := DISTRIBUTE boundedRep kRep (readyCtx rep R) (Sum.inl n, ((s, marks), idx)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
     have a4 := ELIML _ (Q.compose (QP.snd kRep (readyCtx rep R)) (stepReadyCode rep R (recordHashCode rep data cost primitive)))
-      (n, ((s, marks), idx)) a2 (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
-    have a5 := COMPOSE _ _ (Sum.inl n, ((s, marks), idx)) a3 a4 (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
+      (n, ((s, marks), idx)) a2 (by first | exact hval | exact hval' | szg) (by exact hval)
+    have a5 := COMPOSE _ _ (Sum.inl n, ((s, marks), idx)) a3 a4 (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by exact hval)
     have a6 := DISTRIBUTE (sum boundedRep kRep) msgRep (readyCtx rep R) (Sum.inl (Sum.inl n), ((s, marks), idx)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
     exact le_trans (COMPOSE _ _ (Sum.inl (Sum.inl n), ((s, marks), idx)) tpr
       (le_trans (CAST _ _ _ (COMPOSE _ _ (Sum.inl (Sum.inl n), ((s, marks), idx)) a6
         (ELIML _ (holdHashCode rep data cost primitive ports wports R) (Sum.inl n, ((s, marks), idx))
-          (CAST _ _ _ a5) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg))) le_rfl)
-      (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)) (by first | exact hval | exact hval' | szg)
+          (CAST _ _ _ a5) (by first | exact hval | exact hval' | szg) (by exact hval)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by exact hval))) le_rfl)
+      (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by exact hval)) (by first | exact hval | exact hval' | szg)
   · -- a hash reply
     have hl : Q.size (sum boundedRep kRep) (Sum.inr t) ≤ 3 * width := inl_payload S.sizes _ _ _ hdec
     have ht : Q.size kRep t ≤ 3 * width := inr_payload S.sizes _ _ _ hl
@@ -203,17 +203,17 @@ theorem requestReady_continue_cost (s : R.machine.State) (hs : InnerState rep wi
     have hdist2 := inr_size S.sizes (prod boundedRep (readyCtx rep R)) (prod kRep (readyCtx rep R)) (t, ((s, marks), idx)) le_rfl
     nz
     have a1 := SND kRep (readyCtx rep R) (t, ((s, marks), idx)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
-    have a2 := COMPOSE _ _ (t, ((s, marks), idx)) a1 trecord (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
+    have a2 := COMPOSE _ _ (t, ((s, marks), idx)) a1 trecord (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval')
     have a3 := DISTRIBUTE boundedRep kRep (readyCtx rep R) (Sum.inr t, ((s, marks), idx)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
     have a4 := ELIMR (Q.compose (QP.snd boundedRep (readyCtx rep R)) (stepReadyCode rep R (keepMarksCode rep))) _
-      (t, ((s, marks), idx)) a2 (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
-    have a5 := COMPOSE _ _ (Sum.inr t, ((s, marks), idx)) a3 a4 (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
+      (t, ((s, marks), idx)) a2 (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval')
+    have a5 := COMPOSE _ _ (Sum.inr t, ((s, marks), idx)) a3 a4 (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval')
     have a6 := DISTRIBUTE (sum boundedRep kRep) msgRep (readyCtx rep R) (Sum.inl (Sum.inr t), ((s, marks), idx)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)
     exact le_trans (COMPOSE _ _ (Sum.inl (Sum.inr t), ((s, marks), idx)) tpr
       (le_trans (CAST _ _ _ (COMPOSE _ _ (Sum.inl (Sum.inr t), ((s, marks), idx)) a6
         (ELIML _ (holdHashCode rep data cost primitive ports wports R) (Sum.inr t, ((s, marks), idx))
-          (CAST _ _ _ a5) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg))) le_rfl)
-      (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg)) (by first | exact hval | exact hval' | szg)
+          (CAST _ _ _ a5) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval')) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval'))) le_rfl)
+      (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval' | szg) (by first | exact hval | exact hval')) (by first | exact hval | exact hval' | szg)
   · simp at hpos
 
 /-- The hold on a signing request. -/

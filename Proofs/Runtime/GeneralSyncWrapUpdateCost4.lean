@@ -184,7 +184,7 @@ theorem updateReadyCode_cost (s : R.machine.State) (hs : InnerState rep width st
       (by (try simp only [hhead]); szg) (by (try simp only [hhead]); szg)
     rw [hhead] at d1
     have e1 := ELIML _ (requestReadyCode rep data cost primitive ports wports R) (result, ((s, marks), (⟨.inl (.inr (finalIndex result)), h⟩ : GeneralIndex K (K × F) G₁ randomBound))) tfin
-      (by (try simp only [hhead]); szg) (by (try simp only [hhead]); szg)
+      (by szg) (by szg)
     have c1 := COMPOSE _ _ (Sum.inl result, ((s, marks), (⟨.inl (.inr (finalIndex result)), h⟩ : GeneralIndex K (K × F) G₁ randomBound))) d1 e1 (by szg) (by szg) (by szg)
     have c2 : Q.cost (QuantitativeStepClass.IsDistributive.elimContext Q QD (finishReadyCode rep data cost primitive ports wports R)
         (requestReadyCode rep data cost primitive ports wports R)) (R.machine.head s, ((s, marks), (⟨.inl (.inr (finalIndex result)), h⟩ : GeneralIndex K (K × F) G₁ randomBound))) ≤

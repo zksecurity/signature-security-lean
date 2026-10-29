@@ -158,14 +158,14 @@ theorem feedSignCode_cost (s : R.machine.State) (hs : Q.size R.state s ≤ state
     (Sum.inr (Sum.inr (m, σ)), (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)))) (by szg) (by szg)
   have d2 := DISTRIBUTE (prod kRep pRep) (prod msgRep pRep) (signCtx rep R) (Sum.inr (m, σ), (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)))) (by szg) (by szg)
   have e2 := ELIMR (QO.none (prod (prod kRep pRep) (signCtx rep R)) (stateRep rep R)) _ ((m, σ), (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)))) tsigned
-    (by szg) (by first | exact hval | exact hval2 | szg)
-  have c2 := COMPOSE _ _ (Sum.inr (m, σ), (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)))) d2 e2 (by szg) (by szg) (by first | exact hval | exact hval2 | szg)
+    (by szg) (by exact hval)
+  have c2 := COMPOSE _ _ (Sum.inr (m, σ), (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)))) d2 e2 (by szg) (by szg) (by exact hval)
   exact le_trans (COMPOSE _ _ (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))) tdec
     (le_trans (CAST _ _ _ (COMPOSE _ _ (Sum.inr (Sum.inr (m, σ)), (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)))) d1
       (ELIMR (QO.none (prod ports.randomReply (signCtx rep R)) (stateRep rep R)) _ (Sum.inr (m, σ), (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))))
-        (CAST _ _ _ c2) (by szg) (by first | exact hval | exact hval2 | szg))
-      (by szg) (by szg) (by first | exact hval | exact hval2 | szg))) le_rfl)
-    (by szg) (by szg) (by first | exact hval | exact hval2 | szg)) (by szg)
+        (CAST _ _ _ c2) (by szg) (by exact hval))
+      (by szg) (by szg) (by exact hval))) le_rfl)
+    (by szg) (by szg) (by exact hval)) (by szg)
 
 /-- The waiting state's pending request is the signing one: dispatch the signature reply. -/
 theorem requestGotCode_cost (s : R.machine.State) (hs : InnerState rep width stateWidth headWidth work s) (h : G₁)
@@ -204,9 +204,9 @@ theorem requestGotCode_cost (s : R.machine.State) (hs : InnerState rep width sta
   exact le_trans (COMPOSE _ _ (Sum.inr m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))) tpr
     (le_trans (CAST _ _ _ (COMPOSE _ _ (Sum.inr m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))) a6
       (ELIMR _ (feedSignCode rep data cost primitive ports wports correction finalFn keys code R) (m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))) tfeed
-        (by szg) (by first | exact hval | szg))
-      (by szg) (by szg) (by first | exact hval | szg))) le_rfl)
-    (by szg) (by szg) (by first | exact hval | szg)) (by szg)
+        (by szg) (by exact hval))
+      (by szg) (by szg) (by exact hval))) le_rfl)
+    (by szg) (by szg) (by exact hval)) (by szg)
 
 /-- Reading the attacker's readout from a waiting state while retaining the context. -/
 theorem withInputHeadGot_cost (s : R.machine.State) (hs : InnerState rep width stateWidth headWidth work s) (h : G₁)
@@ -289,13 +289,13 @@ theorem updateGotCode_cost (s : R.machine.State) (hs : InnerState rep width stat
   unfold updateGotCode
   apply CAST
   have d1 := DISTRIBUTE bdI.out bdI.pos (gotCtx rep R) (R.machine.head s, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)))
-    (by first | exact hhd | exact hhd' | ((try simp only [hhead]); szg)) (by (try simp only [hhead]); szg)
+    (by exact hhd) (by (try simp only [hhead]); szg)
   rw [hhead] at d1
   have e1 := ELIMR (Q.compose (QuantitativeStepClass.HasProd.pairLeft Q QP (dropPointCode rep R))
       (finishReadyCode rep data cost primitive ports wports R)) _ (Sum.inr m, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))) treq
-    (by szg) (by first | exact hval | szg)
+    (by szg) (by exact hval)
   have c1 := COMPOSE _ _ (Sum.inr (Sum.inr m), ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))) d1 e1
-    (by first | exact hhd | exact hhd' | szg) (by szg) (by first | exact hval | szg)
+    (by first | exact hhd | exact hhd') (by szg) (by exact hval)
   have c2 : Q.cost (QuantitativeStepClass.IsDistributive.elimContext Q QD
       (Q.compose (QuantitativeStepClass.HasProd.pairLeft Q QP (dropPointCode rep R)) (finishReadyCode rep data cost primitive ports wports R))
       (requestGotCode rep data cost primitive ports wports correction finalFn keys code R)) (R.machine.head s, ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound))) ≤
@@ -305,8 +305,8 @@ theorem updateGotCode_cost (s : R.machine.State) (hs : InnerState rep width stat
     rw [hhead]
     exact c1.trans (by szg)
   have := COMPOSE _ _ ((s, h, marks), (⟨.inr m, σ⟩ : GeneralIndex K (K × F) G₁ randomBound)) twith c2 (by szg)
-    (by first | exact hhd | exact hhd' | ((try simp only [hhead]); szg))
-    (by (try simp only [hhead]); first | exact hval | szg)
+    (by exact hhd)
+    (by (try simp only [hhead]); exact hval)
   sz
 
 /-! ## The transition -/

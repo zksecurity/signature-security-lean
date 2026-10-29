@@ -506,7 +506,7 @@ theorem finishCode_cost (result : OutTy.Value (cryptoBase F G₁ G₂ K M)) (hr 
   apply CAST
   have tid := IDENT (prod (rep.ty OutTy) mRep) (result, marks) (by sz)
   have tpair := PAIR _ _ (result, marks) tid tfs (by sz) (by sz)
-  have tenc := COMPOSE _ _ (result, marks, finalFn result.1, ()) tcompile hencode' (by sz) (by (try dsimp only [Function.comp_def, id]); rw [hden]; exact hfinW)
+  have tenc := COMPOSE _ _ (result, marks, finalFn result.1, ()) tcompile hencode' (by sz) (by rw [hden]; exact hfinW)
     (by (try dsimp only [Function.comp_def, id]); rw [hden]; exact hencW)
   have tfinish := COMPOSE _ _ ((result, marks), finalFn result.1) targs tenc (by sz) (by sz) (by (try dsimp only [Function.comp_def, id]); rw [hden]; exact hencW)
   have tbody := COMPOSE _ _ (result, marks) tpair tfinish (by sz) (by sz) (by (try dsimp only [Function.comp_def, id]); rw [hden]; exact hencW)

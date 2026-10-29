@@ -90,7 +90,7 @@ theorem innerUpdate_of_reachable (s : R.machine.State) (hs : GeneralCaller.Reach
   have hc := (hrun.cost_le input (trace.append (.query hv dir (.nil _)))).1
   rw [executionCost_eq_init_add_trace_add_terminal] at hc
   simp only [ExecutionCost.work_add, ExecutionCost.work_ofWork, terminalCost, ExecutionCost.work_observe,
-    QuantitativeRealization.ExecutionTrace.cost_append, executionTrace_cost_query, queryStepCost,
+    QuantitativeRealization.ExecutionTrace.cost_append,
     QuantitativeRealization.ExecutionTrace.cost, ExecutionCost.work_query, Nat.add_zero] at hc
   omega
 
@@ -125,7 +125,7 @@ theorem wrapState_of_linked (k : Nat) (hk : k ≤ cap) (st : State R.machine (F 
 
 /-- The wrapper's exposed position at a linked ready or waiting state is a sized request, and
 its tagged replies are sized. -/
-theorem linked_step_sizes (k : Nat) (hk : k ≤ cap) (st : State R.machine (F := F)) (hst : Linked R k st)
+theorem linked_step_sizes (k : Nat) (_hk : k ≤ cap) (st : State R.machine (F := F)) (hst : Linked R k st)
     (position : GeneralRequest K (K × F) randomBound)
     (next' : (generalSpec K (K × F) G₁ randomBound).Range position → State R.machine (F := F))
     (hview : (wrapped correction finalFn keys R).view st = .inr ⟨position, next'⟩)
@@ -239,15 +239,15 @@ theorem linked_state_size (k : Nat) (hk : k ≤ cap) (st : State R.machine (F :=
     rcases st with ⟨s, marks'⟩ | ⟨s, h, marks'⟩ | ⟨result, marks'⟩
     · rcases hcase with ⟨s', hs'⟩ | ⟨s', h', hs'⟩ | ⟨result', hs'⟩
       · cases hs'; exact hmarks marks hst.2
-      · exact absurd hs' (by simp [gotHash, ready])
-      · exact absurd hs' (by simp [done, ready])
+      · exact absurd hs' (by simp [gotHash])
+      · exact absurd hs' (by simp [done])
     · rcases hcase with ⟨s', hs'⟩ | ⟨s', h', hs'⟩ | ⟨result', hs'⟩
-      · exact absurd hs' (by simp [gotHash, ready])
+      · exact absurd hs' (by simp [ready])
       · cases hs'; exact hmarks marks hst.2.1
-      · exact absurd hs' (by simp [done, gotHash])
+      · exact absurd hs' (by simp [done])
     · rcases hcase with ⟨s', hs'⟩ | ⟨s', h', hs'⟩ | ⟨result', hs'⟩
-      · exact absurd hs' (by simp [done, ready])
-      · exact absurd hs' (by simp [done, gotHash])
+      · exact absurd hs' (by simp [ready])
+      · exact absurd hs' (by simp [gotHash])
       · cases hs'; exact hmarks marks hst.2
 
 /-! ## The whole run -/

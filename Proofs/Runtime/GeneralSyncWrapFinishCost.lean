@@ -159,9 +159,9 @@ local notation "bound" e =>
 local notation "VAR" =>
   Expression.var_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
 local notation "UNIT" =>
-  Expression.unit_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
+  Expression.unit_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound mono
 local notation "NATC" =>
-  Expression.nat_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
+  Expression.nat_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound mono
 local notation "PAIR" =>
   Expression.pair_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
 local notation "FST" =>
@@ -169,13 +169,13 @@ local notation "FST" =>
 local notation "SND" =>
   Expression.snd_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
 local notation "NIL" =>
-  Expression.nil_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes lists mono
+  Expression.nil_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound lists mono
 local notation "CONS" =>
   Expression.cons_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes lists mono
 local notation "LETE" =>
   Expression.letE_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
 local notation "OPT" =>
-  Expression.op_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
+  Expression.op_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound mono
 local notation "BRANCH" =>
   Expression.branch_time rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws primitiveBound sizes mono
 local notation "FOLD" =>

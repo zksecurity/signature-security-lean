@@ -30,8 +30,7 @@ Pointcheval–Sanders has two forms: `εX`, `εY`, `εH` are the DLog successes 
 as the second key, or in the period hashes), uncosted and for a finite period type since they
 sample a hash table; the budgeted form costs four executed solvers in Caliper by wrapping the
 attacker's caller for the two weighted schemes `x•H(t)` and `y•(m•H(t))` with the other key known
-([`SyncWrap*`](Proofs/Runtime/Caliper/SyncWrapParameters.lean)), covers the attacker of the single
-honest signer who reports no co-signer keys, holds for any period type with decidable equality
+([`SyncWrap*`](Proofs/Runtime/Caliper/SyncWrapParameters.lean)), holds for any period type with decidable equality
 ([transport](Proofs/SynchronizedPS/PeriodTransport.lean), as OOPS's topics), and has the usual
 polynomial-family corollary. Its term generators and wrapper routines are executed on 64-bit words
 in [`SignaturesTest/CaliperSyncWrap.lean`](SignaturesTest/CaliperSyncWrap.lean). The same wrapping
