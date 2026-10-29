@@ -253,9 +253,9 @@ theorem execute_eq {N : Type → Type} [Monad N] [LawfulMonad N]
         · simpa using congrArg (· ++ [message]) signed
 
 omit [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
-theorem program_query_bound
+theorem program_query_bound {Out : Type}
     (attack : OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
-      (Explained F Message (Group G₁ G₂)))
+      (Explained F Out (Group G₁ G₂)))
     (positions : Positions) (predicate : Query Index Message → Prop) [DecidablePred predicate] (limit : Nat)
     (bound : IsQueryBoundP attack (fun request => predicate request.value.data) limit) :
     IsQueryBoundP (program attack positions) predicate limit := by

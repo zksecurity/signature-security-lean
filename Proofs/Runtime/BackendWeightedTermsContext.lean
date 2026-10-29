@@ -103,6 +103,44 @@ theorem oops_weakenTail_time (d : Nat) (mt : F × K)
   dsimp only [oopsNativeTime, termFee] at *
   nlinarith
 
+theorem sync_weakenTail_time (weighted : Bool) (m : K × F)
+    {Γ : List (Ty CryptoAtom)} (env : Env (cryptoBase F G₁ G₂ K M) Γ)
+    (width oneTime : Nat)
+    (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)
+    (he : Q.size (rep.env Γ) env ≤ width)
+    (hf : ∀ x : F, Q.size (rep.ty scalar) x ≤ width)
+    (hk : Q.size (rep.ty key) m.1 ≤ width)
+    (h1 : (primitiveBound .one).time () ≤ oneTime) :
+    (Expression.compileBound rep data (arithmetic F G₁ G₂ K M cost) primitive laws
+      dataLaws primitiveBound ((sync weighted).weakenTail Γ)).time (m, env) ≤
+        syncNativeTime overhead width oneTime := by
+  have hp := @sizes.prod_le
+  have hfst := @sizes.fst_le
+  have hsnd := @sizes.snd_le
+  have hnil := lists.nil_le (rep.ty (termTy key))
+  have hcons := @lists.cons_le
+  have hone := hf 1
+  have hmessage := hf m.2
+  have hfee : ∀ k ≤ 128 * (termSpace width 1 + width), overhead k ≤ termFee overhead width 1 :=
+    fun _ h => mono h
+  have hm := hp (rep.ty key) (rep.ty scalar) m
+  have hpair₁ := hp (rep.ty key) (rep.ty scalar) (m.1, 1)
+  have hpair₂ := hp (rep.ty key) (rep.ty scalar) (m.1, m.2)
+  have hlist₁ := hcons (rep.ty (termTy key)) (m.1, 1) []
+  have hlist₂ := hcons (rep.ty (termTy key)) (m.1, m.2) []
+  have henv := hp (rep.ty syncMessage) (rep.env Γ) (m, env)
+  have hpl₁ := hp (rep.ty (termTy key)) (rep.ty (.list (termTy key))) ((m.1, 1), [])
+  have hpl₂ := hp (rep.ty (termTy key)) (rep.ty (.list (termTy key))) ((m.1, m.2), [])
+  clear hp hfst hsnd hcons
+  cases weighted <;>
+    simp only [sync, Expr.weakenTail, Var.weakenTail, List.cons_append, List.nil_append] <;>
+    dsimp only [Expression.compileBound, Expression.variableBound, LocalBound.compose,
+      LocalBound.pair, LocalBound.fst, LocalBound.snd, LocalBound.identity, DataCostLaws.unitBound,
+      DataCostLaws.nilBound, DataCostLaws.consBound, Expr.denote, Var.get, arithmetic, termTy,
+      syncNativeTime, termFee, termSpace, LanguageRepresentation.ty, LanguageRepresentation.env,
+      List.append, List.nil_append, List.cons_append] at * <;>
+    grind only
+
 theorem proximity_weakenTail_time (ell : Nat)
     (ms : (proximityTupleMessage ell).Value (cryptoBase F G₁ G₂ K M))
     {Γ : List (Ty CryptoAtom)} (env : Env (cryptoBase F G₁ G₂ K M) Γ)

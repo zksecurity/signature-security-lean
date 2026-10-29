@@ -16,12 +16,13 @@ private theorem max_polynomial {f g : Nat → Nat}
     PolynomiallyBounded (fun n => max (f n) (g n)) :=
   (hf.add hg).of_le (fun _ => Nat.max_le.mpr ⟨Nat.le_add_right _ _, Nat.le_add_left _ _⟩)
 
-private theorem cases_polynomial (index : Nat → Index) (f g : Nat → Nat → Nat)
+private theorem cases_polynomial (index : Nat → Index) (f g : Nat → Nat → Nat) (h : Nat → Nat)
     (hf : PolynomiallyBounded (fun n => f n (index n).bound))
-    (hg : PolynomiallyBounded (fun n => g n (index n).bound)) :
+    (hg : PolynomiallyBounded (fun n => g n (index n).bound))
+    (hh : PolynomiallyBounded h) :
     PolynomiallyBounded (fun n => match index n with
-      | .oops d => f n d | .proximity d => g n d) := by
-  apply (hf.add hg).of_le
+      | .oops d => f n d | .proximity d => g n d | .sync _ => h n) := by
+  apply ((hf.add hg).add hh).of_le
   intro n
   cases index n <;> simp only [Index.bound] <;> omega
 
@@ -81,6 +82,7 @@ theorem Index.termsTime_polynomial (index : Nat → Index) (overhead : Nat → N
   apply cases_polynomial
   · polynomial_bound
   · polynomial_bound
+  · polynomial_bound
 
 theorem Index.coefficientTime_polynomial (index : Nat → Index) (overhead : Nat → Nat → Nat)
     (width tokenCap coeffCap indexTime finZeroTime oneTime mulTime natEqTime natSubTime natAddTime zeroTime : Nat → Nat)
@@ -101,6 +103,7 @@ theorem Index.coefficientTime_polynomial (index : Nat → Index) (overhead : Nat
       (width n) (tokenCap n) (coeffCap n) (indexTime n) (finZeroTime n) (oneTime n) (mulTime n) (natEqTime n) (natSubTime n) (natAddTime n) (zeroTime n)) := by
   unfold Index.coefficientTime
   apply cases_polynomial
+  · polynomial_bound
   · polynomial_bound
   · polynomial_bound
 

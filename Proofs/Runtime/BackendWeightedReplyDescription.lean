@@ -16,6 +16,7 @@ def Index.termsDescription (allowance : Nat)
     (primitiveSize : {a b : Ty CryptoAtom} → CryptoOp a b → Nat) : Index → Nat
   | .oops d => Terms.oopsDescription allowance primitiveSize d
   | .proximity ell => Terms.proximityDescription allowance primitiveSize ell
+  | .sync _ => Terms.syncDescription allowance primitiveSize
 
 theorem Index.terms_description (allowance : Nat)
     (primitiveSize : {a b : Ty CryptoAtom} → CryptoOp a b → Nat) (index : Index) :
@@ -24,13 +25,14 @@ theorem Index.terms_description (allowance : Nat)
   cases index with
   | oops d => exact Terms.oops_description allowance primitiveSize d
   | proximity ell => exact Terms.proximity_description allowance primitiveSize ell
+  | sync weighted => exact Terms.sync_description allowance primitiveSize weighted
 
 theorem Index.default_description (allowance : Nat)
     (primitiveSize : {a b : Ty CryptoAtom} → CryptoOp a b → Nat) (index : Index) :
     Expression.descriptionBound allowance primitiveSize index.defaultTerm ≤
       primitiveSize (.finZero index.bound) + primitiveSize .zero + 9 * allowance := by
   cases index <;> simp only [Index.defaultTerm, Index.bound, Reply.oopsDefault,
-    Reply.proximityDefault, LazyAGM.ReplySyntax.v0, Expression.descriptionBound,
+    Reply.proximityDefault, Reply.syncDefault, LazyAGM.ReplySyntax.v0, Expression.descriptionBound,
     Expression.variableDescription] <;> omega
 
 namespace Reply

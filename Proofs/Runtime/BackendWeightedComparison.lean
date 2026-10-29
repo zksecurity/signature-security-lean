@@ -15,17 +15,21 @@ open BackendProgram
 inductive Index where
   | oops (degree : Nat)
   | proximity (dimension : Nat)
+  | sync (weighted : Bool)
 
 def Index.bound : Index → Nat
   | .oops d | .proximity d => d
+  | .sync _ => 0
 
 @[reducible] def Index.ty : Index → Ty CryptoAtom
   | .oops d => Weights.oopsKey d
   | .proximity ell => Weights.proximityKey ell
+  | .sync _ => key
 
 def Index.expression : (index : Index) → Expr CryptoOp [index.ty, index.ty] .bool
   | .oops d => AGM.KeyEquality.oops d
   | .proximity ell => AGM.KeyEquality.proximity ell
+  | .sync _ => AGM.KeyEquality.bls
 
 variable {F G₁ G₂ K M : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
@@ -41,6 +45,7 @@ theorem Index.expression_value (cost : PrimitiveCosts) (index : Index)
   cases index with
   | oops d => exact AGM.KeyEquality.oops_value cost d x y
   | proximity ell => exact AGM.KeyEquality.proximity_value cost ell x y
+  | sync _ => exact AGM.KeyEquality.bls_value cost x y
 
 universe v w
 
@@ -78,6 +83,8 @@ theorem Index.description (index : Index) (sizes : DescriptionSize Q) (allowance
     | proximity ell =>
       exact AGM.KeyEquality.proximity_code_size rep data cost primitive ell
         sizes allowance laws dataLaws primitiveSize hp
+    | sync _ =>
+      exact AGM.KeyEquality.bls_code_size rep data cost primitive sizes allowance laws dataLaws primitiveSize hp
   exact ha.trans (by omega)
 
 variable [C.HasOption]
@@ -112,6 +119,9 @@ theorem Index.native_cost (index : Index) (x y : index.ty.Value (cryptoBase F G�
     | proximity ell =>
       exact AGM.KeyEquality.proximity_cost rep data cost primitive laws dataLaws
         primitiveBound sizes mono ell x y width topicTime indexTime natTime hh hu hb hn hx hy ht hi he
+    | sync _ =>
+      exact AGM.KeyEquality.bls_cost rep data cost primitive laws dataLaws
+        primitiveBound sizes mono x y width topicTime indexTime natTime hh hu hb hx hy ht
   have ha := Comparison.cost rep data (arithmetic F G₁ G₂ K M cost) primitive sizes laws dataLaws mono
     index.expression (index.expression_value cost) x y width
     (topicTime + 2 * indexTime + natTime + 128 * overhead (128 * width)) hh hu hb hx hy hc

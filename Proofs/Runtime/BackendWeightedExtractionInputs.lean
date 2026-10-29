@@ -37,6 +37,8 @@ def Index.coefficientTime (index : Index) (overhead : Nat → Nat)
       natEqTime natSubTime natAddTime zeroTime
   | .proximity ell => Coefficients.proximityCoefficientTime overhead width tokenCap coeffCap ell indexTime finZeroTime
       oneTime mulTime natEqTime natSubTime natAddTime zeroTime
+  | .sync _ => Coefficients.syncCoefficientTime overhead width tokenCap coeffCap oneTime mulTime natEqTime natSubTime
+      natAddTime zeroTime
 
 include laws dataLaws primitiveBound sizes lists mono in
 theorem Index.coefficients_cost (index : Index)
@@ -73,6 +75,12 @@ theorem Index.coefficients_cost (index : Index)
       ell tr coeff width tokenCap coeffCap indexTime finZeroTime oneTime mulTime natEqTime natSubTime natAddTime zeroTime
       hh hu hb hn hf hk hj htc hcc hi h0 h1 hm hEq hSub hAdd hZero
     simpa only [Coefficients.proximityCode, QuantitativeStepClass.Realizer.cost_castFunction,
+      Index.terms, Index.coefficientTime] using h
+  | sync weighted =>
+    have h := Coefficients.syncCode_cost rep data cost primitive laws dataLaws primitiveBound sizes lists mono
+      weighted tr coeff width tokenCap coeffCap oneTime mulTime natEqTime natSubTime natAddTime zeroTime
+      hh hu hb hn hf hk htc hcc h1 hm hEq hSub hAdd hZero
+    simpa only [Coefficients.syncCode, QuantitativeStepClass.Realizer.cost_castFunction,
       Index.terms, Index.coefficientTime] using h
 
 theorem Index.coefficients_length (index : Index)

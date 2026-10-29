@@ -60,4 +60,10 @@ theorem proximity_description (ell : Nat) :
   simp only [proximity, descriptionBound, variableDescription, proximityDescription]
   omega
 
+def syncDescription : Nat := primitiveSize .one + 16 * allowance
+
+theorem sync_description (weighted : Bool) :
+    descriptionBound allowance primitiveSize (sync weighted) ≤ syncDescription allowance primitiveSize := by
+  cases weighted <;> simp only [sync, descriptionBound, variableDescription, syncDescription] <;> omega
+
 end Signatures.Runtime.WeightedAGM.Terms

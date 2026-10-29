@@ -34,7 +34,13 @@ attacker's caller for the two weighted schemes `x•H(t)` and `y•(m•H(t))` w
 honest signer who reports no co-signer keys, holds for any period type with decidable equality
 ([transport](Proofs/SynchronizedPS/PeriodTransport.lean), as OOPS's topics), and has the usual
 polynomial-family corollary. Its term generators and wrapper routines are executed on 64-bit words
-in [`SignaturesTest/CaliperSyncWrap.lean`](SignaturesTest/CaliperSyncWrap.lean).
+in [`SignaturesTest/CaliperSyncWrap.lean`](SignaturesTest/CaliperSyncWrap.lean). The same wrapping
+is also done in the general PolyFun backend ([`GeneralSyncWrap*`](Proofs/Runtime/GeneralSyncWrapParameters.lean)):
+the attacker's realized caller is wrapped at every known key, each wrapped caller is an adversary of
+the weighted pipeline, and the sampled solvers' advantages are averages of in-budget ones, giving
+[`SynchronizedPS.GeneralAGM.agm_security`](Proofs/SynchronizedPS/GeneralAGM.lean) (`4·εDL + 2/p`) and
+the [family corollary](Signatures/SynchronizedPS/GeneralAGMFamilyStatement.lean), which picks the best
+key per security parameter as a solver family of the same class.
 
 ## Games
 

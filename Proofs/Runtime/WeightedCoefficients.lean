@@ -151,6 +151,17 @@ theorem oops_signedTerms_denote (d : Nat) (tr : List ((F × K) × G₁)) (coeff 
     exact (Expr.run_value _ _ _).symm.trans (Terms.oops_value cost d m)
   rw [ht]
 
+/-- The synchronized PS expansions are the source's weighted signing transcripts. -/
+theorem sync_signedTerms_denote (weighted : Bool) (tr : List ((K × F) × G₁)) (coeff : List F) :
+    (signedTerms (Terms.sync weighted)).denote (arithmetic F G₁ G₂ K M cost) (tr, coeff, ()) =
+      Model.LazyAGM.WeightedReduction.signedTerms (Terms.syncTerms weighted) coeff tr.reverse := by
+  rw [signedTerms_denote]
+  have ht : (fun m => (Terms.sync weighted).denote (arithmetic F G₁ G₂ K M cost) (m, ())) =
+      Terms.syncTerms weighted := by
+    funext m
+    exact (Expr.run_value _ _ _).symm.trans (Terms.sync_value cost weighted m)
+  rw [ht]
+
 /-- Proximity's tuple messages and finite coordinate tags preserve the original
 source expansion, including the constant coordinate and every zero term. -/
 theorem proximity_signedTerms_denote (ell : Nat)

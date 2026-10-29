@@ -42,6 +42,12 @@ def proximityCoefficientTime (overhead : Nat → Nat)
     (proximityNativeTime overhead (coefficientGeneratorWidth width tokenCap coeffCap (ell + 1)) ell
       indexTime indexZeroTime oneTime) mulTime comparisonTime subtractTime addTime zeroTime
 
+def syncCoefficientTime (overhead : Nat → Nat)
+    (width tokenCap coeffCap oneTime mulTime comparisonTime subtractTime addTime zeroTime : Nat) : Nat :=
+  coefficientTime overhead (5 * width) tokenCap coeffCap 1
+    (syncNativeTime overhead (coefficientGeneratorWidth width tokenCap coeffCap 1) oneTime)
+    mulTime comparisonTime subtractTime addTime zeroTime
+
 universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
@@ -114,6 +120,56 @@ theorem oopsCode_cost (d : Nat) (tr : List ((F × K) × G₁)) (coeff : List F)
         (hh.trans hW) (hu.trans hW) hs (fun f => (hf f).trans hW) ((htopic p hp).trans hW)
         (fun j => (hj j).trans hW) (fun n hn' => (hn n (hn'.trans (Nat.le_max_right _ _))).trans hW)
         hi hm h1) hm hEq hSub hAdd hZero
+
+theorem syncCode_cost (weighted : Bool) (tr : List ((K × F) × G₁)) (coeff : List F)
+    (width tokenCap coeffCap oneTime mulTime comparisonTime subtractTime addTime zeroTime : Nat)
+    (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)
+    (hb : ∀ b, Q.size rep.data.bool b ≤ width)
+    (hn : ∀ n ≤ max (tokenCap + 1) 1, Q.size rep.data.nat n ≤ width)
+    (hf : ∀ f : F, Q.size (rep.ty scalar) f ≤ width)
+    (hk : ∀ p ∈ tr, Q.size (rep.ty (AGM.tokenTy syncMessage)) p ≤ width)
+    (htc : tr.length ≤ tokenCap) (hcc : coeff.length ≤ coeffCap)
+    (h1 : (primitiveBound .one).time () ≤ oneTime)
+    (hm : ∀ x y : F, (primitiveBound .mul).time (x, y) ≤ mulTime)
+    (hEq : ∀ n ≤ tokenCap, (primitiveBound .natEq).time (n, 0) ≤ comparisonTime)
+    (hSub : ∀ n ≤ tokenCap, (primitiveBound .natSub).time (n, 1) ≤ subtractTime)
+    (hAdd : ∀ n ≤ tokenCap, (primitiveBound .natAdd).time (n, 1) ≤ addTime)
+    (hZero : (primitiveBound .zero).time () ≤ zeroTime) :
+    Q.cost (syncCode rep data cost primitive weighted) (tr, coeff, ()) ≤
+      syncCoefficientTime overhead width tokenCap coeffCap oneTime mulTime
+        comparisonTime subtractTime addTime zeroTime := by
+  rw [syncCode, QuantitativeStepClass.Realizer.cost_castFunction]
+  refine (Expression.cost_compile_le rep data (arithmetic F G₁ G₂ K M cost) primitive laws dataLaws
+    primitiveBound (signedTerms (Terms.sync weighted)) (tr, coeff, ())).trans ?_
+  have hw : width ≤ 5 * width := by omega
+  have hkey p (hp : p ∈ tr) : Q.size (rep.ty key) p.1.1 ≤ width :=
+    (sizes.fst_le (rep.ty key) (rep.ty scalar) p.1).trans
+      ((sizes.fst_le (rep.ty syncMessage) (rep.ty point₁) p).trans (hk p hp))
+  have hterms p (hp : p ∈ tr) t
+      (ht : t ∈ (Terms.sync weighted).denote (arithmetic F G₁ G₂ K M cost) (p.1, ())) :
+      Q.size (rep.ty (termTy key)) t ≤ 5 * width := by
+    rw [← Expr.run_value, Terms.sync_value] at ht
+    simp only [Terms.syncTerms, List.mem_singleton] at ht
+    subst ht
+    have hprod := @sizes.prod_le
+    have hs := hf (if weighted then p.1.2 else 1)
+    have hkey' := hkey p hp
+    dsimp only [termTy, LanguageRepresentation.ty] at *
+    grind only
+  have hW := coefficientGeneratorWidth_ge width tokenCap coeffCap 1
+  exact signedTerms_time rep data cost primitive laws dataLaws primitiveBound sizes lists mono
+    (Terms.sync weighted) tr coeff (5 * width) tokenCap coeffCap 1
+    (syncNativeTime overhead (coefficientGeneratorWidth width tokenCap coeffCap 1) oneTime)
+    mulTime comparisonTime subtractTime addTime zeroTime (hh.trans hw) (hu.trans hw)
+    (fun b => (hb b).trans hw) (fun n hn' => (hn n (hn'.trans (Nat.le_max_left _ _))).trans hw)
+    (fun f => (hf f).trans hw) (fun p hp => (hk p hp).trans hw) htc hcc hterms
+    (by intro m; rw [← Expr.run_value, Terms.sync_value]; rfl)
+    (by
+      intro p hp Δ tail hs
+      exact Terms.sync_weakenTail_time rep data cost primitive laws dataLaws primitiveBound sizes lists mono
+        weighted p.1 tail (coefficientGeneratorWidth width tokenCap coeffCap 1) oneTime
+        (hh.trans hW) (hu.trans hW) hs (fun f => (hf f).trans hW) ((hkey p hp).trans hW) h1)
+    hm hEq hSub hAdd hZero
 
 theorem proximityCode_cost (ell : Nat)
     (tr : List ((proximityTupleMessage ell).Value (cryptoBase F G₁ G₂ K M) × G₁)) (coeff : List F)

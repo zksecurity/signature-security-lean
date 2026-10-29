@@ -101,6 +101,8 @@ import Signatures.Schnorr.Statement
 import Signatures.SynchronizedPS.CaliperAGMFamilyStatement
 import Signatures.SynchronizedPS.CaliperAGMParameters
 import Signatures.SynchronizedPS.Game
+import Signatures.SynchronizedPS.GeneralAGMFamilyStatement
+import Signatures.SynchronizedPS.GeneralAGMParameters
 import Signatures.SynchronizedPS.SecurityModel
 import Signatures.SynchronizedPS.Spec.Reduction
 import Signatures.SynchronizedPS.Statement

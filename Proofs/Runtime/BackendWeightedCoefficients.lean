@@ -44,6 +44,15 @@ def proximityCode (ell : Nat) :
       funext env
       exact proximity_signedTerms_denote cost ell env.1 env.2.1)
 
+def syncCode (weighted : Bool) :
+    Q.Realizer (rep.env [.list (AGM.tokenTy Weights.syncMessage), .list scalar])
+      (rep.ty (.list (Terms.termTy key)))
+      (fun env => Model.LazyAGM.WeightedReduction.signedTerms (Terms.syncTerms weighted) env.2.1 env.1.reverse) :=
+  (Expression.compile rep data (arithmetic F G₁ G₂ K M cost) primitive
+    (signedTerms (Terms.sync weighted))).castFunction (by
+      funext env
+      exact sync_signedTerms_denote cost weighted env.1 env.2.1)
+
 variable (sizes : DescriptionSize Q) (allowance : Nat)
   (laws : LocalDescriptionLaws sizes allowance)
   (dataLaws : DataDescriptionLaws sizes rep.data data allowance)
@@ -67,5 +76,13 @@ theorem proximityCode_description (ell : Nat) :
   exact (Expression.compile_size rep data (arithmetic F G₁ G₂ K M cost) primitive sizes
     allowance laws dataLaws primitiveSize hp (signedTerms (Terms.proximity ell))).trans
       (proximity_description allowance primitiveSize ell)
+
+theorem syncCode_description (weighted : Bool) :
+    sizes.localSize (syncCode rep data cost primitive weighted) ≤
+      description allowance primitiveSize (Terms.syncDescription allowance primitiveSize) := by
+  rw [syncCode, DescriptionSize.castFunction]
+  exact (Expression.compile_size rep data (arithmetic F G₁ G₂ K M cost) primitive sizes
+    allowance laws dataLaws primitiveSize hp (signedTerms (Terms.sync weighted))).trans
+      (sync_description allowance primitiveSize weighted)
 
 end Signatures.Runtime.WeightedAGM.Coefficients

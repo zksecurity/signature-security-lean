@@ -160,11 +160,11 @@ theorem defaultRow_cost (index : Index)
   have hfee : ∀ k ≤ 128 * width, overhead k ≤ overhead (128 * width) := fun _ hk => mono hk
   cases index <;>
     dsimp only [defaultRow, Index.defaultTerm, Index.messageTy, Index.ty, Index.bound,
-      Reply.oopsDefault, Reply.proximityDefault, Expr.weakenTail, Var.weakenTail,
+      Reply.oopsDefault, Reply.proximityDefault, Reply.syncDefault, Expr.weakenTail, Var.weakenTail,
       v0, Expression.compileBound, Expression.variableBound, LocalBound.compose,
       LocalBound.pair, LocalBound.fst, LocalBound.snd, LocalBound.identity, DataCostLaws.unitBound,
       Expr.denote, Var.get, arithmetic, Terms.termTy, Weights.oopsKey, Weights.oopsMessage,
-      Weights.proximityKey, Weights.proximityTupleMessage, LanguageRepresentation.ty,
+      Weights.proximityKey, Weights.proximityTupleMessage, Weights.syncMessage, LanguageRepresentation.ty,
       LanguageRepresentation.env, List.cons_append, List.nil_append, List.append] at * <;>
     grind only
 

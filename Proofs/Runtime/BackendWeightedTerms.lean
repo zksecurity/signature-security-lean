@@ -41,6 +41,14 @@ def proximityCode (ell : Nat) :
     simpa only [Expr.run_value] using
       proximity_value (G₁ := G₁) (G₂ := G₂) (M := M) cost ell env.1)
 
+/-- The semantic index is the synchronized PS source term list. -/
+def syncCode (weighted : Bool) : Q.Realizer (rep.env [syncMessage]) (rep.ty (.list (termTy key)))
+    (fun env => syncTerms weighted env.1) :=
+  (Expression.compile rep data (arithmetic F G₁ G₂ K M cost) primitive (sync weighted)).castFunction (by
+    funext env
+    simpa only [Expr.run_value] using
+      sync_value (G₁ := G₁) (G₂ := G₂) (M := M) cost weighted env.1)
+
 section Description
 
 variable (descriptions : DescriptionSize Q) (allowance : Nat)
@@ -66,6 +74,14 @@ theorem proximityCode_size (ell : Nat) :
     allowance descriptionLaws descriptionData primitiveSize hp (proximity ell)).trans
       (proximity_description allowance primitiveSize ell)
 
+theorem syncCode_size (weighted : Bool) :
+    descriptions.localSize (syncCode rep data cost primitive weighted) ≤
+      syncDescription allowance primitiveSize := by
+  rw [syncCode, DescriptionSize.castFunction]
+  exact (Expression.compile_size rep data (arithmetic F G₁ G₂ K M cost) primitive descriptions
+    allowance descriptionLaws descriptionData primitiveSize hp (sync weighted)).trans
+      (sync_description allowance primitiveSize weighted)
+
 end Description
 
 def termSpace (width n : Nat) : Nat := (6 * n + 1) * width
@@ -81,6 +97,9 @@ def proximityNativeTime (overhead : Nat → Nat) (width ell indexTime zeroTime o
   ell * (indexTime + 64 * termFee overhead width ell) +
     zeroTime + oneTime + 68 * termFee overhead width ell
 
+def syncNativeTime (overhead : Nat → Nat) (width oneTime : Nat) : Nat :=
+  oneTime + 64 * termFee overhead width 1
+
 section Cost
 
 variable [C.HasOption]
@@ -91,6 +110,31 @@ variable [C.HasOption]
   (mono : Monotone overhead)
 
 include laws dataLaws sizes lists mono
+
+theorem syncCode_cost (weighted : Bool) (m : K × F) (width oneTime : Nat)
+    (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)
+    (hf : ∀ x : F, Q.size (rep.ty scalar) x ≤ width)
+    (hk : Q.size (rep.ty key) m.1 ≤ width)
+    (h1 : (primitiveBound .one).time () ≤ oneTime) :
+    Q.cost (syncCode rep data cost primitive weighted) (m, ()) ≤ syncNativeTime overhead width oneTime := by
+  rw [syncCode, QuantitativeStepClass.Realizer.cost_castFunction]
+  refine (Expression.cost_compile_le rep data (arithmetic F G₁ G₂ K M cost) primitive laws
+    dataLaws primitiveBound (sync weighted) (m, ())).trans ?_
+  have hp := @sizes.prod_le
+  have hfst := @sizes.fst_le
+  have hsnd := @sizes.snd_le
+  have hnil := lists.nil_le (rep.ty (termTy key))
+  have hcons := @lists.cons_le
+  have hone := hf 1
+  have hmessage := hf m.2
+  have hfee : ∀ k ≤ 128 * (termSpace width 1 + width), overhead k ≤ termFee overhead width 1 :=
+    fun _ h => mono h
+  cases weighted <;>
+    dsimp only [sync, Expression.compileBound, Expression.variableBound, LocalBound.compose,
+      LocalBound.pair, LocalBound.fst, LocalBound.snd, LocalBound.identity, DataCostLaws.unitBound,
+      DataCostLaws.nilBound, DataCostLaws.consBound, Expr.denote, Var.get, arithmetic, termTy,
+      syncNativeTime, termFee, termSpace, LanguageRepresentation.ty, LanguageRepresentation.env] at * <;>
+    grind only
 
 theorem oopsCode_cost (d : Nat) (mt : F × K) (width indexTime mulTime oneTime : Nat)
     (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)

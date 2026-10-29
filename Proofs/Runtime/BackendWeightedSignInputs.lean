@@ -35,6 +35,7 @@ theorem Index.terms_length (index : Index)
   cases index with
   | oops d => rw [Index.oops_sourceTerms, OOPS.LazyAGM.terms_length]; rfl
   | proximity ell => rw [Index.proximity_sourceTerms, List.length_map, Proximity.LazyAGM.terms_length]; rfl
+  | sync weighted => rw [Index.sync_sourceTerms]; rfl
 
 include sizes
 
@@ -75,6 +76,16 @@ theorem Index.terms_rows_size (index : Index)
     dsimp only [Index.ty, Index.bound, Terms.termTy, Weights.proximityKey,
       Prod.map, id_eq, LanguageRepresentation.ty] at *
     grind only
+  | sync weighted =>
+    have hk := (sizes.fst_le (rep.ty key) (rep.ty scalar) m).trans hm
+    rw [Index.sync_sourceTerms]
+    intro row hr
+    simp only [Terms.syncTerms, List.mem_singleton] at hr
+    subst hr
+    have hscalar := hf (if weighted then m.2 else 1)
+    have hprod := @sizes.prod_le
+    dsimp only [Index.ty, Index.bound, Terms.termTy, LanguageRepresentation.ty] at *
+    grind only
 
 include lists in
 omit [Q.HasCategory] QP QS in
@@ -100,12 +111,13 @@ theorem Index.default_size (index : Index)
     Q.size (rep.ty (Terms.termTy index.ty))
       (index.defaultTerm.denote (arithmetic F G₁ G₂ K M cost) (m, ())) ≤ 5 * width := by
   have hprod := @sizes.prod_le
+  have hfst := @sizes.fst_le
   have hsnd := @sizes.snd_le
   cases index <;>
     dsimp only [Index.defaultTerm, Index.messageTy, Index.ty, Index.bound, Reply.oopsDefault,
-      Reply.proximityDefault, Expr.denote, v0, Var.get, arithmetic, Terms.termTy,
+      Reply.proximityDefault, Reply.syncDefault, Expr.denote, v0, Var.get, arithmetic, Terms.termTy,
       Weights.oopsKey, Weights.oopsMessage, Weights.proximityKey, Weights.proximityTupleMessage,
-      LanguageRepresentation.ty] at * <;>
+      Weights.syncMessage, LanguageRepresentation.ty] at * <;>
     grind only
 
 include laws dataLaws primitiveBound mono in
@@ -127,10 +139,10 @@ theorem Index.default_cost (index : Index)
   have hfee : ∀ k ≤ 64 * width, overhead k ≤ overhead (64 * width) := fun _ hk => mono hk
   cases index <;>
     dsimp only [Index.defaultTerm, Index.messageTy, Index.ty, Index.bound, Reply.oopsDefault,
-      Reply.proximityDefault, Expression.compileBound, Expression.variableBound,
+      Reply.proximityDefault, Reply.syncDefault, Expression.compileBound, Expression.variableBound,
       LocalBound.pair, LocalBound.compose, LocalBound.fst, LocalBound.snd, DataCostLaws.unitBound,
       Expr.denote, v0, Var.get, arithmetic, Terms.termTy, Weights.oopsKey, Weights.oopsMessage,
-      Weights.proximityKey, Weights.proximityTupleMessage, LanguageRepresentation.ty,
+      Weights.proximityKey, Weights.proximityTupleMessage, Weights.syncMessage, LanguageRepresentation.ty,
       LanguageRepresentation.env] at * <;>
     grind only
 
@@ -139,6 +151,7 @@ def Index.termsTime (index : Index) (overhead : Nat → Nat)
   match index with
   | .oops d => Terms.oopsNativeTime overhead width d indexTime mulTime oneTime
   | .proximity ell => Terms.proximityNativeTime overhead width ell indexTime finZeroTime oneTime
+  | .sync _ => Terms.syncNativeTime overhead width oneTime
 
 include laws dataLaws primitiveBound lists mono in
 theorem Index.terms_cost (index : Index)
@@ -167,6 +180,12 @@ theorem Index.terms_cost (index : Index)
     have h := Terms.proximityCode_cost rep data cost primitive laws dataLaws primitiveBound sizes lists mono
       ell m width indexTime finZeroTime oneTime hh hu hf hv hk hj hn hi hfin hone
     simpa only [Terms.proximityCode, QuantitativeStepClass.Realizer.cost_castFunction,
+      Index.terms, Index.termsTime] using h
+  | sync weighted =>
+    have hk := (sizes.fst_le (rep.ty key) (rep.ty scalar) m).trans hm
+    have h := Terms.syncCode_cost rep data cost primitive laws dataLaws primitiveBound sizes lists mono
+      weighted m width oneTime hh hu hf hk hone
+    simpa only [Terms.syncCode, QuantitativeStepClass.Realizer.cost_castFunction,
       Index.terms, Index.termsTime] using h
 
 end Signatures.Runtime.WeightedAGM

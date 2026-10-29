@@ -13,14 +13,17 @@ namespace Signatures.Runtime.WeightedAGM
 @[reducible] def Index.messageTy : Index → Ty CryptoAtom
   | .oops _ => Weights.oopsMessage
   | .proximity ell => Weights.proximityTupleMessage ell
+  | .sync _ => Weights.syncMessage
 
 def Index.terms : (index : Index) → Expr CryptoOp [index.messageTy] (.list (Terms.termTy index.ty))
   | .oops d => Terms.oops d
   | .proximity ell => Terms.proximity ell
+  | .sync weighted => Terms.sync weighted
 
 def Index.defaultTerm : (index : Index) → Expr CryptoOp [index.messageTy] (Terms.termTy index.ty)
   | .oops d => Reply.oopsDefault d
   | .proximity ell => Reply.proximityDefault ell
+  | .sync _ => Reply.syncDefault
 
 namespace Reply
 

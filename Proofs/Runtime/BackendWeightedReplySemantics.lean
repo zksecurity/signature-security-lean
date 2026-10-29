@@ -22,6 +22,7 @@ instance Index.messageValueDecidableEq (index : Index) :
       | zero => exact inferInstanceAs (DecidableEq Unit)
       | succ ell ih => exact inferInstanceAs (DecidableEq (F × (tupleTy scalar ell).Value (cryptoBase F G₁ G₂ K M)))
     exact inferInstanceAs (DecidableEq ((tupleTy scalar ell).Value (cryptoBase F G₁ G₂ K M) × K))
+  | sync _ => exact inferInstanceAs (DecidableEq (K × F))
 
 def Index.sourceTerms (cost : PrimitiveCosts) (index : Index)
     (m : index.messageTy.Value (cryptoBase F G₁ G₂ K M)) :
@@ -31,6 +32,10 @@ def Index.sourceTerms (cost : PrimitiveCosts) (index : Index)
 theorem Index.oops_sourceTerms (cost : PrimitiveCosts) (d : Nat) (m : F × K) :
     Index.sourceTerms (G₁ := G₁) (G₂ := G₂) (M := M) cost (.oops d) m = OOPS.LazyAGM.terms d m := by
   exact (Expr.run_value _ _ _).symm.trans (Terms.oops_value cost d m)
+
+theorem Index.sync_sourceTerms (cost : PrimitiveCosts) (weighted : Bool) (m : K × F) :
+    Index.sourceTerms (G₁ := G₁) (G₂ := G₂) (M := M) cost (.sync weighted) m = Terms.syncTerms weighted m := by
+  exact (Expr.run_value _ _ _).symm.trans (Terms.sync_value cost weighted m)
 
 theorem Index.proximity_sourceTerms (cost : PrimitiveCosts) (ell : Nat)
     (m : (Weights.proximityTupleMessage ell).Value (cryptoBase F G₁ G₂ K M)) :

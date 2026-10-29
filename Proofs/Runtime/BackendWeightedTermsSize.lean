@@ -83,6 +83,24 @@ theorem proximityFrom_output_size (cost : PrimitiveCosts) (ell n start : Nat)
     dsimp only [termTy, proximityKey, LanguageRepresentation.ty] at *
     grind only
 
+theorem sync_output_size (cost : PrimitiveCosts) (weighted : Bool) (m : K × F)
+    (width : Nat) (hh : header ≤ width)
+    (hf : ∀ x : F, Q.size (rep.ty scalar) x ≤ width)
+    (hk : Q.size (rep.ty key) m.1 ≤ width) :
+    Q.size (rep.ty (.list (termTy key)))
+      ((sync weighted).denote (arithmetic F G₁ G₂ K M cost) (m, ())) ≤ (6 * 1 + 1) * width := by
+  rw [← Expr.run_value, sync_value]
+  apply (lists.size_le_length _ _ (5 * width) ?_).trans
+  · simp only [syncTerms_length]
+    omega
+  · intro row hr
+    simp only [syncTerms, List.mem_singleton] at hr
+    subst hr
+    have hp := @sizes.prod_le
+    have hs := hf (if weighted then m.2 else 1)
+    dsimp only [termTy, LanguageRepresentation.ty] at *
+    grind only
+
 theorem oops_output_size (cost : PrimitiveCosts) (d : Nat) (mt : F × K)
     (width : Nat) (hh : header ≤ width)
     (hf : ∀ x : F, Q.size (rep.ty scalar) x ≤ width)

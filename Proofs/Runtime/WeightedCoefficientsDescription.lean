@@ -43,4 +43,12 @@ theorem proximity_description (ell : Nat) :
   dsimp only [description] at *
   omega
 
+theorem sync_description (weighted : Bool) :
+    descriptionBound allowance primitiveSize (signedTerms (Terms.sync weighted)) ≤
+      description allowance primitiveSize (syncDescription allowance primitiveSize) := by
+  have ht := Terms.sync_description allowance primitiveSize weighted
+  have hs := signedTerms_description allowance primitiveSize (Terms.sync weighted)
+  dsimp only [description] at *
+  omega
+
 end Signatures.Runtime.WeightedAGM.Coefficients

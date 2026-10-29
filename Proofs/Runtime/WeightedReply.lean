@@ -70,6 +70,9 @@ def proximityDefault (ell : Nat) :
     Expr CryptoOp [Weights.proximityTupleMessage ell] (Terms.termTy (Weights.proximityKey ell)) :=
   .pair (.pair (.op (.finZero ell) .unit) (.snd v0)) (.op .zero .unit)
 
+def syncDefault : Expr CryptoOp [Weights.syncMessage] (Terms.termTy key) :=
+  .pair (.fst v0) (.op .zero .unit)
+
 open BackendProgram in
 theorem cacheArgs_description (allowance : Nat)
     (primitiveSize : {a b : Ty CryptoAtom} → CryptoOp a b → Nat) (signing : Bool) :

@@ -28,6 +28,14 @@ theorem proximity_description (ell allowance : Nat)
   simp only [proximity, Expression.descriptionBound, Expression.variableDescription]
   omega
 
+/-- Plain key comparison fits the shared comparison description shape at degree zero. -/
+theorem bls_description (allowance : Nat)
+    (primitiveSize : {a b : Ty CryptoAtom} → CryptoOp a b → Nat) :
+    Expression.descriptionBound allowance primitiveSize bls ≤
+      primitiveSize .keyEq + 2 * primitiveSize (.finVal 0) + primitiveSize .natEq + 64 * allowance := by
+  simp only [bls, Expression.descriptionBound, Expression.variableDescription]
+  omega
+
 universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
@@ -68,7 +76,42 @@ theorem proximity_code_size (ell : Nat) (descriptions : DescriptionSize Q) (allo
     descriptionLaws descriptionData primitiveSize hp (proximity ell)).trans
       (proximity_description ell allowance primitiveSize)
 
+omit [C.HasOption] in
+theorem bls_code_size (descriptions : DescriptionSize Q) (allowance : Nat)
+    (descriptionLaws : LocalDescriptionLaws descriptions allowance)
+    (descriptionData : DataDescriptionLaws descriptions rep.data data allowance)
+    (primitiveSize : {a b : Ty CryptoAtom} → CryptoOp a b → Nat)
+    (hp : ∀ {a b} (instr : CryptoOp a b), descriptions.localSize (primitive instr) ≤ primitiveSize instr) :
+    descriptions.localSize (Expression.compile rep data (arithmetic F G₁ G₂ K M cost) primitive bls) ≤
+      primitiveSize .keyEq + 2 * primitiveSize (.finVal 0) + primitiveSize .natEq + 64 * allowance :=
+  (Expression.compile_size rep data (arithmetic F G₁ G₂ K M cost) primitive descriptions allowance
+    descriptionLaws descriptionData primitiveSize hp bls).trans (bls_description allowance primitiveSize)
+
 include laws dataLaws sizes mono
+
+/-- Plain key comparison fits the shared comparison cost shape at degree zero. -/
+theorem bls_cost (x y : K) (width topicTime indexTime natTime : Nat)
+    (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)
+    (hb : ∀ b, Q.size rep.data.bool b ≤ width)
+    (hx : Q.size (rep.ty key) x ≤ width) (hy : Q.size (rep.ty key) y ≤ width)
+    (ht : ∀ a b : K, Q.size (rep.ty key) a ≤ width → Q.size (rep.ty key) b ≤ width →
+      (primitiveBound .keyEq).time (a, b) ≤ topicTime) :
+    Q.cost (Expression.compile rep data (arithmetic F G₁ G₂ K M cost) primitive bls) (x, y, ()) ≤
+      topicTime + 2 * indexTime + natTime + 128 * overhead (128 * width) := by
+  refine (Expression.cost_compile_le rep data (arithmetic F G₁ G₂ K M cost) primitive laws
+    dataLaws primitiveBound bls (x, y, ())).trans ?_
+  have hprod := @sizes.prod_le
+  have hfst := @sizes.fst_le
+  have hsnd := @sizes.snd_le
+  have htt := ht x y hx hy
+  have hbool := hb (decide (x = y))
+  have hfee : ∀ k ≤ 128 * width, overhead k ≤ overhead (128 * width) := fun _ h => mono h
+  dsimp only [bls, Expression.compileBound, Expression.variableBound,
+    LocalBound.compose, LocalBound.pair, LocalBound.fst, LocalBound.snd, LocalBound.identity,
+    Expr.denote, Var.get, arithmetic, id, Function.comp_def,
+    LanguageRepresentation.ty, LanguageRepresentation.env] at *
+  clear ht
+  grind only
 
 theorem oops_cost (d : Nat) (x y : K × Fin (d + 1)) (width topicTime indexTime natTime : Nat)
     (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)

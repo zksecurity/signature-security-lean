@@ -44,6 +44,19 @@ def proximity (ell : Nat) :
   .cons (.pair (.pair (.op (.finZero ell) .unit) (.snd (.var .here))) (.op .one .unit))
     (proximityFrom ell ell 1)
 
+/-- Synchronized PS as two weighted schemes over period/message pairs: the single term
+`(t, 1)` when the second key is known, `(t, m)` when the first key is. -/
+def sync : Bool → Expr CryptoOp [syncMessage] (.list (termTy key))
+  | false => .cons (.pair (.fst (.var .here)) (.op .one .unit)) .nil
+  | true => .cons (.pair (.fst (.var .here)) (.snd (.var .here))) .nil
+
+/-- The source term lists of the two synchronized PS schemes. -/
+def syncTerms {F K : Type} [One F] (weighted : Bool) (m : K × F) : List (K × F) :=
+  [(m.1, if weighted then m.2 else 1)]
+
+@[simp] theorem syncTerms_length {F K : Type} [One F] (weighted : Bool) (m : K × F) :
+    (syncTerms weighted m).length = 1 := rfl
+
 variable {F G₁ G₂ K M : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -77,6 +90,15 @@ theorem oops_value (cost : PrimitiveCosts) (d : Nat) (mt : F × K) :
   apply congrArg List.ofFn
   funext k
   simp [Nat.mod_eq_of_lt k.isLt]
+
+theorem sync_value (cost : PrimitiveCosts) (weighted : Bool) (m : K × F) :
+    ((sync weighted).run (arithmetic F G₁ G₂ K M cost) (m, ())).value = syncTerms weighted m := by
+  cases weighted <;> simp [sync, syncTerms, Expr.run, Var.get, arithmetic]
+
+theorem sync_steps_le (cost : PrimitiveCosts) (weighted : Bool) (m : K × F) :
+    ((sync weighted).run (arithmetic F G₁ G₂ K M cost) (m, ())).steps ≤ cost.field + 16 := by
+  cases weighted <;> simp [sync, Expr.run, Var.get, Var.depth, arithmetic, CryptoOp.price]
+  omega
 
 theorem proximityFrom_value (cost : PrimitiveCosts) (ell n start : Nat)
     (ms : (proximityTupleMessage n).Value (cryptoBase F G₁ G₂ K M))

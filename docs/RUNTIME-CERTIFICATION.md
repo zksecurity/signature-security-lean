@@ -238,6 +238,21 @@ and [Proximity](../Signatures/Proximity/GeneralAGMFamilyStatement.lean) asymptot
 statements apply DLog hardness and negligible inverse field size; Proximity keeps
 its actual collision term and requires its negligibility for negligible forgery.
 
+Synchronized Pointcheval–Sanders has the same general route. The attacker's caller, realized in
+the fixed backend at the single-signer interface, is
+[wrapped](../Proofs/Runtime/GeneralSyncWrapMachine.lean) for the two weighted schemes `x•H(t)` and
+`y•(m•H(t))` with the other key known; the wrapper's
+[execution](../Proofs/Runtime/GeneralSyncWrapRuns.lean) and
+[stored-code](../Proofs/Runtime/GeneralSyncWrapDescription.lean) bounds are derived from the
+attacker's, so at every known key both weighted solvers are pipeline certificates
+([parameters](../Proofs/Runtime/GeneralSyncWrapParameters.lean),
+[adversary](../Proofs/Runtime/GeneralSyncWrapAdversary.lean)). The four synchronized solvers sample
+the key, so their advantages are averages of in-budget solvers:
+[concrete security](../Proofs/SynchronizedPS/GeneralAGM.lean) is `4·εDL + 2/p` at the curve, and
+the [family corollary](../Signatures/SynchronizedPS/GeneralAGMFamilyStatement.lean) picks the best
+key per security parameter, a solver family of the same class, to conclude negligible forgery under
+nonuniform DLog hardness and negligible inverse field size.
+
 The working target is a first-order arithmetic/stack/list runtime with explicit cryptographic
 primitive costs. It charges local computation, control flow, sampling, storage, and oracle
 simulation. No arbitrary semantic function is a free instruction. A separate

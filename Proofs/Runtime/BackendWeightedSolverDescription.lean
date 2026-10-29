@@ -29,7 +29,7 @@ theorem termsDescription_le (index : Index) (allowance instructionSize : Nat)
   cases index <;>
     dsimp only [Index.termsDescription, Index.bound, Terms.oopsDescription,
       Terms.oopsFromDescription, Terms.proximityDescription, Terms.proximityFromDescription,
-      termDescriptionCap] at * <;>
+      Terms.syncDescription, termDescriptionCap] at * <;>
     nlinarith
 
 def programDescription (degree callerSize scalarSamplerSize dynamicSamplerSize fuel allowance

@@ -25,6 +25,8 @@ def power : Nat → Expr CryptoOp [scalar, .nat] scalar
 
 abbrev oopsKey (d : Nat) : Ty CryptoAtom := .pair key (boundedNat d)
 abbrev oopsMessage : Ty CryptoAtom := .pair scalar key
+/-- Synchronized PS signs a period/message pair; the hash index is the period. -/
+abbrev syncMessage : Ty CryptoAtom := .pair key scalar
 
 def oops (d : Nat) : Expr CryptoOp [oopsKey d, oopsMessage] scalar :=
   .branch (.op .keyEq (.pair (.fst (.var .here)) (.snd (.var (.there .here)))))

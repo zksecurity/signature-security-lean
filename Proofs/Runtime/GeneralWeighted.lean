@@ -12,7 +12,7 @@ namespace Signatures.Runtime.WeightedAGM
 abbrev GeneralRequest (ι M : Type) (randomBound : Nat) :=
   (Fin (randomBound + 1) ⊕ ι) ⊕ M
 
-def generalSpec (ι M G₁ : Type) (randomBound : Nat) : OracleSpec (GeneralRequest ι M randomBound)
+@[reducible] def generalSpec (ι M G₁ : Type) (randomBound : Nat) : OracleSpec (GeneralRequest ι M randomBound)
   | .inl (.inl n) => Fin (n.val + 1)
   | .inl (.inr _) => G₁
   | .inr _ => G₁
