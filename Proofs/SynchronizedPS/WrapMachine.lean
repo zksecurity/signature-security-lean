@@ -152,8 +152,8 @@ theorem translate_sign (u : U) (m : Period × F)
 theorem wrap_main (correction : Period × F → F) (final : Forgery F Period → F) (keys : G₂ → G₂ × G₂)
     (V : Proofs.View F Period G₁ G₂) (publicKey : G₂) :
     (wrap correction final keys V).main publicKey =
-      translate (fun result => result.mstar.1.1) (fun _ => correction)
-        (fun _ result events => ⟨result.mstar.1, result.β, remap correction result.γ result.ξ events 0 0 ++ [-(final result.mstar)], result.ξ⟩)
+      translate (fun result => result.mstar.1) (fun _ => correction)
+        (fun _ result events => ⟨result.mstar, result.β, remap correction result.γ result.ξ events 0 0 ++ [-(final result.mstar)], result.ξ⟩)
         publicKey (V.main (keys publicKey)) [] := rfl
 
 /-! ### Translating mapped programs and comparing translations -/

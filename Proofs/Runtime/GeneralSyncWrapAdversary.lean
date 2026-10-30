@@ -63,7 +63,7 @@ theorem view_sign (pk : G₂ × G₂) :
 /-- The realized program's signing requests are the source's. -/
 theorem program_sign (pk : G₂ × G₂) : IsQueryBoundP (A.program pk) isSign P.innerQueries.sign := by
   have h := A.view_sign pk
-  rw [← A.corresponds pk, isQueryBoundP_map_iff, isQueryBoundP_map_iff] at h
+  rw [← A.corresponds pk, isQueryBoundP_map_iff] at h
   have h' := isQueryBoundP_of_simulateQ_generalSource (A.program pk) (fun i => General.queryKind i = 2) _ h
   refine (isQueryBoundP_congr_pred fun i => ?_).1 h'
   rcases i with (n | t) | m <;> simp [rename, General.queryKind, isSign]
@@ -81,14 +81,13 @@ theorem resolves (correction finalFn : K × F → F) (keys : G₂ → G₂ × G�
 def native (b : Bool) (correction finalFn : K × F → F) (keys : G₂ → G₂ × G₂)
     (code : SchemeCode (Q := Q) P.rep correction finalFn keys)
     (scaps : SchemeCaps (Q := Q) P.rep correction finalFn keys code P.wrapWidth P.routineTime)
-    (sdesc : SchemeDescriptions P.rep correction finalFn keys code P.descriptionSizes P.routineSize)
-    (final : SynchronizedPS.Forgery F K → F) (hfinal : ∀ m, final (m, []) = finalFn m) :
+    (sdesc : SchemeDescriptions P.rep correction finalFn keys code P.descriptionSizes P.routineSize) :
     General.AlgebraicAdversary (P.toGeneral b) where
-  source := SynchronizedPS.Wrapped.wrap correction final keys A.view
+  source := SynchronizedPS.Wrapped.wrap correction finalFn keys A.view
   program pk := translate correction finalIndex (fin finalFn) (A.program (keys pk)) []
   caller := Signatures.Runtime.SyncWrapGeneral.caller P.rep P.data P.cost P.primitive P.ports P.wports correction finalFn keys code A.caller
   realizes := implements A.caller.machine correction finalIndex (fin finalFn) keys A.program A.realizes
-  corresponds pk := decode_translate_eq_wrap correction finalFn A.program A.view A.corresponds final hfinal keys pk
+  corresponds pk := decode_translate_eq_wrap correction finalFn A.program A.view A.corresponds keys pk
   runs := runsWithin P.innerExecution A.runs P.recovery P.innerRequestWidth (P.caps b code scaps)
     (A.resolves correction finalFn keys)
   storedCode := Signatures.Runtime.SyncWrapGeneral.storedCode P.descriptionSizes P.allowance P.handlerPortSize P.routineSize
@@ -106,23 +105,15 @@ def native (b : Bool) (correction finalFn : K × F → F) (keys : G₂ → G₂ 
     exact wrapped_sign_bound General.queryKind (fun _ => rfl) (fun _ => rfl) (fun _ => rfl) _ _ _ _ _ _ _
       (A.view_sign (keys pk))
 
-omit [SampleableType F] [DecidableEq F] [DecidableEq K] in
-theorem final₁_nil (k : F) (m : K × F) : final₁ k (m, []) = finalFn₁ k m := by
-  simp [final₁, finalFn₁, SynchronizedPS.Reduction.offset]
-
-omit [SampleableType F] [DecidableEq F] [DecidableEq K] in
-theorem final₂_nil (k : F) (m : K × F) : final₂ k (m, []) = finalFn₂ k m := by
-  simp [final₂, finalFn₂, SynchronizedPS.Reduction.offset]
-
 /-- Scheme₁ (`x•H(t)`, the second key `k` known) at the known key `k`. -/
 def native₁ (k : F) : General.AlgebraicAdversary (P.toGeneral false) :=
-  A.native false (correction₁ k) (finalFn₁ k) (fun pk => (pk, k • keyGenerator)) (P.scheme₁ k) (P.scheme₁Caps k)
-    (P.scheme₁Descriptions k) (final₁ k) (final₁_nil k)
+  A.native false (correction₁ k) (final₁ k) (fun pk => (pk, k • keyGenerator)) (P.scheme₁ k) (P.scheme₁Caps k)
+    (P.scheme₁Descriptions k)
 
 /-- Scheme₂ (`y•(m•H(t))`, the first key `k` known) at the known key `k`. -/
 def native₂ (k : F) : General.AlgebraicAdversary (P.toGeneral true) :=
-  A.native true (correction₂ k) (finalFn₂ k) (fun pk => (k • keyGenerator, pk)) (P.scheme₂ k) (P.scheme₂Caps k)
-    (P.scheme₂Descriptions k) (final₂ k) (final₂_nil k)
+  A.native true (correction₂ k) (final₂ k) (fun pk => (k • keyGenerator, pk)) (P.scheme₂ k) (P.scheme₂Caps k)
+    (P.scheme₂Descriptions k)
 
 theorem terms_false : Index.sourceTerms (F := F) (G₁ := G₁) (G₂ := G₂) (K := K) (M := M) (P.toGeneral false).cost (.sync false) = terms₁ (F := F) (Period := K) :=
   funext fun m => (Index.sync_sourceTerms _ false m).trans rfl

@@ -29,7 +29,7 @@ theorem agm_eq_native (adversary : AlgebraicAdversary curve securityParameter (P
       let x ← RandomOracle.sample 𝔽
       let y ← RandomOracle.sample 𝔽
       let forgery ← DirectAGM.runWithData (sign curve securityParameter x y) adversary g₁ [x • g₂, y • g₂]
-      let hash ← RandomOracle.hash forgery.data.1.1
+      let hash ← RandomOracle.hash forgery.data.1
       return forgery.wellFormed &&
         Proofs.accepts (Gₜ := 𝔾ₜ) g₂ x y forgery.data forgery.signature forgery.signedMessages hash := by
   simp only [agm, EufCma.game, signature, EufCma.Attacker.run, Proofs.accepts,
@@ -42,22 +42,22 @@ theorem unchecked_eq (adversary : AlgebraicAdversary curve securityParameter (Pe
       let x ← RandomOracle.sample 𝔽
       let y ← RandomOracle.sample 𝔽
       let forgery ← DirectAGM.runWithData (sign curve securityParameter x y) adversary g₁ [x • g₂, y • g₂]
-      let hash ← RandomOracle.hash forgery.data.1.1
+      let hash ← RandomOracle.hash forgery.data.1
       return Proofs.accepts (Gₜ := 𝔾ₜ) g₂ x y forgery.data forgery.signature forgery.signedMessages hash) =
     Proofs.lazyGame (Gₜ := 𝔾ₜ) g₁ g₂ (Proofs.view adversary g₁) := by
   have key (x y : 𝔽) :
       (DirectAGM.runWithData (sign curve securityParameter x y) adversary g₁ [x • g₂, y • g₂] >>=
         fun forgery => do
-          let hash ← RandomOracle.hash forgery.data.1.1
+          let hash ← RandomOracle.hash forgery.data.1
           return Proofs.accepts (Gₜ := 𝔾ₜ) g₂ x y forgery.data forgery.signature forgery.signedMessages hash) =
       ((simulateQ (LazyAGM.handler RandomOracle.random RandomOracle.hash (sign curve securityParameter x y))
           (DirectAGM.ProofView.program (adversary.main ⟨(), LazyAGM.Interactive.groupLists [g₁] [x • g₂, y • g₂]⟩) {})).run ([], []) >>=
         fun value => do
-          let hash ← RandomOracle.hash (DirectAGM.ProofView.observeWith g₁ value).1.1.1
+          let hash ← RandomOracle.hash (DirectAGM.ProofView.observeWith g₁ value).1.1
           return Proofs.accepts (Gₜ := 𝔾ₜ) g₂ x y (DirectAGM.ProofView.observeWith g₁ value).1
             (DirectAGM.ProofView.observeWith g₁ value).2.1 (DirectAGM.ProofView.observeWith g₁ value).2.2 hash) := by
     have h := congrArg (fun m => m >>= fun p : Forgery 𝔽 Period × 𝔾₁ × List (Period × 𝔽) => do
-        let hash ← RandomOracle.hash p.1.1.1
+        let hash ← RandomOracle.hash p.1.1
         return Proofs.accepts (Gₜ := 𝔾ₜ) g₂ x y p.1 p.2.1 p.2.2 hash)
       (DirectAGM.runWithData_eq (sign curve securityParameter x y) adversary g₁ [x • g₂, y • g₂])
     simpa only [bind_map_left, DirectAGM.ResultWith.plain] using h

@@ -66,12 +66,6 @@ def outerQueries (q : Model.QueryAllowance) : Model.QueryAllowance :=
 /-- The wrapper's query budget: one per attacker query, per signing request and the final hash. -/
 def wrapCap (q : Model.QueryAllowance) (execution : ExecutionCost) : Nat := execution.queries + q.sign + 1
 
-/-- The scheme₁ final scalar at the attacked period: `y • m*`. -/
-def finalFn₁ (y : F) (m : K × F) : F := y * m.2
-
-/-- The scheme₂ final scalar: the known key `x`. -/
-def finalFn₂ (x : F) (_ : K × F) : F := x
-
 /-- A fixed backend with the attacker's interface and allowances, both schemes' routines at every
 known key, and the pipeline's components at the wrapper's boundary. -/
 structure Parameters (generator : G₁) (keyGenerator : G₂) where
@@ -89,8 +83,8 @@ structure Parameters (generator : G₁) (keyGenerator : G₂) where
     (OutTy.Value (cryptoBase F G₁ G₂ K M))
   ports : NativePorts (Q := Q) rep key Weights.syncMessage bdI
   wports : WrapPorts rep ports
-  scheme₁ : ∀ k : F, SchemeCode (Q := Q) rep (SynchronizedPS.Wrapped.correction₁ k) (finalFn₁ k) (fun pk => (pk, k • keyGenerator))
-  scheme₂ : ∀ k : F, SchemeCode (Q := Q) rep (SynchronizedPS.Wrapped.correction₂ k) (finalFn₂ k) (fun pk => (k • keyGenerator, pk))
+  scheme₁ : ∀ k : F, SchemeCode (Q := Q) rep (SynchronizedPS.Wrapped.correction₁ k) (SynchronizedPS.Wrapped.final₁ k) (fun pk => (pk, k • keyGenerator))
+  scheme₂ : ∀ k : F, SchemeCode (Q := Q) rep (SynchronizedPS.Wrapped.correction₂ k) (SynchronizedPS.Wrapped.final₂ k) (fun pk => (k • keyGenerator, pk))
   sampler : BoundedSampler rep key Weights.syncMessage (outerBoundary rep (bdI := bdI)) (outerPorts ports) (iface := iface)
   boundary : ∀ b : Bool, DataPorts (Q := Q) rep (.sync b) (outerBoundary rep (bdI := bdI))
   data : DataCode Q rep.data
@@ -152,9 +146,9 @@ structure Parameters (generator : G₁) (keyGenerator : G₂) where
   wrapHandlerCaps : NativeHandler.PortCaps rep key Weights.syncMessage bdI ports wrapWidth handlerAdapterTime
   wrapPortCaps : WrapPortCaps rep ports wports wrapWidth routeWidth outputWidth
     (finishedWidth wrapWidth (wrapCap innerQueries innerExecution) outputWidth) finishedRoute handlerAdapterTime
-  scheme₁Caps : ∀ k : F, SchemeCaps (Q := Q) rep (SynchronizedPS.Wrapped.correction₁ k) (finalFn₁ k)
+  scheme₁Caps : ∀ k : F, SchemeCaps (Q := Q) rep (SynchronizedPS.Wrapped.correction₁ k) (SynchronizedPS.Wrapped.final₁ k)
     (fun pk => (pk, k • keyGenerator)) (scheme₁ k) wrapWidth routineTime
-  scheme₂Caps : ∀ k : F, SchemeCaps (Q := Q) rep (SynchronizedPS.Wrapped.correction₂ k) (finalFn₂ k)
+  scheme₂Caps : ∀ k : F, SchemeCaps (Q := Q) rep (SynchronizedPS.Wrapped.correction₂ k) (SynchronizedPS.Wrapped.final₂ k)
     (fun pk => (k • keyGenerator, pk)) (scheme₂ k) wrapWidth routineTime
   outputKey : outputWidth ≤ wrapWidth
   headRoute : innerExecution.peakHeadSize ≤ routeWidth
@@ -198,9 +192,9 @@ structure Parameters (generator : G₁) (keyGenerator : G₂) where
   handlerDescriptions : ∀ b : Bool, HandlerPortDescriptions rep (.sync b) (outerBoundary rep (bdI := bdI)) (outerPorts ports)
     descriptionSizes handlerPortSize
   wrapDescriptions : WrapPortDescriptions rep ports wports descriptionSizes handlerPortSize
-  scheme₁Descriptions : ∀ k : F, SchemeDescriptions rep (SynchronizedPS.Wrapped.correction₁ k) (finalFn₁ k)
+  scheme₁Descriptions : ∀ k : F, SchemeDescriptions rep (SynchronizedPS.Wrapped.correction₁ k) (SynchronizedPS.Wrapped.final₁ k)
     (fun pk => (pk, k • keyGenerator)) (scheme₁ k) descriptionSizes routineSize
-  scheme₂Descriptions : ∀ k : F, SchemeDescriptions rep (SynchronizedPS.Wrapped.correction₂ k) (finalFn₂ k)
+  scheme₂Descriptions : ∀ k : F, SchemeDescriptions rep (SynchronizedPS.Wrapped.correction₂ k) (SynchronizedPS.Wrapped.final₂ k)
     (fun pk => (k • keyGenerator, pk)) (scheme₂ k) descriptionSizes routineSize
   solverDescriptions : ∀ b : Bool, PortDescriptions rep (.sync b) (outerBoundary rep (bdI := bdI)) (boundary b) descriptionSizes
     solverPortSize

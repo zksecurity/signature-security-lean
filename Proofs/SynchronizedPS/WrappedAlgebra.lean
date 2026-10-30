@@ -154,7 +154,7 @@ abbrev wrappedForgery : DynForgery F (Period × F) Period :=
   toForgery (wrapped correction final H signO z)
 
 omit [AddCommGroup G₁] [Module F G₁] in
-theorem wrappedForgery_mstar : (wrappedForgery correction final H signO z).2.mstar = z.1.mstar.1 := rfl
+theorem wrappedForgery_mstar : (wrappedForgery correction final H signO z).2.mstar = z.1.mstar := rfl
 
 omit [AddCommGroup G₁] [Module F G₁] in
 theorem wrappedForgery_messages :
@@ -164,9 +164,9 @@ theorem wrappedForgery_messages :
 
 omit [AddCommGroup G₁] [Module F G₁] in
 theorem wrappedForgery_fresh :
-    (wrappedForgery correction final H signO z).Fresh ↔ z.1.mstar.1 ∉ messages z.2 := by
+    (wrappedForgery correction final H signO z).Fresh ↔ z.1.mstar ∉ messages z.2 := by
   rw [toForgery_fresh]
-  change z.1.mstar.1 ∉ (signatures signO z.2).map Prod.fst ↔ _
+  change z.1.mstar ∉ (signatures signO z.2).map Prod.fst ↔ _
   rw [signatures_map_fst]
 
 /-! ### Generic shapes of the core's quantities on `toForgery` -/
@@ -216,7 +216,7 @@ theorem const_eq_ownSum : Reduction.const z.1 (transcript H sign z.2) ρ = z.1.�
 
 omit [AddCommGroup G₁] [Module F G₁] in
 theorem reuse_eq_sum : Reduction.reuse z.1 (transcript H sign z.2) =
-    1 - ((messages z.2).mapIdx fun n m => if m.1 = z.1.mstar.1.1 then tokenCoeff z.1.ξ n else 0).sum := by
+    1 - ((messages z.2).mapIdx fun n m => if m.1 = z.1.mstar.1 then tokenCoeff z.1.ξ n else 0).sum := by
   simp only [Reduction.reuse, transcript]
   rw [signatures_eq_map, mapIdx_map]
 
@@ -243,7 +243,7 @@ correction on the attacked period. -/
 theorem wrapped_const :
     (dynReprA weight (wrappedForgery correction final H signO z) ρ).const =
       Reduction.const z.1 (transcript H sign z.2) ρ + signSum ρ correction z.1.ξ z.2 0 -
-        final z.1.mstar * ρ z.1.mstar.1.1 := by
+        final z.1.mstar * ρ z.1.mstar.1 := by
   rw [const_eq_ownSum, wrappedForgery, toForgery_const]
   simp only [wrapped]
   rw [baseCoeff_mul_sum, List.mapIdx_append_one, List.sum_append, List.sum_singleton,
@@ -254,13 +254,13 @@ theorem wrapped_const :
   ring
 
 omit [AddCommGroup G₁] [Module F G₁] in
-theorem wrapped_target : muW weight ρ (wrappedForgery correction final H signO z).2.mstar = ρ z.1.mstar.1.1 :=
+theorem wrapped_target : muW weight ρ (wrappedForgery correction final H signO z).2.mstar = ρ z.1.mstar.1 :=
   muW_weight ρ _
 
 omit [AddCommGroup G₁] [Module F G₁] in
 theorem wrapped_target' :
     muW (scaled weight scalar) ρ (wrappedForgery correction final H signO z).2.mstar =
-      ρ z.1.mstar.1.1 * z.1.mstar.1.2 := by
+      ρ z.1.mstar.1 * z.1.mstar.2 := by
   rw [muW_scaled, muW_weight]
   rfl
 
@@ -278,7 +278,7 @@ theorem wrapped_denom' :
 omit [Fintype Period] in
 /-- The attacked period's coordinate of the first scheme's functional is the synchronized `reuse`. -/
 theorem wrapped_reuse :
-    dynDenomCoeff weight (wrappedForgery correction final H signO z) z.1.mstar.1.1 =
+    dynDenomCoeff weight (wrappedForgery correction final H signO z) z.1.mstar.1 =
       Reduction.reuse z.1 (transcript H sign z.2) := by
   rw [wrappedForgery, toForgery_coeff, reuse_eq_sum]
   simp only [wrapped]
@@ -287,6 +287,6 @@ theorem wrapped_reuse :
   congr 2
   congr 1
   funext n m
-  by_cases h : m.1 = z.1.mstar.1.1 <;> simp [h, eq_comm]
+  by_cases h : m.1 = z.1.mstar.1 <;> simp [h, eq_comm]
 
 end SynchronizedPS.Wrapped

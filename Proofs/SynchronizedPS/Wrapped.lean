@@ -122,9 +122,9 @@ def wrap (correction : Period × F → F) (final : Forgery F Period → F) (keys
     Model.LazyAGM.Adversary F Period (Period × F) G₁ G₂ where
   main publicKey := do
     let (out, events) ← (simulateQ (translator correction) (V.main (keys publicKey))).run []
-    let _ ← (liftM ((advSpec Period (Period × F) G₁).query (.inl (.inr out.mstar.1.1))) :
+    let _ ← (liftM ((advSpec Period (Period × F) G₁).query (.inl (.inr out.mstar.1))) :
       OracleComp (advSpec Period (Period × F) G₁) G₁)
-    pure ⟨out.mstar.1, out.β, remap correction out.γ out.ξ events 0 0 ++ [-(final out.mstar)], out.ξ⟩
+    pure ⟨out.mstar, out.β, remap correction out.γ out.ξ events 0 0 ++ [-(final out.mstar)], out.ξ⟩
 
 /-- The wrapper's hash replies: every event hashed, then the attacked period. -/
 def wrappedHashes (H : Period → G₁) : List (Event F Period) → List (Period × G₁)
@@ -144,8 +144,8 @@ signer `signO m + correction m • H m.1`. -/
 def wrapped (correction : Period × F → F) (final : Forgery F Period → F) (H : Period → G₁)
     (signO : Period × F → G₁) (z : Output F (Forgery F Period) × List (Event F Period)) :
     Output F (Period × F) × Transcript Period (Period × F) G₁ :=
-  (⟨z.1.mstar.1, z.1.β, remap correction z.1.γ z.1.ξ z.2 0 0 ++ [-(final z.1.mstar)], z.1.ξ⟩,
-    wrappedHashes H z.2 ++ [(z.1.mstar.1.1, H z.1.mstar.1.1)], signatures signO z.2)
+  (⟨z.1.mstar, z.1.β, remap correction z.1.γ z.1.ξ z.2 0 0 ++ [-(final z.1.mstar)], z.1.ξ⟩,
+    wrappedHashes H z.2 ++ [(z.1.mstar.1, H z.1.mstar.1)], signatures signO z.2)
 
 private theorem translator_run {β : Type} (correction : Period × F → F) (H : Period → G₁)
     (signO : Period × F → G₁) (program : OracleComp (advSpec Period (Period × F) G₁) β)

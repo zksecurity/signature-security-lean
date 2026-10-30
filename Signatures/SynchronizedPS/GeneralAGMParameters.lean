@@ -8,7 +8,7 @@ components are the model. All four reduction budgets are derived. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram Signatures.Runtime.WeightedAGM
-open Signatures.Runtime.SyncWrapGeneral (Spec OutTy embed decode)
+open Signatures.Runtime.SyncWrapGeneral (Spec OutTy decode)
 
 namespace SynchronizedPS.GeneralAGM
 
@@ -36,7 +36,7 @@ structure AlgebraicAdversary where
   program : G₂ × G₂ → OracleComp (Spec F K G₁ P.randomBound) (OutTy.Value (cryptoBase F G₁ G₂ K M))
   caller : GeneralCaller.Caller (Q := Q) (bd := P.bdI)
   realizes : caller.machine.Implements program
-  corresponds : ∀ pk, embed <$> (decode F K G₁ G₂ M <$> simulateQ (generalSource P.randomBound) (program pk)) =
+  corresponds : ∀ pk, decode F K G₁ G₂ M <$> simulateQ (generalSource P.randomBound) (program pk) =
     (Proofs.view source generator).main pk
   runs : caller.RunsWithin (fun _ => P.innerExecution)
   storedCode : P.descriptionSizes.localSize caller.initCode + 2 * P.descriptionSizes.localSize caller.headCode +

@@ -22,7 +22,7 @@ variable {F T U G₁ G₂ Gₜ : Type}
 def message (f : U → T) : U × F → T × F := Prod.map f id
 @[simp] theorem message_fst (f : U → T) (m : U × F) : (message f m).1 = f m.1 := rfl
 @[simp] theorem message_snd (f : U → T) (m : U × F) : (message f m).2 = m.2 := rfl
-def forgery (f : U → T) : Forgery F U → Forgery F T := Prod.map (message f) id
+def forgery (f : U → T) : Forgery F U → Forgery F T := message f
 def mapOut (f : U → T) (out : Output F (Forgery F U)) : Output F (Forgery F T) :=
   ⟨forgery f out.mstar, out.β, out.γ, out.ξ⟩
 def mapMain (f : U → T) (oa : OracleComp (advSpec U (U × F) G₁) (Output F (Forgery F U))) :
@@ -51,14 +51,14 @@ def Liftable (f : U → T) (oa : OracleComp (advSpec T (T × F) G₁) (Output F 
       | .inl (.inl _) => True
       | .inl (.inr i) => i ∈ Set.range f
       | .inr m => m.1 ∈ Set.range f)
-    (fun out => out.mstar.1.1 ∈ Set.range f) (fun _ => Set.univ) oa
+    (fun out => out.mstar.1 ∈ Set.range f) (fun _ => Set.univ) oa
 
 noncomputable def restrictMain (f : U → T) (oa : OracleComp (advSpec T (T × F) G₁) (Output F (Forgery F T)))
     (h : Liftable f oa) : OracleComp (advSpec U (U × F) G₁) (Output F (Forgery F U)) := by
   induction oa using OracleComp.recOn with
   | pure out =>
-      have hout : out.mstar.1.1 ∈ Set.range f := (allPathsSatisfy_pure out).mp h
-      exact pure ⟨((Classical.choose hout, out.mstar.1.2), out.mstar.2), out.β, out.γ, out.ξ⟩
+      have hout : out.mstar.1 ∈ Set.range f := (allPathsSatisfy_pure out).mp h
+      exact pure ⟨(Classical.choose hout, out.mstar.2), out.β, out.γ, out.ξ⟩
   | queryBind q next ih =>
       have hq := ((allPathsSatisfy_query_bind q next).mp h).1
       have hn := ((allPathsSatisfy_query_bind q next).mp h).2
@@ -93,7 +93,7 @@ theorem mapMain_restrictMain (f : U → T) (oa : OracleComp (advSpec T (T × F) 
     mapMain f (restrictMain f oa h) = oa := by
   induction oa using OracleComp.recOn with
   | pure out =>
-      change pure (mapOut f ⟨((Classical.choose _, out.mstar.1.2), out.mstar.2), out.β, out.γ, out.ξ⟩) =
+      change pure (mapOut f ⟨(Classical.choose _, out.mstar.2), out.β, out.γ, out.ξ⟩) =
         (pure out : OracleComp (advSpec T (T × F) G₁) (Output F (Forgery F T)))
       have he := Classical.choose_spec ((allPathsSatisfy_pure out).mp h)
       simp only [mapOut, forgery, message, Prod.map_apply, id_eq, he]
@@ -134,7 +134,7 @@ theorem exists_cover [Finite F] [Finite G₁] (g₂ : G₂) [SMul F G₂] (V : V
     · exact inferInstanceAs (Finite G₁)
     · exact inferInstanceAs (Finite G₁)
   obtain ⟨cover, hcover⟩ := Signatures.FiniteDomain.exists_family_cover (K := F × F) labels
-    (fun out : Output F (Forgery F T) => {out.mstar.1.1}) (fun ab => V.main (ab.1 • g₂, ab.2 • g₂))
+    (fun out : Output F (Forgery F T) => {out.mstar.1}) (fun ab => V.main (ab.1 • g₂, ab.2 • g₂))
   refine ⟨cover, fun a b => ?_⟩
   apply Signatures.FiniteDomain.allPaths_mono _ _ _ (hcover (a, b))
   · intro q hq
@@ -143,7 +143,7 @@ theorem exists_cover [Finite F] [Finite G₁] (g₂ : G₂) [SMul F G₂] (V : V
     · exact ⟨⟨i, hq (Finset.mem_singleton_self _)⟩, rfl⟩
     · exact ⟨⟨m.1, hq (Finset.mem_singleton_self _)⟩, rfl⟩
   · intro out hout
-    exact ⟨⟨out.mstar.1.1, hout (Finset.mem_singleton_self _)⟩, rfl⟩
+    exact ⟨⟨out.mstar.1, hout (Finset.mem_singleton_self _)⟩, rfl⟩
 
 /-! ## The lazy game is invariant under relabeling -/
 
@@ -180,13 +180,13 @@ theorem accepts_map (f : U → T) (hf : Function.Injective f) (g₂ : G₂) (x y
     (signed : List (U × F)) (hash : G₁) :
     Proofs.accepts (Gₜ := Gₜ) g₂ x y (forgery f data) aggregate (signed.map (message f)) hash =
       Proofs.accepts (Gₜ := Gₜ) g₂ x y data aggregate signed hash := by
-  have fresh : message (F := F) f data.1 ∈ signed.map (message f) ↔ data.1 ∈ signed :=
+  have fresh : message (F := F) f data ∈ signed.map (message f) ↔ data ∈ signed :=
     List.mem_map_of_injective (message_injective f hf)
-  have once : onePerPeriod (message f data.1) (signed.map (message f)) ↔ onePerPeriod data.1 signed := by
+  have once : onePerPeriod (message f data) (signed.map (message f)) ↔ onePerPeriod data signed := by
     simp only [onePerPeriod, List.pairwise_map, message, Prod.map_fst, hf.ne_iff]
   simp only [Proofs.accepts]
-  rw [show (forgery f data).1 = message f data.1 from rfl, show (message (F := F) f data.1).2 = data.1.2 from rfl,
-    show (forgery f data).2 = data.2 from rfl, decide_eq_decide.mpr (and_congr (not_congr fresh) once)]
+  rw [show forgery f data = message f data from rfl, show (message (F := F) f data).2 = data.2 from rfl,
+    decide_eq_decide.mpr (and_congr (not_congr fresh) once)]
 
 theorem handler_random {N : Type → Type} [Monad N] (random : QueryImpl unifSpec N) (hash : T → N G₁) (sign : T × F → N G₁)
     (n : Nat) (tr : Transcript T (T × F) G₁) :

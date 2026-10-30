@@ -41,12 +41,12 @@ theorem termsValue₂ (table : Period → F) (m : Period × F) :
     termsValue terms₂ table m = ∑ i, table i * scaled weight scalar i m := by
   simp [termsValue, terms₂, scaled, weight, scalar, mul_comm]
 
-/-- Scheme₁'s correction `(y·m)•H(t)` and final `(y·m* + c)•H(t*)`. -/
+/-- Scheme₁'s correction `(y·m)•H(t)` and final `(y·m*)•H(t*)`. -/
 def correction₁ (y : F) (m : Period × F) : F := y * m.2
-def final₁ (y : F) (out : Forgery F Period) : F := y * out.1.2 + Reduction.offset out.2
-/-- Scheme₂'s correction `x•H(t)` and final `(x + c)•H(t*)`. -/
+def final₁ (y : F) (out : Forgery F Period) : F := y * out.2
+/-- Scheme₂'s correction `x•H(t)` and final `x•H(t*)`. -/
 def correction₂ (x : F) (_ : Period × F) : F := x
-def final₂ (x : F) (out : Forgery F Period) : F := x + Reduction.offset out.2
+def final₂ (x : F) (_ : Forgery F Period) : F := x
 
 /-- The attacker wrapped for scheme₁ with the known second key `y`. -/
 def wrap₁ (y : F) (g₂ : G₂) (V : Proofs.View F Period G₁ G₂) :
@@ -287,14 +287,14 @@ omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Finty
   [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem fresh₁_iff : (forgery₁ g₁ x y w).Fresh ↔ (syncForgery g₁ x y w).rep.Fresh := by
   rw [forgery₁, wrappedForgery_fresh, syncForgery, toOffsetForgery, toForgery_fresh]
-  change _ ↔ w.1.1.mstar.1 ∉ (signatures (syncSign g₁ x y w.2) w.1.2).map Prod.fst
+  change _ ↔ w.1.1.mstar ∉ (signatures (syncSign g₁ x y w.2) w.1.2).map Prod.fst
   rw [signatures_map_fst]
 
 omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup G₂]
   [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem fresh₂_iff : (forgery₂ g₁ x y w).Fresh ↔ (syncForgery g₁ x y w).rep.Fresh := by
   rw [forgery₂, wrappedForgery_fresh, syncForgery, toOffsetForgery, toForgery_fresh]
-  change _ ↔ w.1.1.mstar.1 ∉ (signatures (syncSign g₁ x y w.2) w.1.2).map Prod.fst
+  change _ ↔ w.1.1.mstar ∉ (signatures (syncSign g₁ x y w.2) w.1.2).map Prod.fst
   rw [signatures_map_fst]
 
 omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup G₂]
@@ -302,7 +302,7 @@ omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Finty
 theorem valid₂_messages : Proofs.valid (forgery₂ g₁ x y w) ↔ Proofs.valid (syncForgery g₁ x y w).rep := by
   unfold Proofs.valid
   rw [forgery₂, wrappedForgery_messages, wrappedForgery_mstar, syncForgery, toOffsetForgery, toForgery_messages]
-  change _ ↔ onePerPeriod w.1.1.mstar.1 ((signatures (syncSign g₁ x y w.2) w.1.2).map Prod.fst)
+  change _ ↔ onePerPeriod w.1.1.mstar ((signatures (syncSign g₁ x y w.2) w.1.2).map Prod.fst)
   rw [signatures_map_fst]
 
 omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ] in
@@ -311,7 +311,7 @@ include hsucc in
 theorem bad₁_of (hD : Reduction.D w.1.1 tr w.2 = 0) (hreuse : Reduction.reuse w.1.1 tr ≠ 0) :
     adaptiveBadCore valid₁ weight (forgery₁ g₁ x y w) w.2 := by
   refine ⟨?_, (fresh₁_iff g₁ x y w).mpr hsucc.2, ?_⟩
-  · change dynDenomCoeff weight (forgery₁ g₁ x y w) w.1.1.mstar.1.1 ≠ 0
+  · change dynDenomCoeff weight (forgery₁ g₁ x y w) w.1.1.mstar.1 ≠ 0
     rwa [forgery₁, wrapped_reuse (correction₁ y) (final₁ y) (table g₁ w) (simSign weight (x • g₁) w.2)
       (syncSign g₁ x y w.2) w.1]
   · rwa [forgery₁, wrapped_denom (correction₁ y) (final₁ y) (table g₁ w) (simSign weight (x • g₁) w.2)
@@ -324,7 +324,7 @@ theorem bad₂_of (hvalid : Proofs.valid (syncForgery g₁ x y w).rep)
     (hD' : Reduction.D' w.1.1 tr w.2 = 0) (hreuse : Reduction.reuse w.1.1 tr = 0) :
     adaptiveBadCore valid₂ (scaled weight scalar) (forgery₂ g₁ x y w) w.2 := by
   refine ⟨⟨?_, (valid₂_messages g₁ x y w).mpr hvalid⟩, (fresh₂_iff g₁ x y w).mpr hsucc.2, ?_⟩
-  · change dynDenomCoeff weight (forgery₂ g₁ x y w) w.1.1.mstar.1.1 = 0
+  · change dynDenomCoeff weight (forgery₂ g₁ x y w) w.1.1.mstar.1 = 0
     rwa [forgery₂, wrapped_reuse (correction₂ x) (final₂ x) (table g₁ w)
       (simSign (scaled weight scalar) (y • g₁) w.2) (syncSign g₁ x y w.2) w.1]
   · rwa [forgery₂, wrapped_denom' (correction₂ x) (final₂ x) (table g₁ w)

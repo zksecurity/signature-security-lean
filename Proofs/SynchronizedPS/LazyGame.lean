@@ -35,18 +35,6 @@ omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Finty
 theorem sum_weight_smul (H : Period → G₁) (m : Period × F) : ∑ i, weight i m • H i = H m.1 := by
   simp [weight, ite_smul]
 
-omit [SampleableType F] [Fintype F] [DecidableEq F] [Fintype Period] [DecidableEq Period]
-  [SampleableType G₁] [Fintype G₁] in
-theorem offset_smul (g₂ : G₂) (others : List ((F × F) × F)) :
-    (others.map fun signer => (signer.1.1 + signer.1.2 * signer.2) • g₂).sum =
-      Reduction.offset others • g₂ := by
-  induction others with
-  | nil => simp [Reduction.offset]
-  | cons signer rest ih =>
-      rw [List.map_cons, List.sum_cons, ih]
-      change _ = ((signer.1.1 + signer.1.2 * signer.2) + Reduction.offset rest) • g₂
-      simp only [add_smul]
-
 /-- A grouped proof view of a synchronized PS attacker: one oracle program per key pair, reporting
 a forgery with its coefficients. The proof-side games and solvers use the attacker only through
 such a view, so they transport along period relabelings. -/
@@ -81,12 +69,11 @@ def lazyRun (V : View F Period G₁ G₂) (x y : F) (pk : G₂ × G₂) :
 
 /-- The readable game's checks on the attacker's report: a fresh period/message, one honest
 signature per period, and the pairing equation of the hash of the attacked period against the
-honest key, the message and the co-signers' certified keys. -/
+honest key and the message. -/
 def accepts (g₂ : G₂) (x y : F) (data : Forgery F Period) (aggregate : G₁)
     (signed : List (Period × F)) (hash : G₁) : Bool :=
-  decide (data.1 ∉ signed ∧ onePerPeriod data.1 signed) &&
-  decide (pairing (F := F) (Gₜ := Gₜ) hash ((x • g₂ + data.1.2 • (y • g₂)) +
-      (data.2.map fun signer => (signer.1.1 + signer.1.2 * signer.2) • g₂).sum) =
+  decide (data ∉ signed ∧ onePerPeriod data signed) &&
+  decide (pairing (F := F) (Gₜ := Gₜ) hash (x • g₂ + data.2 • (y • g₂)) =
     pairing (F := F) (Gₜ := Gₜ) aggregate g₂)
 
 /-- The group element the attacker's coefficients name. -/
@@ -98,7 +85,7 @@ noncomputable def experiment (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁
   let x ← (liftM ($ᵗ F) : OracleComp (baseSpec Period G₁) F)
   let y ← (liftM ($ᵗ F) : OracleComp (baseSpec Period G₁) F)
   let (out, tr) ← lazyRun V x y (x • g₂, y • g₂)
-  let hash ← (liftM ((baseSpec Period G₁).query (.inr out.mstar.1.1)) : OracleComp (baseSpec Period G₁) G₁)
+  let hash ← (liftM ((baseSpec Period G₁).query (.inr out.mstar.1)) : OracleComp (baseSpec Period G₁) G₁)
   pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst) hash)
 
 noncomputable def lazyGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
@@ -127,7 +114,7 @@ theorem experiment_table (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G�
       let y ← ($ᵗ F : ProbComp F)
       let (out, tr) ← runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
       pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst)
-        (H out.mstar.1.1))) := by
+        (H out.mstar.1))) := by
   simp only [experiment, simulateQ_bind, simulateQ_pure, lazyRun_table, simulateQ_spec_query,
     table_lookup, pure_bind]
   simp [BLS.CoCDH.coinTableImpl, QueryImpl.simulateQ_add_liftM_left]
@@ -139,11 +126,12 @@ def valid (fo : DynForgery F (Period × F) Period) : Prop :=
   onePerPeriod fo.2.mstar (List.ofFn fo.2.v)
 
 def project (out : Output F (Forgery F Period)) : Output F (Period × F) :=
-  ⟨out.mstar.1, out.β, out.γ, out.ξ⟩
+  ⟨out.mstar, out.β, out.γ, out.ξ⟩
 
+/-- The core's offset forgery, with no co-signer offset. -/
 def toOffsetForgery (z : Output F (Forgery F Period) × Transcript Period (Period × F) G₁) :
     OffsetForgery F (Period × F) Period :=
-  ⟨toForgery (project z.1, z.2), Reduction.offset z.1.mstar.2⟩
+  ⟨toForgery (project z.1, z.2), 0⟩
 
 /-- The attacker as the core's representation producer. -/
 def extracted (V : View F Period G₁ G₂) : AdaptiveAdv F (Period × F) Period G₁ G₂ :=
@@ -159,18 +147,16 @@ omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Finty
 theorem verification_iff (g₁ : G₁) (g₂ : G₂) (x y : F) (out : Output F (Forgery F Period))
     (tr : Transcript Period (Period × F) G₁) (H : Period → G₁)
     (signO : Period × F → G₁) (hc : Consistent H signO (project out, tr).2) :
-    pairing (F := F) (Gₜ := Gₜ) (H out.mstar.1.1) ((x • g₂ + out.mstar.1.2 • (y • g₂)) +
-        (out.mstar.2.map fun signer => (signer.1.1 + signer.1.2 * signer.2) • g₂).sum) =
+    pairing (F := F) (Gₜ := Gₜ) (H out.mstar.1) (x • g₂ + out.mstar.2 • (y • g₂)) =
       pairing (F := F) (Gₜ := Gₜ) (aggregate g₁ out tr) g₂ ↔
       pairing (F := F) (Gₜ := Gₜ) (dynForgeryElem g₁ (toOffsetForgery (out, tr)).rep H signO) g₂ =
         pairing (F := F) (Gₜ := Gₜ) (dynTargetElem weight (toOffsetForgery (out, tr)).rep H)
           ((x + y * scalar (toOffsetForgery (out, tr)).rep.2.mstar +
             (toOffsetForgery (out, tr)).offset) • g₂) := by
   rw [aggregate, toOffsetForgery, dynTargetElem, targetElem, sum_weight_smul,
-    ← materialize_eq g₁ H signO (project out, tr) hc, materialize_eq_weightedReplies, offset_smul,
-    eq_comm]
-  simp only [project, toForgery, smul_smul, ← add_smul]
-  rw [mul_comm out.mstar.1.2 y]
+    ← materialize_eq g₁ H signO (project out, tr) hc, materialize_eq_weightedReplies, eq_comm]
+  simp only [project, toForgery, smul_smul, ← add_smul, add_zero]
+  rw [mul_comm out.mstar.2 y]
 
 omit [Fintype F] in
 theorem lazyGame_eq_realGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
@@ -186,7 +172,7 @@ theorem lazyGame_eq_realGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁
     (fun H y => do
       let (out, tr) ← runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
       pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst)
-        (H out.mstar.1.1)))] at hd
+        (H out.mstar.1)))] at hd
   rw [evalDist_apply_singleton, probOutput_congr rfl hd, ← probEvent_true_eq_probOutput]
   unfold realGame extracted
   simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply,
@@ -292,30 +278,30 @@ theorem D'_eq : dynDenom (scaled weight scalar) (toOffsetForgery (out, tr)).rep 
 omit [SampleableType F] [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] in
 theorem known_eq : known weight (toOffsetForgery (out, tr)) ρ = Reduction.K out tr ρ := by
   rw [known, Reduction.K, const_eq]
-  simp only [toOffsetForgery, toForgery, project, muW_weight]
+  simp only [toOffsetForgery, zero_mul, sub_zero]
 
 omit [SampleableType F] [Fintype F] [DecidableEq F] [Fintype Period] [AddCommGroup G₁] [Module F G₁]
   [SampleableType G₁] [Fintype G₁] in
-theorem reuse_eq : dynDenomCoeff weight (toOffsetForgery (out, tr)).rep out.mstar.1.1 =
+theorem reuse_eq : dynDenomCoeff weight (toOffsetForgery (out, tr)).rep out.mstar.1 =
     Reduction.reuse out tr := by
   simp only [dynDenomCoeff, Lcoeff, toOffsetForgery, toForgery, project, weight, Reduction.reuse,
-    List.mapIdx_eq_ofFn, List.sum_ofFn, if_true]
+    List.mapIdx_eq_ofFn, List.sum_ofFn, ite_true]
   congr 1
   refine Finset.sum_congr rfl fun q _ => ?_
   simp only [List.get_eq_getElem]
-  by_cases h : out.mstar.1.1 = tr.2[(q : Nat)].1.1
+  by_cases h : out.mstar.1 = tr.2[(q : Nat)].1.1
   · simp [h]
   · simp [h, Ne.symm h]
 
 /-- The attacked period, the coordinate the hash-branch solver inspects. -/
 def attacked (fo : DynForgery F (Period × F) Period) : Period := fo.2.mstar.1
 
-omit [SampleableType F] [Fintype F] [SampleableType G₁] [Fintype G₁] in
+omit [SampleableType F] [Fintype F] [SampleableType G₁] [Fintype G₁] [AddCommGroup G₁] [Module F G₁] in
 theorem badDenom_eq (table : Period → F) :
     badDenom weight scalar attacked (toOffsetForgery (out, tr)).rep table =
       if Reduction.reuse out tr ≠ 0 then Reduction.D out tr table else Reduction.D' out tr table := by
   rw [badDenom, badCoeff, ← D_eq, ← D'_eq, dynDenom, dynDenom]
-  have : attacked (toOffsetForgery (out, tr)).rep = out.mstar.1.1 := rfl
+  have : attacked (toOffsetForgery (out, tr)).rep = out.mstar.1 := rfl
   rw [this, reuse_eq]
   split_ifs <;> rfl
 

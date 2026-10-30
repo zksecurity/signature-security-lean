@@ -19,7 +19,7 @@ on `propext`, `Classical.choice` and `Quot.sound`.
 | Schnorr | ordinary (ROM) | [`Schnorr.NonzeroNonce.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound, nonzero nonces |
 | Schnorr | algebraic | [`Schnorr.agm_security`](Signatures/Schnorr/Statement.lean) | `εDL + (qH+1)/p + qS(qS+qH)/p` |
 | Synchronized PS | algebraic | [`SynchronizedPS.agm_security`](Signatures/SynchronizedPS/Statement.lean) | `εX + εY + εH + 1/p`, one honest signature per period |
-| Synchronized PS | algebraic | [`SynchronizedPS.agm_security_budgeted`](Signatures/SynchronizedPS/Statement.lean) | `4·εDL + 2/p`, single honest signer, Caliper-costed |
+| Synchronized PS | algebraic | [`SynchronizedPS.agm_security_budgeted`](Signatures/SynchronizedPS/Statement.lean) | `4·εDL + 2/p`, Caliper-costed |
 
 `εDL`/`εcoCDH` are DLog/co-CDH success suprema at the proved reduction budget in
 the same execution model; `p` is the group order. Each statement has a
@@ -52,9 +52,8 @@ every group element they output). For ordinary attackers it is VCVio's
 at the scheme, written out once more as a theorem so the file reads as the
 paper's figure; the proof-side games that reductions start from are related to it
 by equalities in `Proofs/` (e.g. [`BLS.Game.eufCma_eq_rom`](Proofs/BLS/EufCma.lean)).
-[Synchronized Pointcheval–Sanders](Signatures/SynchronizedPS/Game.lean) attacks one honest key
-in the certified-key model: a forgery names the co-signers' key pairs and messages with the
-aggregate, and the one-signature-per-period rule is the admissibility restriction. Its base is a
+[Synchronized Pointcheval–Sanders](Signatures/SynchronizedPS/Game.lean) attacks one honest key,
+and the one-signature-per-period rule is the admissibility restriction. Its base is a
 hash, so every element the attacker sees is bilinear in the secrets and the hash exponents, and the
 AGM proof stays linear like OOPS's. Plain Pointcheval–Sanders, whose base is attacker-chosen, is
 not in scope.

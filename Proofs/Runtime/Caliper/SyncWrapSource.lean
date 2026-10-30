@@ -12,10 +12,6 @@ open PFunctor PFunctor.DynSystem PFunctor.DynSystem.DynComputation
 
 set_option linter.unusedSectionVars false
 
-/-- A single-signer forgery reported with no co-signers. -/
-def _root_.SynchronizedPS.Wrapped.embed {F M : Type} (out : Output F M) : Output F (M × List ((F × F) × F)) :=
-  ⟨(out.mstar, []), out.β, out.γ, out.ξ⟩
-
 /-- The good list reduction runs the attacker only at the given key. -/
 theorem _root_.Model.LazyAGM.WeightedReduction.goodProgram_congr {F ι M G₁ G₂ G₂' : Type} [Field F] [AddCommGroup G₁] [Module F G₁]
     (terms : M → List (ι × F)) (g X : G₁) {pk : G₂} {pk' : G₂'} {A : Adversary F ι M G₁ G₂} {A' : Adversary F ι M G₁ G₂'}
@@ -82,11 +78,11 @@ theorem proj_pair (pk : core.inner.key.Value) (s : core.scalar.Value) : proj (co
 
 variable (V : SynchronizedPS.Proofs.View (scalar.Value base) (key.Value base) G K₀)
   (sourceEq : ∀ pk : core.inner.key.Value,
-    embed <$> ((fun answer => WeightedCallerProgram.output answer.val) <$> witness.source pk.val) = V.main pk.val)
+    ((fun answer => WeightedCallerProgram.output answer.val) <$> witness.source pk.val) = V.main pk.val)
   (correction : scalar.Value base → key.Value base × scalar.Value base → scalar.Value base)
   (final : scalar.Value base → SynchronizedPS.Forgery (scalar.Value base) (key.Value base) → scalar.Value base) (keys : K₀ → K₀ × K₀)
   (corrLaw : ∀ (d : core.scalar.Value) (m : core.message.Value), (routines.corrFn (d, m)).val = correction d.val m.val)
-  (finLaw : ∀ (d : core.scalar.Value) (m : key.Value base × scalar.Value base), finRoutines.negFn (finRoutines.finFn (d.val, m)) = -(final d.val (m, [])))
+  (finLaw : ∀ (d : core.scalar.Value) (m : key.Value base × scalar.Value base), finRoutines.negFn (finRoutines.finFn (d.val, m)) = -(final d.val m))
   (mulLaw : ∀ a b, finRoutines.mulFn (a, b) = a * b)
   (fuelRoom : fuel ≤ core.slotCap)
 
@@ -101,8 +97,8 @@ theorem outerAdversary_main_eq (pk : core.inner.key.Value) (s : core.scalar.Valu
   have corrFun : corr routines messageTotal s = correction s.val := by
     funext m
     exact corrLaw s ⟨m, messageTotal m⟩
-  rw [outerAdversary_main, source, translate_map_out, wrap_main, hk, ← sourceEq pk, Functor.map_map,
-    translate_map_in (fun result => result.mstar.1.1) _ _ (fun a => embed (WeightedCallerProgram.output a.val)) finalIndex (fun _ => rfl)]
+  rw [outerAdversary_main, source, translate_map_out, wrap_main, hk, ← sourceEq pk,
+    translate_map_in (fun result => result.mstar.1) _ _ (fun a => WeightedCallerProgram.output a.val) finalIndex (fun _ => rfl)]
   symm
   refine translate_congr _ _ _ _ _ pk₀ (pk.val, s.val) ?_ core.slotCap ?_ _ [] fuel bound (by simpa using fuelRoom)
   · intro m

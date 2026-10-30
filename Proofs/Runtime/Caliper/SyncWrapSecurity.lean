@@ -124,7 +124,7 @@ structure AlgebraicAdversary where
   correspondence : Correspondence (base := base F Period) (key := indexTy) (val := scalarTy) P.core.inner.good P.core.inner.goodSetup caller
     queries.total invariant (Equiv.refl Period)
   source_eq : ∀ pk : P.core.inner.key.Value,
-    embed <$> ((fun answer => WeightedCallerProgram.output answer.val) <$> correspondence.source pk.val) =
+    ((fun answer => WeightedCallerProgram.output answer.val) <$> correspondence.source pk.val) =
       (SynchronizedPS.Proofs.view source generator).main pk.val
   localTime : ∀ value, caller.continuation.time value ≤ P.callerLimits.step.time
   initialTime : ∀ value, caller.initialCode.time value ≤ P.callerLimits.initial.time
@@ -317,7 +317,7 @@ theorem caliperGood_within :
 variable (correction : F → Period × F → F) (final : F → SynchronizedPS.Forgery F Period → F) (keysOf : F → G₂ → G₂ → G₂ × G₂)
   (postEq : ∀ g X g₂ Z₂ s, postFn ((g, X), (((Z₂, s • g₂), s), ((Z₂, s • g₂), s))) = ((g, X), ((keysOf s g₂ Z₂, s), (keysOf s g₂ Z₂, s))))
   (corrLaw : ∀ (d : P.core.scalar.Value) (m : P.core.message.Value), (side.routines.corrFn (d, m)).val = correction d.val m.val)
-  (finLaw : ∀ (d : P.core.scalar.Value) (m : Period × F), side.finish.negFn (side.finish.finFn (d.val, m)) = -(final d.val (m, [])))
+  (finLaw : ∀ (d : P.core.scalar.Value) (m : Period × F), side.finish.negFn (side.finish.finFn (d.val, m)) = -(final d.val m))
   (keysValid : ∀ (s : P.scalar.Value) (α : F), P.core.inner.key.valid (keysOf s.val keyGenerator (α • keyGenerator)))
 
 include postEq corrLaw finLaw keysValid in
@@ -417,7 +417,7 @@ variable (correction : F → Period × F → F) (final : F → SynchronizedPS.Fo
   (postEq : ∀ kappa g X g₂ s, postFn ((kappa, (g, X)), (((kappa • g₂, s • g₂), s), ((kappa • g₂, s • g₂), s))) =
     ((kappa, (g, X)), ((keysOf s g₂ (kappa • g₂), s), (keysOf s g₂ (kappa • g₂), s))))
   (corrLaw : ∀ (d : P.core.scalar.Value) (m : P.core.message.Value), (side.routines.corrFn (d, m)).val = correction d.val m.val)
-  (finLaw : ∀ (d : P.core.scalar.Value) (m : Period × F), side.finish.negFn (side.finish.finFn (d.val, m)) = -(final d.val (m, [])))
+  (finLaw : ∀ (d : P.core.scalar.Value) (m : Period × F), side.finish.negFn (side.finish.finFn (d.val, m)) = -(final d.val m))
   (keysValid : ∀ (s : P.scalar.Value) (α : F), P.core.inner.key.valid (keysOf s.val keyGenerator (α • keyGenerator)))
 
 include postEq corrLaw finLaw keysValid in
@@ -473,13 +473,13 @@ theorem keysValid₁ (s : P.scalar.Value) (α : F) : P.core.inner.key.valid (α 
 theorem keysValid₂ (s : P.scalar.Value) (α : F) : P.core.inner.key.valid (s.val • keyGenerator, α • keyGenerator) :=
   ⟨P.key_valid s.val, P.key_valid α⟩
 theorem finLaw₁ (d : P.core.scalar.Value) (m : Period × F) :
-    P.wrap₁.finish.negFn (P.wrap₁.finish.finFn (d.val, m)) = -(final₁ d.val (m, [])) := by
+    P.wrap₁.finish.negFn (P.wrap₁.finish.finFn (d.val, m)) = -(final₁ d.val m) := by
   rw [P.wrap₁.finLaw, P.wrap₁.negLaw]
-  simp [final₁, SynchronizedPS.Reduction.offset]
+  simp [final₁]
 theorem finLaw₂ (d : P.core.scalar.Value) (m : Period × F) :
-    P.wrap₂.finish.negFn (P.wrap₂.finish.finFn (d.val, m)) = -(final₂ d.val (m, [])) := by
+    P.wrap₂.finish.negFn (P.wrap₂.finish.finFn (d.val, m)) = -(final₂ d.val m) := by
   rw [P.wrap₂.finLaw, P.wrap₂.negLaw]
-  simp [final₂, SynchronizedPS.Reduction.offset]
+  simp [final₂]
 
 theorem good₁_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₁ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.goodTime₁ :=
   A.good_advantage P.wrap₁ P.reserve₁ P.good₁ P.postGood₁ (fun value => value) (KeyedSetup.keepStage_source P.shape.keyed P.outer.port)

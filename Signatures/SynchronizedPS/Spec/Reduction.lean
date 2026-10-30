@@ -3,9 +3,8 @@ import Signatures.Model.DLog11
 
 /-! The three `(1,1)`-DLog solvers behind synchronized PS security. Each runs the attacker
 through its grouped proof view against a simulated signer, then reads the challenge off the
-forgery. With every hash exponent `ρ(t)` known, a forgery `σ*` on `(t*, m*)` with co-signer
-offset `c` has exponent `const + x·lin + y·lin'`, and verification demands
-`(x + y·m* + c)·ρ(t*)`, so `x·D + y·D' = K`. The challenge is placed as `x` (solve when
+forgery. With every hash exponent `ρ(t)` known, a forgery `σ*` on `(t*, m*)` has exponent
+`const + x·lin + y·lin'`, and verification demands `(x + y·m*)·ρ(t*)`, so `x·D + y·D' = K`. The challenge is placed as `x` (solve when
 `D ≠ 0`), as `y` (solve when `D' ≠ 0`), or in the hashes `H(t) = a(t)•Z₁ + b(t)•g₁` with both
 keys known, where `D = D' = 0` becomes a linear equation in the hidden slopes `a`. -/
 
@@ -15,10 +14,6 @@ namespace SynchronizedPS.Reduction
 
 variable {F Period G₁ G₂ : Type} [Field F] [DecidableEq F] [Fintype Period] [DecidableEq Period]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
-
-/-- The co-signers' certified keys and messages add `Σ (xᵢ + yᵢ·mᵢ)` to the aggregate's exponent. -/
-def offset (others : List ((F × F) × F)) : F :=
-  (others.map fun signer => signer.1.1 + signer.1.2 * signer.2).sum
 
 abbrev Adversary (F Period G₁ G₂ : Type) [Field F] [AddCommGroup G₁] [Module F G₁]
     [AddCommGroup G₂] [Module F G₂] :=
@@ -39,15 +34,15 @@ variable (out : Output F (Forgery F Period)) (tr : Transcript Period (Period × 
 def const : F := out.β + (tr.1.mapIdx fun n reply => tokenCoeff out.γ n * ρ reply.1).sum
 def lin : F := (tr.2.mapIdx fun n reply => tokenCoeff out.ξ n * ρ reply.1.1).sum
 def lin' : F := (tr.2.mapIdx fun n reply => tokenCoeff out.ξ n * (ρ reply.1.1 * reply.1.2)).sum
-/-- Verification against `(x + y·m* + offset)·ρ(t*)` leaves `x·D + y·D' = K`. -/
-def D : F := ρ out.mstar.1.1 - lin out tr ρ
-def D' : F := ρ out.mstar.1.1 * out.mstar.1.2 - lin' out tr ρ
-def K : F := const out tr ρ - offset out.mstar.2 * ρ out.mstar.1.1
+/-- Verification against `(x + y·m*)·ρ(t*)` leaves `x·D + y·D' = K`. -/
+def D : F := ρ out.mstar.1 - lin out tr ρ
+def D' : F := ρ out.mstar.1 * out.mstar.2 - lin' out tr ρ
+def K : F := const out tr ρ
 /-- The attacked period's coefficient in `D`: one minus the weight the forgery puts on the
 signature of that period. It is zero only when the forgery reuses that signature with weight
 one, and then `D'`'s coefficient `m* − m` is nonzero for a fresh message. -/
 def reuse : F :=
-  1 - (tr.2.mapIdx fun n reply => if reply.1.1 = out.mstar.1.1 then tokenCoeff out.ξ n else 0).sum
+  1 - (tr.2.mapIdx fun n reply => if reply.1.1 = out.mstar.1 then tokenCoeff out.ξ n else 0).sum
 
 end Exponents
 

@@ -51,10 +51,6 @@ theorem remap_eq_remapMarks (γ ξ : List F) (events : List (SynchronizedPS.Wrap
 coefficient lists, as the weighted pipeline encodes them. -/
 abbrev OutTy := AGM.outputTy Weights.syncMessage
 
-/-- A single-signer forgery reported with no co-signers. -/
-def embed (out : Output F (K × F)) : Output F (SynchronizedPS.Forgery F K) :=
-  ⟨(out.mstar, []), out.β, out.γ, out.ξ⟩
-
 /-- A mark as the first-order language types it: the signing flag and the recorded correction. -/
 abbrev markTy : Ty CryptoAtom := .pair .bool scalar
 
@@ -185,17 +181,16 @@ output encoding, is `Wrapped.wrap` around its proof view. -/
 theorem decode_translate_eq_wrap
     (program : G₂ × G₂ → OracleComp (Spec F K G₁ randomBound) (OutTy.Value (cryptoBase F G₁ G₂ K M)))
     (V : SynchronizedPS.Proofs.View F K G₁ G₂)
-    (corresponds : ∀ pk, embed <$> (decode F K G₁ G₂ M <$> simulateQ (generalSource randomBound) (program pk)) = V.main pk)
-    (final : SynchronizedPS.Forgery F K → F) (hfinal : ∀ m, final (m, []) = finalFn m)
+    (corresponds : ∀ pk, decode F K G₁ G₂ M <$> simulateQ (generalSource randomBound) (program pk) = V.main pk)
     (keys : G₂ → G₂ × G₂) (pk : G₂) :
     decode F K G₁ G₂ M <$> simulateQ (generalSource randomBound)
         (translate correction finalIndex (fin finalFn) (program (keys pk)) []) =
-      (SynchronizedPS.Wrapped.wrap correction final keys V).main pk := by
-  rw [SynchronizedPS.Wrapped.wrap_main, ← corresponds (keys pk), Functor.map_map]
-  exact map_simulateQ_translate correction (fin finalFn) finalIndex (fun out => embed (decode F K G₁ G₂ M out))
-    (decode F K G₁ G₂ M) (fun result => result.mstar.1.1) (fun _ => rfl) _ pk
+      (SynchronizedPS.Wrapped.wrap correction finalFn keys V).main pk := by
+  rw [SynchronizedPS.Wrapped.wrap_main, ← corresponds (keys pk)]
+  exact map_simulateQ_translate correction (fin finalFn) finalIndex (decode F K G₁ G₂ M)
+    (decode F K G₁ G₂ M) (fun result => result.mstar.1) (fun _ => rfl) _ pk
     (fun r events => by
-      simp only [embed, decode, AGM.outputView, fin, hfinal, remap_eq_remapMarks, List.reverse_reverse])
+      simp only [decode, AGM.outputView, fin, remap_eq_remapMarks, List.reverse_reverse])
     (program (keys pk)) []
 
 /-! ## Query bounds of the wrapped attacker -/
