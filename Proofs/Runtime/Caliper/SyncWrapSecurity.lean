@@ -114,9 +114,9 @@ end Parameters
 
 /-! ## The attacker's certificate -/
 
-/-- An algebraic attacker with a Caliper caller for the inner (single-signer) interface: the
-caller corresponds to the attacker's proof view at the model's generator, reporting no
-co-signers, within the model's local budgets and signing allowance. -/
+/-- An algebraic attacker with a Caliper caller for the inner interface: the caller corresponds
+to the attacker's proof view at the model's generator, within the model's local budgets and
+signing allowance. -/
 structure AlgebraicAdversary where
   source : SynchronizedPS.Reduction.Adversary F Period G₁ G₂
   caller : SharedCaller (base := base F Period) (key := indexTy) (scalar := scalarTy) P.core.inner

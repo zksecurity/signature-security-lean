@@ -20,7 +20,7 @@ abbrev Adversary (F Period G₁ G₂ : Type) [Field F] [AddCommGroup G₁] [Modu
   DirectAGM.AdversaryWith F Period (Period × F) (Forgery F Period) G₁ G₂
 
 /-- Run the attacker's proof view with fixed hash and signing tables; the transcripts record
-the replies it saw, and its output explains the aggregate over `g₁` and those replies. -/
+the replies it saw, and its output explains the forged signature over `g₁` and those replies. -/
 def run (adversary : Adversary F Period G₁ G₂) (g₁ : G₁) (publicKey : G₂ × G₂)
     (hash : Period → G₁) (sign : Period × F → G₁) :
     ProbComp (Output F (Forgery F Period) × Transcript Period (Period × F) G₁) :=

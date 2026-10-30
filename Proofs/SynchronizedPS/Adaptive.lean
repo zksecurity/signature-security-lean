@@ -2,8 +2,8 @@ import Proofs.LinearFunctional.Adaptive
 
 /-! # Two secrets, one hashed base: adaptive AGM extraction for synchronized PS
 
-Signatures are `(x + y·s(m)) • Σᵢ wᵢ(m) Hᵢ`. A forgery on `m*` with co-signer offset `c`
-verifies when `e(σ*, g₂) = e(Σᵢ wᵢ(m*) Hᵢ, (x + y·s(m*) + c)•g₂)`. With the base table `ρ`
+Signatures are `(x + y·s(m)) • Σᵢ wᵢ(m) Hᵢ`. A forgery on `m*` with a known offset `c` (zero
+for synchronized PS) verifies when `e(σ*, g₂) = e(Σᵢ wᵢ(m*) Hᵢ, (x + y·s(m*) + c)•g₂)`. With the base table `ρ`
 known, the forgery's exponent is affine in the two secrets, `const + lin·x + lin'·y`, where
 `lin'` uses the weights `w·s`, and verification reads `x·D + y·D' = K` with `D`, `D'` the
 denominators of the weight families `w` and `w·s`. Three straight-line `(1,1)`-DLog reductions
@@ -23,7 +23,7 @@ variable {G₁ G₂ Gₜ : Type}
   [AddCommGroup G₂] [Module F G₂] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ]
 
-/-- An exact-length algebraic forgery together with the co-signers' offset. -/
+/-- An exact-length algebraic forgery together with a known offset on the secret. -/
 structure OffsetForgery (F M ι : Type) where
   rep : DynForgery F M ι
   offset : F

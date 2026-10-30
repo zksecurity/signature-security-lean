@@ -70,14 +70,14 @@ def lazyRun (V : View F Period G₁ G₂) (x y : F) (pk : G₂ × G₂) :
 /-- The readable game's checks on the attacker's report: a fresh period/message, one honest
 signature per period, and the pairing equation of the hash of the attacked period against the
 honest key and the message. -/
-def accepts (g₂ : G₂) (x y : F) (data : Forgery F Period) (aggregate : G₁)
+def accepts (g₂ : G₂) (x y : F) (data : Forgery F Period) (σ : G₁)
     (signed : List (Period × F)) (hash : G₁) : Bool :=
   decide (data ∉ signed ∧ onePerPeriod data signed) &&
   decide (pairing (F := F) (Gₜ := Gₜ) hash (x • g₂ + data.2 • (y • g₂)) =
-    pairing (F := F) (Gₜ := Gₜ) aggregate g₂)
+    pairing (F := F) (Gₜ := Gₜ) σ g₂)
 
 /-- The group element the attacker's coefficients name. -/
-def aggregate (g₁ : G₁) (out : Output F (Forgery F Period)) (tr : Transcript Period (Period × F) G₁) : G₁ :=
+def forged (g₁ : G₁) (out : Output F (Forgery F Period)) (tr : Transcript Period (Period × F) G₁) : G₁ :=
   out.β • g₁ + weightedReplies out.γ tr.1 + weightedReplies out.ξ tr.2
 
 noncomputable def experiment (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
@@ -86,7 +86,7 @@ noncomputable def experiment (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁
   let y ← (liftM ($ᵗ F) : OracleComp (baseSpec Period G₁) F)
   let (out, tr) ← lazyRun V x y (x • g₂, y • g₂)
   let hash ← (liftM ((baseSpec Period G₁).query (.inr out.mstar.1)) : OracleComp (baseSpec Period G₁) G₁)
-  pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst) hash)
+  pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (forged g₁ out tr) (tr.2.map Prod.fst) hash)
 
 noncomputable def lazyGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
     ProbComp Bool :=
@@ -113,7 +113,7 @@ theorem experiment_table (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G�
       let x ← ($ᵗ F : ProbComp F)
       let y ← ($ᵗ F : ProbComp F)
       let (out, tr) ← runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
-      pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst)
+      pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (forged g₁ out tr) (tr.2.map Prod.fst)
         (H out.mstar.1))) := by
   simp only [experiment, simulateQ_bind, simulateQ_pure, lazyRun_table, simulateQ_spec_query,
     table_lookup, pure_bind]
@@ -148,12 +148,12 @@ theorem verification_iff (g₁ : G₁) (g₂ : G₂) (x y : F) (out : Output F (
     (tr : Transcript Period (Period × F) G₁) (H : Period → G₁)
     (signO : Period × F → G₁) (hc : Consistent H signO (project out, tr).2) :
     pairing (F := F) (Gₜ := Gₜ) (H out.mstar.1) (x • g₂ + out.mstar.2 • (y • g₂)) =
-      pairing (F := F) (Gₜ := Gₜ) (aggregate g₁ out tr) g₂ ↔
+      pairing (F := F) (Gₜ := Gₜ) (forged g₁ out tr) g₂ ↔
       pairing (F := F) (Gₜ := Gₜ) (dynForgeryElem g₁ (toOffsetForgery (out, tr)).rep H signO) g₂ =
         pairing (F := F) (Gₜ := Gₜ) (dynTargetElem weight (toOffsetForgery (out, tr)).rep H)
           ((x + y * scalar (toOffsetForgery (out, tr)).rep.2.mstar +
             (toOffsetForgery (out, tr)).offset) • g₂) := by
-  rw [aggregate, toOffsetForgery, dynTargetElem, targetElem, sum_weight_smul,
+  rw [forged, toOffsetForgery, dynTargetElem, targetElem, sum_weight_smul,
     ← materialize_eq g₁ H signO (project out, tr) hc, materialize_eq_weightedReplies, eq_comm]
   simp only [project, toForgery, smul_smul, ← add_smul, add_zero]
   rw [mul_comm out.mstar.2 y]
@@ -171,7 +171,7 @@ theorem lazyGame_eq_realGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁
   rw [evalSPMF_bind_congr' _ fun x => DeferredSampling.evalSPMF_bind_comm ($ᵗ (Period → G₁)) ($ᵗ F)
     (fun H y => do
       let (out, tr) ← runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
-      pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (aggregate g₁ out tr) (tr.2.map Prod.fst)
+      pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (forged g₁ out tr) (tr.2.map Prod.fst)
         (H out.mstar.1)))] at hd
   rw [evalDist_apply_singleton, probOutput_congr rfl hd, ← probEvent_true_eq_probOutput]
   unfold realGame extracted

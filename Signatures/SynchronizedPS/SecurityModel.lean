@@ -29,8 +29,7 @@ attribute [instance_reducible, instance] AGMSecurityModel.periodEquality
 variable (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
 
 /-- A realized algebraic attacker within the model's execution, stored-code, memory and signing
-limits. It attacks the single honest signer, reporting no co-signer keys; its source retains the
-game's interface. -/
+limits; its source retains the game's interface. -/
 abbrev AlgebraicAdversary (securityParameter : Nat) (queries : QueryAllowance) :=
   SyncWrapCaliper.AlgebraicAdversary (model.parameters securityParameter queries)
 

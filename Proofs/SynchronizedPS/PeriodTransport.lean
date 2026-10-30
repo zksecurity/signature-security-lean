@@ -171,15 +171,15 @@ theorem weightedReplies_map {D D' : Type} (g : D → D') (coeff : List F) (tr : 
 
 omit [SampleableType F] [DecidableEq F] [DecidableEq T] [DecidableEq U] [SampleableType G₁] [AddCommGroup G₂] [Module F G₂]
   [AddCommGroup Gₜ] [Module F Gₜ] [BilinearGroup.BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
-theorem aggregate_map (f : U → T) (g₁ : G₁) (out : Output F (Forgery F U)) (tr : Transcript U (U × F) G₁) :
-    Proofs.aggregate g₁ (mapOut f out) (mapTranscript f (message f) tr) = Proofs.aggregate g₁ out tr := by
-  simp only [Proofs.aggregate, mapOut, mapTranscript, weightedReplies_map]
+theorem forged_map (f : U → T) (g₁ : G₁) (out : Output F (Forgery F U)) (tr : Transcript U (U × F) G₁) :
+    Proofs.forged g₁ (mapOut f out) (mapTranscript f (message f) tr) = Proofs.forged g₁ out tr := by
+  simp only [Proofs.forged, mapOut, mapTranscript, weightedReplies_map]
 
 omit [SampleableType F] [SampleableType G₁] in
-theorem accepts_map (f : U → T) (hf : Function.Injective f) (g₂ : G₂) (x y : F) (data : Forgery F U) (aggregate : G₁)
+theorem accepts_map (f : U → T) (hf : Function.Injective f) (g₂ : G₂) (x y : F) (data : Forgery F U) (σ : G₁)
     (signed : List (U × F)) (hash : G₁) :
-    Proofs.accepts (Gₜ := Gₜ) g₂ x y (forgery f data) aggregate (signed.map (message f)) hash =
-      Proofs.accepts (Gₜ := Gₜ) g₂ x y data aggregate signed hash := by
+    Proofs.accepts (Gₜ := Gₜ) g₂ x y (forgery f data) σ (signed.map (message f)) hash =
+      Proofs.accepts (Gₜ := Gₜ) g₂ x y data σ signed hash := by
   have fresh : message (F := F) f data ∈ signed.map (message f) ↔ data ∈ signed :=
     List.mem_map_of_injective (message_injective f hf)
   have once : onePerPeriod (message f data) (signed.map (message f)) ↔ onePerPeriod data signed := by
@@ -239,7 +239,7 @@ theorem experiment_map (f : U → T) (hf : Function.Injective f) (g₁ : G₁) (
   refine bind_congr fun x => bind_congr fun y => bind_congr fun z => bind_congr fun hash => ?_
   obtain ⟨out, tr⟩ := z
   simp only [Prod.map_apply]
-  rw [aggregate_map]
+  rw [forged_map]
   have hs : (mapTranscript f (message f) tr).2.map Prod.fst = (tr.2.map Prod.fst).map (message f) := by
     simp only [mapTranscript, List.map_map]
     congr 1

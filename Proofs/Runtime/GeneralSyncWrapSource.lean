@@ -47,7 +47,7 @@ theorem remap_eq_remapMarks (γ ξ : List F) (events : List (SynchronizedPS.Wrap
 
 /-! ## The realized output and its finishing step -/
 
-/-- The attacker's realized output: period/message pair, aggregate coefficient and the two
+/-- The attacker's realized output: period/message pair, generator coefficient and the two
 coefficient lists, as the weighted pipeline encodes them. -/
 abbrev OutTy := AGM.outputTy Weights.syncMessage
 
