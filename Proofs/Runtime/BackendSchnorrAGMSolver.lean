@@ -5,7 +5,7 @@ import Proofs.Runtime.BackendSchnorrAGMCallerOutput
 state construction, actual boundary conversions, general caller execution,
 cutoff handling, extraction and scalar projection are represented as code. -/
 
-open OracleComp OracleSpec PFunctor AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec PFunctor GroupModel.Interaction
 open PFunctor.DynSystem.DynComputation
 
 namespace Signatures.Runtime.SchnorrAGM.Native.Solver
@@ -43,7 +43,7 @@ structure DataPorts where
   optional : Q.Realizer (StepClass.HasOption.option bd.out)
     (StepClass.HasSum.sum rep.data.unit bd.out) optionView
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
   {iface : BackendProgram.Interface (C := C) unifSpec}

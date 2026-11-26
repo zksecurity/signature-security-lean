@@ -75,7 +75,7 @@ theorem forkKernel_private_bind {B : Type} (target : I) (draw : OracleComp spec 
     funext x
     exact ih x (by simpa [hne] using hdraw.2 x)
 
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+attribute [local implicit_reducible] PFunctor.Idx
 
 /-- The same unguarded fork, presented by a typed first path and occurrence. -/
 def kernelPath (target : I) (main : OracleComp spec A) (select : A → Option Nat)

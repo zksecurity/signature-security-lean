@@ -4,7 +4,7 @@ import Proofs.Runtime.Caliper.SchnorrAGMPartialCaller
 chronological received basis. A source-only fallback with no outgoing groups
 is valid at every basis, including unrepresented oracle replies. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrAGM.Full.Caller.Partial
-open Caliper OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open Caliper OracleComp OracleSpec GroupModel.Interaction
 open Signatures.Runtime.SchnorrAGM.Native
 variable {w qH qS randomBound : Nat} {M F G A : Type}
     (layout : CallerExtraction.Layouts w M F G qH qS randomBound A)

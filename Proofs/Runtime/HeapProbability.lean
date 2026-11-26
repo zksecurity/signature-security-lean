@@ -15,7 +15,7 @@ private theorem stateMap_apply {S A B : Type} (f : A → B) (code : StateT S PMF
     (f <$> code) s = (fun out => (f out.1, out.2)) <$> code s := StateT.run_map f code s
 
 noncomputable abbrev fairBits : QueryImpl BitRejection.bitSpec PMF :=
-  fun _ => PMF.uniformOfFintype Bool
+  fun _ => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool
 
 /-- Mathematical observation of a returned scalar encoding. It is not an
 extra online operation or a claim about the cost of exporting the heap. -/
@@ -28,7 +28,7 @@ def scalarValue (r : Nat) (out : HeapExpression.Result) : ZMod r :=
 
 noncomputable def markedHom {r : Nat} [NeZero r] (w k : Nat) (S : Type) :
     StateT S (OracleComp (MachineSampling.spec (ZMod r))) →ᵐ StateT (S × Bool) PMF :=
-  Simulation.flatten ∘ₘ StateT.mapHom (simulateQ' (MarkedProbability.stateImpl (MachineSampling.real r w k)))
+  Simulation.flatten ∘ᵐ StateT.mapHom (simulateQ' (MarkedProbability.stateImpl (MachineSampling.real r w k)))
 
 private theorem finEquiv_ofNat (r n : Nat) [NeZero r] :
     ZMod.finEquiv r (Fin.ofNat r n) = (n : ZMod r) := by

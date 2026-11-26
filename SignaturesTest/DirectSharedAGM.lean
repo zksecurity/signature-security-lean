@@ -9,7 +9,7 @@ import Lean.Util.CollectAxioms
 Interleaved and repeated replies retain their chronological positions; malformed
 protocol shapes are rejected even when their algebraic explanations are valid. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 open Model.LazyAGM.Interactive
 
 namespace SignaturesTest.DirectSharedAGM

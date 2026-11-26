@@ -14,7 +14,7 @@ open Caliper Assembly
 variable {w : Nat}
 
 def WordIO.Code.memBound : WordIO.Code w → Nat
-  | .compute code => code.memBound
+  | .compute stmt => stmt.memBound
   | .read _ | .write _ | .invoke => 0
   | .seq first second => max first.memBound second.memBound
   | .branch _ yes no => max yes.memBound no.memBound
@@ -22,7 +22,7 @@ def WordIO.Code.memBound : WordIO.Code w → Nat
 theorem WordIO.Code.touches_lt_memBound {code : WordIO.Code w} {buffer : BufId}
     (touched : code.Touches buffer) : buffer < code.memBound := by
   induction code with
-  | compute code => exact Stmt.touches_lt_memBound touched
+  | compute stmt => exact Stmt.touches_lt_memBound touched
   | read | write | invoke => cases touched
   | seq first second ih₁ ih₂ | branch condition first second ih₁ ih₂ =>
     exact touched.elim (fun h => lt_of_lt_of_le (ih₁ h) (le_max_left _ _))

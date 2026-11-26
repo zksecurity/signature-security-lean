@@ -16,19 +16,17 @@ open AlgebraicGroupModel.LinFunctional
 -- Symbolic collision means every coefficient vanishes, not that sampled hashes coincide.
 example {F M : Type} [Field F] [DecidableEq M]
     (experiment : ProbComp (DynForgery F M M)) :
-    Pr[fun fo => fo.Fresh ∧ ∀ k, dynDenomCoeff BLS.Proofs.indicatorWeight fo k = 0 |
-      experiment] = 0 := by
-  apply probEvent_eq_zero
+    Pr{let fo ← experiment}[fo.Fresh ∧ ∀ k, dynDenomCoeff BLS.Proofs.indicatorWeight fo k = 0] = 0 := by
+  apply prEvent_eq_zero_of_forall_mem_support _ _
   intro fo _ h
   exact BLS.Proofs.fresh_coefficient fo h.1 (h.2 fo.2.mstar)
 
 -- The OOPS degree rule is part of winning, not an assumed property of the adversary.
 example {F T : Type} [Field F] [DecidableEq F] [DecidableEq T] (d : ℕ)
     (experiment : ProbComp (DynForgery F (F × T) (T × Fin (d + 1)))) :
-    Pr[fun fo => (OOPS.Handle.targetMessages fo.2.v fo.2.mstar.2).card ≤ d ∧
-      fo.Fresh ∧ ∀ k, dynDenomCoeff (OOPS.Handle.oopsWMulti d) fo k = 0 |
-      experiment] = 0 := by
-  apply probEvent_eq_zero
+    Pr{let fo ← experiment}[(OOPS.Handle.targetMessages fo.2.v fo.2.mstar.2).card ≤ d ∧
+      fo.Fresh ∧ ∀ k, dynDenomCoeff (OOPS.Handle.oopsWMulti d) fo k = 0] = 0 := by
+  apply prEvent_eq_zero_of_forall_mem_support _ _
   intro fo _ h
   obtain ⟨j, hj⟩ := OOPS.Handle.forgery_coeff_ne_zero_multi
     fo.2.v fo.2.mstar fo.2.ξ h.1 h.2.1
@@ -76,9 +74,10 @@ example : 𝒟[Proximity.LazyAGM.collisionGame ((1, 0) : ZMod 5 × ZMod 5) keyPr
   rw [Proximity.LazyAGM.Proofs.collision_eq_realGame]
   simp [AlgebraicGroupModel.LinFunctional.realGameDynAdaptive, Model.LazyAGM.Proofs.extracted,
     fixedRun, fixedImpl, keyProbe, keyOutput, Model.LazyAGM.Proofs.toForgery,
-    Proximity.Proofs.Noncollision, probEvent_bind_eq_tsum]
-  intro _ h
-  exact one_ne_zero (congrFun h 0)
+    Proximity.Proofs.Noncollision]
+  apply prEvent_eq_zero_of_forall_mem_support _ _
+  intro _ _ h
+  exact one_ne_zero (congrFun h.2 0)
 
 -- A key outside that image can produce a fresh colliding output.
 example :
@@ -123,8 +122,6 @@ example : 𝒟[Proximity.LazyAGM.collisionGame (1 : ZMod 5) zeroProbe] {true} = 
   simp [AlgebraicGroupModel.LinFunctional.realGameDynAdaptive, Model.LazyAGM.Proofs.extracted,
     fixedRun, fixedImpl, zeroProbe, vectorOutput, Model.LazyAGM.Proofs.toForgery,
     Proximity.Proofs.Noncollision, AlgebraicGroupModel.LinFunctional.DynForgery.Fresh]
-  rintro _ _ _ _ _ _ rfl rfl rfl rfl
-  simp
 
 example {F S : Type} [Semiring F] (out : Output F ((Fin 0 → F) × S)) (signed) :
     Proximity.LazyAGM.Collision out signed ↔ out.mstar ∉ signed := by

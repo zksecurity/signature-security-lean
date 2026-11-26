@@ -59,18 +59,18 @@ private def testRun (n w k : Nat) (tape : List Bool) :=
   unless first.2.2 == 3 && last.2.2 == 9 && abort.2.2 == 9 && abort.1.value.isNone do
     throw <| IO.userError "early/final/exhausted sampler path mismatch"
 
-example : ((simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool)
+example : ((simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool)
     (execute (compile 4 2 1))).map Run.value) none = 0 := by
   rw [execute_failure 4 2 1 (by decide)]
   norm_num [ENNReal.mul_inv_cancel]
 
-example : ((simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool)
+example : ((simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool)
     (execute (compile 1 0 1))).map Run.value) (some []) = 1 := by
   have h := execute_some 1 0 1 (by decide) 0
   norm_num [natBits] at h
   simpa only [PMF.map_apply] using h
 
-example (w k : Nat) : ((simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool)
+example (w k : Nat) : ((simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool)
     (execute (compile 0 w k))).map Run.value) none = 1 := by
   rw [execute_failure 0 w k (Nat.zero_le _)]
   simp

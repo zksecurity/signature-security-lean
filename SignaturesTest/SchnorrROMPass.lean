@@ -21,7 +21,7 @@ private abbrev F := ZMod 5
 section Execution
 
 variable {C : StepClass} [C.HasProd] [C.HasSum] [C.HasOption]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
   [Q.HasOption] [OptionCode (Q := Q)] {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F F F Nat Nat))
   (bd : Boundary C (NativeInterface.sourceSpec F F Nat).toPFunctor F (Nat × F × F))

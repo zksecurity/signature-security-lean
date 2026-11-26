@@ -206,7 +206,7 @@ run_meta do
       if (conclusion.find? (fun e => e.isConstOf ``MeasureTheory.Measure)).isSome then
         throwError "{name}: must retain full computation correspondence"
   let securityType := (← getConstInfo ``RawTape.security).type
-  if (securityType.find? (fun e => e.isConstOf ``instEvalDistSemanticsOfMonadLiftTSPMF)).isSome then
+  unless (securityType.find? (fun e => e.isConstOf ``OracleComp.instEvalDistSemantics)).isSome do
     throwError "raw finite-list security must use native measures"
   for forbidden in #[``OracleComp.IsPerIndexQueryBound, `Proofs.Runtime.Program,
       `Signatures.Runtime.Schnorr.SourceCertificate] do

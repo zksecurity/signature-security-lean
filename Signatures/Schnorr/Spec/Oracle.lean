@@ -75,7 +75,7 @@ abbrev sampleNonce : OracleM F G M F :=
 
 /-- Algebraic hash requests supply a commitment; signing replies supply a new commitment. -/
 def oracle (generator : G) (secret : F) :
-    QueryImpl (AlgebraicGroupModel.Interaction.plainSpec (Group G) (Request M) (Reply F M))
+    QueryImpl (GroupModel.Interaction.plainSpec (Group G) (Request M) (Reply F M))
       (OracleM F G M) := fun ⟨request, groups⟩ =>
   match request with
   | .random n => do
@@ -104,7 +104,7 @@ def oracle (generator : G) (secret : F) :
 /-- The algebraic oracle with an arbitrary signing oracle: a signing reply delivers the
 commitment as a group input and the response as data. -/
 def oracleWith (sign : M → Model.RandomOracle.Computation (M × G) F (G × F)) :
-    QueryImpl (AlgebraicGroupModel.Interaction.plainSpec (Group G) (Request M) (Reply F M))
+    QueryImpl (GroupModel.Interaction.plainSpec (Group G) (Request M) (Reply F M))
       (OracleM F G M) := fun ⟨request, groups⟩ =>
   match request with
   | .random n => do

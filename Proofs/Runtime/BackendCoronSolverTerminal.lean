@@ -36,7 +36,7 @@ structure PortCaps (inputWidth routeWidth adapterTime : Nat) : Prop where
 
 def terminalWidth (width routeWidth cap : Nat) : Nat := routeWidth + writtenStoreWidth width cap
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   [Field F] [SampleableType F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]

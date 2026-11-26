@@ -40,7 +40,7 @@ theorem scalar_source (saved : Store layout) (valid : ready layout fuel saved) :
           Schnorr.ListROM.Shared.tapeRun (Schnorr.privateImpl (F := F) (.inr ())) first.2)
           (scalar saved (first_ready layout fuel saved valid))
       simp only [bind_map_left] at same
-      convert same using 1
+      exact same
 
 theorem observe_scalar (tape : RandomTape w) (saved : Store layout) (valid : ready layout fuel saved)
     (before : State w) (holds : (Read.tapes layout.tape).representation.Holds saved before) :

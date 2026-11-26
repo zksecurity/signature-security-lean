@@ -17,7 +17,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ M α : Type} [Field F] [SampleableType F]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]
@@ -86,9 +86,11 @@ theorem backendGoodOracle_eq (g X : G₁) :
   · simp only [backendGoodOracle]
     rw [backendGoodReply_denote]
     simp only [Bool.false_eq_true, ite_false, Functor.map_map, listOracle, listReply, StateT.run]
+    rfl
   · simp only [backendGoodOracle]
     rw [backendGoodReply_denote]
     simp only [ite_true, Functor.map_map, listOracle, listReply, StateT.run]
+    rfl
 
 theorem backendBadOracle_eq (g X : G₁) (kappa : F) :
     backendBadOracle rep data cost primitive samplingCode g X kappa =

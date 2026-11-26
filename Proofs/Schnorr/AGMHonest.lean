@@ -1,12 +1,13 @@
 import Proofs.Schnorr.AGMCacheBound
 import VCVio.OracleComp.QueryTracking.RandomOracle.DeferredSampling
-import VCVio.EvalDist.Monad.Disagreement
+import VCVio.EvalDist.Monad.Disagreement.Measure
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-! Honest signing on the reduction's instrumented state. A padded independent
 challenge gives an explicit coupling to the simulator, with disagreement only
 when the signing nonce hits a cached message/commitment point. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction OracleComp.DeferredSampling
+open OracleComp OracleSpec GroupModel.Interaction OracleComp.DeferredSampling
 open scoped ENNReal
 
 namespace Schnorr.AGM.Reduction
@@ -39,12 +40,13 @@ def honestSign (g : G) (x : F) (s : State F G M) (m : M) :
 
 theorem nonceSign_bind {B : Type} (g : G) (x : F) (s : State F G M) (m : M)
     (next : Message F (Group G) × State F G M → ProbComp B) :
-    𝒮[nonceSign g x s m >>= next] = 𝒮[simulatedSign g (x • g) s m >>= next] := by
+    (nonceSign g x s m >>= next) =ᵈ (simulatedSign g (x • g) s m >>= next) := by
   simp only [nonceSign, simulatedSign, bind_assoc, pure_bind]
-  apply evalSPMF_bind_congr_left
-  intro c
-  simpa only [id_eq] using evalSPMF_bind_bijective_add_right_uniform (α := F) id
-    Function.bijective_id (c * x) (fun z => next (signingOutput g (x • g) s m c z))
+  refine EvalDistEq.bind_right _ fun c => ?_
+  have h := (SampleableType.map_uniformSample_evalDistEq_of_bijective (f := fun r : F => r + c * x)
+    ⟨add_left_injective _, fun y => ⟨y - c * x, sub_add_cancel y _⟩⟩).bind_left
+    (fun z => next (signingOutput g (x • g) s m c z))
+  simpa only [bind_map_left] using h
 
 /-- A common continuation sees identical replies and state off the nonce-collision set.
 Different continuations may contribute their own already-proved uniform tail error. -/
@@ -53,17 +55,18 @@ theorem honestSign_bind_le [Fintype F] {B : Type}
     (x : F) (s : State F G M) (m : M) (k : Nat) (hk : CacheBound s k)
     (contL contR : Message F (Group G) × State F G M → ProbComp B)
     (event : B → Prop) (epsilon : ENNReal)
-    (hnext : ∀ c z, Pr[event | contL (signingOutput g (x • g) s m c z)] ≤
-      Pr[event | contR (signingOutput g (x • g) s m c z)] + epsilon) :
-    Pr[event | honestSign g x s m >>= contL] ≤
-      Pr[event | simulatedSign g (x • g) s m >>= contR] +
+    (hnext : ∀ c z, Pr{let y ← contL (signingOutput g (x • g) s m c z)}[event y] ≤
+      Pr{let y ← contR (signingOutput g (x • g) s m c z)}[event y] + epsilon) :
+    Pr{let y ← honestSign g x s m >>= contL}[event y] ≤
+      Pr{let y ← simulatedSign g (x • g) s m >>= contR}[event y] +
         (k : ENNReal) * (Fintype.card F : ENNReal)⁻¹ + epsilon := by
-  rw [← probEvent_congr' (fun _ _ => Iff.rfl) (nonceSign_bind g x s m contR)]
+  rw [← (nonceSign_bind g x s m contR).prEvent_eq, add_assoc,
+    ← add_zero (Pr{let y ← nonceSign g x s m >>= contR}[event y])]
   simp only [honestSign, nonceSign, bind_assoc, pure_bind]
-  rw [add_assoc]
-  apply probEvent_bind_congr_le_add
-  intro c _
-  have h := probEvent_bind_le_add_of_disagree
+  -- The outer draw of `c` has no disagreement set; the slack is carried by the continuations.
+  refine prEvent_bind_le_add_of_disagree (D := fun _ => False)
+    (prEvent_eq_zero_of_forall_not _ _ fun _ => id).le fun c _ _ => ?_
+  have h := prEvent_bind_le_add_of_disagree
     (mx := ($ᵗ F)) (D := fun r => s.cache (m, r • g) ≠ none)
     (my := fun r => contL (signingOutput g (x • g) s m
       ((s.cache (m, r • g)).map Entry.challenge |>.getD c)

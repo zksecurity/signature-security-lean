@@ -97,7 +97,7 @@ example (input : P.layout.service.scheme.config.Value) :
       (Schnorr.AGM.initial input.val.1 input.val.2) = some input :=
   SchnorrAGM.Full.Caller.Partial.representInput_initial P.layout input
 
-example (basis : AlgebraicGroupModel.Interaction.Groups (Schnorr.AGM.Group G)) :
+example (basis : GroupModel.Interaction.Groups (Schnorr.AGM.Group G)) :
     (SchnorrAGM.Native.Interface.decodeForgery (allowances.fallback P caller).val).Valid basis :=
   allowances.fallback_valid P caller basis
 
@@ -136,7 +136,7 @@ run_meta do
     for param in params do
       let premise ← inferType param
       for forbidden in #[``OracleMachine, ``OracleComp, ``Schnorr.AGM.Adversary,
-          ``AlgebraicGroupModel.Interaction.Adversary, ``SchnorrAGM.Full.Caller.Source,
+          ``GroupModel.Interaction.Adversary, ``SchnorrAGM.Full.Caller.Source,
           ``SchnorrAGM.Full.Caller.Invariant, ``Interactive.Within, ``cyclicDLogWithin] do
         if (premise.find? (fun expression => expression.isConstOf forbidden)).isSome then
           throwError "local caller constructor assumes a derived source/reduction certificate: {forbidden}"

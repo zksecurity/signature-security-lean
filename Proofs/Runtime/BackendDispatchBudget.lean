@@ -42,13 +42,13 @@ theorem firstAtomic_bound_of_width {A B S : Type} {a : C.Str A} {b : C.Str B}
   have h2 := mono (show Q.size store input.2 + Q.size b (f input.1) ≤ 32 * width by omega)
   exact ⟨⟨hout, hp.2⟩, by dsimp; omega⟩
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   (dispatch : DispatchCostLaws (Q := Q) overhead)
 
 include sizes dispatch
 
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem branchStore_bound_of_width {A B D S : Type} {a : C.Str A} {b : C.Str B} {d : C.Str D}
     (store : C.Str S)
     (left : Code Q spec iface (StepClass.HasProd.prod a store) d)

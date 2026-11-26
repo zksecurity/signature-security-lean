@@ -19,7 +19,7 @@ private instance : Fact (Nat.Prime 5) := ⟨by decide⟩
 section Native
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase (ZMod 5) (ZMod 5) (ZMod 5) Nat Nat))
   (bd : Boundary C (generalSpec Nat (ZMod 5) 4).toPFunctor (ZMod 5) (Model.LazyAGM.Output (ZMod 5) Nat))

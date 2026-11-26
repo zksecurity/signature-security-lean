@@ -26,20 +26,20 @@ variable (V : Proofs.View F Period G₁ G₂) (g₁ : G₁) (g₂ : G₂)
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem pivot_tsum (q : ((Output F (Forgery F Period) × List (Event F Period)) × (Period → F)) × F × F → Prop) :
-    Pr[q | pivot V g₁ g₂] =
-      ∑' x : F, Pr[= x | ($ᵗ F : ProbComp F)] * ∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] *
-        Pr[fun w => q (w, x, y) | body V g₁ g₂ x y] := by
+    Pr{let x ← pivot V g₁ g₂}[q x] =
+      ∑' x : F, Pr{let y ← ($ᵗ F : ProbComp F)}[y = x] * ∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] *
+        Pr{let w ← body V g₁ g₂ x y}[q (w, x, y)] := by
   unfold pivot
-  simp only [probEvent_bind_eq_tsum, bind_pure_comp, probEvent_map, Function.comp_def]
+  simp only [OracleComp.prEvent_bind_eq_tsum, bind_pure_comp, prEvent_map, Function.comp_def]
 
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 /-- Sampling the known key inside the solver is averaging the solver's success over it. -/
 theorem dlog_bind_uniform (B : F → G₁ → G₁ → G₂ → G₂ → ProbComp F) :
-    Pr[= true | dlog11Exp g₁ g₂ (fun h₁ Z₁ h₂ Z₂ => do let k ← ($ᵗ F : ProbComp F); B k h₁ Z₁ h₂ Z₂)] =
-      ∑' k : F, Pr[= k | ($ᵗ F : ProbComp F)] * Pr[= true | dlog11Exp g₁ g₂ (B k)] := by
+    Pr{let x ← dlog11Exp g₁ g₂ (fun h₁ Z₁ h₂ Z₂ => do let k ← ($ᵗ F : ProbComp F); B k h₁ Z₁ h₂ Z₂)}[x = true] =
+      ∑' k : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = k] * Pr{let x ← dlog11Exp g₁ g₂ (B k)}[x = true] := by
   classical
-  simp only [dlog11Exp, bind_assoc, ← probEvent_eq_eq_probOutput, probEvent_bind_eq_tsum,
+  simp only [dlog11Exp, bind_assoc, OracleComp.prEvent_bind_eq_tsum,
     ← ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_comm]
   refine tsum_congr fun k => tsum_congr fun α => tsum_congr fun r => ?_
@@ -49,26 +49,26 @@ omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGr
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 /-- Scheme₁'s scalar game at `y` as a sum over the pivot's run. -/
 theorem scalarGame₁_tsum (y : F) (q : DynForgery F (Period × F) Period × F × (Period → F) → Prop) :
-    Pr[q | scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V))] =
-      ∑' x : F, Pr[= x | ($ᵗ F : ProbComp F)] * Pr[fun w => q (forgery₁ g₁ x y w, x, w.2) | body V g₁ g₂ x y] := by
+    Pr{let x ← scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V))}[q x] =
+      ∑' x : F, Pr{let y ← ($ᵗ F : ProbComp F)}[y = x] * Pr{let w ← body V g₁ g₂ x y}[q (forgery₁ g₁ x y w, x, w.2)] := by
   rw [scalarGame₁_eq]
-  simp only [probEvent_bind_eq_tsum, bind_pure_comp, probEvent_map, Function.comp_def]
+  simp only [OracleComp.prEvent_bind_eq_tsum, bind_pure_comp, prEvent_map, Function.comp_def]
 
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem scalarGame₂_tsum (x : F) (q : DynForgery F (Period × F) Period × F × (Period → F) → Prop) :
-    Pr[q | scalarGameDynAdaptive (scaled weight scalar) g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V))] =
-      ∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] * Pr[fun w => q (forgery₂ g₁ x y w, y, w.2) | body V g₁ g₂ x y] := by
+    Pr{let y ← scalarGameDynAdaptive (scaled weight scalar) g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V))}[q y] =
+      ∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] * Pr{let w ← body V g₁ g₂ x y}[q (forgery₂ g₁ x y w, y, w.2)] := by
   rw [scalarGame₂_eq]
-  simp only [probEvent_bind_eq_tsum, bind_pure_comp, probEvent_map, Function.comp_def]
+  simp only [OracleComp.prEvent_bind_eq_tsum, bind_pure_comp, prEvent_map, Function.comp_def]
 
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 /-- An event on the pivot that only reads scheme₁'s view is the `y`-average of the scheme₁ game. -/
 theorem pivot_eq_average₁ (q : DynForgery F (Period × F) Period × F × (Period → F) → Prop) :
-    Pr[fun t => q (forgery₁ g₁ t.2.1 t.2.2 t.1, t.2.1, t.1.2) | pivot V g₁ g₂] =
-      ∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] *
-        Pr[q | scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V))] := by
+    Pr{let t ← pivot V g₁ g₂}[q (forgery₁ g₁ t.2.1 t.2.2 t.1, t.2.1, t.1.2)] =
+      ∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] *
+        Pr{let x ← scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V))}[q x] := by
   rw [pivot_tsum]
   simp only [scalarGame₁_tsum, ← ENNReal.tsum_mul_left]
   rw [ENNReal.tsum_comm]
@@ -78,9 +78,9 @@ theorem pivot_eq_average₁ (q : DynForgery F (Period × F) Period × F × (Peri
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 theorem pivot_eq_average₂ (q : DynForgery F (Period × F) Period × F × (Period → F) → Prop) :
-    Pr[fun t => q (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2) | pivot V g₁ g₂] =
-      ∑' x : F, Pr[= x | ($ᵗ F : ProbComp F)] *
-        Pr[q | scalarGameDynAdaptive (scaled weight scalar) g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V))] := by
+    Pr{let t ← pivot V g₁ g₂}[q (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2)] =
+      ∑' x : F, Pr{let y ← ($ᵗ F : ProbComp F)}[y = x] *
+        Pr{let y ← scalarGameDynAdaptive (scaled weight scalar) g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V))}[q y] := by
   rw [pivot_tsum]
   simp only [scalarGame₂_tsum]
 
@@ -89,13 +89,13 @@ omit [Field F] [Fintype F] [DecidableEq F] [Fintype Period] [DecidableEq Period]
   [BilinearPairing F G₁ G₂ Gₜ] [DecidableEq Gₜ] in
 /-- Averaging a per-key bound with a constant loss keeps the loss once. -/
 theorem tsum_probOutput_mul_add_le (a : F → ENNReal) (c : ENNReal) :
-    ∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] * (a y + c) ≤ (∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] * a y) + c := by
-  rw [show (∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] * (a y + c)) =
-      (∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] * a y) + (∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)]) * c by
+    ∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] * (a y + c) ≤ (∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] * a y) + c := by
+  rw [show (∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] * (a y + c)) =
+      (∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] * a y) + (∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y]) * c by
     rw [← ENNReal.tsum_mul_right, ← ENNReal.tsum_add]
     exact tsum_congr fun y => mul_add _ _ _]
   gcongr
-  calc (∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)]) * c ≤ 1 * c := by gcongr; exact tsum_probOutput_le_one
+  calc (∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y]) * c ≤ 1 * c := by gcongr; exact (OracleComp.tsum_prEvent_le_one _)
     _ = c := one_mul c
 
 /-! ## The bound -/
@@ -107,9 +107,9 @@ def wins (t : ((Output F (Forgery F Period) × List (Event F Period)) × (Period
       (mapScalar weight scalar g₁ (syncForgery g₁ t.2.1 t.2.2 t.1, (t.2.1, t.2.2), t.1.2))
 
 theorem lazyGame_eq_pivot (hgen : Function.Bijective (fun ρ : F => ρ • g₁)) :
-    𝒟[lazyGame (Gₜ := Gₜ) g₁ g₂ V] {true} = Pr[wins (Gₜ := Gₜ) g₁ g₂ | pivot V g₁ g₂] := by
-  rw [lazyGame_eq_realGame, probEvent_def, realGame_eq_map_scalar weight scalar g₁ g₂ _ hgen, ← probEvent_def,
-    probEvent_map, scalarGame_eq, probEvent_map]
+    𝒟[lazyGame (Gₜ := Gₜ) g₁ g₂ V] {true} = Pr{let x ← pivot V g₁ g₂}[(wins (Gₜ := Gₜ) g₁ g₂) x] := by
+  rw [lazyGame_eq_realGame, (realGame_eq_map_scalar weight scalar g₁ g₂ _ hgen).prEvent_eq,
+    prEvent_map, scalarGame_eq, prEvent_map]
   rfl
 
 /-- Scheme₁'s good extraction event. -/
@@ -160,8 +160,8 @@ noncomputable def adaptiveBad₂ : DLog11Adversary F G₁ G₂ := fun g₁ Z₁ 
 omit [Fintype F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ]
   [DecidableEq Gₜ] in
 theorem good₁_bound :
-    Pr[fun t => good₁ (forgery₁ g₁ t.2.1 t.2.2 t.1, t.2.1, t.1.2) | pivot V g₁ g₂] =
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveGood₁ V)] := by
+    Pr{let t ← pivot V g₁ g₂}[good₁ (forgery₁ g₁ t.2.1 t.2.2 t.1, t.2.1, t.1.2)] =
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGood₁ V)}[x = true] := by
   rw [pivot_eq_average₁]
   unfold adaptiveGood₁
   rw [dlog_bind_uniform]
@@ -171,8 +171,8 @@ theorem good₁_bound :
 omit [Fintype F] [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ]
   [DecidableEq Gₜ] in
 theorem good₂_bound :
-    Pr[fun t => good₂ (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2) | pivot V g₁ g₂] =
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveGood₂ V)] := by
+    Pr{let t ← pivot V g₁ g₂}[good₂ (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2)] =
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGood₂ V)}[x = true] := by
   rw [pivot_eq_average₂]
   unfold adaptiveGood₂
   rw [dlog_bind_uniform]
@@ -182,37 +182,37 @@ theorem good₂_bound :
 omit [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ]
   [DecidableEq Gₜ] in
 theorem bad₁_bound :
-    Pr[fun t => bad₁ (forgery₁ g₁ t.2.1 t.2.2 t.1, t.2.1, t.1.2) | pivot V g₁ g₂] ≤
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveBad₁ V)] + 1 / (Fintype.card F : ENNReal) := by
+    Pr{let t ← pivot V g₁ g₂}[bad₁ (forgery₁ g₁ t.2.1 t.2.2 t.1, t.2.1, t.1.2)] ≤
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBad₁ V)}[x = true] + 1 / (Fintype.card F : ENNReal) := by
   rw [pivot_eq_average₁]
   unfold adaptiveBad₁
   rw [dlog_bind_uniform]
-  have each : ∀ y : F, Pr[bad₁ | scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V))] ≤
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction weight (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V)))] +
+  have each : ∀ y : F, Pr{let x ← scalarGameDynAdaptive weight g₁ g₂ (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V))}[bad₁ x] ≤
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction weight (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V)))}[x = true] +
         1 / (Fintype.card F : ENNReal) := fun y =>
     adaptive_bad_core_le_dlog_add_collision valid₁ weight g₁ g₂ _ (fun fo => fo.2.mstar.1) (fun _ hv _ => hv)
-  calc _ ≤ ∑' y : F, Pr[= y | ($ᵗ F : ProbComp F)] *
-        (Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction weight (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V)))] +
+  calc _ ≤ ∑' y : F, Pr{let x ← ($ᵗ F : ProbComp F)}[x = y] *
+        (Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction weight (Model.LazyAGM.Proofs.extracted (wrap₁ y g₂ V)))}[x = true] +
           1 / (Fintype.card F : ENNReal)) := ENNReal.tsum_le_tsum fun y => by gcongr; exact each y
     _ ≤ _ := tsum_probOutput_mul_add_le _ _
 
 omit [SampleableType G₁] [Fintype G₁] [AddCommGroup Gₜ] [Module F Gₜ] [BilinearPairing F G₁ G₂ Gₜ]
   [DecidableEq Gₜ] in
 theorem bad₂_bound :
-    Pr[fun t => bad₂ (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2) | pivot V g₁ g₂] ≤
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveBad₂ V)] + 1 / (Fintype.card F : ENNReal) := by
+    Pr{let t ← pivot V g₁ g₂}[bad₂ (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2)] ≤
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBad₂ V)}[x = true] + 1 / (Fintype.card F : ENNReal) := by
   rw [pivot_eq_average₂]
   unfold adaptiveBad₂
   rw [dlog_bind_uniform]
-  have each : ∀ x : F, Pr[bad₂ | scalarGameDynAdaptive (scaled weight scalar) g₁ g₂
-        (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V))] ≤
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (scaled weight scalar)
-        (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V)))] + 1 / (Fintype.card F : ENNReal) := fun x =>
+  have each : ∀ x : F, Pr{let y ← (scalarGameDynAdaptive (scaled weight scalar) g₁ g₂
+        (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V)))}[bad₂ y] ≤
+      Pr{let y ← (dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (scaled weight scalar)
+        (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V))))}[y = true] + 1 / (Fintype.card F : ENNReal) := fun x =>
     adaptive_bad_core_le_dlog_add_collision valid₂ (scaled weight scalar) g₁ g₂ _ (fun fo => fo.2.mstar.1)
       valid₂_nondegenerate
-  calc _ ≤ ∑' x : F, Pr[= x | ($ᵗ F : ProbComp F)] *
-        (Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (scaled weight scalar)
-          (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V)))] + 1 / (Fintype.card F : ENNReal)) :=
+  calc _ ≤ ∑' x : F, Pr{let y ← ($ᵗ F : ProbComp F)}[y = x] *
+        (Pr{let y ← (dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (scaled weight scalar)
+          (Model.LazyAGM.Proofs.extracted (wrap₂ x g₂ V))))}[y = true] + 1 / (Fintype.card F : ENNReal)) :=
         ENNReal.tsum_le_tsum fun x => by gcongr; exact each x
     _ ≤ _ := tsum_probOutput_mul_add_le _ _
 
@@ -263,7 +263,7 @@ theorem security_wrapped (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
       2 / (Fintype.card F : ENNReal) := by
   rw [lazyGame_eq_pivot V g₁ g₂ hgen, ← adaptiveGood₁_advantage, ← adaptiveBad₁_advantage,
     ← adaptiveGood₂_advantage, ← adaptiveBad₂_advantage]
-  simp only [Model.dlog11Advantage, evalDist_apply_singleton]
+  simp only [Model.dlog11Advantage, ← prEvent_eq_evalDist_singleton]
   let E₁ := fun t : ((Output F (Forgery F Period) × List (Event F Period)) × (Period → F)) × F × F =>
     good₁ (forgery₁ g₁ t.2.1 t.2.2 t.1, t.2.1, t.1.2)
   let E₂ := fun t : ((Output F (Forgery F Period) × List (Event F Period)) × (Period → F)) × F × F =>
@@ -272,28 +272,28 @@ theorem security_wrapped (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     good₂ (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2)
   let E₄ := fun t : ((Output F (Forgery F Period) × List (Event F Period)) × (Period → F)) × F × F =>
     bad₂ (forgery₂ g₁ t.2.1 t.2.2 t.1, t.2.2, t.1.2)
-  have split : Pr[wins (Gₜ := Gₜ) g₁ g₂ | pivot V g₁ g₂] ≤
-      Pr[E₁ | pivot V g₁ g₂] + Pr[E₂ | pivot V g₁ g₂] +
-      Pr[E₃ | pivot V g₁ g₂] + Pr[E₄ | pivot V g₁ g₂] := by
-    refine le_trans (probEvent_mono fun t _ h => wins_cases g₁ g₂ hpair t h) ?_
-    calc Pr[fun t => E₁ t ∨ E₂ t ∨ E₃ t ∨ E₄ t | pivot V g₁ g₂]
-        ≤ Pr[E₁ | pivot V g₁ g₂] + Pr[fun t => E₂ t ∨ E₃ t ∨ E₄ t | pivot V g₁ g₂] :=
-          probEvent_or_le _ _ _
-      _ ≤ Pr[E₁ | pivot V g₁ g₂] +
-          (Pr[E₂ | pivot V g₁ g₂] + Pr[fun t => E₃ t ∨ E₄ t | pivot V g₁ g₂]) :=
-          add_le_add le_rfl (probEvent_or_le _ _ _)
-      _ ≤ Pr[E₁ | pivot V g₁ g₂] +
-          (Pr[E₂ | pivot V g₁ g₂] + (Pr[E₃ | pivot V g₁ g₂] + Pr[E₄ | pivot V g₁ g₂])) :=
-          add_le_add le_rfl (add_le_add le_rfl (probEvent_or_le _ _ _))
+  have split : Pr{let x ← pivot V g₁ g₂}[(wins (Gₜ := Gₜ) g₁ g₂) x] ≤
+      Pr{let x ← pivot V g₁ g₂}[E₁ x] + Pr{let x ← pivot V g₁ g₂}[E₂ x] +
+      Pr{let x ← pivot V g₁ g₂}[E₃ x] + Pr{let x ← pivot V g₁ g₂}[E₄ x] := by
+    refine le_trans (prEvent_mono _ _ _ fun t h => wins_cases g₁ g₂ hpair t h) ?_
+    calc Pr{let t ← pivot V g₁ g₂}[E₁ t ∨ E₂ t ∨ E₃ t ∨ E₄ t]
+        ≤ Pr{let x ← pivot V g₁ g₂}[E₁ x] + Pr{let t ← pivot V g₁ g₂}[E₂ t ∨ E₃ t ∨ E₄ t] :=
+          prEvent_or_le _ _ _
+      _ ≤ Pr{let x ← pivot V g₁ g₂}[E₁ x] +
+          (Pr{let x ← pivot V g₁ g₂}[E₂ x] + Pr{let t ← pivot V g₁ g₂}[E₃ t ∨ E₄ t]) :=
+          add_le_add le_rfl (prEvent_or_le _ _ _)
+      _ ≤ Pr{let x ← pivot V g₁ g₂}[E₁ x] +
+          (Pr{let x ← pivot V g₁ g₂}[E₂ x] + (Pr{let x ← pivot V g₁ g₂}[E₃ x] + Pr{let x ← pivot V g₁ g₂}[E₄ x])) :=
+          add_le_add le_rfl (add_le_add le_rfl (prEvent_or_le _ _ _))
       _ = _ := by ring
   refine split.trans ?_
   rw [good₁_bound, good₂_bound]
   have b₁ := bad₁_bound V g₁ g₂
   have b₂ := bad₂_bound V g₁ g₂
-  calc _ ≤ Pr[= true | dlog11Exp g₁ g₂ (adaptiveGood₁ V)] +
-        (Pr[= true | dlog11Exp g₁ g₂ (adaptiveBad₁ V)] + 1 / (Fintype.card F : ENNReal)) +
-        Pr[= true | dlog11Exp g₁ g₂ (adaptiveGood₂ V)] +
-        (Pr[= true | dlog11Exp g₁ g₂ (adaptiveBad₂ V)] + 1 / (Fintype.card F : ENNReal)) :=
+  calc _ ≤ Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGood₁ V)}[x = true] +
+        (Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBad₁ V)}[x = true] + 1 / (Fintype.card F : ENNReal)) +
+        Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGood₂ V)}[x = true] +
+        (Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBad₂ V)}[x = true] + 1 / (Fintype.card F : ENNReal)) :=
       add_le_add (add_le_add (add_le_add le_rfl b₁) le_rfl) b₂
     _ = _ := by
       rw [show (2 : ENNReal) / (Fintype.card F : ENNReal) = 1 / (Fintype.card F : ENNReal) + 1 / (Fintype.card F : ENNReal) by

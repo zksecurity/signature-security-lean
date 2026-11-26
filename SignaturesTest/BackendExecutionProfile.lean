@@ -14,7 +14,7 @@ namespace SignaturesTest.BackendExecutionProfile
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass C}
-  [Q.HasCategory] [Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
+  [Q.HasComposition] [Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
   (nat : C.Str Nat) {iface : Interface (C := C) unifSpec}
 
 private def summary (z : ExecutionProfile.Result Nat Nat) : Nat × Nat × Nat × List Nat :=

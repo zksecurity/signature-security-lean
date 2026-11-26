@@ -27,7 +27,7 @@ private def adaptive : OracleComp (advSpec Nat Nat (ZMod 5)) (Output (ZMod 5) Na
 section Execution
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase (ZMod 5) (ZMod 5) (ZMod 5) Nat Nat))
   (data : DataCode Q rep.data) (sampling : MachineCompiler.SamplingImplementation Q iface rep)

@@ -28,36 +28,32 @@ noncomputable def coinTableImpl (g : D → R) :
   (QueryImpl.ofLift unifSpec ProbComp) +
     (QueryImpl.ofFn g).liftTarget ProbComp
 
-private lemma evalSPMF_uniformSample_bind_update_bind {α : Type} (t : D)
+private lemma evalDistEq_uniformSample_bind_update_bind {α : Type} (t : D)
     (ψ : (D → R) → ProbComp α) :
-    𝒮[do let u ← $ᵗ R; let g ← $ᵗ (D → R); ψ (Function.update g t u)] =
-      𝒮[do let g ← $ᵗ (D → R); ψ g] := by
-  have h : 𝒮[(do
-      let u ← $ᵗ R
-      let g ← $ᵗ (D → R)
-      pure (Function.update g t u)) >>= ψ] = 𝒮[($ᵗ (D → R)) >>= ψ] := by
-    rw [evalSPMF_bind, evalSPMF_uniformSample_bind_update, evalSPMF_bind]
-  simpa only [bind_assoc, pure_bind] using h
+    (do let u ← $ᵗ R; let g ← $ᵗ (D → R); ψ (Function.update g t u)) =ᵈ
+      (do let g ← $ᵗ (D → R); ψ g) := by
+  let : MeasurableSpace R := ⊤
+  let : MeasurableSpace α := ⊤
+  exact EvalDistEq.of_evalDist_eq (evalDist_bind_bind_update ($ᵗ R) ($ᵗ (D → R))
+    SampleableType.evalDist_uniformSample SampleableType.evalDist_uniformSample t ψ)
 
 /-- Running a computation with lazy cached coins has the same output distribution as first sampling
 a full independent coin table and interpreting every coin query from that table.  Uniform-sampling
 queries in the computation remain probabilistic and are merely forwarded on both sides. -/
-theorem evalSPMF_lazyCoin_eq_table {α : Type}
+theorem evalDistEq_lazyCoin_eq_table {α : Type}
     (oa : OracleComp (unifSpec + (D →ₒ R)) α)
     (c : (D →ₒ R).QueryCache) :
-    𝒮[(simulateQ (lazyCoinImpl (D := D) (R := R)) oa).run' c] =
-      𝒮[do let g ← $ᵗ (D → R);
-            simulateQ (coinTableImpl (tableExtending c g)) oa] := by
+    ((simulateQ (lazyCoinImpl (D := D) (R := R)) oa).run' c) =ᵈ
+      (do let g ← $ᵗ (D → R)
+          simulateQ (coinTableImpl (tableExtending c g)) oa) := by
   classical
   letI := Fintype.ofFinite D
   letI := Fintype.ofFinite R
   induction oa using OracleComp.inductionOn generalizing c with
   | pure a =>
       simp only [simulateQ_pure]
-      change 𝒮[(pure a : ProbComp α)] =
-        𝒮[do let _g ← $ᵗ (D → R); pure a]
-      symm
-      exact DeferredSampling.evalSPMF_bind_const_neverFails _ (by simp) _
+      change (pure a : ProbComp α) =ᵈ (do let _g ← $ᵗ (D → R); pure a)
+      exact (EvalDistEq.bind_const _ _).symm
   | query_bind t k ih =>
       cases t with
       | inl T =>
@@ -77,16 +73,16 @@ theorem evalSPMF_lazyCoin_eq_table {α : Type}
             simp [coinTableImpl]
           rw [hL, hR]
           calc
-            𝒮[(unifSpec.query T : ProbComp (unifSpec.Range T)) >>= fun u =>
-                (simulateQ (lazyCoinImpl (D := D) (R := R)) (k u)).run' c] =
-                𝒮[(unifSpec.query T : ProbComp (unifSpec.Range T)) >>= fun u =>
+            ((unifSpec.query T : ProbComp (unifSpec.Range T)) >>= fun u =>
+                (simulateQ (lazyCoinImpl (D := D) (R := R)) (k u)).run' c) =ᵈ
+                ((unifSpec.query T : ProbComp (unifSpec.Range T)) >>= fun u =>
                   ($ᵗ (D → R)) >>= fun g =>
-                    simulateQ (coinTableImpl (tableExtending c g)) (k u)] := by
-              exact evalSPMF_bind_congr' _ (fun u => ih u c)
-            _ = 𝒮[($ᵗ (D → R)) >>= fun g =>
+                    simulateQ (coinTableImpl (tableExtending c g)) (k u)) :=
+              EvalDistEq.bind_right _ (fun u => ih u c)
+            _ =ᵈ (($ᵗ (D → R)) >>= fun g =>
                   (unifSpec.query T : ProbComp (unifSpec.Range T)) >>= fun u =>
-                    simulateQ (coinTableImpl (tableExtending c g)) (k u)] := by
-              exact DeferredSampling.evalSPMF_bind_comm _ _ _
+                    simulateQ (coinTableImpl (tableExtending c g)) (k u)) :=
+              EvalDistEq.bind_bind_swap _ _ _
       | inr d =>
           have hL :
               (simulateQ (lazyCoinImpl (D := D) (R := R))
@@ -138,27 +134,25 @@ theorem evalSPMF_lazyCoin_eq_table {α : Type}
                 congr 2
                 simp [tableExtending, hc]
               calc
-                𝒮[($ᵗ R) >>= fun u =>
+                (($ᵗ R) >>= fun u =>
                     (simulateQ (lazyCoinImpl (D := D) (R := R)) (k u)).run'
-                      (c.cacheQuery d u)] =
-                    𝒮[($ᵗ R) >>= fun u => ($ᵗ (D → R)) >>= fun g =>
-                      simulateQ (coinTableImpl (tableExtending (c.cacheQuery d u) g)) (k u)] := by
-                  exact evalSPMF_bind_congr' _ (fun u => ih u (c.cacheQuery d u))
-                _ = 𝒮[($ᵗ R) >>= fun u => ($ᵗ (D → R)) >>= fun g =>
-                      ψ (Function.update g d u)] := by
-                  refine evalSPMF_bind_congr' _ fun u => ?_
+                      (c.cacheQuery d u)) =ᵈ
+                    (($ᵗ R) >>= fun u => ($ᵗ (D → R)) >>= fun g =>
+                      simulateQ (coinTableImpl (tableExtending (c.cacheQuery d u) g)) (k u)) :=
+                  EvalDistEq.bind_right _ (fun u => ih u (c.cacheQuery d u))
+                _ =ᵈ (($ᵗ R) >>= fun u => ($ᵗ (D → R)) >>= fun g =>
+                      ψ (Function.update g d u)) := by
+                  refine EvalDistEq.bind_right _ fun u => ?_
                   rw [hfun u]
-                _ = 𝒮[($ᵗ (D → R)) >>= fun g => ψ g] :=
-                  evalSPMF_uniformSample_bind_update_bind d ψ
+                _ =ᵈ (($ᵗ (D → R)) >>= fun g => ψ g) :=
+                  evalDistEq_uniformSample_bind_update_bind d ψ
           | some u =>
               rw [show ((randomOracle (spec := (D →ₒ R)) d).run c) =
                     (pure (u, c) : ProbComp _) from QueryImpl.withCaching_run_some _ hc,
                   pure_bind]
-              rw [ih u c]
-              refine congrArg evalSPMF ?_
-              refine bind_congr fun g => ?_
+              refine (ih u c).trans ?_
+              refine EvalDistEq.bind_right _ fun g => ?_
               have hcell : tableExtending c g d = u := by simp [tableExtending, hc]
-              congr 2
-              exact hcell.symm
+              rw [hcell]
 
 end BLS.CoCDH

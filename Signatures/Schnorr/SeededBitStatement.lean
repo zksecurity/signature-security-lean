@@ -67,7 +67,7 @@ theorem schnorr_eufcma_of_dlog_seeded_bit_hardness
     simp only [dlogExperiment, simulateQ_bind, simulateQ_pure, MachineSampling.uniformSample_law,
       HeapMachine.dlogAdvantage, PMF.bind_apply]
     calc
-      _ ≤ ∑' x : ZMod r, PMF.uniformOfFintype (ZMod r) x *
+      _ ≤ ∑' x : ZMod r, Signatures.Runtime.RejectionSampling.uniformOfFintype (ZMod r) x *
           (((HeapMachine.scalarLaw r w pack ((x • g : H₁) : W₁.Point)).map
             (fun out => decide (out.1 = x))) true + cert.seededTargetBudget H₁ H₂ sampling g qH*(1/2 : ℝ≥0∞)^k) := by
         apply ENNReal.tsum_le_tsum

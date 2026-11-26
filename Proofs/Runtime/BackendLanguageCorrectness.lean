@@ -29,7 +29,7 @@ theorem repeatDenote_context {I A E S : Type} {spec : OracleSpec I}
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {I S : Type} {spec : OracleSpec I} {iface : Interface (C := C) spec}
   {Atom : Type} {base : Atom → Type} {Op Cmd : Ty Atom → Ty Atom → Type}
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)

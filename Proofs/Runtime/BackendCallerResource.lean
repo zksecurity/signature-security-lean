@@ -17,7 +17,7 @@ universe v w x
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   {I A B S J K : Type} {source : OracleSpec I} [DecidableEq I] [Fintype K]
   {bd : Boundary C source.toPFunctor A B}
@@ -121,7 +121,7 @@ theorem assembled_bound_of_width
     tickTime hstep hstop' hreturn' hquery' contract kind price storeInv hprice fuel
     (3 * overhead (32 * width)) localTime queries htick input hi hs hinit hcaller z hz
 
-omit hstep hstop hreturn hquery hprice [C.HasOption] [Q.HasCategory] QP QS QO QD OC [DecidableEq I] in
+omit hstep hstop hreturn hquery hprice [C.HasOption] [Q.HasComposition] QP QS QO QD OC [DecidableEq I] in
 theorem handler_denote_of_run (i : I) (saved : S) :
     handler.denote (i, saved) =
       (fun p => (⟨i, p.1⟩, p.2)) <$> (Run.value <$> H i).run saved := by

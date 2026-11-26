@@ -1,22 +1,8 @@
-import ArkLib.AGM.Basic
 import Signatures
 import Proofs
 import Lean.Util.CollectAxioms
 
-/-! Upstream representation compatibility and the seven general-attacker security endpoints. -/
-
-#check AGM.GroupRepresentation
-
-example {G : Type} [Group G] {p : Nat} [Fact (Nat.Prime p)] [PrimeOrderWith G p]
-    {ι : Type} [Fintype ι] {basis : ι → G} {target : G}
-    (repr : AGM.GroupRepresentation (p := p) basis target) :
-    (∏ i, basis i ^ (repr.exponents i).val) = target :=
-  repr.hEq
-
-example {G : Type} [Group G] {p : Nat} [Fact (Nat.Prime p)] [PrimeOrderWith G p]
-    {ι : Type} [Fintype ι] {basis : ι → G} {target : G}
-    (repr : AGM.GroupRepresentation (p := p) basis target) : 0 < p :=
-  repr.modulus_pos
+/-! The seven general-attacker security endpoints and their axiom footprint. -/
 
 open Lean Meta in
 run_meta do

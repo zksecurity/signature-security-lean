@@ -5,7 +5,7 @@ cache entry, so extraction need not repeat a lookup. The verification Boolean
 is discarded by the original solver; the joint scalar/state law below proves
 that omitting its pure computation preserves that solver exactly. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec GroupModel.Interaction Schnorr.AGM
 
 namespace Signatures.Runtime.SchnorrAGM
 

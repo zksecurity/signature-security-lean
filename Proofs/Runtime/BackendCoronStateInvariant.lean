@@ -46,7 +46,7 @@ theorem StateInvariant.ready (qS messageWidth storeWidth width cap : Nat)
     (fun p hp => ⟨(hi.2.1.2.1 p hp).trans hm, hc p.2⟩),
     ((Nat.le_max_left _ _).trans (Nat.le_max_right _ _)).trans hi.2.2⟩
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [SampleableType F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]
   {iface : Interface (C := C) unifSpec}

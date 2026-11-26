@@ -5,7 +5,7 @@ open OracleComp OracleSpec Signatures.Runtime Signatures.Runtime.Schnorr
 
 namespace SignaturesTest.EncodedReplay
 
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+attribute [local implicit_reducible] PFunctor.Idx
 
 private def tape : Replay.Tape (replaySpec Nat) :=
   [⟨.inl (.inr ()), (9 : Nat)⟩, ⟨.inl (.inl 3), (⟨2, by omega⟩ : Fin 4)⟩,

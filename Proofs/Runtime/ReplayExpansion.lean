@@ -54,11 +54,11 @@ theorem forkKernel_expand
       simp only [expandPrivate]
       change ((rawSpec + (Unit →ₒ F)).query (.inr ()) :
         OracleComp (rawSpec + (Unit →ₒ F)) F) >>= _ =
-        forkKernel (.inr ()) (OracleComp.queryBind (.inr ())
-          (fun answer => simulateQ (expandPrivate privateImpl) (next answer))) select
+        forkKernel (.inr ()) (OracleComp.queryBind (spec := rawSpec + (Unit →ₒ F)) (Sum.inr ())
+          (fun answer : F => simulateQ (expandPrivate privateImpl) (next answer))) select
       rw [forkKernel_target]
       change OracleComp.queryBind (spec := rawSpec + (Unit →ₒ F)) (Sum.inr ())
-        (fun answer => simulateQ (expandPrivate privateImpl) (do
+        (fun answer : F => simulateQ (expandPrivate privateImpl) (do
           let first ← forkKernel (Sum.inr ()) (next answer) (fun x => previous (select x))
           if select first.1 = some 0 then do
             let fresh ← (spec + (Unit →ₒ F)).query (.inr ())

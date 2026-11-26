@@ -12,8 +12,8 @@ variable {F G M : Type} [Field F] [SampleableType F] [SampleableType Fˣ]
   [AddCommGroup G] [Module F G] [SampleableType G] [DecidableEq G]
 
 theorem sigma_complete (g : G) : (sigma (F := F) g).PerfectlyComplete := by
-  intro pk sk h
-  rw [evalDist_apply_singleton]
+  intro pk sk h ω
+  rw [← prEvent_eq_evalDist_singleton]
   have heq : sk • g = pk := of_decide_eq_true h
   simp only [sigma, Schnorr.sigma, monad_norm]
   have hv (r c : F) : (r + c * sk) • g = r • g + c • pk := by
@@ -28,7 +28,7 @@ theorem realTranscript_eq (g pk : G) (sk : F) :
       let a ← $ᵗ Fˣ
       let c ← $ᵗ F
       pure ((a : F) • g, c, (a : F) + c * sk)) := by
-  simp only [ChallengeVerifyProtocol.realTranscript, sigma, Schnorr.sigma, monad_norm]
+  simp only [ChallengeVerifyProtocol.realTranscript_probComp, sigma, Schnorr.sigma, monad_norm]
 
 variable [DecidableEq F]
 
@@ -56,13 +56,15 @@ theorem sigma_hvzk [Finite F] (g : G)
   intro pk sk hsk
   have heq : sk • g = pk := of_decide_eq_true hsk
   subst pk
-  rw [realTranscript_eq, evalSPMF_bind_comm]
+  rw [realTranscript_eq]
+  refine (EvalDistEq.bind_bind_swap _ _ _).trans ?_
   unfold simTranscript
-  apply evalSPMF_bind_congr_left
-  intro c
-  rw [← evalSPMF_bind_bijective_add_right_uniform (α := F) id
-    Function.bijective_id (c * sk)]
-  simpa only [id_eq, ← apply_ite pure, sim_shift g hg] using
+  refine EvalDistEq.bind_right _ fun c => ?_
+  refine EvalDistEq.trans ?_ ((SampleableType.map_uniformSample_evalDistEq_of_bijective
+    (f := fun r : F => r + c * sk)
+    ⟨add_left_injective _, fun y => ⟨y - c * sk, sub_add_cancel y _⟩⟩).bind_left _)
+  rw [bind_map_left]
+  simpa only [← apply_ite pure, sim_shift g hg] using
     (repair_uniform_bind (fun r => pure (r • g, c, r + c * sk))).symm
 
 end Schnorr.NonzeroNonce

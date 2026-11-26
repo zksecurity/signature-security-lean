@@ -373,7 +373,7 @@ machine steps; relating them to bit-level runtime would require a separate proof
 ## Read the proof
 
 1. Read the selected statement above and its source game before reading proof tactics.
-2. Distinguish [generic indexed interaction](https://github.com/zksecurity/agm-lean/blob/c207f29d1bba8b36fd6c09a0a3a6b4e82148b402/AlgebraicGroupModel/Interaction.lean)
+2. Distinguish [generic indexed interaction](https://github.com/Verified-zkEVM/VCVio/blob/70c422d63c07fd3401dd85c51e8b3ed8fd587718/VCVio/CryptoFoundations/GroupModel/Interaction.lean)
    from [the signature protocol](../Signatures/Model/DirectAGM.lean). The generic
    layer accepts arbitrary oracles; only the signature layer mandates base/signing channels.
    Check adaptive continuations, the shared cache, and exact reply transcripts.
@@ -415,9 +415,9 @@ Private tables remain proof/simulator machinery and are never supplied to the so
 lake build Signatures SignaturesTest
 ```
 
-The generic AGM library is the pinned, public `zksecurity/agm-lean` dependency.
-Its standalone tests run with
-`lake build AlgebraicGroupModel AGMTest` in that repository. Token/output utilities and
+The generic AGM library is VCVio's `GroupModel.Interaction` (the former
+`zksecurity/agm-lean` package, absorbed upstream). Its standalone tests run with
+`lake build VCVioTest` in that repository. Token/output utilities and
 signature integration tests live here; the library has one indexed interaction module.
 
 The [four public axiom guards](../SignaturesTest/Upstream.lean) require exactly
@@ -434,15 +434,15 @@ premises, and test applications using only their explicit arguments.
   [exact signature-adapter preservation](../SignaturesTest/AlgebraicSignatureAdapter.lean): actual
   certified execution, interleaved/repeated replies, chronological vectors, malformed replies,
   tracked public keys, malformed initial lists, and distinct signature/verification group types.
-- [Interactive algebraicity](https://github.com/zksecurity/agm-lean/blob/c207f29d1bba8b36fd6c09a0a3a6b4e82148b402/AGMTest/Interaction.lean): adaptive group arguments,
+- [Interactive algebraicity](https://github.com/Verified-zkEVM/VCVio/blob/70c422d63c07fd3401dd85c51e8b3ed8fd587718/VCVioTest/GroupModel/Interaction/Basic.lean): adaptive group arguments,
   exact-length witnesses, fresh replies without explanations, and no use of future inputs.
-- [Multi-group interaction](https://github.com/zksecurity/agm-lean/blob/c207f29d1bba8b36fd6c09a0a3a6b4e82148b402/AGMTest/MultiGroup.lean):
+- [Multi-group interaction](https://github.com/Verified-zkEVM/VCVio/blob/70c422d63c07fd3401dd85c51e8b3ed8fd587718/VCVioTest/GroupModel/Interaction/MultiGroup.lean):
   one adaptive stream with separate group bases, cross-sort dependencies, and rejection
   of explanations from the wrong sort. The signature games use the same indexed interface
   with separate `signature` and `verification` sorts. Their public keys are tracked inputs;
   the signature protocol accepts one signature-group output and rejects unexpected
   verification-group outputs. Algebraic explanations use each sort’s own received basis.
-- [Whole-library axiom guard](https://github.com/zksecurity/agm-lean/blob/c207f29d1bba8b36fd6c09a0a3a6b4e82148b402/AGMTest/Axioms.lean)
+- [Whole-library axiom guard](https://github.com/Verified-zkEVM/VCVio/blob/70c422d63c07fd3401dd85c51e8b3ed8fd587718/VCVioTest/GroupModel/Interaction/Axioms.lean)
   for all declarations in the generic AGM namespace.
 - [Direct shared attackers](../SignaturesTest/DirectSharedAGM.lean): an attacker built in
   the shared library, interleaved and repeated replies, distinct group bases, malformed

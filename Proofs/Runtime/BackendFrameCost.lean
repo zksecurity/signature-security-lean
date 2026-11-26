@@ -16,7 +16,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   {overhead : Nat → Nat} (laws : LocalCostLaws Q overhead)
   (dispatch : DispatchCostLaws (Q := Q) overhead)
@@ -100,35 +100,35 @@ theorem elim_inr_le {A B D : Type} {a : C.Str A} {b : C.Str B} {d : C.Str D} {f 
   omega
 
 include dispatch in
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem inl_le {A B : Type} (a : C.Str A) (b : C.Str B) (x : A)
     (hx : Q.size a x ≤ W) (hs : Q.size (sum a b) (.inl x) ≤ W) :
     Q.cost (QS.inl a b) x ≤ fee overhead W :=
   (dispatch.inl a b x).trans (mono (by omega))
 
 include dispatch in
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem inr_le {A B : Type} (a : C.Str A) (b : C.Str B) (x : B)
     (hx : Q.size b x ≤ W) (hs : Q.size (sum a b) (.inr x) ≤ W) :
     Q.cost (QS.inr a b) x ≤ fee overhead W :=
   (dispatch.inr a b x).trans (mono (by omega))
 
 include dispatch in
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem none_le {A B : Type} (a : C.Str A) (b : C.Str B) (x : A)
     (hx : Q.size a x ≤ W) (hn : Q.size (opt b) none ≤ W) :
     Q.cost (QO.none a b) x ≤ fee overhead W :=
   (dispatch.none a b x).trans (mono (by omega))
 
 include dispatch in
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem some_le {A : Type} (a : C.Str A) (x : A)
     (hx : Q.size a x ≤ W) (hs : Q.size (opt a) (some x) ≤ W) :
     Q.cost (OC.someCode a) x ≤ fee overhead W :=
   (dispatch.some a x).trans (mono (by omega))
 
 include dispatch in
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem distribute_le {A B E : Type} (a : C.Str A) (b : C.Str B) (e : C.Str E) (x : (A ⊕ B) × E)
     (hx : Q.size (prod (sum a b) e) x ≤ W)
     (hr : Q.size (sum (prod a e) (prod b e))
@@ -137,7 +137,7 @@ theorem distribute_le {A B E : Type} (a : C.Str A) (b : C.Str B) (e : C.Str E) (
   (dispatch.distribute a b e x).trans (mono (by omega))
 
 include dataLaws in
-omit [C.HasOption] [Q.HasCategory] QP QS QO QD OC in
+omit [C.HasOption] [Q.HasComposition] QP QS QO QD OC in
 theorem select_le {A : Type} (a : C.Str A) (x : Bool × A)
     (hx : Q.size (prod data.bool a) x ≤ W)
     (hr : Q.size (sum a a) (if x.1 = true then Sum.inl x.2 else Sum.inr x.2) ≤ W) :
@@ -145,32 +145,32 @@ theorem select_le {A : Type} (a : C.Str A) (x : Bool × A)
   (dataLaws.select a x).trans (mono (by omega))
 
 include dataLaws in
-omit [C.HasOption] [Q.HasCategory] QP QS QO QD OC in
+omit [C.HasOption] [Q.HasComposition] QP QS QO QD OC in
 theorem unit_le {A : Type} (a : C.Str A) (x : A) (hx : Q.size a x ≤ W) (hu : Q.size data.unit () ≤ W) :
     Q.cost (code.unit a) x ≤ fee overhead W :=
   (dataLaws.unit a x).trans (mono (by omega))
 
 include dataLaws in
-omit [C.HasOption] [Q.HasCategory] QP QS QO QD OC in
+omit [C.HasOption] [Q.HasComposition] QP QS QO QD OC in
 theorem bool_le (value : Bool) (hu : Q.size data.unit () ≤ W) (hb : Q.size data.bool value ≤ W) :
     Q.cost (code.bool value) () ≤ fee overhead W :=
   (dataLaws.bool value ()).trans (mono (by omega))
 
 include dataLaws in
-omit [C.HasOption] [Q.HasCategory] QP QS QO QD OC in
+omit [C.HasOption] [Q.HasComposition] QP QS QO QD OC in
 theorem nil_le {A : Type} (a : C.Str A) (hu : Q.size data.unit () ≤ W) (hn : Q.size (data.list a) [] ≤ W) :
     Q.cost (code.nil a) () ≤ fee overhead W :=
   (dataLaws.nil a ()).trans (mono (by omega))
 
 include dataLaws in
-omit [C.HasOption] [Q.HasCategory] QP QS QO QD OC in
+omit [C.HasOption] [Q.HasComposition] QP QS QO QD OC in
 theorem cons_le {A : Type} (a : C.Str A) (x : A × List A)
     (hx : Q.size (prod a (data.list a)) x ≤ W) (hr : Q.size (data.list a) (x.1 :: x.2) ≤ W) :
     Q.cost (code.cons a) x ≤ fee overhead W :=
   (dataLaws.cons a x).trans (mono (by omega))
 
 include optLaws in
-omit [C.HasSum] [Q.HasCategory] QP QS QD OC in
+omit [C.HasSum] [Q.HasComposition] QP QS QD OC in
 theorem map_le {A B : Type} {a : C.Str A} {b : C.Str B} {f : A → B} (inner : Q.Realizer a b f) (x : Option A) {T : Nat}
     (hinner : ∀ v, x = some v → Q.cost inner v ≤ T)
     (hx : Q.size (opt a) x ≤ W) (hr : Q.size (opt b) (x.map f) ≤ W) :
@@ -187,7 +187,7 @@ theorem map_le {A B : Type} {a : C.Str A} {b : C.Str B} {f : A → B} (inner : Q
     omega
 
 include optLaws in
-omit [C.HasSum] [Q.HasCategory] QP QS QD OC in
+omit [C.HasSum] [Q.HasComposition] QP QS QD OC in
 theorem bindContext_le {A B E : Type} {a : C.Str A} {b : C.Str B} {e : C.Str E} {k : A × E → Option B}
     (inner : Q.Realizer (prod a e) (opt b) k) (x : Option A × E) {T : Nat}
     (hinner : ∀ v, x.1 = some v → Q.cost inner (v, x.2) ≤ T)
@@ -211,7 +211,7 @@ theorem bindContext_le {A B E : Type} {a : C.Str A} {b : C.Str B} {e : C.Str E} 
       Q.size (opt b) ((some v).bind fun v => k (v, ctx))) ≤ T + fee overhead W
     omega
 
-omit mono [C.HasProd] [C.HasSum] [C.HasOption] [Q.HasCategory] QP QS QO QD OC in
+omit mono [C.HasProd] [C.HasSum] [C.HasOption] [Q.HasComposition] QP QS QO QD OC in
 theorem castFunction_le {A B : Type} {a : C.Str A} {b : C.Str B} {f g : A → B} (inner : Q.Realizer a b f) (h : f = g)
     (x : A) {T : Nat} (hc : Q.cost inner x ≤ T) : Q.cost (inner.castFunction h) x ≤ T := by
   rwa [QuantitativeStepClass.Realizer.cost_castFunction]

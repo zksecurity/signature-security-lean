@@ -114,7 +114,7 @@ theorem machineState_encoded_size (qS : Nat) (g X h : G₁) (state : CacheState 
 
 section Execution
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [SampleableType F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]
   {iface : Interface (C := C) unifSpec}

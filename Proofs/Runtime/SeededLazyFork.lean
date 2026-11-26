@@ -44,8 +44,7 @@ def recordedFork (main : OracleComp spec A) (target : I) {q : Nat}
   let first ← main.withQueryLog
   afterFirst main target select first.1 (SeededTrace.restore first.2 ∅)
 
-variable [IsUniformSpec spec]
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
+variable [OracleSpec.UniformAnswerMeasure spec]
   [unifSpec ˡ⊂ₒ spec] [MeasurableSpace A]
 
 omit [unifSpec ˡ⊂ₒ spec] [∀ i, DecidableEq (spec.Range i)] in
@@ -54,12 +53,7 @@ private theorem discard_seed {B : Type} [MeasurableSpace B]
     𝒟[do
       let _ ← liftComp (generateSeed spec budget families) spec
       pure result] = 𝒟[(pure result : OracleComp spec B)] := by
-  apply SeededDeferred.measure_of_compat
-  apply congrArg SPMF.toMeasure
-  apply evalSPMF_ext
-  intro output
-  rw [probOutput_bind_const]
-  simp
+  exact SeededDeferred.measure_of_compat (EvalDistEq.bind_const _ _)
 
 /-- Unused entries disappear even with replacement sampling, the old-answer
 comparison, and the replay's acceptance test all present in the controller. -/

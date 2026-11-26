@@ -11,7 +11,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QD : Q.IsDistributive]
   {I J S : Type} {target : OracleSpec J}
   (store : C.Str S) (control : ControlCosts)
   (inv : Nat → S → Prop) (cap width counter route query : Nat) (allowed : I → Prop)

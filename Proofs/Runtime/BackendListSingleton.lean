@@ -14,7 +14,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {Atom : Type} {base : Atom → Type} {Op : Ty Atom → Ty Atom → Type}
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)
   (P : Primitives base Op)
@@ -140,7 +140,7 @@ theorem scan_cost {Γ : List (Ty Atom)} (xs : List (cell.Value base)) (default :
       (scan_time rep data P primitive laws dataLaws (fun instr => LocalBound.measured (primitive instr))
         sizes lists mono xs default env width cap hh hu hb he hd hx hc)
 
-omit mono [Q.HasCategory] QP QS in
+omit mono [Q.HasComposition] QP QS in
 theorem output_size (xs : List (cell.Value base)) (default : cell.Value base) (width : Nat)
     (hh : header ≤ width) (hb : ∀ b, Q.size rep.data.bool b ≤ width)
     (hd : Q.size (rep.ty cell) default ≤ width) (hx : ∀ x ∈ xs, Q.size (rep.ty cell) x ≤ width) :

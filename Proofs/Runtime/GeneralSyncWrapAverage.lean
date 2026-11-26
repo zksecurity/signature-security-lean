@@ -1,6 +1,6 @@
 import Signatures.Model.CoCDH
 import VCVio.OracleComp.QueryTracking.RandomOracle.DeferredSampling
-import VCVio.OracleComp.Constructions.SampleableType.MeasureCompatibility
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-! # Averaging over a sampled known key
 
@@ -18,8 +18,7 @@ universe u
 /-- A uniform bound on reachable continuation events bounds their composed event. -/
 theorem evalDist_bind_apply_le_of_support
     {ι : Type u} {α β : Type} {spec : OracleSpec.{u, 0} ι}
-    [∀ t, MeasurableSpace (spec.Range t)] [∀ t, DiscreteMeasurableSpace (spec.Range t)]
-    [OracleSpec.IsMeasureSpec spec] [MeasurableSpace β]
+    [OracleSpec.AnswerMeasure spec] [MeasurableSpace β]
     (mx : OracleComp spec α) (f : α → OracleComp spec β)
     {event : Set β} (hevent : MeasurableSet event) {r : ENNReal}
     (h : ∀ a ∈ support mx, 𝒟[f a] event ≤ r) :
@@ -27,6 +26,7 @@ theorem evalDist_bind_apply_le_of_support
   induction mx using OracleComp.inductionOn with
   | pure a => simpa only [pure_bind] using h a (by simp)
   | query_bind t k ih =>
+    let : MeasurableSpace (spec.Range t) := ⊤
     rw [bind_assoc, evalDist_bind_of_discrete,
       MeasureTheory.Measure.bind_apply hevent Measurable.of_discrete.aemeasurable]
     calc
@@ -49,10 +49,9 @@ theorem dlog11Advantage_sample_le (g₁ : G₁) (g₂ : G₂)
   unfold Model.dlog11Advantage at *
   have hswap : 𝒟[AlgebraicGroupModel.dlog11Exp g₁ g₂
       (fun g X h₂ Y => do let k ← ($ᵗ F : ProbComp F); solver k g X h₂ Y)] =
-      𝒟[do let k ← ($ᵗ F : ProbComp F); AlgebraicGroupModel.dlog11Exp g₁ g₂ (solver k)] :=
-    evalDist_eq_of_evalSPMF_eq _ _ (by
-      simp only [AlgebraicGroupModel.dlog11Exp, bind_assoc]
-      exact DeferredSampling.evalSPMF_bind_comm _ _ _)
+      𝒟[do let k ← ($ᵗ F : ProbComp F); AlgebraicGroupModel.dlog11Exp g₁ g₂ (solver k)] := by
+    simp only [AlgebraicGroupModel.dlog11Exp, bind_assoc]
+    exact (EvalDistEq.bind_bind_swap _ _ _).evalDist_eq
   rw [hswap]
   exact evalDist_bind_apply_le_of_support _ _ (measurableSet_singleton true) fun k _ => h k
 

@@ -66,7 +66,7 @@ theorem resource_step (width groups rows coefficients arity : Nat)
     (reachable_request rep bd sizes R recovery bound hrun state hs q next hv),
     fun answer => GeneralCaller.reachable_step R state hs q next hv answer⟩
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   [QO : Q.HasOption] [OC : OptionCode (Q := Q)]
   [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]

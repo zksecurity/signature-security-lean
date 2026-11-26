@@ -2,7 +2,7 @@ import Proofs.Schnorr.AGMSourceProgram
 
 /-! The instrumented honest experiment has exactly the original AGM game's law. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 set_option backward.isDefEq.respectTransparency false
 
@@ -17,7 +17,7 @@ def finalCheck (g pk : G) (out : Explained F (M × F) (Group G)) :
   match out.value.groups () with
   | [R] =>
       let st ← get
-      let c ← liftM ((BaseSpec F G M).query (.inr (out.value.data.1, R)))
+      let c : F ← liftM ((BaseSpec F G M).query (.inr (out.value.data.1, R)))
       pure (!st.malformed && decide
         (out.value.data.1 ∉ st.signed ∧ out.value.data.2 • g = R + c • pk))
   | _ => pure false
@@ -46,8 +46,11 @@ theorem close_finalCheck (g pk : G) (out : Explained F (M × F) (Group G))
           simp only [finalCheck, hg, close_pure, StateT.run'_eq, StateT.run_pure, map_pure]
       | nil =>
           simp only [finalCheck, hg, StateT.run'_eq, close_bind, close_pure,
-            StateT.run_bind, StateT.run_pure, close_get, pure_bind, close_hash,
+            StateT.run_bind, StateT.run_pure, close_get, pure_bind,
             bind_map_left, map_bind, map_pure]
+          -- the query is typed `F`, `close_hash` is stated at `Range (.inr _)`
+          erw [close_hash]
+          simp only [bind_map_left]
 
 theorem finish_erase (g pk : G) (s : Reduction.State F G M)
     (out : Explained F (M × F) (Group G))
@@ -81,13 +84,12 @@ def body (g : G) (x : F) (A : Adversary F G M) :
   finalCheck g (x • g) out
 
 theorem honest_body (g : G) (x : F) (A : Adversary F G M) :
-    𝒮[(fun p => p.1.1) <$> honestRun g x A] =
-      𝒮[(close (body g x A)).run' ({}, ∅)] := by
+    ((fun p => p.1.1) <$> honestRun g x A) =ᵈ ((close (body g x A)).run' ({}, ∅)) := by
   have h := simulate_observe g x (A.main (initial g (x • g))) {}
     (initial_valid g (x • g)) (by simpa using A.algebraic (initial g (x • g)))
     (fun out s => (fun p => p.1.1) <$> (Reduction.finish g (x • g) out).run s)
     (fun out s => (close (finalCheck g (x • g) out)).run' s)
-    (fun out s _ hout => congrArg evalSPMF (finish_erase g (x • g) s out hout))
+    (fun out s _ hout => (finish_erase g (x • g) s out hout) ▸ EvalDistEq.refl _)
   simpa only [honestRun, body, close_bind, close_simulate, StateT.run_bind,
     StateT.run'_eq, map_bind, erase_empty] using h
 
@@ -137,10 +139,9 @@ variable {F G M : Type} [Field F] [AddCommGroup G] [Module F G]
 
 /-- Representation bookkeeping and padded signing draws do not change the source game. -/
 theorem honestGame_eq (g : G) (A : Adversary F G M) :
-    𝒮[honestGame g A] = 𝒮[Schnorr.AGM.game g A] := by
+    honestGame g A =ᵈ Schnorr.AGM.game g A := by
   rw [honestGame, Source.game_body]
-  apply evalSPMF_bind_congr'
-  intro x
+  refine EvalDistEq.bind_right _ fun x => ?_
   simpa only [← map_eq_pure_bind] using Source.honest_body g x A
 
 end Schnorr.AGM.Reduction

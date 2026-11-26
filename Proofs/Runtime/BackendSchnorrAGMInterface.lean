@@ -5,7 +5,7 @@ import Proofs.Runtime.SchnorrAGMReply
 incoming group and coefficient row. Dependent reply tagging has actual backend
 realizers; these proof-level functions do not supply free executable adapters. -/
 
-open OracleComp OracleSpec PFunctor AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec PFunctor GroupModel.Interaction Schnorr.AGM
 open PFunctor.DynSystem.DynComputation
 
 namespace Signatures.Runtime.SchnorrAGM.Native.Interface

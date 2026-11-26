@@ -41,8 +41,7 @@ theorem within_of_reachable (main : OracleComp spec A) (budget : I → Nat) (tar
   exact h
 
 variable [∀ i, SampleableType (spec.Range i)] [∀ i, DecidableEq (spec.Range i)]
-  [IsUniformSpec spec]
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
+  [OracleSpec.UniformAnswerMeasure spec]
   [unifSpec ⊂ₒ spec] [unifSpec ˡ⊂ₒ spec] [MeasurableSpace A]
 
 theorem seededFork_eq_recordedFork_of_reachable (main : OracleComp spec A) (budget : I → Nat)

@@ -24,7 +24,7 @@ theorem good_privateOracle (value : layout.good.input.Value) (ready : layout.goo
     Subtype.val <$> goodDenote layout zeroValid P comparison correct mul add mulBuffers reserve addBuffers source value =
       ((value.val.1.1.reverse.mapIdx (fun n token => (token, (value.val.1.2[n]?).getD 0))).foldlM
         (fun (acc : val.Value base) (row : (key.Value base × G) × val.Value base) => do
-          let answer ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base)) (.inr row.1.1)
+          let answer : val.Value base ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base)) (.inr row.1.1)
           pure (acc + row.2 * answer)) 0).run value.val.2 := by
   have prepared := TokenEvaluation.foldValue_ready (base := base) (key := key) (val := val) layout.good
     (zero layout zeroValid) (zero layout zeroValid) value ready
@@ -33,7 +33,7 @@ theorem good_privateOracle (value : layout.good.input.Value) (ready : layout.goo
   refine folded.trans ?_
   exact congrArg (fun rows : List ((key.Value base × G) × val.Value base) =>
     (rows.foldlM (fun (acc : val.Value base) (row : (key.Value base × G) × val.Value base) => do
-      let answer ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base)) (.inr row.1.1)
+      let answer : val.Value base ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base)) (.inr row.1.1)
       pure (acc + row.2 * answer)) 0).run value.val.2)
     (TokenEvaluation.foldValue_rows layout.good (zero layout zeroValid) (zero layout zeroValid) value)
 
@@ -42,7 +42,7 @@ theorem bad_privateOracle (value : layout.bad.input.Value) (ready : layout.bad.r
     Subtype.val <$> badDenote layout zeroValid P comparison correct mul add mulBuffers reserve addBuffers source value =
       ((value.val.1.1.reverse.mapIdx (fun n token => (token, (value.val.1.2[n]?).getD 0))).foldlM
         (fun (acc : val.Value base × val.Value base) (row : (key.Value base × G) × val.Value base) => do
-          let answer ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base × val.Value base)) (.inr row.1.1)
+          let answer : val.Value base × val.Value base ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base × val.Value base)) (.inr row.1.1)
           pure (acc.1 + row.2 * answer.1, acc.2 + row.2 * answer.2)) (0, 0)).run value.val.2 := by
   have prepared := TokenEvaluation.foldValue_ready (base := base) (key := key) (val := .pair val val) layout.bad
     (zero layout zeroValid) (pairZero layout zeroValid) value ready
@@ -51,7 +51,7 @@ theorem bad_privateOracle (value : layout.bad.input.Value) (ready : layout.bad.r
   refine folded.trans ?_
   exact congrArg (fun rows : List ((key.Value base × G) × val.Value base) =>
     (rows.foldlM (fun (acc : val.Value base × val.Value base) (row : (key.Value base × G) × val.Value base) => do
-      let answer ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base × val.Value base)) (.inr row.1.1)
+      let answer : val.Value base × val.Value base ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base × val.Value base)) (.inr row.1.1)
       pure (acc.1 + row.2 * answer.1, acc.2 + row.2 * answer.2)) (0, 0)).run value.val.2)
     (TokenEvaluation.foldValue_rows layout.bad (zero layout zeroValid) (pairZero layout zeroValid) value)
 end Signatures.Runtime.CaliperBackend.BLSTokens

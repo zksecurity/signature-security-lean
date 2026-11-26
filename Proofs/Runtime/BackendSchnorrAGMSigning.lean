@@ -129,7 +129,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ K M))
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)
   (primitive : {a b : Ty CryptoAtom} → (instr : CryptoOp a b) →

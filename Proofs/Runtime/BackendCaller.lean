@@ -28,7 +28,7 @@ class OptionCode where
 
 namespace Caller
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   {I A B S J : Type} {source : OracleSpec I} [DecidableEq I]
   {bd : Boundary C source.toPFunctor A B}

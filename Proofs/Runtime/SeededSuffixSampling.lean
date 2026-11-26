@@ -10,9 +10,26 @@ open OracleComp OracleSpec MeasureTheory
 namespace Signatures.Runtime.SeededTrace
 
 variable {I A : Type} {spec : OracleSpec I} [DecidableEq I]
-  [∀ i, SampleableType (spec.Range i)] [IsUniformSpec spec]
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
+  [∀ i, SampleableType (spec.Range i)] [OracleSpec.UniformAnswerMeasure spec]
   [unifSpec ⊂ₒ spec] [unifSpec ˡ⊂ₒ spec] [MeasurableSpace A]
+
+/-- Upstream now proves only the single-value `evalDist_liftComp_uniformSample_bind_simulateQ_run'_addValue`;
+iterate it over a replicated block. -/
+private theorem evalDist_liftComp_replicate_uniformSample_bind_simulateQ_run'_addValues
+    (i : I) (main : OracleComp spec A) (n : Nat) (recorded : QuerySeed spec) :
+    𝒟[do
+      let answers ← liftComp (replicate n ($ᵗ spec.Range i)) spec
+      (simulateQ seededOracle main).run' (recorded.addValues answers)] =
+      𝒟[(simulateQ seededOracle main).run' recorded] := by
+  induction n generalizing recorded with
+  | zero => rw [replicate_zero, liftComp_pure, pure_bind, QuerySeed.addValues_nil]
+  | succ n ih =>
+    rw [replicate_succ_bind]
+    simp only [liftComp_bind, liftComp_pure, bind_assoc, pure_bind]
+    rw [← seededOracle.evalDist_liftComp_uniformSample_bind_simulateQ_run'_addValue recorded i main]
+    refine evalDist_bind_congr _ _ _ fun u => ?_
+    rw [← ih (recorded.addValue i u)]
+    exact evalDist_bind_congr _ _ _ fun us => by rw [QuerySeed.addValues_cons]
 
 /-- Appending independent seed entries does not change an adaptive replay's
 output law; those entries can instead be sampled by live fallback when needed. -/
@@ -36,10 +53,8 @@ theorem generate_suffix_run (main : OracleComp spec A) (budget : I → Nat)
         apply Filter.Eventually.of_forall
         intro answers
         exact ih (recorded.addValues answers)
-      · apply SeededDeferred.measure_of_compat
-        exact congrArg SPMF.toMeasure
-          (seededOracle.evalSPMF_liftComp_replicate_uniformSample_bind_simulateQ_run'_addValues
-            i main (budget i) recorded)
+      · exact evalDist_liftComp_replicate_uniformSample_bind_simulateQ_run'_addValues
+          i main (budget i) recorded
 
 /-- The same law holds after dropping the forked family's unused suffix. In
 particular, a private family first visited on replay needs no eager allocation. -/
@@ -67,12 +82,7 @@ theorem generate_erased_suffix_run (main : OracleComp spec A) (budget : I → Na
           conv_rhs => rw [evalDist_bind_of_discrete]
           apply Measure.bind_congr_right
           exact Filter.Eventually.of_forall (fun _ => ih recorded)
-        · apply SeededDeferred.measure_of_compat
-          apply congrArg SPMF.toMeasure
-          apply evalSPMF_ext
-          intro result
-          rw [probOutput_bind_const]
-          simp
+        · exact evalDist_bind_const _ _
       · simp only [erase_prepend_other _ target i h, append_prepend]
         trans 𝒟[do
           let answers ← liftComp (replicate (budget i) ($ᵗ spec.Range i)) spec
@@ -80,10 +90,8 @@ theorem generate_erased_suffix_run (main : OracleComp spec A) (budget : I → Na
         · rw [evalDist_bind_of_discrete, evalDist_bind_of_discrete]
           apply Measure.bind_congr_right
           exact Filter.Eventually.of_forall (fun answers => ih (recorded.addValues answers))
-        · apply SeededDeferred.measure_of_compat
-          exact congrArg SPMF.toMeasure
-            (seededOracle.evalSPMF_liftComp_replicate_uniformSample_bind_simulateQ_run'_addValues
-              i main (budget i) recorded)
+        · exact evalDist_liftComp_replicate_uniformSample_bind_simulateQ_run'_addValues
+            i main (budget i) recorded
 
 /-- After a valid prefix reset, every unencountered entry of the pregenerated
 seed can be replaced by on-demand sampling in the second execution. -/

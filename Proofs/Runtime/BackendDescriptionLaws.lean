@@ -23,7 +23,7 @@ theorem DescriptionSize.castFunction (sizes : DescriptionSize Q)
   cases h
   rfl
 
-structure LocalDescriptionLaws (sizes : DescriptionSize Q) [Q.HasCategory]
+structure LocalDescriptionLaws (sizes : DescriptionSize Q) [Q.HasComposition]
     [QP : Q.HasProd] [QS : Q.HasSum] (allowance : Nat) : Prop where
   identity : ∀ {A : Type} (a : C.Str A), sizes.localSize (Q.identity a) ≤ allowance
   compose : ∀ {A B D : Type} {a : C.Str A} {b : C.Str B} {d : C.Str D}
@@ -53,7 +53,7 @@ structure DataDescriptionLaws (sizes : DescriptionSize Q)
 
 namespace LocalDescriptionLaws
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {sizes : DescriptionSize Q} {allowance : Nat} (laws : LocalDescriptionLaws sizes allowance)
 
 include laws

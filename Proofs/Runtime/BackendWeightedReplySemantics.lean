@@ -52,7 +52,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ K M))
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)
@@ -66,7 +66,8 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
 theorem goodHash_denote (i : index.ty.Value (cryptoBase F G₁ G₂ K M))
     (cache : List (index.ty.Value (cryptoBase F G₁ G₂ K M) × F)) :
     (goodHash rep data cost primitive sampling index).denote (i, (g, X), cache, tr) =
-      (fun p => (p.1 • g, (g, X), p.2, record (.inl i) (p.1 • g) tr)) <$>
+      (fun (p : F × List (index.ty.Value (cryptoBase F G₁ G₂ K M) × F)) =>
+        (p.1 • g, (g, X), p.2, record (.inl i) (p.1 • g) tr)) <$>
         ((BLS.LazyAGM.Reduction.privateListOracle
           (M := index.ty.Value (cryptoBase F G₁ G₂ K M)) (R := F)) (.inr i)).run cache := by
   rw [goodHash.eq_def, backendReply_denote, Read.goodRead_denote]
@@ -75,7 +76,8 @@ theorem goodHash_denote (i : index.ty.Value (cryptoBase F G₁ G₂ K M))
 theorem goodSign_denote (m : index.messageTy.Value (cryptoBase F G₁ G₂ K M))
     (cache : List (index.ty.Value (cryptoBase F G₁ G₂ K M) × F)) :
     (goodSign rep data cost primitive sampling index).denote (m, (g, X), cache, tr) =
-      (fun p => (p.1 • X, (g, X), p.2, record (.inr m) (p.1 • X) tr)) <$>
+      (fun (p : F × List (index.ty.Value (cryptoBase F G₁ G₂ K M) × F)) =>
+        (p.1 • X, (g, X), p.2, record (.inr m) (p.1 • X) tr)) <$>
         (simulateQ (BLS.LazyAGM.Reduction.privateListOracle
           (M := index.ty.Value (cryptoBase F G₁ G₂ K M)) (R := F))
           (evalTerms (index.sourceTerms cost m))).run cache := by

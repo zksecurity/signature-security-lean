@@ -81,7 +81,7 @@ theorem badReserved_size (width cap remaining : Nat) (hh : header ≤ width)
   dsimp only [handlerStoreWidth]
   nlinarith only [h, hmul, hmul', hh, Nat.zero_le (cap * index.bound * width)]
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [SampleableType F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq K] [DecidableEq M]
   {iface : Interface (C := C) unifSpec}

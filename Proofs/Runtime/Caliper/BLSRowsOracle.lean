@@ -26,7 +26,7 @@ theorem good_privateOracle {capacity : Nat}
     (admitted : RowFold.valid (base := base) (key := key) (val := val) layout.good value) :
     Subtype.val <$> goodDenote layout default P comparison correct mul add mulBuffers reserve addBuffers source value =
       ((value.1.val.map Subtype.val).foldlM (fun (accumulator : val.Value base) (row : (key.Value base × G) × val.Value base) => do
-        let answer ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base)) (.inr row.1.1)
+        let answer : val.Value base ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base)) (.inr row.1.1)
         pure (accumulator + row.2 * answer)) value.2.val.1).run value.2.val.2 := by
   refine (RowFold.listCache (base := base) (key := key) (val := val) layout.good default P comparison correct
     (BLSPrivateAccumulate.goodUpdate layout.accumulation mul add mulBuffers reserve)
@@ -44,7 +44,7 @@ theorem bad_privateOracle {capacity : Nat}
     (admitted : RowFold.valid (base := base) (key := key) (val := .pair val val) layout.bad value) :
     Subtype.val <$> badDenote layout default P comparison correct mul add mulBuffers reserve addBuffers source value =
       ((value.1.val.map Subtype.val).foldlM (fun (accumulator : val.Value base × val.Value base) (row : (key.Value base × G) × val.Value base) => do
-        let answer ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base × val.Value base)) (.inr row.1.1)
+        let answer : val.Value base × val.Value base ← (BLS.LazyAGM.Reduction.privateListOracle (M := key.Value base) (R := val.Value base × val.Value base)) (.inr row.1.1)
         pure ((accumulator.1 + row.2 * answer.1, accumulator.2 + row.2 * answer.2))) value.2.val.1).run value.2.val.2 := by
   refine (RowFold.listCache (base := base) (key := key) (val := .pair val val) layout.bad (pairDefault layout default) P comparison correct
     (BLSPrivateAccumulate.badUpdate layout.accumulation mul add mulBuffers reserve addBuffers)

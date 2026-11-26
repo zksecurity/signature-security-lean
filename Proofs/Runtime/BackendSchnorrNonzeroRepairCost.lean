@@ -19,7 +19,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {F G₁ G₂ K M : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -63,7 +63,7 @@ theorem repair_expression_time (R : G₁) (z a : F) (g : G₁)
     simp only [h, decide_true, decide_false, Bool.false_eq_true, ↓reduceIte] at * <;>
     grind only
 
-omit mono [Q.HasCategory] [Q.HasProd] [Q.HasSum] in
+omit mono [Q.HasComposition] [Q.HasProd] [Q.HasSum] in
 theorem repair_output_size (R : G₁) (z a : F) (g : G₁) (width : Nat)
     (hh : header ≤ width)
     (hi : Q.size (rep.env [point₁, scalar, scalar, point₁]) (R, z, a, g, ()) ≤ width)

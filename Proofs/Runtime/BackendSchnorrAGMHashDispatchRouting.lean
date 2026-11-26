@@ -12,7 +12,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ K M : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -27,7 +27,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   (mono : Monotone overhead)
 
 include sizes in
-omit [Q.HasCategory] QP QS [Module F G₁] [AddCommGroup G₂] [Module F G₂]
+omit [Q.HasComposition] QP QS [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M] in
 theorem route_property (width cap historyWidth basisCap groupCap rowCap coeffCap : Nat)
     (hh : header ≤ width) (hg : Q.size (rep.ty point₁) (0 : G₁) ≤ width)
@@ -40,7 +40,7 @@ theorem route_property (width cap historyWidth basisCap groupCap rowCap coeffCap
   split <;> exact h
 
 include sizes lists in
-omit [Q.HasCategory] QP QS [Module F G₁] [AddCommGroup G₂] [Module F G₂]
+omit [Q.HasComposition] QP QS [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M] in
 theorem route_size (width cap historyWidth basisCap groupCap rowCap coeffCap : Nat)
     (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)

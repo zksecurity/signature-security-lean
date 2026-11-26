@@ -74,13 +74,17 @@ omit [DecidableEq F] [Fintype G₁] in
 /-- Programming the bases as `ρᵢ•g₁` for uniform `ρ` is the real game. -/
 theorem realGame_eq_map_scalar (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂)
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁)) :
-    𝒮[realGame w s g₂ adv] = 𝒮[mapScalar w s g₁ <$> scalarGame w s g₁ g₂ adv] := by
+    realGame w s g₂ adv =ᵈ (mapScalar w s g₁ <$> scalarGame w s g₁ g₂ adv) := by
   have hf : Function.Bijective (fun ρ : ι → F => fun i => ρ i • g₁) :=
     (Equiv.piCongrRight fun _ => Equiv.ofBijective _ hgen).bijective
   simp only [realGame, scalarGame, mapScalar, map_bind, map_pure]
-  refine evalSPMF_bind_congr' _ fun x => ?_
-  refine evalSPMF_bind_congr' _ fun y => ?_
-  exact (evalSPMF_ext (probOutput_bind_bijective_uniform_cross (ι → F) _ hf
+  refine EvalDistEq.bind_right _ fun x => ?_
+  refine EvalDistEq.bind_right _ fun y => ?_
+  let : MeasurableSpace (ι → F) := ⊤
+  let : MeasurableSpace (ι → G₁) := ⊤
+  let : MeasurableSpace (OffsetForgery F M ι × (F × F) × (ι → G₁) × (M → G₁)) := ⊤
+  exact (EvalDistEq.of_evalDist_eq (evalDist_bind_bijective_uniform_cross _ _
+    SampleableType.evalDist_uniformSample SampleableType.evalDist_uniformSample _ hf
     (fun H => do
       let fo ← adv (x • g₂, y • g₂) H (realSign w s x y H)
       pure (fo, (x, y), H, realSign w s x y H)))).symm
@@ -160,14 +164,14 @@ theorem split (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂)
     (valid : DynForgery F M ι → Prop)
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     (hpair : Function.Injective (fun c : F => c • (pairing (F := F) g₁ g₂ : Gₜ))) :
-    Pr[fun z => valid z.1.rep ∧ succ (Gₜ := Gₜ) w s g₁ g₂ z | realGame w s g₂ adv]
-      ≤ Pr[fun z => guessX w s z.1 z.2.1.2 z.2.2 = z.2.1.1 | scalarGame w s g₁ g₂ adv]
-        + Pr[fun z => guessY w s z.1 z.2.1.1 z.2.2 = z.2.1.2 | scalarGame w s g₁ g₂ adv]
-        + Pr[fun z => badCore w s valid z.1 z.2.2 | scalarGame w s g₁ g₂ adv] := by
-  rw [probEvent_def, realGame_eq_map_scalar w s g₁ g₂ adv hgen, ← probEvent_def, probEvent_map]
-  refine le_trans (probEvent_mono ?_) (le_trans (probEvent_or_le _ _ _)
-    (add_le_add (probEvent_or_le _ _ _) le_rfl))
-  intro z _ hz
+    Pr{let z ← realGame w s g₂ adv}[valid z.1.rep ∧ succ (Gₜ := Gₜ) w s g₁ g₂ z]
+      ≤ Pr{let z ← scalarGame w s g₁ g₂ adv}[guessX w s z.1 z.2.1.2 z.2.2 = z.2.1.1]
+        + Pr{let z ← scalarGame w s g₁ g₂ adv}[guessY w s z.1 z.2.1.1 z.2.2 = z.2.1.2]
+        + Pr{let z ← scalarGame w s g₁ g₂ adv}[badCore w s valid z.1 z.2.2] := by
+  rw [(realGame_eq_map_scalar w s g₁ g₂ adv hgen).prEvent_eq, prEvent_map]
+  refine le_trans (prEvent_mono _ _ _ ?_) (le_trans (prEvent_or_le _ _ _)
+    (add_le_add (prEvent_or_le _ _ _) le_rfl))
+  intro z hz
   obtain ⟨hvalid, hsucc⟩ := hz
   have hrel := relation w s g₁ g₂ hpair z hsucc
   by_cases hD : dynDenom w z.1.rep z.2.2 = 0
@@ -222,31 +226,29 @@ noncomputable def reductionY (adv : AdaptiveAdv F M ι G₁ G₂) : DLog11Advers
 
 omit [SampleableType G₁] [Fintype G₁] [Fintype F] in
 theorem guessX_eq_dlog (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂) :
-    Pr[fun z => guessX w s z.1 z.2.1.2 z.2.2 = z.2.1.1 | scalarGame w s g₁ g₂ adv]
-      = Pr[= true | dlog11Exp g₁ g₂ (reductionX w s adv)] := by
-  rw [← probEvent_eq_eq_probOutput]
-  simp only [scalarGame, dlog11Exp, reductionX, bind_assoc, pure_bind, probEvent_bind_eq_tsum,
-    probEvent_pure, decide_eq_true_eq, simSignX_eq]
+    Pr{let z ← scalarGame w s g₁ g₂ adv}[guessX w s z.1 z.2.1.2 z.2.2 = z.2.1.1]
+      = Pr{let x ← dlog11Exp g₁ g₂ (reductionX w s adv)}[x = true] := by
+  simp only [scalarGame, dlog11Exp, reductionX, bind_assoc, pure_bind, OracleComp.prEvent_bind_eq_tsum,
+    prEvent_pure, decide_eq_true_eq, simSignX_eq]
 
 omit [SampleableType G₁] [Fintype G₁] [Fintype F] in
 theorem guessY_eq_dlog (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂) :
-    Pr[fun z => guessY w s z.1 z.2.1.1 z.2.2 = z.2.1.2 | scalarGame w s g₁ g₂ adv]
-      = Pr[= true | dlog11Exp g₁ g₂ (reductionY w s adv)] := by
-  rw [← probEvent_eq_eq_probOutput]
-  have hswap : 𝒮[scalarGame w s g₁ g₂ adv] = 𝒮[do
+    Pr{let z ← scalarGame w s g₁ g₂ adv}[guessY w s z.1 z.2.1.1 z.2.2 = z.2.1.2]
+      = Pr{let x ← dlog11Exp g₁ g₂ (reductionY w s adv)}[x = true] := by
+  have hswap : scalarGame w s g₁ g₂ adv =ᵈ (do
       let y ← ($ᵗ F : ProbComp F)
       let x ← ($ᵗ F : ProbComp F)
       let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))
       let fo ← adv (x • g₂, y • g₂) (fun i => ρ i • g₁) (realSign w s x y (fun i => ρ i • g₁))
-      pure (fo, (x, y), ρ)] := by
+      pure (fo, (x, y), ρ)) := by
     unfold scalarGame
-    exact DeferredSampling.evalSPMF_bind_comm ($ᵗ F) ($ᵗ F) fun x y => do
+    exact EvalDistEq.bind_bind_swap ($ᵗ F) ($ᵗ F) fun x y => do
       let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))
       let fo ← adv (x • g₂, y • g₂) (fun i => ρ i • g₁) (realSign w s x y (fun i => ρ i • g₁))
       pure (fo, (x, y), ρ)
-  rw [probEvent_def, hswap, ← probEvent_def]
-  simp only [dlog11Exp, reductionY, bind_assoc, pure_bind, probEvent_bind_eq_tsum,
-    probEvent_pure, decide_eq_true_eq, simSignY_eq]
+  rw [hswap.prEvent_eq]
+  simp only [dlog11Exp, reductionY, bind_assoc, pure_bind, OracleComp.prEvent_bind_eq_tsum,
+    prEvent_pure, decide_eq_true_eq, simSignY_eq]
 
 /-! ## The hash-table reduction for `D = D' = 0` -/
 
@@ -328,15 +330,15 @@ noncomputable def independentBadView (g₁ : G₁) (g₂ : G₂) (adv : Adaptive
 
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] in
 theorem independentBadView_scalar (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂) :
-    𝒮[BadView.scalar <$> independentBadView w s g₁ g₂ adv] = 𝒮[scalarGame w s g₁ g₂ adv] := by
+    (BadView.scalar <$> independentBadView w s g₁ g₂ adv) =ᵈ scalarGame w s g₁ g₂ adv := by
   unfold independentBadView scalarGame BadView.scalar
   simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply]
-  rw [DeferredSampling.evalSPMF_bind_const_neverFails ($ᵗ F) (by simp)]
-  refine evalSPMF_bind_congr' _ fun x => ?_
-  refine evalSPMF_bind_congr' _ fun y => ?_
-  refine evalSPMF_bind_congr' _ fun ρ => ?_
-  refine evalSPMF_bind_congr' _ fun fo => ?_
-  rw [DeferredSampling.evalSPMF_bind_const_neverFails ($ᵗ (ι → F)) (by simp)]
+  refine (EvalDistEq.bind_const ($ᵗ F) _).trans ?_
+  refine EvalDistEq.bind_right _ fun x => ?_
+  refine EvalDistEq.bind_right _ fun y => ?_
+  refine EvalDistEq.bind_right _ fun ρ => ?_
+  refine EvalDistEq.bind_right _ fun fo => ?_
+  exact EvalDistEq.bind_const ($ᵗ (ι → F)) _
 
 def badGuess (v : BadView F M ι) : F :=
   -(badDenom w s jk v.fo.rep v.table - badDenom w s jk v.fo.rep v.slope * v.challenge) /
@@ -350,51 +352,55 @@ theorem badGuess_eq (v : BadView F M ι) (hzero : badDenom w s jk v.fo.rep v.tab
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] in
 /-- Affine programming of the bases is a one-time pad: the slopes stay hidden. -/
 theorem affineBadView_eq_independent (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂) :
-    𝒮[affineBadView w s g₁ g₂ adv] = 𝒮[independentBadView w s g₁ g₂ adv] := by
+    affineBadView w s g₁ g₂ adv =ᵈ independentBadView w s g₁ g₂ adv := by
   unfold affineBadView independentBadView
-  refine evalSPMF_bind_congr' _ fun z => ?_
-  refine evalSPMF_bind_congr' _ fun x => ?_
-  refine evalSPMF_bind_congr' _ fun y => ?_
-  trans 𝒮[do
+  refine EvalDistEq.bind_right _ fun z => ?_
+  refine EvalDistEq.bind_right _ fun x => ?_
+  refine EvalDistEq.bind_right _ fun y => ?_
+  trans (do
     let a ← ($ᵗ (ι → F) : ProbComp (ι → F))
     let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))
     let fo ← adv (x • g₂, y • g₂) (fun i => ρ i • g₁) (realSign w s x y (fun i => ρ i • g₁))
-    pure (BadView.mk fo (x, y) z a ρ)]
-  · refine evalSPMF_bind_congr' _ fun a => ?_
+    pure (BadView.mk fo (x, y) z a ρ) : ProbComp (BadView F M ι))
+  · refine EvalDistEq.bind_right _ fun a => ?_
     unfold affineTable
-    simpa only [Pi.add_def, Pi.add_apply] using
-      evalSPMF_ext (probOutput_bind_add_left_uniform (ι → F) (fun i => a i * z)
-        (fun ρ : ι → F => do
-          let fo ← adv (x • g₂, y • g₂) (fun i => ρ i • g₁) (realSign w s x y (fun i => ρ i • g₁))
-          pure (BadView.mk fo (x, y) z a ρ)))
+    have he : Function.Bijective (fun b : ι → F => fun i => a i * z + b i) :=
+      Function.bijective_iff_has_inverse.2 ⟨fun ρ i => ρ i - a i * z,
+        fun b => by funext i; simp, fun ρ => by funext i; simp⟩
+    let : MeasurableSpace (ι → F) := ⊤
+    let : MeasurableSpace (BadView F M ι) := ⊤
+    exact EvalDistEq.of_evalDist_eq (evalDist_bind_bijective_uniform_cross _ _
+      SampleableType.evalDist_uniformSample SampleableType.evalDist_uniformSample _ he
+      (fun ρ : ι → F => do
+        let fo ← adv (x • g₂, y • g₂) (fun i => ρ i • g₁) (realSign w s x y (fun i => ρ i • g₁))
+        pure (BadView.mk fo (x, y) z a ρ)))
   · let seen : ProbComp (OffsetForgery F M ι × (ι → F)) := do
       let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))
       let fo ← adv (x • g₂, y • g₂) (fun i => ρ i • g₁) (realSign w s x y (fun i => ρ i • g₁))
       pure (fo, ρ)
     simpa only [seen, bind_assoc, pure_bind] using
-      DeferredSampling.evalSPMF_bind_comm ($ᵗ (ι → F) : ProbComp (ι → F)) seen
+      EvalDistEq.bind_bind_swap ($ᵗ (ι → F) : ProbComp (ι → F)) seen
         (fun a q => pure (BadView.mk q.1 (x, y) z a q.2))
 
 omit [Fintype F] [SampleableType G₁] [Fintype G₁] in
 theorem badGuess_eq_dlog (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂) :
-    Pr[fun v => badGuess w s jk v = v.challenge | affineBadView w s g₁ g₂ adv]
-      = Pr[= true | dlog11Exp g₁ g₂ (reductionBad w s jk adv)] := by
+    Pr{let v ← affineBadView w s g₁ g₂ adv}[badGuess w s jk v = v.challenge]
+      = Pr{let x ← dlog11Exp g₁ g₂ (reductionBad w s jk adv)}[x = true] := by
   have hH (z : F) (a b : ι → F) : (fun i => a i • (z • g₁) + b i • g₁) =
       (fun i => affineTable z a b i • g₁) := by
     funext i
     simp only [affineTable, add_smul, smul_smul]
-  rw [← probEvent_eq_eq_probOutput]
   simp only [affineBadView, dlog11Exp, reductionBad, bind_assoc, pure_bind,
-    probEvent_bind_eq_tsum, probEvent_pure, decide_eq_true_eq, hH,
+    OracleComp.prEvent_bind_eq_tsum, prEvent_pure, decide_eq_true_eq, hH,
     badGuess, badDenom_affine, add_sub_cancel_left]
 
 omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] in
 theorem bad_core_scalar_eq_independent (valid : DynForgery F M ι → Prop)
     (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂) :
-    Pr[fun z => badCore w s valid z.1 z.2.2 | scalarGame w s g₁ g₂ adv]
-      = Pr[fun v => badCore w s valid v.fo v.table | independentBadView w s g₁ g₂ adv] := by
+    Pr{let z ← scalarGame w s g₁ g₂ adv}[badCore w s valid z.1 z.2.2]
+      = Pr{let v ← independentBadView w s g₁ g₂ adv}[badCore w s valid v.fo v.table] := by
   have hdist := independentBadView_scalar w s g₁ g₂ adv
-  rw [probEvent_def, ← hdist, ← probEvent_def, probEvent_map]
+  rw [← hdist.prEvent_eq, prEvent_map]
   rfl
 
 omit [SampleableType G₁] [Fintype G₁] in
@@ -402,16 +408,15 @@ theorem independent_slope_collision (valid : DynForgery F M ι → Prop)
     (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂)
     (hvand : ∀ fo, valid fo → fo.Fresh →
       dynDenomCoeff w fo (jk fo) ≠ 0 ∨ dynDenomCoeff (scaled w s) fo (jk fo) ≠ 0) :
-    Pr[fun v => badCore w s valid v.fo v.table ∧ badDenom w s jk v.fo.rep v.slope = 0 |
-        independentBadView w s g₁ g₂ adv]
+    Pr{let v ← independentBadView w s g₁ g₂ adv}[badCore w s valid v.fo v.table ∧ badDenom w s jk v.fo.rep v.slope = 0]
       ≤ 1 / (Fintype.card F : ENNReal) := by
   rw [independentBadView]
-  refine probEvent_bind_le_of_forall_le fun z _ => ?_
-  refine probEvent_bind_le_of_forall_le fun x _ => ?_
-  refine probEvent_bind_le_of_forall_le fun y _ => ?_
-  refine probEvent_bind_le_of_forall_le fun ρ _ => ?_
-  refine probEvent_bind_le_of_forall_le fun fo _ => ?_
-  rw [bind_pure_comp, probEvent_map]
+  refine prEvent_bind_le_of_forall_le _ _ _ fun z => ?_
+  refine prEvent_bind_le_of_forall_le _ _ _ fun x => ?_
+  refine prEvent_bind_le_of_forall_le _ _ _ fun y => ?_
+  refine prEvent_bind_le_of_forall_le _ _ _ fun ρ => ?_
+  refine prEvent_bind_le_of_forall_le _ _ _ fun fo => ?_
+  rw [bind_pure_comp, prEvent_map]
   by_cases hcore : badCore w s valid fo ρ
   · simpa only [Function.comp_def, hcore, true_and, badDenom] using
       linear_functional_collision (badCoeff w s jk fo.rep) (jk fo.rep)
@@ -423,20 +428,20 @@ theorem bad_core_le_dlog_add_collision (valid : DynForgery F M ι → Prop)
     (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂)
     (hvand : ∀ fo, valid fo → fo.Fresh →
       dynDenomCoeff w fo (jk fo) ≠ 0 ∨ dynDenomCoeff (scaled w s) fo (jk fo) ≠ 0) :
-    Pr[fun z => badCore w s valid z.1 z.2.2 | scalarGame w s g₁ g₂ adv]
-      ≤ Pr[= true | dlog11Exp g₁ g₂ (reductionBad w s jk adv)] + 1 / (Fintype.card F : ENNReal) := by
+    Pr{let z ← scalarGame w s g₁ g₂ adv}[badCore w s valid z.1 z.2.2]
+      ≤ Pr{let x ← dlog11Exp g₁ g₂ (reductionBad w s jk adv)}[x = true] + 1 / (Fintype.card F : ENNReal) := by
   rw [bad_core_scalar_eq_independent w s valid g₁ g₂ adv]
-  refine le_trans (probEvent_mono ?_) (le_trans
-    (probEvent_or_le (independentBadView w s g₁ g₂ adv)
+  refine le_trans (prEvent_mono _ _ _ ?_) (le_trans
+    (prEvent_or_le (independentBadView w s g₁ g₂ adv)
       (fun v => badGuess w s jk v = v.challenge)
       (fun v => badCore w s valid v.fo v.table ∧ badDenom w s jk v.fo.rep v.slope = 0)) ?_)
-  · intro v _ hcore
+  · intro v hcore
     by_cases hslope : badDenom w s jk v.fo.rep v.slope = 0
     · exact Or.inr ⟨hcore, hslope⟩
     · exact Or.inl (badGuess_eq w s jk v
         (badDenom_eq_zero w s jk v.fo.rep v.table hcore.2.2.1 hcore.2.2.2) hslope)
   · have hguess := badGuess_eq_dlog w s jk g₁ g₂ adv
-    rw [probEvent_def, affineBadView_eq_independent, ← probEvent_def] at hguess
+    rw [(affineBadView_eq_independent w s g₁ g₂ adv).prEvent_eq] at hguess
     rw [hguess]
     exact add_le_add le_rfl (independent_slope_collision w s jk valid g₁ g₂ adv hvand)
 
@@ -451,10 +456,10 @@ theorem adaptive_security (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι 
     (hvand : ∀ fo, valid fo → fo.Fresh →
       dynDenomCoeff w fo (jk fo) ≠ 0 ∨ dynDenomCoeff (scaled w s) fo (jk fo) ≠ 0)
     (hpair : Function.Injective (fun c : F => c • (pairing (F := F) g₁ g₂ : Gₜ))) :
-    Pr[fun z => valid z.1.rep ∧ succ (Gₜ := Gₜ) w s g₁ g₂ z | realGame w s g₂ adv]
-      ≤ Pr[= true | dlog11Exp g₁ g₂ (reductionX w s adv)]
-        + Pr[= true | dlog11Exp g₁ g₂ (reductionY w s adv)]
-        + Pr[= true | dlog11Exp g₁ g₂ (reductionBad w s jk adv)]
+    Pr{let z ← realGame w s g₂ adv}[valid z.1.rep ∧ succ (Gₜ := Gₜ) w s g₁ g₂ z]
+      ≤ Pr{let x ← dlog11Exp g₁ g₂ (reductionX w s adv)}[x = true]
+        + Pr{let x ← dlog11Exp g₁ g₂ (reductionY w s adv)}[x = true]
+        + Pr{let x ← dlog11Exp g₁ g₂ (reductionBad w s jk adv)}[x = true]
         + 1 / (Fintype.card F : ENNReal) := by
   have hsplit := split w s g₁ g₂ adv valid hgen hpair
   rw [guessX_eq_dlog, guessY_eq_dlog] at hsplit

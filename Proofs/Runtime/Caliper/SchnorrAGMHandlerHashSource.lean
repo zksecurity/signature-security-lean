@@ -3,7 +3,7 @@ import Proofs.Runtime.Caliper.SchnorrAGMHandlerHash
 /-! Common-store hashing preserves the original handler's joint reply/state
 law and the represented runtime generator/public key. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrAGM.Handler.HashComponent
-open Caliper BoundedSource OracleComp OracleSpec Schnorr.AGM AlgebraicGroupModel.Interaction
+open Caliper BoundedSource OracleComp OracleSpec Schnorr.AGM GroupModel.Interaction
 open Signatures.Runtime.SchnorrAGM.Native
 variable {w qH qS randomBound : Nat} {M F G : Type} [Field F]
     [DecidableEq F] [DecidableEq M] [DecidableEq G]

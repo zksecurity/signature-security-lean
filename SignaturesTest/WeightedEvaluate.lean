@@ -40,7 +40,7 @@ example : ((evaluateBad (indexTy := Weights.proximityKey 3)).denote arithmeticMo
 section Compiled
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase field field field Nat Bool))
   (data : DataCode Q rep.data) (sampling : MachineCompiler.SamplingImplementation Q iface rep)

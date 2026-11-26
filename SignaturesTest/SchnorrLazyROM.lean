@@ -1,5 +1,5 @@
 import Proofs.Schnorr.LazyROM
-import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
@@ -13,11 +13,8 @@ namespace SignaturesTest.SchnorrLazyROM
 
 private abbrev Spec := Schnorr.FixedTape.Spec (Fin 2)
 
-noncomputable local instance : IsUniformSpec (Unit →ₒ Fin 2) :=
-  IsUniformSpec.ofFintypeInhabited _
-
-noncomputable local instance : IsUniformMeasureSpec Spec :=
-  OracleSpec.instIsUniformMeasureSpecOfIsUniformSpec
+noncomputable local instance : OracleSpec.UniformAnswerMeasure (Unit →ₒ Fin 2) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 private def afterChallenge (challenge : Fin 2) : OracleComp Spec (Fin 2 × Nat) := do
   if challenge = 0 then
@@ -124,8 +121,6 @@ run_meta do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
     let type := (← getConstInfo name).type
-    if (type.find? (fun e => e.isConstOf ``instEvalDistSemanticsOfMonadLiftTSPMF)).isSome then
-      throwError "{name}: statement must use native measure semantics"
     forallTelescope type fun params _ => do
       for param in params do
         let declaration ← getFVarLocalDecl param
@@ -136,6 +131,12 @@ run_meta do
                 premiseType.isAppOf ``Countable) &&
                 (premiseType.find? (fun e => e == param)).isSome then
               throwError "{name}: must not restrict the message universe"
+  for name in #[``Schnorr.LazyROM.fork_eq_complete, ``Schnorr.LazyROM.sample_measure,
+      ``Schnorr.LazyROM.dlogReduction_eq_fixed, ``Schnorr.LazyROM.dlogExperiment_eq_fixed,
+      ``Schnorr.LazyROM.security_of_seed_bound, ``Schnorr.LazyROM.security] do
+    let type := (← getConstInfo name).type
+    unless (type.find? (fun e => e.isConstOf ``OracleComp.instEvalDistSemantics)).isSome do
+      throwError "{name}: statement must use native measure semantics"
   let securityType := (← getConstInfo ``Schnorr.LazyROM.security).type
   for forbidden in #[``OracleComp.IsPerIndexQueryBound, ``Schnorr.FixedTape.finiteBounds,
       `Proofs.Runtime.Program] do

@@ -11,7 +11,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QD : Q.IsDistributive]
   {I J S : Type} {source : OracleSpec I} {target : OracleSpec J}
   {src : Interface (C := C) source} {dst : Interface (C := C) target}
   (store : C.Str S) (control : ControlCosts)
@@ -19,7 +19,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   (handler : Code Q target dst (StepClass.HasProd.prod src.position store)
     (StepClass.HasProd.prod src.response store))
 
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem auditLoop_erase {A B : Type} (a : C.Str A) (b : C.Str B)
     (body : A × S → OracleComp target (Audit I (B ⊕ A) S))
     (stop : A × S → OracleComp target (Audit I B S)) (fuel : Nat) (input : A × S) :
@@ -52,7 +52,7 @@ theorem auditLoop_erase {A B : Type} (a : C.Str A) (b : C.Str B)
           congr 1
           omega
 
-omit QD [C.HasSum] [Q.HasCategory] QP in
+omit QD [C.HasSum] [Q.HasComposition] QP in
 theorem auditIteration_erase {A : Type} (a : C.Str A) (counter : C.Str Nat)
     (body : A × S → OracleComp target (Audit I A S)) (count : Nat) (input : A × S) :
     Prod.fst <$> auditIteration (Q := Q) store control a counter body count input =

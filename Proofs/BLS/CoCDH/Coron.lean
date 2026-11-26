@@ -7,6 +7,8 @@ import Signatures.BLS.CoCDH.Spec.Assumption
 import Proofs.BLS.CoCDH.LazyGame
 import Proofs.BLS.CoCDH.LazyCoin
 import VCVio.OracleComp.SimSemantics.StateT.PreservesInv
+import VCVio.OracleComp.EvalDist.Sum
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-!
 # BLS EUF-CMA ⇒ co-CDH — the `q_S` Coron partitioning bound
@@ -68,18 +70,35 @@ and each continuation's projected distribution matches on the projected state (`
 projected bind matches.  The projection `proj` on the state is a deterministic map (identity on the
 output), so relating the two computations is a pushforward — the bind respects it.  This is the engine
 that lifts the per-step projections (`realCoronK_step_proj_inl/inr`) to whole runs. -/
-lemma evalSPMF_bind_proj_congr {β σ σ' γ : Type} (proj : σ → σ')
+lemma evalDistEq_bind_proj_congr {β σ σ' γ : Type} (proj : σ → σ')
     (m1 : ProbComp (β × σ)) (m2 : ProbComp (β × σ'))
     (g1 : β → σ → ProbComp (γ × σ)) (g2 : β → σ' → ProbComp (γ × σ'))
-    (hstep : 𝒮[m1 >>= fun z => pure (z.1, proj z.2)] = 𝒮[m2])
-    (hcont : ∀ b s, 𝒮[g1 b s >>= fun z => pure (z.1, proj z.2)] = 𝒮[g2 b (proj s)]) :
-    𝒮[(m1 >>= fun p => g1 p.1 p.2) >>= fun z => pure (z.1, proj z.2)]
-      = 𝒮[m2 >>= fun p => g2 p.1 p.2] := by
-  rw [bind_assoc, evalSPMF_bind_congr' m1 (fun p => hcont p.1 p.2)]
+    (hstep : (m1 >>= fun z => pure (z.1, proj z.2)) =ᵈ m2)
+    (hcont : ∀ b s, (g1 b s >>= fun z => pure (z.1, proj z.2)) =ᵈ g2 b (proj s)) :
+    ((m1 >>= fun p => g1 p.1 p.2) >>= fun z => pure (z.1, proj z.2)) =ᵈ (m2 >>= fun p => g2 p.1 p.2) := by
+  rw [bind_assoc]
+  refine (EvalDistEq.bind_right m1 fun p => hcont p.1 p.2).trans ?_
   have hrw : (m1 >>= fun p => g2 p.1 (proj p.2))
       = (m1 >>= fun p => pure (p.1, proj p.2)) >>= fun p' => g2 p'.1 p'.2 := by
     rw [bind_assoc]; simp only [pure_bind]
-  rw [hrw, evalSPMF_bind (m1 >>= fun p => pure (p.1, proj p.2)), evalSPMF_bind m2, hstep]
+  rw [hrw]
+  exact hstep.bind_left _
+
+/-- A uniform draw pushed through a bijection onto another uniformly sampled type is that type's
+uniform draw, before any continuation (the "one-time pad" transport). -/
+lemma uniformSample_bind_bijective_evalDistEq {α β γ : Type} [SampleableType α] [SampleableType β]
+    {f : α → β} (hf : Function.Bijective f) (cont : β → ProbComp γ) :
+    (($ᵗ α : ProbComp α) >>= fun x => cont (f x)) =ᵈ (($ᵗ β : ProbComp β) >>= cont) := by
+  rw [← bind_map_left]
+  exact (SampleableType.map_uniformSample_evalDistEq_of_bijective hf).bind_left cont
+
+omit [Fintype M] [DecidableEq M] [Fintype F] [DecidableEq G₁] in
+/-- Right-translating a uniform field sample by a constant leaves the continuation's distribution
+unchanged. -/
+lemma uniformSample_bind_add_right_evalDistEq {γ : Type} (c : F) (cont : F → ProbComp γ) :
+    (($ᵗ F : ProbComp F) >>= fun v => cont (v + c)) =ᵈ (($ᵗ F : ProbComp F) >>= cont) :=
+  uniformSample_bind_bijective_evalDistEq (f := (· + c))
+    ⟨add_left_injective c, fun y => ⟨y - c, sub_add_cancel y c⟩⟩ cont
 
 /-- A fixed-public-key Coron BLS computation with private uniform randomness, hash queries, and
 signing queries.  The public-key-aware proof instantiates this computation pointwise. -/
@@ -94,7 +113,7 @@ The finite **analysis game** samples a whole coin function `k : M → Fin (q_S+1
 (`c_m := (k m = 0)`, `Pr[c_m = 1] = 1/(q_S+1) = δ`).  This exposes the joint distribution needed by
 the counting argument: for fixed `k` the run factors, `coin_partition` applies directly, and the
 per-`k` coupling is a fixed translation.  The public reduction defined below uses a lazy coin cache;
-`evalSPMF_lazyCoin_eq_table` proves that it has exactly this analysis distribution. -/
+`evalDistEq_lazyCoin_eq_table` proves that it has exactly this analysis distribution. -/
 
 /-- **Eager-coin Coron oracle** (state = the real dlog cache).  Coin `c_m = (k m = 0)` is read from the
 fixed coin function `k`; the dlog is lazy via `BLS.ROM.Internal.getDlogS`.  Hash `m`: `ρ·g₁ + c_m·h`.  Sign `m`: abort
@@ -216,29 +235,26 @@ lemma coronReductionProgram_table (g₁ X₁ : G₁) (X₂ : G₂) (h : G₁) (q
 omit [Fintype F] [DecidableEq G₁] [AddCommGroup G₂] [Module F G₂] in
 /-- The lazy reduction and the full-table analysis reduction have exactly the same output
 distribution on every co-CDH input. -/
-theorem coronReductionLazyPK_evalSPMF (g₁ : G₁) (g₂ : G₂) (X₁ : G₁) (X₂ : G₂) (h : G₁)
+theorem coronReductionLazyPK_evalDistEq (g₁ : G₁) (g₂ : G₂) (X₁ : G₁) (X₂ : G₂) (h : G₁)
     (qS : ℕ) (adv : CoronAdvPK M G₁ G₂) :
-    𝒮[coronReductionLazyPK (F := F) qS adv g₁ g₂ X₁ X₂ h] =
-      𝒮[coronReductionKPK (F := F) qS adv g₁ g₂ X₁ X₂ h] := by
+    coronReductionLazyPK (F := F) qS adv g₁ g₂ X₁ X₂ h =ᵈ coronReductionKPK (F := F) qS adv g₁ g₂ X₁ X₂ h := by
   classical
-  rw [coronReductionLazyPK, evalSPMF_lazyCoin_eq_table]
+  rw [coronReductionLazyPK]
+  refine (evalDistEq_lazyCoin_eq_table _ _).trans ?_
   simp only [tableExtending_empty, coronReductionKPK]
-  refine congrArg evalSPMF ?_
-  refine bind_congr fun k => ?_
-  exact coronReductionProgram_table g₁ X₁ X₂ h qS adv k
+  refine EvalDistEq.bind_right _ fun k => ?_
+  rw [coronReductionProgram_table g₁ X₁ X₂ h qS adv k]
 
 omit [Fintype F] in
 /-- Replacing the table-analysis reduction by the lazy reduction leaves the co-CDH experiment's
 entire output distribution unchanged. -/
-theorem coCDHExp_coronReductionLazyPK_evalSPMF [SampleableType G₁]
+theorem coCDHExp_coronReductionLazyPK_evalDistEq [SampleableType G₁]
     (g₁ : G₁) (g₂ : G₂) (qS : ℕ) (adv : CoronAdvPK M G₁ G₂) :
-    𝒮[coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv)] =
-      𝒮[coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)] := by
+    coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv) =ᵈ coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv) := by
   unfold coCDHExp
-  refine evalSPMF_bind_congr' _ fun x => ?_
-  refine evalSPMF_bind_congr' _ fun h => ?_
-  rw [evalSPMF_bind, evalSPMF_bind,
-    coronReductionLazyPK_evalSPMF g₁ g₂ (x • g₁) (x • g₂) h qS adv]
+  refine EvalDistEq.bind_right _ fun x => ?_
+  refine EvalDistEq.bind_right _ fun h => ?_
+  exact (coronReductionLazyPK_evalDistEq g₁ g₂ (x • g₁) (x • g₂) h qS adv).bind_left _
 
 omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 /-- The appended verification-hash query preserves the signed set and leaves the forgery message
@@ -358,8 +374,8 @@ theorem coupling_coron_realCoron_K_gen (g₁ X₁ h xh : G₁) (qS : ℕ) (k : M
     (adv : OracleComp (advSpec M G₁) α)
     (Q : α × ((M → Option F) × Finset M) → Prop) (hQ : ∀ z, Q z → ¬ signedC1K qS k z.2) :
     ∀ s : (M → Option F) × Finset M,
-      Pr[Q | (simulateQ (coronOracleK (F := F) g₁ X₁ h qS k) adv).run s]
-      = Pr[Q | (simulateQ (realCoronK (F := F) g₁ X₁ h xh qS k) adv).run s] := by
+      Pr{let x ← (simulateQ (coronOracleK (F := F) g₁ X₁ h qS k) adv).run s}[Q x]
+      = Pr{let x ← (simulateQ (realCoronK (F := F) g₁ X₁ h xh qS k) adv).run s}[Q x] := by
   induction adv using OracleComp.inductionOn with
   | pure x => intro s; simp only [simulateQ_pure, StateT.run_pure]
   | query_bind q k' ih =>
@@ -371,7 +387,7 @@ theorem coupling_coron_realCoron_K_gen (g₁ X₁ h xh : G₁) (qS : ℕ) (k : M
           have houter : (coronOracleK (F := F) g₁ X₁ h qS k (Sum.inl (Sum.inl n))).run s
                       = (realCoronK (F := F) g₁ X₁ h xh qS k
                           (Sum.inl (Sum.inl n))).run s := rfl
-          rw [houter, probEvent_bind_eq_tsum, probEvent_bind_eq_tsum]
+          rw [houter, OracleComp.prEvent_bind_eq_tsum, OracleComp.prEvent_bind_eq_tsum]
           exact tsum_congr fun p => by rw [ih p.1 p.2]
       ·
           have houter : (coronOracleK (F := F) g₁ X₁ h qS k
@@ -379,11 +395,11 @@ theorem coupling_coron_realCoron_K_gen (g₁ X₁ h xh : G₁) (qS : ℕ) (k : M
                       = (realCoronK (F := F) g₁ X₁ h xh qS k
                           (Sum.inl (Sum.inr m))).run s := by
             rfl
-          rw [houter, probEvent_bind_eq_tsum, probEvent_bind_eq_tsum]
+          rw [houter, OracleComp.prEvent_bind_eq_tsum, OracleComp.prEvent_bind_eq_tsum]
           exact tsum_congr fun p => by rw [ih p.1 p.2]
       ·
           by_cases hk : k m = 0
-          · rw [probEvent_eq_zero (by
+          · rw [prEvent_eq_zero_of_forall_mem_support _ _ (by
                 intro z hz
                 rw [support_bind] at hz; simp only [Set.mem_iUnion] at hz
                 obtain ⟨p, hp, hz⟩ := hz
@@ -391,7 +407,7 @@ theorem coupling_coron_realCoron_K_gen (g₁ X₁ h xh : G₁) (qS : ℕ) (k : M
                   ⟨m, mem_signed_of_inr_K_coron g₁ X₁ h qS k m s p hp, hk⟩
                 exact fun hev => hQ z hev (run_preserves_signedC1K qS k
                   (coronOracleK_signed_mono g₁ X₁ h qS k) (k' p.1) p.2 hsig z hz)),
-              probEvent_eq_zero (by
+              prEvent_eq_zero_of_forall_mem_support _ _ (by
                 intro z hz
                 rw [support_bind] at hz; simp only [Set.mem_iUnion] at hz
                 obtain ⟨p, hp, hz⟩ := hz
@@ -400,7 +416,7 @@ theorem coupling_coron_realCoron_K_gen (g₁ X₁ h xh : G₁) (qS : ℕ) (k : M
                 exact fun hev => hQ z hev (run_preserves_signedC1K qS k
                   (realCoronK_signed_mono g₁ X₁ h xh qS k) (k' p.1) p.2 hsig z hz))]
           · rw [coronK_inr_eq_off_coin g₁ X₁ h xh qS k m hk s,
-              probEvent_bind_eq_tsum, probEvent_bind_eq_tsum]
+              OracleComp.prEvent_bind_eq_tsum, OracleComp.prEvent_bind_eq_tsum]
             exact tsum_congr fun p => by rw [ih p.1 p.2]
 
 /-- **Eager coin-erasing projection** (fixed `k`): collapse each cached dlog `ρ_m ↦ ρ_m + c_m·ρ_h`,
@@ -426,20 +442,18 @@ omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 leave the state unchanged, so projection commutes with the step. -/
 lemma realCoronK_step_proj_unif (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ)
     (k : M → Fin (qS + 1)) (n : ℕ) (s : (M → Option F) × Finset M) :
-    𝒮[(realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inl (Sum.inl n))).run s >>=
-        fun z => pure (z.1, projCK ρh qS k z.2)]
-      = 𝒮[(BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inl n))).run
-          (projCK ρh qS k s)] := by
+    ((realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inl (Sum.inl n))).run s >>=
+        fun z => pure (z.1, projCK ρh qS k z.2)) =ᵈ ((BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inl n))).run
+          (projCK ρh qS k s)) := by
   simp [realCoronK, BLS.ROM.Internal.oracle, StateT.run_monadLift]
 
 omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 /-- **Coupling A′ eager, hash step.** -/
 lemma realCoronK_step_proj_inl (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k : M → Fin (qS + 1)) (m : M)
     (hh : h = ρh • g₁) (s : (M → Option F) × Finset M) :
-    𝒮[(realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inl (Sum.inr m))).run s >>=
-        fun z => pure (z.1, projCK ρh qS k z.2)]
-      = 𝒮[(BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inr m))).run
-          (projCK ρh qS k s)] := by
+    ((realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inl (Sum.inr m))).run s >>=
+        fun z => pure (z.1, projCK ρh qS k z.2)) =ᵈ ((BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inl (Sum.inr m))).run
+          (projCK ρh qS k s)) := by
   have hval : ∀ ρ : F, ρ • g₁ + (if k m = 0 then h else (0 : G₁))
       = (ρ + (if k m = 0 then ρh else 0)) • g₁ := by
     intro ρ; rw [hh]; by_cases hk : k m = 0 <;> simp [hk, add_smul]
@@ -454,18 +468,17 @@ lemma realCoronK_step_proj_inl (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k :
   rw [hL, hR, getDlogS_run, getDlogS_run,
     show (projCK ρh qS k s).1 m = (s.1 m).map (fun ρ => ρ + (if k m = 0 then ρh else 0)) from rfl]
   cases hsm : s.1 m with
-  | some ρ => simp only [Option.map_some, pure_bind, hval, projCK]
+  | some ρ => simp only [Option.map_some, pure_bind, hval, projCK]; exact EvalDistEq.refl _
   | none =>
       simp only [Option.map_none, bind_assoc, pure_bind, hval, projCK_update]
-      exact evalSPMF_ext (probOutput_bind_add_right_uniform F (if k m = 0 then ρh else 0)
-        (fun v => pure (v • g₁, (Function.update (projCK ρh qS k s).1 m (some v), s.2))))
+      exact uniformSample_bind_add_right_evalDistEq (if k m = 0 then ρh else 0)
+        (fun v => pure (v • g₁, (Function.update (projCK ρh qS k s).1 m (some v), s.2)))
 
 omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 /-- **Coupling A′ eager, sign step.** -/
 lemma realCoronK_step_proj_inr (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k : M → Fin (qS + 1)) (m : M)
     (hxh : xh = ρh • X₁) (s : (M → Option F) × Finset M) :
-    𝒮[(realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inr m)).run s >>= fun z => pure (z.1, projCK ρh qS k z.2)]
-      = 𝒮[(BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inr m)).run (projCK ρh qS k s)] := by
+    ((realCoronK (F := F) g₁ X₁ h xh qS k (Sum.inr m)).run s >>= fun z => pure (z.1, projCK ρh qS k z.2)) =ᵈ ((BLS.ROM.Internal.oracle (F := F) g₁ X₁ (Sum.inr m)).run (projCK ρh qS k s)) := by
   have hval : ∀ ρ : F, ρ • X₁ + (if k m = 0 then xh else (0 : G₁))
       = (ρ + (if k m = 0 then ρh else 0)) • X₁ := by
     intro ρ; rw [hxh]; by_cases hk : k m = 0 <;> simp [hk, add_smul]
@@ -483,11 +496,11 @@ lemma realCoronK_step_proj_inr (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k :
     show ((projCK ρh qS k s).1, insert m (projCK ρh qS k s).2).1 m
         = (s.1 m).map (fun ρ => ρ + (if k m = 0 then ρh else 0)) from rfl]
   cases hsm : s.1 m with
-  | some ρ => simp only [Option.map_some, pure_bind, hval, projCK]
+  | some ρ => simp only [Option.map_some, pure_bind, hval, projCK]; exact EvalDistEq.refl _
   | none =>
       simp only [Option.map_none, bind_assoc, pure_bind, hval, projCK_update]
-      exact evalSPMF_ext (probOutput_bind_add_right_uniform F (if k m = 0 then ρh else 0)
-        (fun v => pure (v • X₁, (Function.update (projCK ρh qS k s).1 m (some v), insert m s.2))))
+      exact uniformSample_bind_add_right_evalDistEq (if k m = 0 then ρh else 0)
+        (fun v => pure (v • X₁, (Function.update (projCK ρh qS k s).1 m (some v), insert m s.2)))
 
 omit [Fintype M] [Fintype F] [DecidableEq G₁] in
 /-- **Coupling A′ (eager, per fixed `k`).**  Projected by `projCK`, the whole `realCoronK k` simulation
@@ -497,16 +510,15 @@ theorem coupling_A'_K (g₁ X₁ h xh : G₁) (ρh : F) (qS : ℕ) (k : M → Fi
     (hh : h = ρh • g₁) (hxh : xh = ρh • X₁) {α : Type}
     (adv : OracleComp (advSpec M G₁) α) :
     ∀ s : (M → Option F) × Finset M,
-      𝒮[(simulateQ (realCoronK (F := F) g₁ X₁ h xh qS k) adv).run s
-          >>= fun z => pure (z.1, projCK ρh qS k z.2)]
-        = 𝒮[(simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ X₁) adv).run (projCK ρh qS k s)] := by
+      ((simulateQ (realCoronK (F := F) g₁ X₁ h xh qS k) adv).run s
+          >>= fun z => pure (z.1, projCK ρh qS k z.2)) =ᵈ ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ X₁) adv).run (projCK ρh qS k s)) := by
   induction adv using OracleComp.inductionOn with
-  | pure a => intro s; simp only [simulateQ_pure, StateT.run_pure, pure_bind]
+  | pure a => intro s; simp only [simulateQ_pure, StateT.run_pure, pure_bind]; exact EvalDistEq.refl _
   | query_bind q k' ih =>
       intro s
       simp only [simulateQ_bind, simulateQ_query, OracleQuery.input_query, OracleQuery.cont_query,
         id_map, StateT.run_bind]
-      refine evalSPMF_bind_proj_congr (projCK ρh qS k)
+      refine evalDistEq_bind_proj_congr (projCK ρh qS k)
         ((realCoronK (F := F) g₁ X₁ h xh qS k q).run s)
         ((BLS.ROM.Internal.oracle (F := F) g₁ X₁ q).run (projCK ρh qS k s))
         (fun b t => (simulateQ (realCoronK (F := F) g₁ X₁ h xh qS k) (k' b)).run t)
@@ -581,10 +593,10 @@ open scoped ENNReal in
 "forgery drew `c = 1`, every signed message drew `c = 0`" event has probability `δ(1−δ)^{|S|}`,
 `δ = (qS+1)⁻¹`. -/
 lemma coin_prob_eq (qS : ℕ) (S : Finset M) (mstar : M) (hm : mstar ∉ S) :
-    Pr[fun k : M → Fin (qS + 1) => k mstar = 0 ∧ ∀ s ∈ S, k s ≠ 0 | $ᵗ (M → Fin (qS + 1))]
+    Pr{let k ← $ᵗ (M → Fin (qS + 1))}[k mstar = 0 ∧ ∀ s ∈ S, k s ≠ 0]
       = (qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ S.card := by
   classical
-  rw [probEvent_uniformSample, coin_partition_card qS S mstar hm, Fintype.card_fun,
+  rw [SampleableType.prEvent_uniformSample, coin_partition_card qS S mstar hm, Fintype.card_fun,
     Fintype.card_fin]
   have hk : S.card + 1 ≤ Fintype.card M := by
     have hlt : S.card < Fintype.card M := by
@@ -630,29 +642,29 @@ lemma coin_factor_run (qS : ℕ) (g₁ : G₁) (g₂ : G₂) (x : F) (adv : Coro
     (hqs : ∀ out ∈ support ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)),
         out.2.2.card ≤ qS) :
     ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
-        * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-              | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
-      ≤ ∑' k : M → Fin (qS + 1), Pr[= k | $ᵗ (M → Fin (qS + 1))]
-          * Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-                | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)] := by
+        * Pr{let y ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[(accR (Gₜ := Gₜ) g₁ g₂ x) y]
+      ≤ ∑' k : M → Fin (qS + 1), Pr{let x ← $ᵗ (M → Fin (qS + 1))}[x = k]
+          * Pr{let out ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out] := by
   classical
   set run := (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅) with hrun
   set c := (qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS with hc
-  have hR : (∑' k : M → Fin (qS + 1), Pr[= k | $ᵗ (M → Fin (qS + 1))]
-        * Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out | run])
+  have hR : (∑' k : M → Fin (qS + 1), Pr{let x ← $ᵗ (M → Fin (qS + 1))}[x = k]
+        * Pr{let out ← run}[accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out])
       = ∑' out, (if accR (Gₜ := Gₜ) g₁ g₂ x out
-          then Pr[= out | run] * Pr[fun k => coinE qS k out | $ᵗ (M → Fin (qS + 1))] else 0) := by
-    simp_rw [probEvent_eq_tsum_ite run, ← ENNReal.tsum_mul_left]
+          then Pr{let x ← run}[x = out] * Pr{let k ← $ᵗ (M → Fin (qS + 1))}[coinE qS k out] else 0) := by
+    rw [tsum_congr fun k => by
+      rw [OracleComp.prEvent_eq_tsum_ite run (fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out),
+        ← ENNReal.tsum_mul_left]]
     rw [ENNReal.tsum_comm]
     refine tsum_congr fun out => ?_
     by_cases hacc : accR (Gₜ := Gₜ) g₁ g₂ x out
     · simp only [hacc, true_and, if_true]
-      rw [probEvent_eq_tsum_ite ($ᵗ (M → Fin (qS + 1))) (fun k => coinE qS k out),
+      rw [OracleComp.prEvent_eq_tsum_ite ($ᵗ (M → Fin (qS + 1))) (fun k => coinE qS k out),
         ← ENNReal.tsum_mul_left]
       refine tsum_congr fun k => ?_
       by_cases hck : coinE qS k out <;> simp [hck, mul_comm]
     · simp only [hacc, false_and, if_false, mul_zero, tsum_zero]
-  rw [hR, probEvent_eq_tsum_ite run (accR (Gₜ := Gₜ) g₁ g₂ x), ← ENNReal.tsum_mul_left]
+  rw [hR, OracleComp.prEvent_eq_tsum_ite run (accR (Gₜ := Gₜ) g₁ g₂ x), ← ENNReal.tsum_mul_left]
   refine ENNReal.tsum_le_tsum fun out => ?_
   rw [mul_ite, mul_zero]
   by_cases hacc : accR (Gₜ := Gₜ) g₁ g₂ x out
@@ -660,7 +672,7 @@ lemma coin_factor_run (qS : ℕ) (g₁ : G₁) (g₂ : G₂) (x : F) (adv : Coro
     by_cases hsupp : out ∈ support run
     · have hmem : out.1.1 ∉ out.2.2 := hacc.2.2
       simp only [coinE]
-      rw [coin_prob_eq qS out.2.2 out.1.1 hmem, mul_comm (Pr[= out | run])]
+      rw [coin_prob_eq qS out.2.2 out.1.1 hmem, mul_comm (Pr{let x ← run}[x = out])]
       refine mul_le_mul_left ?_ _
       rw [hc]
       refine mul_le_mul_right (pow_le_pow_right_of_le_one' ?_ (hqs out hsupp)) _
@@ -668,7 +680,7 @@ lemma coin_factor_run (qS : ℕ) (g₁ : G₁) (g₂ : G₂) (x : F) (adv : Coro
             gcongr
             simp
         _ = 1 := ENNReal.div_self (by positivity) (by simp)
-    · simp only [probOutput_eq_zero_of_not_mem_support hsupp, mul_zero, zero_mul, le_refl]
+    · simp only [(prEvent_eq_zero_of_not_mem_support _) hsupp, mul_zero, zero_mul, le_refl]
   · simp only [hacc, if_false, le_refl]
 
 omit [Fintype M] [DecidableEq M] [SampleableType F] [Fintype F] in
@@ -686,35 +698,29 @@ challenge message yields `x·h`). -/
 lemma reduction_lb (g₁ : G₁) (g₂ : G₂) (x ρh : F) (qS : ℕ) (k : M → Fin (qS + 1))
     (adv : CoronAdv M G₁)
     (hinj : Function.Injective (fun z : G₁ => pairing (F := F) (Gₜ := Gₜ) z g₂)) :
-    Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-        | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
-      ≤ Pr[fun z => z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)
-        | (simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k) adv).run ((fun _ => none), ∅)] := by
+    Pr{let out ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out]
+      ≤ Pr{let z ← (simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k) adv).run ((fun _ => none), ∅)}[z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)] := by
   classical
   -- move the real run to the projected `realCoronK` run (coupling A′-K)
   have hd := coupling_A'_K g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) ρh qS k rfl rfl adv
     ((fun _ => none), ∅)
   rw [projCK_empty] at hd
-  have hA : Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-        | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
-      = Pr[fun z => accR (Gₜ := Gₜ) g₁ g₂ x (z.1, projCK ρh qS k z.2)
-              ∧ coinE qS k (z.1, projCK ρh qS k z.2)
-        | (simulateQ (realCoronK (F := F) g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) qS k) adv).run
-            ((fun _ => none), ∅)] := by
-    rw [show Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-        | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
-      = Pr[fun out => accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out
-        | (simulateQ (realCoronK (F := F) g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) qS k) adv).run
-            ((fun _ => none), ∅) >>= fun z => pure (z.1, projCK ρh qS k z.2)]
-      from by rw [probEvent_def, probEvent_def, hd]]
-    rw [probEvent_bind_eq_tsum]
-    simp only [probEvent_pure, mul_ite, mul_one, mul_zero]
-    rw [← probEvent_eq_tsum_ite]
+  have hA : Pr{let out ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out]
+      = Pr{let z ← ((simulateQ (realCoronK (F := F) g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) qS k) adv).run
+            ((fun _ => none), ∅))}[accR (Gₜ := Gₜ) g₁ g₂ x (z.1, projCK ρh qS k z.2)
+              ∧ coinE qS k (z.1, projCK ρh qS k z.2)] := by
+    rw [show Pr{let out ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out]
+      = Pr{let out ← ((simulateQ (realCoronK (F := F) g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) qS k) adv).run
+            ((fun _ => none), ∅) >>= fun z => pure (z.1, projCK ρh qS k z.2))}[accR (Gₜ := Gₜ) g₁ g₂ x out ∧ coinE qS k out]
+      from (hd.prEvent_eq _).symm]
+    rw [OracleComp.prEvent_bind_eq_tsum]
+    simp only [prEvent_pure, mul_ite, mul_one, mul_zero]
+    rw [← OracleComp.prEvent_eq_tsum_ite]
   rw [hA, ← coupling_coron_realCoron_K_gen g₁ (x • g₁) (ρh • g₁) (ρh • (x • g₁)) qS k adv
       (fun z => accR (Gₜ := Gₜ) g₁ g₂ x (z.1, projCK ρh qS k z.2) ∧ coinE qS k (z.1, projCK ρh qS k z.2))
       (by rintro z ⟨-, hcoin⟩ ⟨m, hmem, hk0⟩; exact hcoin.2 m hmem hk0)]
   -- extraction: a verifying `c = 1` forgery yields `x·h`
-  refine probEvent_mono (fun z _ hQ => ?_)
+  refine prEvent_mono _ _ _ (fun z hQ => ?_)
   obtain ⟨⟨hsome, hpair, _hfresh⟩, hk0, _⟩ := hQ
   simp only [projCK, hk0, if_true] at hsome hpair
   cases hzc : z.2.1 z.1.1 with
@@ -738,21 +744,17 @@ lemma per_x (g₁ : G₁) (g₂ : G₂) (x : F) (qS : ℕ) (adv : CoronAdv M G�
     (hqs : ∀ out ∈ support ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)),
         out.2.2.card ≤ qS) :
     ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
-        * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-              | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)]
-      ≤ ∑' ρh : F, Pr[= ρh | $ᵗ F] * ∑' k : M → Fin (qS + 1), Pr[= k | $ᵗ (M → Fin (qS + 1))]
-          * Pr[fun z => z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)
-            | (simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k) adv).run
-                ((fun _ => none), ∅)] := by
+        * Pr{let y ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[(accR (Gₜ := Gₜ) g₁ g₂ x) y]
+      ≤ ∑' ρh : F, Pr{let x ← $ᵗ F}[x = ρh] * ∑' k : M → Fin (qS + 1), Pr{let x ← $ᵗ (M → Fin (qS + 1))}[x = k]
+          * Pr{let z ← ((simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k) adv).run
+                ((fun _ => none), ∅))}[z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)] := by
   have h1 := coin_factor_run (Gₜ := Gₜ) qS g₁ g₂ x adv hqs
-  have hsum1 : ∑' ρh : F, Pr[= ρh | $ᵗ F]
+  have hsum1 : ∑' ρh : F, Pr{let x ← $ᵗ F}[x = ρh]
       * (((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
-          * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-                | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)])
+          * Pr{let y ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[(accR (Gₜ := Gₜ) g₁ g₂ x) y])
       = ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)
-          * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-                | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)] := by
-    rw [ENNReal.tsum_mul_right, tsum_probOutput_eq_sub, probFailure_uniformSample, tsub_zero, one_mul]
+          * Pr{let y ← (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) adv).run ((fun _ => none), ∅)}[(accR (Gₜ := Gₜ) g₁ g₂ x) y] := by
+    rw [ENNReal.tsum_mul_right, tsum_prEvent_eq_one, one_mul]
   rw [← hsum1]
   refine ENNReal.tsum_le_tsum fun ρh => mul_le_mul_right (le_trans h1 ?_) _
   exact ENNReal.tsum_le_tsum fun k =>
@@ -779,14 +781,14 @@ theorem bls_eufcma_le_cocdh_coron_pk [SampleableType G₁] [Fintype G₁] [Decid
         (pairing (F := F) (Gₜ := Gₜ) out.1.2 g₂
               = pairing (F := F) (Gₜ := Gₜ) (((out.2.1 out.1.1).getD 0) • g₁) (x • g₂)
             ∧ out.1.1 ∉ out.2.2) → (out.2.1 out.1.1).isSome = true) :
-    Pr[= true | blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]
+    Pr{let x ← blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv}[x = true]
       ≤ ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)⁻¹
-          * Pr[= true | coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv)] := by
+          * Pr{let x ← coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv)}[x = true] := by
   classical
   have hlazy :
-      Pr[= true | coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv)] =
-        Pr[= true | coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)] :=
-    probOutput_congr rfl (coCDHExp_coronReductionLazyPK_evalSPMF g₁ g₂ qS adv)
+      Pr{let x ← coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv)}[x = true] =
+        Pr{let x ← coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)}[x = true] :=
+    (coCDHExp_coronReductionLazyPK_evalDistEq g₁ g₂ qS adv).prEvent_eq _
   set c := (qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS with hcdef
   have hctop : c ≠ ⊤ := by
     rw [hcdef]; apply ENNReal.mul_ne_top; · simp
@@ -799,53 +801,49 @@ theorem bls_eufcma_le_cocdh_coron_pk [SampleableType G₁] [Fintype G₁] [Decid
     · refine pow_ne_zero _ ?_
       rw [Ne, ENNReal.div_eq_zero_iff, not_or]
       exact ⟨by exact_mod_cast h.ne', by simp⟩
-  have ha : Pr[= true | blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]
-      = ∑' x : F, Pr[= x | $ᵗ F] * Pr[accR (Gₜ := Gₜ) g₁ g₂ x
-          | (simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
-              ((fun _ => none), ∅)] := by
+  have ha : Pr{let x ← blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv}[x = true]
+      = ∑' x : F, Pr{let y ← $ᵗ F}[y = x] * Pr{let y ← ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
+              ((fun _ => none), ∅))}[(accR (Gₜ := Gₜ) g₁ g₂ x) y] := by
     simp only [blsEufTightPK]
-    rw [probOutput_bind_eq_tsum]
+    rw [OracleComp.prEvent_bind_eq_tsum]
     refine tsum_congr fun x => ?_
     congr 1
     simp only [← Bool.decide_and]
-    rw [bind_pure_comp, probOutput_map]
+    rw [bind_pure_comp, prEvent_map]
     simp only [decide_eq_true_eq]
-    refine le_antisymm (probEvent_mono fun out hout hAB => ⟨hq x out hout hAB, hAB.1, hAB.2⟩)
-      (probEvent_mono fun out _ h => ⟨h.2.1, h.2.2⟩)
-  have hb : Pr[= true | coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)]
-      = ∑' x : F, Pr[= x | $ᵗ F] * ∑' ρh : F, Pr[= ρh | $ᵗ F]
-          * ∑' k : M → Fin (qS + 1), Pr[= k | $ᵗ (M → Fin (qS + 1))]
-          * Pr[fun z => z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)
-            | (simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k)
-                (adv (x • g₂))).run ((fun _ => none), ∅)] := by
+    refine le_antisymm (prEvent_mono_of_support _ _ _ fun out hout hAB => ⟨hq x out hout hAB, hAB.1, hAB.2⟩)
+      (prEvent_mono _ _ _ fun out h => ⟨h.2.1, h.2.2⟩)
+  have hb : Pr{let x ← coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)}[x = true]
+      = ∑' x : F, Pr{let y ← $ᵗ F}[y = x] * ∑' ρh : F, Pr{let x ← $ᵗ F}[x = ρh]
+          * ∑' k : M → Fin (qS + 1), Pr{let x ← $ᵗ (M → Fin (qS + 1))}[x = k]
+          * Pr{let z ← ((simulateQ (coronOracleK (F := F) g₁ (x • g₁) (ρh • g₁) qS k)
+                (adv (x • g₂))).run ((fun _ => none), ∅))}[z.1.2 - (((z.2.1 z.1.1).getD 0) • (x • g₁)) = x • (ρh • g₁)] := by
     simp only [coCDHExp, coronReductionKPK, bind_assoc, pure_bind]
-    rw [probOutput_bind_eq_tsum]
+    rw [OracleComp.prEvent_bind_eq_tsum]
     refine tsum_congr fun x => ?_
     congr 1
-    rw [probOutput_congr rfl
-      (evalSPMF_bind_bijective_add_right_uniform (α := F) (β := G₁) (· • g₁) hgenbij 0 _).symm]
-    simp only [add_zero]
-    rw [probOutput_bind_eq_tsum]
+    rw [← (uniformSample_bind_bijective_evalDistEq hgenbij _).prEvent_eq _]
+    rw [OracleComp.prEvent_bind_eq_tsum]
     refine tsum_congr fun ρh => ?_
     congr 1
-    rw [probOutput_bind_eq_tsum]
+    rw [OracleComp.prEvent_bind_eq_tsum]
     refine tsum_congr fun k => ?_
     congr 1
-    rw [bind_pure_comp, probOutput_map]
+    rw [bind_pure_comp, prEvent_map]
     simp only [decide_eq_true_eq]
-  have hcore : c * Pr[= true | blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]
-      ≤ Pr[= true | coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)] := by
+  have hcore : c * Pr{let x ← blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv}[x = true]
+      ≤ Pr{let x ← coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)}[x = true] := by
     rw [ha, hb, ← ENNReal.tsum_mul_left]
     refine ENNReal.tsum_le_tsum fun x => ?_
-    rw [← mul_assoc, mul_comm c (Pr[= x | $ᵗ F]), mul_assoc]
+    rw [← mul_assoc, mul_comm c (Pr{let y ← $ᵗ F}[y = x]), mul_assoc]
     exact mul_le_mul_right
       (per_x (Gₜ := Gₜ) g₁ g₂ x qS (adv (x • g₂)) hinj (hqs x)) _
-  calc Pr[= true | blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]
-      = c⁻¹ * (c * Pr[= true | blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]) := by
+  calc Pr{let x ← blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv}[x = true]
+      = c⁻¹ * (c * Pr{let x ← blsEufTightPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv}[x = true]) := by
         rw [← mul_assoc, ENNReal.inv_mul_cancel hc0 hctop, one_mul]
-    _ ≤ c⁻¹ * Pr[= true | coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)] := by
+    _ ≤ c⁻¹ * Pr{let x ← coCDHExp (F := F) g₁ g₂ (coronReductionKPK qS adv)}[x = true] := by
         exact mul_le_mul_right hcore _
-    _ = c⁻¹ * Pr[= true | coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv)] := by
+    _ = c⁻¹ * Pr{let x ← coCDHExp (F := F) g₁ g₂ (coronReductionLazyPK qS adv)}[x = true] := by
         rw [hlazy]
 
 omit [Fintype F] in
@@ -864,10 +862,10 @@ theorem bls_eufcma_le_cocdh_coron_lazy_pk [SampleableType G₁] [Fintype G₁] [
         ((simulateQ (BLS.ROM.Internal.oracle (F := F) g₁ (x • g₁)) (adv (x • g₂))).run
           ((fun _ => none), ∅)),
         out.2.2.card ≤ qS) :
-    Pr[= true | blsEufLazyPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv]
+    Pr{let x ← blsEufLazyPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv}[x = true]
       ≤ ((qS + 1 : ℝ≥0∞)⁻¹ * ((qS : ℝ≥0∞) / (qS + 1)) ^ qS)⁻¹
-          * Pr[= true | coCDHExp (F := F) g₁ g₂
-              (coronReductionLazyPK qS (cacheForgeryPK adv))] := by
+          * Pr{let x ← (coCDHExp (F := F) g₁ g₂
+              (coronReductionLazyPK qS (cacheForgeryPK adv)))}[x = true] := by
   unfold blsEufLazyPK
   refine bls_eufcma_le_cocdh_coron_pk g₁ g₂ qS (cacheForgeryPK adv) hgenbij hinj
     (fun x out hout => ?_) (fun x out hout _ => ?_)

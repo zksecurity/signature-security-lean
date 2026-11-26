@@ -6,7 +6,7 @@ import Proofs.Runtime.Caliper.SchnorrAGMHandlerRandomSource
 reply/store query tree. Erasure interprets stored packet bytes; it supplies no
 machine conversion or free request storage. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrAGM.Handler
-open Caliper BoundedSource OracleComp OracleSpec Schnorr.AGM AlgebraicGroupModel.Interaction
+open Caliper BoundedSource OracleComp OracleSpec Schnorr.AGM GroupModel.Interaction
 open Signatures.Runtime.SchnorrAGM.Native
 variable {w qH qS randomBound : Nat} {M F G : Type} [DecidableEq M] [DecidableEq G]
     (layout : Layouts w M F G qH qS randomBound)

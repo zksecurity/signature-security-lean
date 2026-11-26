@@ -1,6 +1,5 @@
 import Mathlib.Probability.Distributions.Uniform
 import Mathlib.Probability.ProbabilityMassFunction.Constructions
-import ToMathlib.Probability.ProbabilityMassFunction.Lemmas
 import Mathlib.Logic.Equiv.Fin.Basic
 import Mathlib.Data.Fintype.BigOperators
 import Mathlib.Data.Nat.Size
@@ -16,11 +15,34 @@ namespace Signatures.Runtime.RejectionSampling
 
 open scoped ENNReal
 
+/-- The uniform `PMF` on a finite nonempty type. Mathlib's `uniformOfFintype` became a
+`Measure`, while the samplers here stay `PMF`s. -/
+noncomputable def uniformOfFintype (X : Type*) [Fintype X] [Nonempty X] : PMF X :=
+  PMF.ofFintype (fun _ => (Fintype.card X : ℝ≥0∞)⁻¹) (by
+    rw [Finset.sum_const, Finset.card_univ, nsmul_eq_mul]
+    exact ENNReal.mul_inv_cancel (by simp [Fintype.card_ne_zero]) (ENNReal.natCast_ne_top _))
+
+@[simp] theorem uniformOfFintype_apply (X : Type*) [Fintype X] [Nonempty X] (x : X) :
+    uniformOfFintype X x = (Fintype.card X : ℝ≥0∞)⁻¹ := rfl
+
+theorem uniformOfFintype_map_of_bijective {X Y : Type*} [Fintype X] [Fintype Y]
+    [Nonempty X] [Nonempty Y] (f : X → Y) (hf : Function.Bijective f) :
+    (uniformOfFintype X).map f = uniformOfFintype Y := by
+  classical
+  ext y
+  obtain ⟨x, rfl⟩ := hf.surjective y
+  rw [PMF.map_apply, tsum_eq_single x]
+  · simp [Fintype.card_of_bijective hf]
+  · intro b hb
+    rw [ite_eq_right_iff]
+    intro h
+    exact absurd (hf.injective h).symm hb
+
 def accept (n : Nat) {w : Nat} (x : Fin (2 ^ w)) : Option (Fin n) :=
   if h : x.val < n then some ⟨x.val, h⟩ else none
 
 noncomputable def draw (n w : Nat) : PMF (Option (Fin n)) :=
-  (PMF.uniformOfFintype (Fin (2 ^ w))).map (accept n)
+  (uniformOfFintype (Fin (2 ^ w))).map (accept n)
 
 noncomputable def sample (n w : Nat) : Nat → PMF (Option (Fin n))
   | 0 => PMF.pure none
@@ -44,7 +66,7 @@ theorem draw_some (n w : Nat) (hfit : n ≤ 2 ^ w) (y : Fin n) :
   rw [PMF.map_apply]
   let x : Fin (2 ^ w) := ⟨y.val, y.isLt.trans_le hfit⟩
   rw [tsum_eq_single x]
-  · simp [accept_some_iff, x, PMF.uniformOfFintype_apply]
+  · simp [accept_some_iff, x, uniformOfFintype_apply]
   · intro b hb
     rw [ite_eq_right]
     intro h
@@ -102,12 +124,12 @@ theorem sample_some (n w k : Nat) (hfit : n ≤ 2 ^ w) (x : Fin n) :
 /-- Independent uniform draws form the uniform distribution on pairs. -/
 theorem uniform_pair {X Y : Type} [Fintype X] [Fintype Y]
     [Nonempty X] [Nonempty Y] :
-    (PMF.uniformOfFintype X).bind (fun x =>
-      (PMF.uniformOfFintype Y).map (fun y => (x, y))) =
-      PMF.uniformOfFintype (X × Y) := by
+    (uniformOfFintype X).bind (fun x =>
+      (uniformOfFintype Y).map (fun y => (x, y))) =
+      uniformOfFintype (X × Y) := by
   classical
   ext ⟨x, y⟩
-  simp [PMF.bind_apply, PMF.map_apply, PMF.uniformOfFintype_apply,
+  simp [PMF.bind_apply, PMF.map_apply, uniformOfFintype_apply,
     Prod.ext_iff, ite_and, mul_ite, tsum_fintype, ENNReal.mul_inv]
 
 def joinBit (w : Nat) : Fin 2 × Fin (2 ^ w) ≃ Fin (2 ^ (w + 1)) :=
@@ -116,18 +138,18 @@ def joinBit (w : Nat) : Fin 2 × Fin (2 ^ w) ≃ Fin (2 ^ (w + 1)) :=
 /-- Draw exactly w independent fair bits, using their binary numeric encoding. -/
 noncomputable def fairWord : (w : Nat) → PMF (Fin (2 ^ w))
   | 0 => PMF.pure 0
-  | w + 1 => ((PMF.uniformOfFintype (Fin 2)).bind fun b =>
+  | w + 1 => ((uniformOfFintype (Fin 2)).bind fun b =>
       (fairWord w).map (fun x => (b, x))).map (joinBit w)
 
-theorem fairWord_uniform (w : Nat) : fairWord w = PMF.uniformOfFintype (Fin (2 ^ w)) := by
+theorem fairWord_uniform (w : Nat) : fairWord w = uniformOfFintype (Fin (2 ^ w)) := by
   induction w with
   | zero =>
     ext x
     have hx : x = 0 := Subsingleton.elim (α := Fin 1) _ _
-    simp [fairWord, hx, PMF.pure_apply, PMF.uniformOfFintype_apply]
+    simp [fairWord, hx, PMF.pure_apply, uniformOfFintype_apply]
   | succ w ih =>
     simp only [fairWord, ih, uniform_pair]
-    exact PMF.uniformOfFintype_map_of_bijective _ (joinBit w).bijective
+    exact uniformOfFintype_map_of_bijective _ (joinBit w).bijective
 
 noncomputable def fairSample (n w : Nat) : Nat → PMF (Option (Fin n))
   | 0 => PMF.pure none

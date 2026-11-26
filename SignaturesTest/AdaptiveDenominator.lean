@@ -38,12 +38,12 @@ example : (Finset.univ.filter (fun x : F => x = 0)).card = 1 := by decide
 example : (109 : ℚ) / 125 > 1 / 5 + 1 / 5 := by norm_num
 
 -- The collision kernel needs a nonzero slope: one root versus every field element.
-example : Pr[fun ρ : F => 2 * ρ + 3 = 4 | ($ᵗ F : ProbComp F)] = 1 / 5 := by
-  rw [probEvent_uniformSample]
+example : Pr{let ρ ← ($ᵗ F : ProbComp F)}[2 * ρ + 3 = 4] = 1 / 5 := by
+  rw [SampleableType.prEvent_uniformSample]
   have hcard : (Finset.univ.filter (fun ρ : F => 2 * ρ + 3 = 4)).card = 1 := by decide
   rw [hcard]
-  norm_num [F]
+  simp [F, ENNReal.div_self]
 
-example : Pr[fun ρ : F => 0 * ρ + 3 = 3 | ($ᵗ F : ProbComp F)] = 1 := by simp
+example : Pr{let ρ ← ($ᵗ F : ProbComp F)}[0 * ρ + 3 = 3] = 1 := by simp [ENNReal.div_self]
 
 end SignaturesTest.AdaptiveDenominator

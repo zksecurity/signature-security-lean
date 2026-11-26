@@ -2,7 +2,7 @@ import Proofs.Schnorr.AGMReduction
 
 /-! Support invariants for the AGM reduction's recorded representations. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 namespace Schnorr.AGM.Reduction
 

@@ -13,7 +13,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QD : Q.IsDistributive]
   {I J S : Type} {source : OracleSpec I} {target : OracleSpec J}
   {src : Interface (C := C) source} {dst : Interface (C := C) target}
   (store : C.Str S) (control : ControlCosts)
@@ -21,7 +21,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   (handler : Code Q target dst (StepClass.HasProd.prod src.position store)
     (StepClass.HasProd.prod src.response store))
 
-omit [C.HasProd] [C.HasSum] [Q.HasCategory] QP QD in
+omit [C.HasProd] [C.HasSum] [Q.HasComposition] QP QD in
 @[simp] theorem auditFrame_fits {A B : Type} (a : C.Str A) (b : C.Str B) (input : A)
     (r : Run (B × S)) (metrics : ExecutionProfile.Metrics I)
     (extra count width counter : Nat) (allowed : I → Prop) :
@@ -30,7 +30,7 @@ omit [C.HasProd] [C.HasSum] [Q.HasCategory] QP QD in
         count ≤ counter ∧ metrics.Fits width counter allowed :=
   ExecutionProfile.frame_fits a b input (r.value.1, metrics) extra count width counter allowed
 
-omit [C.HasProd] [C.HasSum] [Q.HasCategory] QP QD in
+omit [C.HasProd] [C.HasSum] [Q.HasComposition] QP QD in
 @[simp] theorem auditFrame_price {A B : Type} (a : C.Str A) (b : C.Str B) (input : A)
     (r : Run (B × S)) (metrics : ExecutionProfile.Metrics I)
     (extra count route query : Nat) :
@@ -38,7 +38,7 @@ omit [C.HasProd] [C.HasSum] [Q.HasCategory] QP QD in
       metrics.price route query + route := by
   exact ExecutionProfile.Metrics.price_node metrics _ _ route query
 
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem auditLoop_sizes {A B : Type} (a : C.Str A) (b : C.Str B)
     (body : A × S → OracleComp target (Audit I (B ⊕ A) S))
     (stop : A × S → OracleComp target (Audit I B S)) (fuel : Nat) (input : A × S)
@@ -62,7 +62,7 @@ theorem auditLoop_sizes {A B : Type} (a : C.Str A) (b : C.Str B)
           obtain ⟨rest, _, rfl⟩ := hr
           exact ExecutionProfile.frame_sizes _ _ _ _ _ _
 
-omit [Q.HasCategory] QP QD [C.HasSum] in
+omit [Q.HasComposition] QP QD [C.HasSum] in
 theorem auditIteration_sizes {A : Type} (a : C.Str A) (counter : C.Str Nat)
     (body : A × S → OracleComp target (Audit I A S)) (count : Nat) (input : A × S)
     (r : Audit I A S) (hr : r ∈ support (auditIteration (Q := Q) store control a counter body count input)) :

@@ -6,7 +6,7 @@ import Signatures.Model.SignatureInteraction
 The adversary receives only the verification key. Base queries, signing, and final verification
 share one lazy random oracle. Only answers explicitly returned to the adversary enter its
 representation transcript; internal signing/verification base lookups do not.
-The source experiment executes a certified adversary through `AlgebraicGroupModel.Interaction`.
+The source experiment executes a certified adversary through `GroupModel.Interaction`.
 `SignatureInteraction` supplies the signature adapter and its exact execution-equivalence proof.
 Grouped transcripts remain a proof-side view for the existing reductions.
 -/
@@ -113,7 +113,7 @@ def interactiveRun (terms : M → List (ι × F)) (α : F)
     -- The remaining external interface provides private randomness and lazy base values.
     OracleComp (baseSpec ι G₁)
       -- Return plain result data and separately typed group lists, after certified execution.
-      (AlgebraicGroupModel.Interaction.Message (Interactive.Result F M) (Interactive.Group G₁ G₂)) :=
+      (GroupModel.Interaction.Message (Interactive.Result F M) (Interactive.Group G₁ G₂)) :=
   -- Run A's certified adapter, then project away final coefficients and accumulated basis.
   (fun z => z.1.value) <$> A.toInteractive.run (Interactive.impl
     -- Private randomness stays an ambient uniform query; it adds no group inputs.

@@ -1,5 +1,5 @@
 import VCVio.CryptoFoundations.SeededFork
-import ToMathlib.MeasureTheory.MeasurableSpace.Option
+import ToCslib.MeasureTheory.MeasurableSpace.Option
 
 /-!
 Fixed-private-tape replay for Schnorr's simulated adversary. Uniform draws and
@@ -48,24 +48,22 @@ def fork [DecidableEq F] (main : OracleComp (Spec F) A) (randomBound qR qH : Nat
     (cf : A → Option (Fin (qH + 1))) : OracleComp (Spec F) (Option (A × A)) :=
   seededFork main (bounds randomBound qR qH) (families randomBound) (.inr ()) cf
 
-noncomputable local instance [Fintype F] [Inhabited F] : IsUniformSpec (Unit →ₒ F) :=
-  IsUniformSpec.ofFintypeInhabited _
+noncomputable local instance [Fintype F] [Inhabited F] :
+    OracleSpec.UniformAnswerMeasure (Unit →ₒ F) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 /-- The seeded fork has the established quadratic success bound. Seed coverage
 and Schnorr transcript extraction are separate obligations, not hidden premises. -/
 theorem fork_success_bound [DecidableEq F] [Fintype F] [Inhabited F]
-    [MeasurableSpace A] [DiscreteMeasurableSpace A]
     (main : OracleComp (Spec F) A) (randomBound qR qH : Nat)
     (cf : A → Option (Fin (qH + 1))) :
-    let acc : ENNReal := ∑ s, 𝒟[cf <$> main] {some s}
+    let acc : ENNReal := ∑ s, Pr{let x ← main}[cf x = some s]
     acc * (acc / (qH + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
-      𝒟[fork main randomBound qR qH cf] {r | r.isSome} := by
-  rw [evalDist_apply _ Option.measurableSet_isSome]
+      Pr{let r ← fork main randomBound qR qH cf}[r.isSome] := by
   have hcard : Fintype.card ((Spec F).Range (.inr ())) = Fintype.card F :=
     Fintype.card_congr (Equiv.refl F)
-  simpa only [fork, bounds, evalDist_apply_singleton, hcard, Nat.cast_add,
-    Nat.cast_one, Set.mem_ofPred_eq] using
-    le_probEvent_isSome_seededFork main (bounds randomBound qR qH)
+  simpa only [fork, bounds, hcard, Nat.cast_add, Nat.cast_one] using
+    le_prEvent_isSome_seededFork main (bounds randomBound qR qH)
       (families randomBound) (.inr ()) cf
 
 /-- A generated seed has enough entries even for private draws not used in the first run. -/

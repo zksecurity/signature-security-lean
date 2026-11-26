@@ -30,7 +30,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   {F G₁ G₂ K M : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -93,7 +93,7 @@ theorem handler_denote (n : Nat) (saved : List (TapeCell F) × List (TapeCell F)
     map_pure, pure_bind, bind_pure_comp, bind_map_left,
     Functor.map_map, id_eq, NativeUniform.encodeState, semantics, StateT.run] using h
 
-omit rep data cost primitive uniform ports QD QS QP [Q.HasCategory] [DecidableEq F] in
+omit rep data cost primitive uniform ports QD QS QP [Q.HasComposition] [DecidableEq F] in
 theorem simulate_source {A : Type} (main : ProbComp A) (state : State F) :
     (simulateQ semantics main).run (NativeUniform.encodeState state) =
       (fun p => (p.1, NativeUniform.encodeState p.2)) <$>

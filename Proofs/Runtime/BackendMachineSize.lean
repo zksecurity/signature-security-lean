@@ -13,7 +13,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ K M : Type} [SampleableType F]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ K M))

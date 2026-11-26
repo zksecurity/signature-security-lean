@@ -63,7 +63,7 @@ theorem evalTerms_queries [AddCommMonoid R] [SMul F R] (terms : List (M × F)) :
   | nil => trivial
   | cons p rest ih =>
     simp only [evalTerms, List.length_cons, isTotalQueryBound_query_bind_iff]
-    refine ⟨by omega, fun sampled => ?_⟩
+    refine ⟨by omega, fun (sampled : R) => ?_⟩
     rw [Nat.add_sub_cancel, bind_pure_comp]
     exact (isQueryBound_map_iff (evalTerms rest) (fun r => p.2 • sampled + r)
       rest.length _ _).2 ih

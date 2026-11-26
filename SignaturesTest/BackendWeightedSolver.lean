@@ -17,7 +17,7 @@ private instance : Fact (Nat.Prime 5) := ⟨by decide⟩
 
 variable {C : StepClass} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass C}
-  [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive] [OptionCode (Q := Q)]
+  [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive] [OptionCode (Q := Q)]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase (ZMod 5) (ZMod 5) (ZMod 5) Nat Bool))
   (bd : Boundary C (generalSpec (Nat × Fin 2) (ZMod 5 × Nat) (ZMod 5) 4).toPFunctor (ZMod 5)

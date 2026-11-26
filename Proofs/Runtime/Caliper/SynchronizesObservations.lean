@@ -32,7 +32,7 @@ theorem Synchronizes.mono_left_support {relation stronger : A → B → Prop}
   | pure h => exact .pure (implies _ _ (by simp) h)
   | query position _ ih =>
     exact .query position (fun answer => ih answer
-      (fun a b reached h => implies a b (Set.mem_iUnion.mpr ⟨answer, reached⟩) h))
+      (fun a b reached h => implies a b (PFunctor.FreeM.mem_support_liftBind.mpr ⟨answer, reached⟩) h))
 
 /-- Recover joint leaf synchronization from an equality of observed query
 trees. Neither observation has to be injective. -/

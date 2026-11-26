@@ -16,7 +16,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd]
+  [Q.HasComposition] [QP : Q.HasProd]
   {I A B : Type} {spec : OracleSpec I} {iface : Interface (C := C) spec}
   (data : DataRepresentation C) (construct : DataCode Q data)
   (a : C.Str A) (b : C.Str B)

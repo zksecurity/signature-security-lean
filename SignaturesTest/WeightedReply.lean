@@ -19,7 +19,7 @@ private abbrev model := arithmetic field field field Nat Bool PrimitiveCosts.uni
 section Native
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase field field field Nat Bool))
   (data : DataCode Q rep.data) (sampling : MachineCompiler.SamplingImplementation Q iface rep)

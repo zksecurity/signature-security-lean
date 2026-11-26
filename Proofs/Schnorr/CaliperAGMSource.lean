@@ -48,7 +48,7 @@ noncomputable def LocalQueries.fallback : P.layout.forgery.Value :=
       ⟨(generator, generator), P.generatorValid, P.generatorValid⟩))
 
 omit [DecidableEq F] [DecidableEq G] [DecidableEq M] in
-theorem LocalQueries.fallback_valid (basis : AlgebraicGroupModel.Interaction.Groups (AGM.Group G)) :
+theorem LocalQueries.fallback_valid (basis : GroupModel.Interaction.Groups (AGM.Group G)) :
     (Interface.decodeForgery (allowances.fallback P caller).val).Valid basis :=
   CaliperBackend.SchnorrAGM.Full.Caller.Partial.blank_valid P.layout _ basis
 

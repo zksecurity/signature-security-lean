@@ -1,6 +1,5 @@
 import Proofs.BLS.LazyAGMExtraction
-import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
-import VCVio.OracleComp.Constructions.SampleableType.MeasureCompatibility
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-! Joint deferred sampling for the BLS AGM solvers. The entire adaptive
 execution, transcript extraction, and final target lookup are interpreted under
@@ -19,8 +18,7 @@ theorem lazyRun_eq_table [DecidableEq M] [Finite M] [SampleableType R]
       𝒟[do
         let table ← ($ᵗ (M → R) : ProbComp (M → R))
         simulateQ (CoCDH.coinTableImpl table) oa] := by
-  apply evalDist_eq_of_evalSPMF_eq
-  simpa only [tableExtending_empty] using CoCDH.evalSPMF_lazyCoin_eq_table oa ∅
+  simpa only [tableExtending_empty] using (CoCDH.evalDistEq_lazyCoin_eq_table oa ∅).evalDist_eq
 
 /-- A table of independent pairs has exactly the law of two independent
 tables. Keeping this joint law is necessary for the bad branch's hidden slope. -/

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
 import Proofs.LinearFunctional.Dynamic
+import VCVio.OracleComp.EvalDist.Sum
 
 /-!
 # Adaptive AGM extraction for linear-functional signatures
@@ -75,10 +76,9 @@ bases and signatures. -/
 theorem realGameDynAdaptive_eq_map_scalar (w : ι → M → F) (g₁ : G₁) (g₂ : G₂)
     (adv : AdaptiveAdv F M ι G₁ G₂)
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁)) :
-    𝒮[realGameDynAdaptive w g₂ adv]
-      = 𝒮[mapScalarDyn w g₁ <$> scalarGameDynAdaptive w g₁ g₂ adv] := by
+    realGameDynAdaptive w g₂ adv =ᵈ (mapScalarDyn w g₁ <$> scalarGameDynAdaptive w g₁ g₂ adv) := by
   simp only [realGameDynAdaptive, scalarGameDynAdaptive, mapScalarDyn, map_bind, map_pure]
-  refine evalSPMF_bind_congr' _ fun α => ?_
+  refine EvalDistEq.bind_right _ fun α => ?_
   exact (functional_perfect_sim w g₁ α hgen
     (fun H signO => do
       let fo ← adv (α • g₂) H signO
@@ -98,13 +98,11 @@ omit [SampleableType G₁] [Fintype G₁] [Fintype F] in
 /-- The good extraction event is exactly the success event of `adaptiveGoodDlogReduction`. -/
 theorem adaptive_good_extract_eq_dlog (w : ι → M → F) (g₁ : G₁) (g₂ : G₂)
     (adv : AdaptiveAdv F M ι G₁ G₂) :
-    Pr[fun x => (dynReprA w x.1 x.2.2).const /
-          (muW w x.2.2 x.1.2.mstar - (dynReprA w x.1 x.2.2).lin) = x.2.1 |
-        scalarGameDynAdaptive w g₁ g₂ adv]
-      = Pr[= true | dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction w adv)] := by
-  rw [← probEvent_eq_eq_probOutput]
+    Pr{let x ← scalarGameDynAdaptive w g₁ g₂ adv}[(dynReprA w x.1 x.2.2).const /
+          (muW w x.2.2 x.1.2.mstar - (dynReprA w x.1 x.2.2).lin) = x.2.1]
+      = Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction w adv)}[x = true] := by
   simp only [scalarGameDynAdaptive, dlog11Exp, adaptiveGoodDlogReduction, bind_assoc, pure_bind,
-    probEvent_bind_eq_tsum, probEvent_pure, decide_eq_true_eq]
+    OracleComp.prEvent_bind_eq_tsum, prEvent_pure, decide_eq_true_eq]
 
 omit [DecidableEq Gₜ] in
 /-- Adaptive perfect simulation followed by the algebraic extraction split.  This theorem leaves
@@ -114,17 +112,13 @@ theorem functional_euf_cma_adaptive_split (w : ι → M → F) (g₁ : G₁) (g�
     (adv : AdaptiveAdv F M ι G₁ G₂) (valid : DynForgery F M ι → Prop)
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     (hpair : Function.Injective (fun c : F => c • (pairing (F := F) g₁ g₂ : Gₜ))) :
-    Pr[fun x => valid x.1 ∧ dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ x |
-        realGameDynAdaptive w g₂ adv]
-      ≤ Pr[fun x => (dynReprA w x.1 x.2.2).const /
-            (muW w x.2.2 x.1.2.mstar - (dynReprA w x.1 x.2.2).lin) = x.2.1 |
-          scalarGameDynAdaptive w g₁ g₂ adv]
-        + Pr[fun x => (valid x.1 ∧
+    Pr{let x ← realGameDynAdaptive w g₂ adv}[valid x.1 ∧ dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ x]
+      ≤ Pr{let x ← scalarGameDynAdaptive w g₁ g₂ adv}[(dynReprA w x.1 x.2.2).const /
+            (muW w x.2.2 x.1.2.mstar - (dynReprA w x.1 x.2.2).lin) = x.2.1]
+        + Pr{let x ← scalarGameDynAdaptive w g₁ g₂ adv}[(valid x.1 ∧
               dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ (mapScalarDyn w g₁ x)) ∧
-              (dynReprA w x.1 x.2.2).lin = muW w x.2.2 x.1.2.mstar |
-            scalarGameDynAdaptive w g₁ g₂ adv] := by
-  rw [probEvent_def, realGameDynAdaptive_eq_map_scalar w g₁ g₂ adv hgen,
-    ← probEvent_def, probEvent_map]
+              (dynReprA w x.1 x.2.2).lin = muW w x.2.2 x.1.2.mstar] := by
+  rw [(realGameDynAdaptive_eq_map_scalar w g₁ g₂ adv hgen).prEvent_eq, prEvent_map]
   exact agm_forgery_extract_split (scalarGameDynAdaptive w g₁ g₂ adv)
     (fun x => valid x.1 ∧
       dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ (mapScalarDyn w g₁ x))
@@ -219,19 +213,18 @@ samples are never-failing and are erased; simulator signatures are converted to 
 by the pointwise perfect-simulation identity. -/
 theorem adaptiveIndependentBadView_scalar (w : ι → M → F) (g₁ : G₁) (g₂ : G₂)
     (adv : AdaptiveAdv F M ι G₁ G₂) :
-    𝒮[AdaptiveBadView.scalar <$> adaptiveIndependentBadView w g₁ g₂ adv]
-      = 𝒮[scalarGameDynAdaptive w g₁ g₂ adv] := by
+    (AdaptiveBadView.scalar <$> adaptiveIndependentBadView w g₁ g₂ adv) =ᵈ scalarGameDynAdaptive w g₁ g₂ adv := by
   unfold adaptiveIndependentBadView scalarGameDynAdaptive AdaptiveBadView.scalar
   simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply]
-  rw [DeferredSampling.evalSPMF_bind_const_neverFails ($ᵗ F) (by simp)]
-  refine evalSPMF_bind_congr' _ fun κ => ?_
-  refine evalSPMF_bind_congr' _ fun ρ => ?_
+  refine (EvalDistEq.bind_const ($ᵗ F) _).trans ?_
+  refine EvalDistEq.bind_right _ fun κ => ?_
+  refine EvalDistEq.bind_right _ fun ρ => ?_
   have hs : simSign w (κ • g₁) ρ = realSign w κ (fun i => ρ i • g₁) := by
     funext m
     exact simSign_eq_realSign w g₁ κ ρ m
   rw [hs]
-  refine evalSPMF_bind_congr' _ fun fo => ?_
-  rw [DeferredSampling.evalSPMF_bind_const_neverFails ($ᵗ (ι → F)) (by simp)]
+  refine EvalDistEq.bind_right _ fun fo => ?_
+  exact EvalDistEq.bind_const ($ᵗ (ι → F)) _
 
 /-- The scalar expression output by the affine reduction, written in the common view.  The mask
 table is `b = ρ - a*z`; spelling it this way is only for the coupling proof--the reduction itself
@@ -255,32 +248,36 @@ the adversary sees and branches on the concrete base and signature values, its o
 resulting denominator coefficient vector are independent of the hidden slope table. -/
 theorem adaptiveAffineBadView_eq_independent (w : ι → M → F) (g₁ : G₁) (g₂ : G₂)
     (adv : AdaptiveAdv F M ι G₁ G₂) :
-    𝒮[adaptiveAffineBadView w g₁ g₂ adv]
-      = 𝒮[adaptiveIndependentBadView w g₁ g₂ adv] := by
+    adaptiveAffineBadView w g₁ g₂ adv =ᵈ adaptiveIndependentBadView w g₁ g₂ adv := by
   unfold adaptiveAffineBadView adaptiveIndependentBadView
-  refine evalSPMF_bind_congr' _ fun z => ?_
-  refine evalSPMF_bind_congr' _ fun κ => ?_
-  trans 𝒮[do
+  refine EvalDistEq.bind_right _ fun z => ?_
+  refine EvalDistEq.bind_right _ fun κ => ?_
+  trans (do
     let a ← ($ᵗ (ι → F) : ProbComp (ι → F))
     let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))
     let fo ← adv (κ • g₂) (fun i => ρ i • g₁)
       (realSign w κ (fun i => ρ i • g₁))
-    pure (AdaptiveBadView.mk fo κ z a ρ)]
-  · refine evalSPMF_bind_congr' _ fun a => ?_
+    pure (AdaptiveBadView.mk fo κ z a ρ) : ProbComp (AdaptiveBadView F M ι))
+  · refine EvalDistEq.bind_right _ fun a => ?_
     unfold affineTable
-    simpa only [Pi.add_def, Pi.add_apply] using
-      evalSPMF_ext (probOutput_bind_add_left_uniform (ι → F) (fun i => a i * z)
-        (fun ρ : ι → F => do
-          let fo ← adv (κ • g₂) (fun i => ρ i • g₁)
-            (realSign w κ (fun i => ρ i • g₁))
-          pure (AdaptiveBadView.mk fo κ z a ρ)))
+    have he : Function.Bijective (fun b : ι → F => fun i => a i * z + b i) :=
+      Function.bijective_iff_has_inverse.2 ⟨fun ρ i => ρ i - a i * z,
+        fun b => by funext i; simp, fun ρ => by funext i; simp⟩
+    let : MeasurableSpace (ι → F) := ⊤
+    let : MeasurableSpace (AdaptiveBadView F M ι) := ⊤
+    exact EvalDistEq.of_evalDist_eq (evalDist_bind_bijective_uniform_cross _ _
+      SampleableType.evalDist_uniformSample SampleableType.evalDist_uniformSample _ he
+      (fun ρ : ι → F => do
+        let fo ← adv (κ • g₂) (fun i => ρ i • g₁)
+          (realSign w κ (fun i => ρ i • g₁))
+        pure (AdaptiveBadView.mk fo κ z a ρ)))
   · let seen : ProbComp (DynForgery F M ι × (ι → F)) := do
       let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))
       let fo ← adv (κ • g₂) (fun i => ρ i • g₁)
         (realSign w κ (fun i => ρ i • g₁))
       pure (fo, ρ)
     simpa only [seen, bind_assoc, pure_bind] using
-      DeferredSampling.evalSPMF_bind_comm ($ᵗ (ι → F) : ProbComp (ι → F)) seen
+      EvalDistEq.bind_bind_swap ($ᵗ (ι → F) : ProbComp (ι → F)) seen
         (fun a q => pure (AdaptiveBadView.mk q.1 κ z a q.2))
 
 omit [Fintype F] [SampleableType G₁] [Fintype G₁] in
@@ -288,15 +285,14 @@ omit [Fintype F] [SampleableType G₁] [Fintype G₁] in
 event in `adaptiveAffineBadView`. -/
 theorem adaptive_bad_guess_eq_dlog (w : ι → M → F) (g₁ : G₁) (g₂ : G₂)
     (adv : AdaptiveAdv F M ι G₁ G₂) :
-    Pr[fun v => adaptiveBadGuess w v = v.challenge | adaptiveAffineBadView w g₁ g₂ adv]
-      = Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w adv)] := by
+    Pr{let v ← adaptiveAffineBadView w g₁ g₂ adv}[adaptiveBadGuess w v = v.challenge]
+      = Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w adv)}[x = true] := by
   have hH (z : F) (a b : ι → F) : (fun i => a i • (z • g₁) + b i • g₁) =
       (fun i => affineTable z a b i • g₁) := by
     funext i
     simp only [affineTable, add_smul, smul_smul]
-  rw [← probEvent_eq_eq_probOutput]
   simp only [adaptiveAffineBadView, dlog11Exp, adaptiveBadDlogReduction, bind_assoc, pure_bind,
-    probEvent_bind_eq_tsum, probEvent_pure, decide_eq_true_eq, hH,
+    OracleComp.prEvent_bind_eq_tsum, prEvent_pure, decide_eq_true_eq, hH,
     adaptiveBadGuess, dynDenom_affine, add_sub_cancel_left]
 
 /-- The only information needed in the zero-denominator branch: game validity, exact transcript
@@ -310,12 +306,10 @@ omit [Fintype F] [DecidableEq F] [SampleableType G₁] [Fintype G₁] in
 core event. -/
 theorem adaptive_bad_core_scalar_eq_independent (valid : DynForgery F M ι → Prop)
     (w : ι → M → F) (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂) :
-    Pr[fun x => adaptiveBadCore valid w x.1 x.2.2 |
-        scalarGameDynAdaptive w g₁ g₂ adv]
-      = Pr[fun v => adaptiveBadCore valid w v.fo v.table |
-          adaptiveIndependentBadView w g₁ g₂ adv] := by
+    Pr{let x ← scalarGameDynAdaptive w g₁ g₂ adv}[adaptiveBadCore valid w x.1 x.2.2]
+      = Pr{let v ← adaptiveIndependentBadView w g₁ g₂ adv}[adaptiveBadCore valid w v.fo v.table] := by
   have hdist := adaptiveIndependentBadView_scalar w g₁ g₂ adv
-  rw [probEvent_def, ← hdist, ← probEvent_def, probEvent_map]
+  rw [← hdist.prEvent_eq, prEvent_map]
   rfl
 
 omit [SampleableType G₁] [Fintype G₁] in
@@ -325,16 +319,15 @@ theorem adaptive_independent_slope_collision (valid : DynForgery F M ι → Prop
     (w : ι → M → F) (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂)
     (jk : DynForgery F M ι → ι)
     (hvand : ∀ fo, valid fo → fo.Fresh → dynDenomCoeff w fo (jk fo) ≠ 0) :
-    Pr[fun v => adaptiveBadCore valid w v.fo v.table ∧
-          dynDenomSlope w v.fo v.slope = 0 |
-        adaptiveIndependentBadView w g₁ g₂ adv]
+    Pr{let v ← adaptiveIndependentBadView w g₁ g₂ adv}[adaptiveBadCore valid w v.fo v.table ∧
+          dynDenomSlope w v.fo v.slope = 0]
       ≤ 1 / (Fintype.card F : ENNReal) := by
   rw [adaptiveIndependentBadView]
-  refine probEvent_bind_le_of_forall_le fun z _ => ?_
-  refine probEvent_bind_le_of_forall_le fun κ _ => ?_
-  refine probEvent_bind_le_of_forall_le fun ρ _ => ?_
-  refine probEvent_bind_le_of_forall_le fun fo _ => ?_
-  rw [bind_pure_comp, probEvent_map]
+  refine prEvent_bind_le_of_forall_le _ _ _ fun z => ?_
+  refine prEvent_bind_le_of_forall_le _ _ _ fun κ => ?_
+  refine prEvent_bind_le_of_forall_le _ _ _ fun ρ => ?_
+  refine prEvent_bind_le_of_forall_le _ _ _ fun fo => ?_
+  rw [bind_pure_comp, prEvent_map]
   by_cases hcore : adaptiveBadCore valid w fo ρ
   · simpa only [Function.comp_def, hcore, true_and, dynDenomSlope] using
       linear_functional_collision (dynDenomCoeff w fo) (jk fo)
@@ -348,22 +341,21 @@ theorem adaptive_bad_core_le_dlog_add_collision (valid : DynForgery F M ι → P
     (w : ι → M → F) (g₁ : G₁) (g₂ : G₂) (adv : AdaptiveAdv F M ι G₁ G₂)
     (jk : DynForgery F M ι → ι)
     (hvand : ∀ fo, valid fo → fo.Fresh → dynDenomCoeff w fo (jk fo) ≠ 0) :
-    Pr[fun x => adaptiveBadCore valid w x.1 x.2.2 |
-        scalarGameDynAdaptive w g₁ g₂ adv]
-      ≤ Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w adv)]
+    Pr{let x ← scalarGameDynAdaptive w g₁ g₂ adv}[adaptiveBadCore valid w x.1 x.2.2]
+      ≤ Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w adv)}[x = true]
         + 1 / (Fintype.card F : ENNReal) := by
   rw [adaptive_bad_core_scalar_eq_independent valid w g₁ g₂ adv]
-  refine le_trans (probEvent_mono ?_) (le_trans
-    (probEvent_or_le (adaptiveIndependentBadView w g₁ g₂ adv)
+  refine le_trans (prEvent_mono _ _ _ ?_) (le_trans
+    (prEvent_or_le (adaptiveIndependentBadView w g₁ g₂ adv)
       (fun v => adaptiveBadGuess w v = v.challenge)
       (fun v => adaptiveBadCore valid w v.fo v.table ∧
         dynDenomSlope w v.fo v.slope = 0)) ?_)
-  · intro v _ hcore
+  · intro v hcore
     by_cases hslope : dynDenomSlope w v.fo v.slope = 0
     · exact Or.inr ⟨hcore, hslope⟩
     · exact Or.inl (adaptiveBadGuess_eq_of_denom_zero w v hcore.2.2 hslope)
   · have hguess := adaptive_bad_guess_eq_dlog w g₁ g₂ adv
-    rw [probEvent_def, adaptiveAffineBadView_eq_independent, ← probEvent_def] at hguess
+    rw [(adaptiveAffineBadView_eq_independent w g₁ g₂ adv).prEvent_eq] at hguess
     rw [hguess]
     exact add_le_add le_rfl
       (adaptive_independent_slope_collision valid w g₁ g₂ adv jk hvand)
@@ -378,21 +370,19 @@ theorem functional_euf_cma_adaptive (w : ι → M → F) (g₁ : G₁) (g₂ : G
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     (hvand : ∀ fo, valid fo → fo.Fresh → dynDenomCoeff w fo (jk fo) ≠ 0)
     (hpair : Function.Injective (fun c : F => c • (pairing (F := F) g₁ g₂ : Gₜ))) :
-    Pr[fun x => valid x.1 ∧ dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ x |
-        realGameDynAdaptive w g₂ adv]
-      ≤ Pr[= true | dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction w adv)]
-        + Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w adv)]
+    Pr{let x ← realGameDynAdaptive w g₂ adv}[valid x.1 ∧ dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ x]
+      ≤ Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction w adv)}[x = true]
+        + Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w adv)}[x = true]
         + 1 / (Fintype.card F : ENNReal) := by
   let badSplit :
       (DynForgery F M ι × F × (ι → F)) → Prop := fun x =>
     (valid x.1 ∧ dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ (mapScalarDyn w g₁ x)) ∧
       (dynReprA w x.1 x.2.2).lin = muW w x.2.2 x.1.2.mstar
   have hbad :
-      Pr[badSplit | scalarGameDynAdaptive w g₁ g₂ adv]
-        ≤ Pr[fun x => adaptiveBadCore valid w x.1 x.2.2 |
-            scalarGameDynAdaptive w g₁ g₂ adv] := by
-    refine probEvent_mono ?_
-    intro x _ hx
+      Pr{let x ← scalarGameDynAdaptive w g₁ g₂ adv}[badSplit x]
+        ≤ Pr{let x ← scalarGameDynAdaptive w g₁ g₂ adv}[adaptiveBadCore valid w x.1 x.2.2] := by
+    refine prEvent_mono _ _ _ ?_
+    intro x hx
     refine ⟨hx.1.1, hx.1.2.2, ?_⟩
     rw [dynDenom, dynDenomCoeff, ← muW_sub_reprA_lin]
     change _ - (dynReprA w x.1 x.2.2).lin = 0

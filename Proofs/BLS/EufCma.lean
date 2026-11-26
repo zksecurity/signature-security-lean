@@ -1,6 +1,6 @@
 import Proofs.BLS.ROM
 import Proofs.Model.SimulationProjection
-import VCVio.OracleComp.Constructions.SampleableType.MeasureCompatibility
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 import VCVio.EvalDist.Monad.Measure
 
 /-! The exponent-keeping game `ROM.game` and the standard EUF-CMA experiment `eufCma`
@@ -134,7 +134,8 @@ theorem uniform_exponent {β : Type} [MeasurableSpace β] (f : 𝔾₁ → ProbC
     𝒟[($ᵗ 𝔽 : ProbComp 𝔽) >>= fun scalar => f (scalar • g₁)] = 𝒟[($ᵗ 𝔾₁ : ProbComp 𝔾₁) >>= f] := by
   let : MeasurableSpace 𝔽 := ⊤
   let : MeasurableSpace 𝔾₁ := ⊤
-  exact evalDist_bind_bijective_uniform_cross _ _ evalDist_uniformSample evalDist_uniformSample _
+  exact evalDist_bind_bijective_uniform_cross _ _ SampleableType.evalDist_uniformSample
+    SampleableType.evalDist_uniformSample _
     (curve.generates securityParameter) f
 
 theorem query_project (secret : 𝔽) (request : (ROM.advSpec Message 𝔾₁).Domain)

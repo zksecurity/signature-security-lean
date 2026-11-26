@@ -132,8 +132,8 @@ variable [Fintype F]
 
 local instance : Inhabited F := ⟨0⟩
 
-noncomputable local instance : IsUniformSpec (Unit →ₒ F) :=
-  IsUniformSpec.ofFintypeInhabited _
+noncomputable local instance : OracleSpec.UniformAnswerMeasure (Unit →ₒ F) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 /-- The source-derived seed capacity does not enlarge the number of selectable
 fork positions in the Bellare–Neven bound. -/
@@ -141,10 +141,10 @@ theorem fork_success_bound (cost : PrimitiveCosts) {Γ} (randomBound : Nat)
     (code : Program CryptoOp (Command randomBound) Γ forgery)
     (env : Env (cryptoBase F G₁ G₂ K M) Γ) (g pk : G₁)
     (localTime : Nat) (queries : Fin 3 → Nat) (qH : Nat) :
-    let acc : ENNReal := ∑ s, Pr[= some s | FiatShamir.Fork.forkPoint G₁ F F M qH <$>
-      main cost randomBound code env g pk]
+    let acc : ENNReal := ∑ s, Pr{let x ← (FiatShamir.Fork.forkPoint G₁ F F M qH <$>
+      main cost randomBound code env g pk)}[x = some s]
     acc * (acc / (qH + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
-      Pr[fun r => r.isSome | fork cost randomBound code env g pk localTime queries qH] := by
+      Pr{let r ← fork cost randomBound code env g pk localTime queries qH}[r.isSome] := by
   have hcard : Fintype.card ((replaySpec F).Range (.inr ())) = Fintype.card F :=
     Fintype.card_congr (Equiv.refl F)
   simpa only [fork, hcard, Nat.cast_add, Nat.cast_one] using

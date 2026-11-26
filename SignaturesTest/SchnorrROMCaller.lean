@@ -24,7 +24,7 @@ example : NativeHandler.kind (G := F) (M := Nat) (.inr 7) = 2 := rfl
 section Boundary
 
 variable {C : StepClass} [C.HasProd] [C.HasSum] [C.HasOption]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
   [Q.HasOption] [OptionCode (Q := Q)] {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F F F Nat Nat))
   (bd : Boundary C (NativeInterface.sourceSpec F F Nat).toPFunctor Nat Nat)

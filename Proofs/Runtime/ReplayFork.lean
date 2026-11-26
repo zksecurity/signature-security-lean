@@ -11,7 +11,7 @@ namespace Signatures.Runtime.Replay
 
 variable {I A : Type} {spec : OracleSpec.{0, 0} I} [DecidableEq I]
 
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+attribute [local implicit_reducible] PFunctor.Idx
 
 omit [DecidableEq I] in
 private theorem free_map {B : Type} (f : A → B) (x : OracleComp spec A) :
@@ -23,7 +23,7 @@ private theorem free_bind {B : Type} (x : OracleComp spec A) (f : A → OracleCo
 
 theorem rerun_log_completion {main : OracleComp spec A} {target : I} {n : Nat}
     (occ : Cursor.Occurrence target main n) :
-    rerun main.withQueryLog occ.before =
+    rerun main.withQueryLog occ.before.toList =
       (fun c : occ.Completion => pathLogResult main c.path) <$> occ.complete := by
   rw [rerun_log_before]
   change _ = (fun c : occ.Completion => pathLogResult main c.path) <$>
@@ -90,7 +90,7 @@ theorem loggedFork_eq_contextFork [∀ i, DecidableEq (spec.Range i)]
       congr 1
       funext second
       have hsplit := splitBefore_before located.occurrence second.answer
-        (PFunctor.FreeM.Path.trace (located.occurrence.resume second.answer) second.suffix)
+        (PFunctor.FreeM.Path.trace (located.occurrence.resume second.answer) second.suffix).toList
       have hfirst : PFunctor.FreeM.output (located.occurrence.resume located.completion.answer)
           located.completion.suffix = PFunctor.FreeM.output main path := by
         simpa only [Cursor.Occurrence.Completion.path, Cursor.Occurrence.output_plug] using

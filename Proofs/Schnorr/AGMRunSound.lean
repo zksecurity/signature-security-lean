@@ -2,7 +2,7 @@ import Proofs.Schnorr.AGMReductionSound
 
 /-! Preserve representation validity through the complete adaptive explained program. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 namespace Schnorr.AGM.Reduction
 

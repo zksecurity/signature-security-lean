@@ -36,7 +36,7 @@ private def signValue (p : Message × Trace) : Nat × Trace :=
 section Compiled
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase Nat Nat Nat Nat Bool))
   (bd : Boundary C Spec.toPFunctor Unit Nat)

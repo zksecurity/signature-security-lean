@@ -84,14 +84,11 @@ theorem TimeBound.query : TimeBound port cost port.request .query
     (WordIO.exchangeTime cost port.request.encoding.words port.reply.encoding.words) := by
   intro tape value before holds finished reached
   rw [Code.execute, port.call_eq cost tape value before holds] at reached
-  obtain ⟨answer, reached⟩ := Set.mem_iUnion.mp reached
+  obtain ⟨answer, reached⟩ := PFunctor.FreeM.mem_support_liftBind.mp reached
   obtain ⟨result, execution, _, _, time, _, _, _⟩ :=
     WordIO.exchange_run cost tape port.request port.reply value ⟨value, answer⟩ before holds []
   simp only [List.append_nil] at execution
-  change some finished = WordIO.run cost tape 2
-    (WordIO.exchange port.request.encoding.words port.reply.encoding.words) before
-    (port.reply.encoding.encode ⟨value, answer⟩) at reached
-  rw [execution] at reached
+  rw [support_pure, Set.mem_singleton_iff, execution] at reached
   cases Option.some.inj reached
   exact time.le
 

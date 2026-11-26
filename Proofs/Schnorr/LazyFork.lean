@@ -51,14 +51,10 @@ theorem seedFamilies_dedup_nodup (privateFamilies : List Nat) :
   refine ⟨List.Nodup.map Sum.inl_injective (List.nodup_dedup _), by simp, ?_⟩
   simp
 
-variable [Fintype F] [Inhabited F]
-  [MeasurableSpace F] [DiscreteMeasurableSpace F] [MeasurableSpace A]
+variable [Fintype F] [Inhabited F] [MeasurableSpace A]
 
-noncomputable local instance forkUniformChallenges : IsUniformSpec (Unit →ₒ F) :=
-  IsUniformSpec.ofFintypeInhabited _
-
-noncomputable local instance forkNativeMeasure : IsUniformMeasureSpec (FixedTape.Spec F) :=
-  OracleSpec.instIsUniformMeasureSpecOfIsUniformSpec
+noncomputable local instance forkUniformChallenges : UniformAnswerMeasure (Unit →ₒ F) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 /-- The complete joint law, with the same selectable `qH + 1` labels. The
 proof-only list may contain duplicates; its membership-based bound is unchanged

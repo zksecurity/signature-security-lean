@@ -36,7 +36,7 @@ theorem realOracle_step_card (g₁ X₁ : G₁) (q : (advSpec M G₁).Domain)
   · simp only [BLS.ROM.Internal.oracle, StateT.run_bind, StateT.run_modify, StateT.run_pure,
       pure_bind, mem_support_bind_iff] at hp
     obtain ⟨r, hr, hp⟩ := hp
-    have heq : p = (r.1 • X₁, r.2) := hp
+    have heq : p = (r.1 • X₁, r.2) := by simpa using hp
     have hs := getDlogS_snd_preserved m (st.1, insert m st.2) r hr
     rw [heq]
     simpa [hs] using Finset.card_insert_le m st.2
@@ -84,7 +84,8 @@ theorem security (g₁ : G₁) (g₂ : G₂) (qS : ℕ) (adv : AdversaryPK M G�
     𝒟[blsEufLazyPK (F := F) (Gₜ := Gₜ) g₁ g₂ adv] {true} ≤
       Model.coronFactor qS * Model.coCDHAdvantage g₁ g₂
         (coronReductionLazyPK (F := F) qS (cacheForgeryPK adv)) := by
-  rw [Model.coronFactor, Model.coCDHAdvantage, evalDist_apply_singleton, evalDist_apply_singleton]
+  rw [Model.coronFactor, Model.coCDHAdvantage, ← prEvent_eq_evalDist_singleton,
+    ← prEvent_eq_evalDist_singleton]
   apply Coron.bls_eufcma_le_cocdh_coron_lazy_pk g₁ g₂ qS adv hgen hinj
   intro x out hout
   simpa using signed_card_le_queryBound g₁ (x • g₁) (adv (x • g₂)) qS

@@ -24,7 +24,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   {F G₁ G₂ M Input Output S : Type} {randomBound : Nat}
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ M M))
@@ -79,7 +79,7 @@ theorem group_denote (signing : Bool) (m : M) (saved : S) :
   simp only [group, Language.withContext_denote, Code.denote, map_pure, bind_pure_comp, Functor.map_map]
   rfl
 
-omit [Q.HasCategory] QP QS QD in
+omit [Q.HasComposition] QP QS QD in
 theorem random_denote (n : Fin (randomBound + 1)) (saved : S) :
     (random rep bd ports sampler store).denote (n, saved) =
       (fun r => (tagRandom (M := M) (G₁ := G₁) ⟨n, r⟩, saved)) <$>

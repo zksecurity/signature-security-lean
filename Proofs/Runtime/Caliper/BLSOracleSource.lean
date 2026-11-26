@@ -62,12 +62,14 @@ theorem denote_source (value : (Fin (randomBound + 1) × layout.store.Value) ⊕
         (fun out => ((Sum.inr out.1 : Nat ⊕ G), out.2)) <$> computation) law
       simp only [denote, Sum.elim_inr, Functor.map_map, decoded, query, saved, answer, BLSDispatch.request, LazyAGM.listOracle, StateT.run] at mapped ⊢
       convert mapped using 1
+      rfl
     | inr value =>
       have law := BLSDispatch.denote_source layout default P comparison correct response responseBuffers reserve drawSource drawLaw true ⟨value, valid⟩
       have mapped := congrArg (fun computation : ProbComp (G × BLSReply.Store (key.Value base) (val.Value base) C G) =>
         (fun out => ((Sum.inr out.1 : Nat ⊕ G), out.2)) <$> computation) law
       simp only [denote, Sum.elim_inr, Functor.map_map, decoded, query, saved, answer, BLSDispatch.request, LazyAGM.listOracle, StateT.run] at mapped ⊢
       convert mapped using 1
+      rfl
 
 include drawCorrect drawLaw in
 theorem observe (value : (Fin (randomBound + 1) × layout.store.Value) ⊕ (BLSDispatch.input layout default).Value)

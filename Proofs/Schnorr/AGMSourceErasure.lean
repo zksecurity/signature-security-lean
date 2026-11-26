@@ -3,7 +3,7 @@ import Proofs.Schnorr.AGMRunSound
 
 /-! Erasing representation metadata recovers the original source oracle exactly. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction OracleComp.DeferredSampling
+open OracleComp OracleSpec GroupModel.Interaction OracleComp.DeferredSampling
 
 set_option backward.isDefEq.respectTransparency false
 
@@ -31,29 +31,30 @@ theorem erase_signed (g : G) (x : F) (s : Reduction.State F G M)
         · simp [erase, hk, QueryCache.cacheQuery_of_ne]
 
 theorem sign_erase (g : G) (x : F) (s : Reduction.State F G M) (m : M) :
-    𝒮[(fun p => (p.1, erase p.2)) <$> honestSign g x s m] =
-      𝒮[do let r ← $ᵗ F
-           let (c, cache') ← ((M × G →ₒ F).randomOracle (m, r • g)).run (erase s).2
-           pure (signingReply (r • g) (r + c * x),
-             (⟨s.signed ++ [m], s.malformed⟩, cache'))] := by
-  rw [evalSPMF_map, honestSign_normal, ← evalSPMF_map]
+    ((fun p => (p.1, erase p.2)) <$> honestSign g x s m) =ᵈ (do
+      let r ← $ᵗ F
+      let (c, cache') ← ((M × G →ₒ F).randomOracle (m, r • g)).run (erase s).2
+      pure (signingReply (r • g) (r + c * x),
+        (⟨s.signed ++ [m], s.malformed⟩, cache'))) := by
+  refine ((honestSign_normal g x s m).map _).trans ?_
   simp only [map_bind, map_pure]
-  apply evalSPMF_bind_congr_left
+  apply EvalDistEq.bind_right
   intro r
   rw [randomOracle.run_eq]
   cases hc : s.cache (m, r • g) with
   | some e =>
       have he : (erase s).2 (m, r • g) = some e.challenge := by simp [erase, hc]
       simp only [he, hc, pure_bind, signingOutput, shiftedCommit, map_bind, map_pure, erase_signed, hc]
+      exact .rfl
   | none =>
       have he : (erase s).2 (m, r • g) = none := by simp [erase, hc]
       simp only [he, hc, bind_assoc, pure_bind, signingOutput, shiftedCommit, map_bind, map_pure, erase_signed, hc]
+      exact .rfl
 
 theorem handler_erase (g : G) (x : F) (s : Reduction.State F G M)
     (q : Explained F (Request M) (Group G))
     (hq : q.Valid (representedBasis g (x • g) s.representations)) :
-    𝒮[(fun p => (p.1, erase p.2)) <$> (honestHandler g x q).run s] =
-      𝒮[(close (Schnorr.AGM.handler g x q.value)).run (erase s)] := by
+    ((fun p => (p.1, erase p.2)) <$> (honestHandler g x q).run s) =ᵈ ((close (Schnorr.AGM.handler g x q.value)).run (erase s)) := by
   rcases q with ⟨⟨request, groups⟩, coeffs⟩
   cases request with
   | random n =>
@@ -70,8 +71,8 @@ theorem handler_erase (g : G) (x : F) (s : Reduction.State F G M)
         simp only [honestHandler, handler, StateT.run, hR, hco, map_bind, map_pure]
         have hr := congrArg (fun oa => (fun p => (scalarReply (G := G) p.1, p.2)) <$> oa)
           (read_erase s (m, R) (flatten co s.representations))
-        simpa only [Functor.map_map, map_bind, map_pure, ← map_eq_pure_bind, Reply, StateT.run] using
-          congrArg evalSPMF hr
+        simp only [Functor.map_map, map_bind, map_pure, ← map_eq_pure_bind, Reply, StateT.run] at hr ⊢
+        rw [hr]
       · have hn : ∀ R, groups () ≠ [R] := by simpa using hsingle
         cases hg : groups () with
         | nil =>

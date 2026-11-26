@@ -32,8 +32,10 @@ the deterministic function implemented by `Core.implementation`. LIVE is passed
 through unchanged; that preservation will be executed by the handler wrapper. -/
 theorem signing_run (msg : M) (saved : Schnorr.ListROM.Shared.Store F G M) :
     (Schnorr.ListROM.Shared.interpret (Schnorr.ListROM.handler (G₂ := G₂) (K := K) (.inr msg))).run saved = (do
-      let first ← Schnorr.ListROM.Shared.tapeRun (Schnorr.privateImpl (F := F) (.inr ())) saved.2
-      let second ← Schnorr.ListROM.Shared.tapeRun (Schnorr.privateImpl (F := F) (.inr ())) first.2
+      let first : F × Schnorr.ListROM.Shared.Tape F ←
+        Schnorr.ListROM.Shared.tapeRun (Schnorr.privateImpl (F := F) (.inr ())) saved.2
+      let second : F × Schnorr.ListROM.Shared.Tape F ←
+        Schnorr.ListROM.Shared.tapeRun (Schnorr.privateImpl (F := F) (.inr ())) first.2
       let computed := Core.value ((first.1, second.1), saved.1.1.1, saved.1.1.2, msg, saved.1.2.1)
       pure (computed.1, (computed.2.1, computed.2.2, saved.1.2.2), second.2)) := by
   rw [Schnorr.ListROM.Shared.signing_run]
@@ -42,6 +44,5 @@ theorem signing_run (msg : M) (saved : Schnorr.ListROM.Shared.Store F G M) :
   apply bind_congr
   intro second
   rw [Core.value_original (G₂ := G₂) (K := K)]
-  rfl
 
 end Signatures.Runtime.CaliperBackend.SchnorrROM.Signing

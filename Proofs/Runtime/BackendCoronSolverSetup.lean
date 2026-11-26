@@ -44,7 +44,7 @@ theorem initial_reserved (qS messageWidth width scalarWidth coinWidth groupWidth
   refine ⟨hs.trans hw, hm, ?_⟩
   simpa [machineState, machineCaches, CacheState.empty, CacheState.size] using hcap
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

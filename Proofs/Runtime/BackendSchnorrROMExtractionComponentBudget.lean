@@ -16,7 +16,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ K M : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -42,7 +42,7 @@ structure Operations (width pointTime scalarTime subTime divTime zeroTime : Nat)
   zero : (primitiveBound .zero).time () ≤ zeroTime
 
 include sizes in
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem oneValue_scalar (width managedCap liveCap pointTime scalarTime subTime divTime zeroTime : Nat)
     (first second : cachePassOutput.Value (cryptoBase F G₁ G₂ K M))
     (hf : NativePass.CompletedBound (Q := Q) rep width managedCap liveCap first)
@@ -69,7 +69,7 @@ theorem oneValue_scalar (width managedCap liveCap pointTime scalarTime subTime d
   · exact hz.trans (by omega)
 
 include sizes in
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem oneValue_size (width managedCap liveCap pointTime scalarTime subTime divTime zeroTime : Nat)
     (first second : cachePassOutput.Value (cryptoBase F G₁ G₂ K M))
     (hf : NativePass.CompletedBound (Q := Q) rep width managedCap liveCap first)

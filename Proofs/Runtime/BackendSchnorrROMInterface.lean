@@ -28,8 +28,8 @@ def signingTag {F G M : Type} (p : M × G × F) : Response F G M :=
 def defaultReply {F G M : Type} [Zero F] [Zero G] (q : Request G M) : (sourceSpec F G M).Range q :=
   match q with
   | .inl (.inl n) => (0 : Fin (n + 1))
-  | .inl (.inr _) => 0
-  | .inr _ => (0, 0)
+  | .inl (.inr _) => (0 : F)
+  | .inr _ => ((0 : G), (0 : F))
 
 universe v w
 

@@ -161,7 +161,7 @@ theorem simulate_state (impl : (q : spec.Domain) → PMF (spec.Range q × Bool))
     (simulateQ (stateImpl impl) code).run flag =
       (simulate impl code).map (fun out => (out.1, flag || out.2)) := by
   induction code using OracleComp.inductionOn generalizing flag with
-  | pure a => simp [simulate_pure, StateT.run_pure, PMF.pure_map]
+  | pure a => simp [simulate_pure, StateT.run_pure, PMF.pure_map]; rfl
   | query_bind q next ih =>
     rw [simulateQ_bind, simulateQ_spec_query]
     change ((impl q).map (fun out => (out.1, flag || out.2))).bind

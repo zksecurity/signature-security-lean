@@ -259,7 +259,7 @@ example : PaddedSampling.width 8 3 = 3 := rfl
     unless heap.count.length == 8 && out.steps ≤ 24*factor do
       throw <| IO.userError "initialization was omitted from allocation or bit-step accounting"
 
-example : ((simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool)
+example : ((simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool)
     (PaddedSampling.run (PaddedSampling.compile 8 3 1))).map (fun out => out.value.2)) true = 0 := by
   rw [PaddedSampling.bad_eq 8 3 1 (by decide)]
   have h : PaddedSampling.width 8 3 = 3 := rfl

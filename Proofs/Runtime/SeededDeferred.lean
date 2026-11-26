@@ -30,8 +30,7 @@ theorem budget_run'_eq (main : OracleComp spec A) (budget : I → Nat) :
         (fun f => (liftM (spec.query i) : OracleComp spec _) >>= f)
         (funext fun answer => ih answer (debit budget i))
 
-variable [∀ i, SampleableType (spec.Range i)] [IsUniformSpec spec]
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
+variable [∀ i, SampleableType (spec.Range i)] [OracleSpec.UniformAnswerMeasure spec]
   [unifSpec ⊂ₒ spec] [unifSpec ˡ⊂ₒ spec]
   [MeasurableSpace B]
 

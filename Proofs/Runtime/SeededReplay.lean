@@ -1,6 +1,6 @@
 import Proofs.Runtime.ReplayFork
 import VCVio.CryptoFoundations.SeededFork
-import VCVio.OracleComp.SimSemantics.StateT.Basic.Native
+import VCVio.OracleComp.SimSemantics.StateT.Basic
 
 /-! Structural bridges for fixed-private-tape replay. A fully seeded first
 execution follows one ordinary query-tree path. Replacing a selected seeded
@@ -14,7 +14,7 @@ namespace Signatures.Runtime.SeededReplay
 
 variable {I A : Type} {spec : OracleSpec.{0, 0} I} [DecidableEq I]
 
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+attribute [local implicit_reducible] PFunctor.Idx
 
 def run (main : OracleComp spec A) (seed : QuerySeed spec) : OracleComp spec A :=
   (simulateQ seededOracle main).run' seed
@@ -47,7 +47,7 @@ theorem covered_path_of_support (main : OracleComp spec A) (qb : I → Nat)
     ∃ path : Path main, PFunctor.FreeM.output main path = x ∧ Covered seed main path := by
   induction main generalizing qb seed with
   | pure a =>
-      have hax : a = x := by simpa [run] using hx.symm
+      have hax : a = x := (PFunctor.FreeM.canReturn_pure_iff.mp (support_run_subset _ _ hx)).symm
       subst x
       exact ⟨(), rfl, trivial⟩
   | queryBind i next ih =>
@@ -183,7 +183,8 @@ theorem context_mem_of_completion [∀ i, DecidableEq (spec.Range i)]
     exact ⟨second, completion_mem_support _ _, rfl⟩
   · simp only [Cursor.Occurrence.Completion.path, Cursor.Occurrence.trace_plug,
       Cursor.Occurrence.output_plug] at hs₂ ⊢
-    rw [Replay.splitBefore_before (spec := spec) located.occurrence second.answer]
+    rw [FreeMonoid.toList_mul, FreeMonoid.toList_of_mul, ← List.append_eq,
+      Replay.splitBefore_before (spec := spec) located.occurrence second.answer]
     simp [hs₂, hne]
 
 /-- Every successful fully seeded fork has the common-prefix structure of a
@@ -246,33 +247,34 @@ theorem seededFork_support_context [∀ i, SampleableType (spec.Range i)]
 the selector's actual labels keeps the denominator equal to their number. -/
 theorem seededFork_success_bound_labels [∀ i, SampleableType (spec.Range i)]
     [∀ i, DecidableEq (spec.Range i)] [unifSpec ⊂ₒ spec] [unifSpec ˡ⊂ₒ spec]
-    [IsUniformSpec spec]
+    [OracleSpec.UniformAnswerMeasure spec]
     (main : OracleComp spec A) (qb : I → Nat) (families : List I) (target : I)
-    {q : Nat} (select : A → Option (Fin q))
+    [Fintype (spec.Range target)] {q : Nat} (select : A → Option (Fin q))
     (embed : Fin q → Fin (qb target + 1)) (hinj : Function.Injective embed) :
-    let acc : ENNReal := ∑ s, Pr[= some s | select <$> main]
+    let acc : ENNReal := ∑ s, Pr{let x ← select <$> main}[x = some s]
     acc * (acc / q - (Fintype.card (spec.Range target) : ENNReal)⁻¹) ≤
-      Pr[fun r => r.isSome |
-        seededFork main qb families target (Option.map embed ∘ select)] := by
+      Pr{let r ← seededFork main qb families target (Option.map embed ∘ select)}[r.isSome] := by
   classical
-  let ps : Fin q → ENNReal := fun s => Pr[= some s | select <$> main]
+  let ps : Fin q → ENNReal := fun s => Pr{let x ← select <$> main}[x = some s]
   have hsum : (∑ s, ps s) ≠ ⊤ := ne_top_of_le_ne_top ENNReal.one_ne_top
-    (sum_probOutput_some_le_one (mx := select <$> main))
+    (by simpa only [ps, prEvent_map] using sum_prEvent_eq_some_le_one main select)
   have hquad := ENNReal.mul_tsub_inv_le_sum_sq_sub_div
     (Finset.univ : Finset (Fin q)) ps
     (Fintype.card (spec.Range target) : ENNReal) hsum
   simp only [Finset.card_univ, Fintype.card_fin] at hquad
   refine hquad.trans ((Finset.sum_le_sum fun s _ => ?_).trans
-    (sum_probEvent_option_map_eq_some_le_isSome (mx :=
+    (sum_prEvent_option_map_eq_some_le_isSome (mx :=
       seededFork main qb families target (Option.map embed ∘ select))
       (select ∘ Prod.fst)))
-  have hslot := le_probOutput_seededFork main qb families target
+  have hslot := le_prEvent_seededFork main qb families target
     (Option.map embed ∘ select) (embed s)
-  have hprob : Pr[= some (embed s) | (Option.map embed ∘ select) <$> main] = ps s := by
-    simpa only [Functor.map_map, Function.comp_def, ps] using
-      probOutput_some_map_option_map (select <$> main) hinj s
+  have hprob : Pr{let x ← main}[(Option.map embed ∘ select) x = some (embed s)] = ps s := by
+    simp only [ps, prEvent_map]
+    exact prEvent_congr main _ _ fun x => by
+      simp [Option.map_eq_some_iff, hinj.eq_iff]
+  dsimp only at hslot
   rw [hprob] at hslot
-  refine hslot.trans_eq (probEvent_ext fun r _ => ?_)
+  refine hslot.trans_eq (prEvent_congr _ _ _ fun r => ?_)
   cases r with
   | none => simp
   | some pair => simp [Function.comp_def, Option.map_eq_some_iff, hinj.eq_iff]

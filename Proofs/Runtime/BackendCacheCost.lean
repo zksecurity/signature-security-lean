@@ -15,7 +15,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {Atom : Type} {base : Atom → Type} {Op Cmd : Ty Atom → Ty Atom → Type}
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)
   (P : Primitives base Op)
@@ -44,7 +44,7 @@ def frameWidth (width cap : Nat) : Nat := 4 * ((4 * cap + 32) * width)
 
 include sizes lists
 
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem list_size (xs : List (key.Value base × val.Value base)) (width cap : Nat)
     (hh : header ≤ width) (he : Entries (Q := Q) rep width xs) (hn : xs.length ≤ cap) :
     Q.size (rep.ty (.list (.pair key val))) xs ≤ (4 * cap + 1) * width := by
@@ -56,7 +56,7 @@ theorem list_size (xs : List (key.Value base × val.Value base)) (width cap : Na
   dsimp only [LanguageRepresentation.ty] at h ⊢
   nlinarith [Nat.mul_le_mul_left cap hh]
 
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem input_size (width cap : Nat) (hh : header ≤ width) (hu : Q.size rep.data.unit () ≤ width)
     (env : Env base [key, val, .list (.pair key val)]) (hi : Input (Q := Q) rep width cap env) :
     Q.size (rep.env [key, val, .list (.pair key val)]) env ≤ (4 * cap + 7) * width := by
@@ -68,7 +68,7 @@ theorem input_size (width cap : Nat) (hh : header ≤ width) (hu : Q.size rep.da
   dsimp only [LanguageRepresentation.env] at *
   grind only
 
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem output_size (width cap : Nat) (hh : header ≤ width)
     (value : val.Value base × List (key.Value base × val.Value base))
     (ho : Output (Q := Q) rep width cap value) :
@@ -90,7 +90,7 @@ private theorem lookupValue_property {K V : Type} [DecidableEq K] (valid : V →
       · simpa [lookupValue, h] using hx p (by simp)
       · simpa [lookupValue, h] using ih (fun q hq => hx q (by simp [hq]))
 
-omit sizes lists [C.HasSum] [C.HasOption] [Q.HasCategory] QP QS in
+omit sizes lists [C.HasSum] [C.HasOption] [Q.HasComposition] QP QS in
 theorem lookup_value_size (eq : Op (.pair key key) .bool) [DecidableEq (key.Value base)]
     (heq : ∀ x y, P.execute eq (x, y) = decide (x = y))
     (width cap : Nat) (env : Env base [key, val, .list (.pair key val)])

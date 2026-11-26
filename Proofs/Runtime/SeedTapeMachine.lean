@@ -115,6 +115,7 @@ theorem handler_erase (cost : PrimitiveCosts) (sampling : Machine.SamplingCosts)
     have hh := congrArg (Functor.map (fun p : F × List (TapeCell F) => (p.1, (cache, p.2)))) h
     simp only [Functor.map_map, semantics, StateT.run] at hh ⊢
     convert hh using 1
+    rfl
   | uniform n =>
     cases arg
     change (Run.value <$> handler cost sampling (.uniform n) ()).run _ = _
@@ -126,6 +127,7 @@ theorem handler_erase (cost : PrimitiveCosts) (sampling : Machine.SamplingCosts)
       (fun p : Fin (n + 1) × List (TapeCell F) => (p.1, (cache, p.2)))) h
     simp only [Functor.map_map, semantics, StateT.run] at hh ⊢
     convert hh using 1
+    rfl
 
 /-- Erasure retains the joint cache/tape state through adaptive program control. -/
 theorem program_erase (cost : PrimitiveCosts) (sampling : Machine.SamplingCosts)

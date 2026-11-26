@@ -12,7 +12,7 @@ open OracleComp OracleSpec
 
 namespace Model.DirectAGM
 
-open AlgebraicGroupModel.Interaction
+open GroupModel.Interaction
 open LazyAGM.Interactive
 
 variable {F Index Message G₁ G₂ : Type}
@@ -21,7 +21,7 @@ variable {F Index Message G₁ G₂ : Type}
 /-- The shared AGM adversary itself, specialized only to the signature protocol. -/
 abbrev Adversary (F Index Message G₁ G₂ : Type)
     [Zero F] [AddCommMonoid G₁] [SMul F G₁] [AddMonoid G₂] [SMul F G₂] :=
-  AlgebraicGroupModel.Interaction.Adversary F (Group G₁ G₂) Unit
+  GroupModel.Interaction.Adversary F (Group G₁ G₂) Unit
     (Query Index Message) (Reply (ι := Index) (M := Message)) Message
 
 /-- Positions of hash and signing replies in the shared library's received basis. -/
@@ -40,7 +40,7 @@ def Positions.sign (positions : Positions) : Positions :=
     signatures := positions.signatures ++ [positions.next] }
 
 def Positions.request (positions : Positions)
-    (request : AlgebraicGroupModel.Interaction.Message (Query Index Message) (Group G₁ G₂)) :
+    (request : GroupModel.Interaction.Message (Query Index Message) (Group G₁ G₂)) :
     Positions :=
   { positions with wellFormed := positions.wellFormed &&
       (request.groups .signature).isEmpty && (request.groups .verification).isEmpty }
@@ -276,7 +276,7 @@ that data and one `𝔾₁` element, and the key may have several `𝔾₂` comp
 /-- The shared AGM adversary whose final report is a value of `Out` with its group outputs. -/
 abbrev AdversaryWith (F Index Message Out G₁ G₂ : Type)
     [Zero F] [AddCommMonoid G₁] [SMul F G₁] [AddMonoid G₂] [SMul F G₂] :=
-  AlgebraicGroupModel.Interaction.Adversary F (Group G₁ G₂) Unit
+  GroupModel.Interaction.Adversary F (Group G₁ G₂) Unit
     (Query Index Message) (Reply (ι := Index) (M := Message)) Out
 
 structure ResultWith (Out Message G₁ : Type) where

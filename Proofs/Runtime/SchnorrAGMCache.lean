@@ -6,7 +6,7 @@ Only encountered message/commitment pairs are stored. `erase` is a proof-level
 abstraction, not a machine operation. Repeated hashes and signing collisions
 preserve the first cached challenge and affine representation. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec GroupModel.Interaction Schnorr.AGM
 
 namespace Signatures.Runtime.SchnorrAGM
 

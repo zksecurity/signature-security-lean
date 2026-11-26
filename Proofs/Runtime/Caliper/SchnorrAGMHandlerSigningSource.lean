@@ -3,7 +3,7 @@ import Proofs.Runtime.Caliper.SchnorrAGMHandlerSigning
 /-! Common-store signing has the original joint reply/state law and preserves
 the runtime configuration. Malformed inputs keep the core's conditional guard. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrAGM.Handler.SigningComponent
-open Caliper BoundedSource OracleComp OracleSpec Schnorr.AGM AlgebraicGroupModel.Interaction
+open Caliper BoundedSource OracleComp OracleSpec Schnorr.AGM GroupModel.Interaction
 open Signatures.Runtime.SchnorrAGM.Native
 variable {w qH qS randomBound : Nat} {M F G : Type} [Field F] [AddCommGroup G] [Module F G]
     [DecidableEq M] [DecidableEq G]

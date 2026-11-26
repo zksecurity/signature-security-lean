@@ -71,17 +71,17 @@ theorem source_original (value : Input config) (valid : ready config value) :
     have mapped := congrArg (Functor.map (fun answer : (Nat × Nat) × Schnorr.ListROM.Shared.Store F G M =>
       ((.inl (.inl answer.1) : Reply (F := F) (G := G)), answer.2))) same
     simp only [source, Sum.elim, randomSource, Functor.map_map, observed, representReply, query, initialStore, law.shared] at mapped ⊢
-    convert mapped using 1
+    convert mapped using 1 <;> rfl
   · have same := Hash.source_original (G₂ := G) (K := M) config value valid
     have mapped := congrArg (Functor.map (fun answer : F × Schnorr.ListROM.Shared.Store F G M =>
       ((.inl (.inr answer.1) : Reply (F := F) (G := G)), answer.2))) same
     simp only [source, Sum.elim, hashSource, Functor.map_map, observed, representReply, query, initialStore, law.shared] at mapped ⊢
-    convert mapped using 1
+    convert mapped using 1 <;> rfl
   · have same := law.source_original value valid
     have mapped := congrArg (Functor.map (fun answer : (G × F) × Schnorr.ListROM.Shared.Store F G M =>
       ((.inr answer.1 : Reply (F := F) (G := G)), answer.2))) same
     simp only [source, Sum.elim, signingSource, signSource, Functor.map_map, observed, representReply, query, initialStore] at mapped ⊢
-    convert mapped using 1
+    convert mapped using 1 <;> rfl
 
 theorem synchronizes (value : Input config) (valid : ready config value) :
     letI := PrivateSampler.Enumerated.sampleable config.sampler

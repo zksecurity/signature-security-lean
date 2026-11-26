@@ -5,7 +5,7 @@ import Proofs.Schnorr.AGMCacheGrowth
 count hash/sign queries and the final target, independently of the message or
 group domain cardinality. They do not yet bound encoded byte sizes or runtime. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec GroupModel.Interaction Schnorr.AGM
 
 namespace Signatures.Runtime.SchnorrAGM
 

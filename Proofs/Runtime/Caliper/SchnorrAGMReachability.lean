@@ -7,7 +7,7 @@ Only encountered messages need to belong to their layout; the mathematical
 message type can be infinite. These are source invariants for the forthcoming
 Caliper handler refinement, not an assumption of its completed implementation. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrAGM
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 open Signatures.Runtime.SchnorrAGM
 open _root_.Schnorr.AGM
 variable {F G M : Type} [Field F]

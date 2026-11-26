@@ -22,7 +22,7 @@ example : (ListSingleton.value ([] : List Nat) [[], []]).1 = false := rfl
 section Execution
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F F F Nat Nat))
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

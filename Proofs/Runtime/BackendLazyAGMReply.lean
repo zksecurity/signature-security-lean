@@ -18,7 +18,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ M : Type} [Field F] [SampleableType F]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]
@@ -111,7 +111,7 @@ theorem backendGoodReply_denote (samplingCode : MachineCompiler.SamplingImplemen
     (signing : Bool) (m : M) (g X : G₁) (cache : List (M × F))
     (tr : Model.LazyAGM.Transcript M M G₁) :
     (backendGoodReply rep data cost primitive samplingCode signing).denote (m, (g, X), cache, tr) =
-      (fun p => let r := if signing then p.1 • X else p.1 • g
+      (fun p : F × List (M × F) => let r := if signing then p.1 • X else p.1 • g
         (r, (g, X), p.2, record signing m r tr)) <$>
           ((BLS.LazyAGM.Reduction.privateListOracle (M := M) (R := F)) (.inr m)).run cache := by
   rw [backendGoodReply, backendReply_denote rep data cost primitive _ _ _ (samplingCode.scalar_denote ())]

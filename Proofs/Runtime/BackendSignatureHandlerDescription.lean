@@ -16,7 +16,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   {F G₁ G₂ M Input Output S : Type} {randomBound : Nat}
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ M M))
@@ -43,7 +43,7 @@ theorem group_description (signing : Bool) :
   dsimp only [group, Code.descriptionSize]
   omega
 
-omit laws [Q.HasCategory] QP QS QD in
+omit laws [Q.HasComposition] QP QS QD in
 theorem random_description :
     (random rep bd ports sampler store).descriptionSize sizes =
       sampler.code.descriptionSize sizes + sizes.localSize ports.randomTag + 4 := by

@@ -64,7 +64,7 @@ example : (Caliper.run .unit RandomTape.zero 200 splitUnits.code
 example : (Caliper.run .unit RandomTape.zero 500 grow.code
     (two.initial ⟨[42], by decide⟩)).map
     (fun (state, time, net, peak) => (state.bufs 0, time, net, peak)) =
-    some (#[1, 42, 0, 0, 0, 0], 45, 3, 9) := by decide
+    some (#[1, 42, 0, 0, 0, 0], 45, 3, 9) := by decide +kernel
 example : three.encoding.decode [4, 42, 7, 11] = none := by decide
 
 -- These are uniform symbolic bounds, including arbitrary element encodings;

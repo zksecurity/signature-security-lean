@@ -7,12 +7,13 @@ open Signatures.Runtime CircuitExecution
 
 namespace SignaturesTest.CircuitExecution
 
--- Shared fan-ins are stored once, and both ordinary and complemented outputs are read.
+-- Both ordinary and complemented outputs are read; the cached builder folds the self-fan-in gate
+-- `⟨xy.ref, xy.ref⟩` back to `xy` (idempotency), so the circuit is one AND gate.
 #eval show IO Unit from do
-  let x := AIG.mkAtom (AIG.empty : AIG (Fin 2)) 0
-  let y := AIG.mkAtom x.aig 1
-  let xy := AIG.mkGate y.aig ⟨x.ref.cast (AIG.LawfulOperator.le_size (f := AIG.mkAtom) x.aig 1), y.ref⟩
-  let shared := AIG.mkGate xy.aig ⟨xy.ref, xy.ref⟩
+  let x := AIG.mkAtomCached (AIG.empty : AIG (Fin 2)) 0
+  let y := AIG.mkAtomCached x.aig 1
+  let xy := AIG.mkGateCached y.aig ⟨x.ref.cast (AIG.LawfulOperator.le_size (f := AIG.mkAtomCached) x.aig 1), y.ref⟩
+  let shared := AIG.mkGateCached xy.aig ⟨xy.ref, xy.ref⟩
   let refs := [shared.ref, ⟨shared.ref.gate, true, shared.ref.hgate⟩]
   let n := shared.aig.decls.size
   unless ((compile shared.aig).map Instr.cells).sum ≤ n * (2*n + 2 + 3) do

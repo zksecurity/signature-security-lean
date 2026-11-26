@@ -121,17 +121,17 @@ def quantitative (w : Nat) (hw : 0 < w) (cost : CostModel) :
   admissible realizer := ⟨realizer⟩
 
 def exactCategory (w : Nat) (hw : 0 < w) (cost : CostModel) :
-    (quantitative w hw cost).ExactCategory where
+    (quantitative w hw cost).ExactComposition where
   identity := Realizer.identity hw
   compose := Realizer.then
   composeOverhead _ _ _ := 0
   cost_compose_eq _ _ _ := by simp [quantitative, Realizer.then]
 
 instance (w : Nat) (hw : 0 < w) (cost : CostModel) :
-    (quantitative w hw cost).HasCategory := (exactCategory w hw cost).toHasCategory
+    (quantitative w hw cost).HasComposition := (exactCategory w hw cost).toHasComposition
 
 instance (w : Nat) (hw : 0 < w) (cost : CostModel) :
-    (quantitative w hw cost).HasExactCategory := (exactCategory w hw cost).toHasExactCategory
+    (quantitative w hw cost).HasExactComposition := (exactCategory w hw cost).toHasExactComposition
 
 /-- Existing reduction code accounting can use the concrete stored Caliper
 description of each local implementation. -/

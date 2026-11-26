@@ -2,7 +2,7 @@ import Proofs.Runtime.SchnorrAGMSecurity
 import Mathlib.Algebra.Field.ZMod
 import Lean.Util.CollectAxioms
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec GroupModel.Interaction Schnorr.AGM
 open Signatures.Runtime Signatures.Runtime.SchnorrAGM
 
 namespace SignaturesTest.SchnorrAGMFiniteCache

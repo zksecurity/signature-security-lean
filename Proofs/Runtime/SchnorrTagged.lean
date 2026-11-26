@@ -131,8 +131,8 @@ theorem taggedSign_denote (cost : PrimitiveCosts) (msg : M) (g pk : G₁)
     (managed live : List ((M × G₁) × F)) :
     (taggedSign.denote (arithmetic F G₁ G₂ K M cost) taggedSemantics (msg, ())).run
         ((g, pk), managed, live) = (do
-      let c ← (replaySpec F).query (.inl (.inr ()))
-      let z ← (replaySpec F).query (.inl (.inr ()))
+      let c : F ← (replaySpec F).query (.inl (.inr ()))
+      let z : F ← (replaySpec F).query (.inl (.inr ()))
       let R := z • g - c • pk
       let updated := ((cacheProgram (val := scalar) hashEq).run (arithmetic F G₁ G₂ K M cost)
         ((msg, R), c, managed, ())).value

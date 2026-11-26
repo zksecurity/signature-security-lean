@@ -68,16 +68,14 @@ theorem denote_source (value : Packet layout randomBound) (valid : ready layout 
       (fun out => ((Sum.inr out.1 : (Nat × Nat) ⊕ G), out.2)) <$> computation) law
     simp only [serviceRequest, BLSOracle.denote, Sum.elim_inr, Functor.map_map, observed, finished, replyValue,
       query, answer, original, BLSDispatch.request, LazyAGM.listOracle, StateT.run] at mapped ⊢
-    convert mapped using 1
-    rfl
+    convert mapped using 1 <;> rfl
   · have law := BLSDispatch.denote_source layout default P comparison correct response responseBuffers reserve drawSource drawLaw true
       ⟨(message.val, saved.val), ⟨message.property, saved.property⟩, valid⟩
     have mapped := congrArg (fun computation : ProbComp (G × BLSReply.Store (key.Value base) (val.Value base) C G) =>
       (fun out => ((Sum.inr out.1 : (Nat × Nat) ⊕ G), out.2)) <$> computation) law
     simp only [serviceRequest, BLSOracle.denote, Sum.elim_inr, Functor.map_map, observed, finished, replyValue,
       query, answer, original, BLSDispatch.request, LazyAGM.listOracle, StateT.run] at mapped ⊢
-    convert mapped using 1
-    rfl
+    convert mapped using 1 <;> rfl
 
 include drawLaw in
 theorem synchronizes (value : Packet layout randomBound) (valid : ready layout default randomBound value) :

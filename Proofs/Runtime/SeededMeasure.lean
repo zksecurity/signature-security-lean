@@ -1,23 +1,17 @@
-import VCVio.OracleComp.EvalDist.UniformCompatibility
+import VCVio.OracleComp.EvalDist.Measure
+import VCVio.OracleComp.EvalDist.AnswerMeasure
 
-/-! Explicit transport from the pinned seeded-fork library's discrete
-interpretation to the native uniform-oracle measure interpretation. -/
+/-! Equality in distribution of seeded-fork computations gives equal output measures. -/
 
 open OracleComp OracleSpec MeasureTheory
 
 namespace Signatures.Runtime.SeededDeferred
 
 variable {I A : Type} {spec : OracleSpec I}
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
-  [IsUniformSpec spec] [MeasurableSpace A]
+  [OracleSpec.UniformAnswerMeasure spec] [MeasurableSpace A]
 
-theorem measure_of_compat {left right : OracleComp spec A}
-    (h : @evalDist (OracleComp spec) instEvalDistSemanticsOfMonadLiftTSPMF A _ left =
-      @evalDist (OracleComp spec) instEvalDistSemanticsOfMonadLiftTSPMF A _ right) :
-    𝒟[left] = 𝒟[right] := by
-  apply Measure.ext
-  intro event hevent
-  have he := congrArg (fun μ : Measure A => μ event) h
-  simpa only [evalDist_apply, hevent] using he
+theorem measure_of_compat {left right : OracleComp spec A} (h : left =ᵈ right) :
+    𝒟[left] = 𝒟[right] :=
+  h.evalDist_eq
 
 end Signatures.Runtime.SeededDeferred

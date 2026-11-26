@@ -75,7 +75,7 @@ theorem indexedTapeImpl_hit (i : (replaySpec F).Domain) (answer : (replaySpec F)
           prior ++ encodeReply i answer :: rest, encodeReply i answer :: events)) := by
   simp [indexedTapeImpl, decode_encode]
 
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+attribute [local implicit_reducible] PFunctor.Idx
 
 omit [Zero F] in
 private theorem queryBind_bind (i : (replaySpec F).Domain)
@@ -112,17 +112,17 @@ theorem indexedRun_fresh (main : OracleComp (replaySpec F) A)
 is not in this prefix, so its answer will be fresh when the residual program starts. -/
 theorem indexedRun_spine {main residual : OracleComp (replaySpec F) A}
     (spine : Cursor.Spine main residual) (prior events : List (TapeCell F)) :
-    indexedRun main (prior.length, (prior ++ encodeTape spine.trace).length,
-      prior ++ encodeTape spine.trace, events) =
-      indexedRun residual ((prior ++ encodeTape spine.trace).length,
-        (prior ++ encodeTape spine.trace).length, prior ++ encodeTape spine.trace,
-        (encodeTape spine.trace).reverse ++ events) := by
+    indexedRun main (prior.length, (prior ++ encodeTape spine.trace.toList).length,
+      prior ++ encodeTape spine.trace.toList, events) =
+      indexedRun residual ((prior ++ encodeTape spine.trace.toList).length,
+        (prior ++ encodeTape spine.trace.toList).length, prior ++ encodeTape spine.trace.toList,
+        (encodeTape spine.trace.toList).reverse ++ events) := by
   induction spine generalizing prior events with
   | root => simp [encodeTape, Cursor.Spine.trace]
   | @down i next residual answer tail ih =>
     change indexedRun (OracleComp.queryBind i next)
-      (prior.length, (prior ++ encodeReply i answer :: encodeTape tail.trace).length,
-        prior ++ encodeReply i answer :: encodeTape tail.trace, events) = _
+      (prior.length, (prior ++ encodeReply i answer :: encodeTape tail.trace.toList).length,
+        prior ++ encodeReply i answer :: encodeTape tail.trace.toList, events) = _
     rw [indexedRun_queryBind, indexedTapeImpl_hit, pure_bind]
     have ht := ih (prior ++ [encodeReply i answer]) (encodeReply i answer :: events)
     simpa [encodeTape, Cursor.Spine.trace, List.append_assoc, List.reverse_cons,
@@ -130,18 +130,19 @@ theorem indexedRun_spine {main residual : OracleComp (replaySpec F) A}
 
 theorem indexedRun_before {main : OracleComp (replaySpec F) A} {target : (replaySpec F).Domain}
     {n : Nat} (occ : Cursor.Occurrence target main n) :
-    indexedRun main (0, (encodeTape occ.before).length, encodeTape occ.before, []) =
+    indexedRun main (0, (encodeTape occ.before.toList).length, encodeTape occ.before.toList, []) =
       (fun p => (p.1,
-        ((encodeTape occ.before).length + (p.2 : Replay.Tape (replaySpec F)).length,
-          (encodeTape occ.before).length, encodeTape occ.before,
-          (encodeTape p.2).reverse ++ (encodeTape occ.before).reverse))) <$>
+        ((encodeTape occ.before.toList).length + (p.2 : Replay.Tape (replaySpec F)).length,
+          (encodeTape occ.before.toList).length, encodeTape occ.before.toList,
+          (encodeTape p.2).reverse ++ (encodeTape occ.before.toList).reverse))) <$>
         (OracleComp.queryBind target occ.resume).withQueryLog := by
   have h := indexedRun_spine occ.toSpine [] []
   simp only [List.length_nil, List.nil_append, List.append_nil] at h
-  change indexedRun main (0, (encodeTape occ.before).length, encodeTape occ.before, []) =
+  change indexedRun main
+      (0, (encodeTape occ.before.toList).length, encodeTape occ.before.toList, []) =
     indexedRun (OracleComp.queryBind target occ.resume)
-      ((encodeTape occ.before).length, (encodeTape occ.before).length, encodeTape occ.before,
-        (encodeTape occ.before).reverse) at h
+      ((encodeTape occ.before.toList).length, (encodeTape occ.before.toList).length,
+        encodeTape occ.before.toList, (encodeTape occ.before.toList).reverse) at h
   rw [h]
   exact indexedRun_fresh _ _ _ _ _ le_rfl
 
@@ -150,8 +151,9 @@ including the forced prefix. No claim is made about adversarially malformed tape
 theorem indexedRun_log_spine {main residual : OracleComp (replaySpec F) A}
     (spine : Cursor.Spine main residual) :
     (fun p => (p.1, p.2.2.2.2.reverse)) <$>
-        indexedRun main (0, (encodeTape spine.trace).length, encodeTape spine.trace, []) =
-      (fun p => (p.1, encodeTape p.2)) <$> Replay.rerun main.withQueryLog spine.trace := by
+        indexedRun main
+          (0, (encodeTape spine.trace.toList).length, encodeTape spine.trace.toList, []) =
+      (fun p => (p.1, encodeTape p.2)) <$> Replay.rerun main.withQueryLog spine.trace.toList := by
   have h := indexedRun_spine spine [] []
   simp only [List.length_nil, List.nil_append, List.append_nil] at h
   rw [h, indexedRun_fresh _ _ _ _ _ le_rfl, Replay.rerun_log_spine]
@@ -211,8 +213,8 @@ theorem indexedLoggedRun_empty (main : OracleComp (replaySpec F) A) :
 
 theorem indexedLoggedRun_before {main : OracleComp (replaySpec F) A}
     {target : (replaySpec F).Domain} {n : Nat} (occ : Cursor.Occurrence target main n) :
-    indexedLoggedRun main (encodeTape occ.before) =
-      (fun p => (p.1, encodeTape p.2)) <$> Replay.rerun main.withQueryLog occ.before :=
+    indexedLoggedRun main (encodeTape occ.before.toList) =
+      (fun p => (p.1, encodeTape p.2)) <$> Replay.rerun main.withQueryLog occ.before.toList :=
   indexedRun_log_spine occ.toSpine
 
 /-- The encoded controller's semantic specification. Its scans and list reversal are

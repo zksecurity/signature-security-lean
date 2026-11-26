@@ -164,7 +164,7 @@ def Layout.ports {t : Ty CryptoAtom} (layout : Layout t) (w : Nat) :
 
 theorem Layout.ports_size {t : Ty CryptoAtom} (layout : Layout t) (w : Nat) :
     (layout.ports w).graph.decls.size = 1 + layout.width w := by
-  simp [ports, InputCircuit.build_size, AIG.empty]
+  simp [ports, InputCircuit.build_empty_size Function.injective_id]
 
 theorem Layout.ports_correct {t : Ty CryptoAtom} (layout : Layout t)
     (input : Vector Bool (layout.width w))

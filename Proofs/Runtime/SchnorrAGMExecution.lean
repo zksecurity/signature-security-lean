@@ -4,7 +4,7 @@ import Proofs.Runtime.SchnorrAGMCache
 The refinement preserves the joint output/state query tree for arbitrary adaptive
 callers, including malformed requests. Runtime costs are a separate obligation. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec GroupModel.Interaction Schnorr.AGM
 
 namespace Signatures.Runtime.SchnorrAGM
 

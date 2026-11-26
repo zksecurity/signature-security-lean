@@ -21,7 +21,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ K M S : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -54,7 +54,7 @@ variable (data : DataCode Q rep.data) (cost : PrimitiveCosts)
 
 include sizes lists
 
-omit [Q.HasCategory] QP QS [Field F] [AddCommGroup G₁] [Module F G₁]
+omit [Q.HasComposition] QP QS [Field F] [AddCommGroup G₁] [Module F G₁]
   [AddCommGroup G₂] [Module F G₂] [DecidableEq F] [DecidableEq G₁]
   [DecidableEq G₂] [DecidableEq K] [DecidableEq M] in
 theorem managed_input_size (width managedCap liveCap : Nat) (hh : header ≤ width)
@@ -70,7 +70,7 @@ theorem managed_input_size (width managedCap liveCap : Nat) (hh : header ≤ wid
   dsimp only [ManagedEnv, LanguageRepresentation.env] at *
   grind only
 
-omit [Q.HasCategory] QP QS [Field F] [AddCommGroup G₁] [Module F G₁]
+omit [Q.HasComposition] QP QS [Field F] [AddCommGroup G₁] [Module F G₁]
   [AddCommGroup G₂] [Module F G₂] [DecidableEq F] [DecidableEq G₁]
   [DecidableEq G₂] [DecidableEq K] [DecidableEq M] in
 theorem managed_output_size (width managedCap liveCap : Nat) (hh : header ≤ width)

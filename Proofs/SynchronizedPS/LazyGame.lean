@@ -161,41 +161,47 @@ theorem verification_iff (g₁ : G₁) (g₂ : G₂) (x y : F) (out : Output F (
 omit [Fintype F] in
 theorem lazyGame_eq_realGame (g₁ : G₁) (g₂ : G₂) (V : View F Period G₁ G₂) :
     𝒟[lazyGame (Gₜ := Gₜ) g₁ g₂ V] {true} =
-      Pr[fun z => valid z.1.rep ∧ succ (Gₜ := Gₜ) weight scalar g₁ g₂ z |
-        realGame weight scalar g₂ (extracted V)] := by
+      Pr{let z ← realGame weight scalar g₂ (extracted V)}[valid z.1.rep ∧ succ (Gₜ := Gₜ) weight scalar g₁ g₂ z] := by
   classical
-  have hd := BLS.CoCDH.evalSPMF_lazyCoin_eq_table (experiment (Gₜ := Gₜ) g₁ g₂ V) ∅
+  have hd := BLS.CoCDH.evalDistEq_lazyCoin_eq_table (experiment (Gₜ := Gₜ) g₁ g₂ V) ∅
   simp only [tableExtending_empty, experiment_table] at hd
-  change 𝒮[lazyGame (Gₜ := Gₜ) g₁ g₂ V] = _ at hd
-  rw [DeferredSampling.evalSPMF_bind_comm] at hd
-  rw [evalSPMF_bind_congr' _ fun x => DeferredSampling.evalSPMF_bind_comm ($ᵗ (Period → G₁)) ($ᵗ F)
-    (fun H y => do
+  change lazyGame (Gₜ := Gₜ) g₁ g₂ V =ᵈ _ at hd
+  replace hd := hd.trans (EvalDistEq.bind_bind_swap _ _ _)
+  replace hd := hd.trans (EvalDistEq.bind_right _ fun x => EvalDistEq.bind_bind_swap
+    ($ᵗ (Period → G₁)) ($ᵗ F) (fun H y => do
       let (out, tr) ← runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1)
       pure (accepts (Gₜ := Gₜ) g₂ x y out.mstar (forged g₁ out tr) (tr.2.map Prod.fst)
-        (H out.mstar.1)))] at hd
-  rw [evalDist_apply_singleton, probOutput_congr rfl hd, ← probEvent_true_eq_probOutput]
+        (H out.mstar.1))))
+  rw [← prEvent_eq_evalDist_singleton, hd.prEvent_eq]
   unfold realGame extracted
-  simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply,
-    probEvent_bind_eq_tsum, realSign_weight]
+  simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply, realSign_weight]
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun x => ?_
   congr 1
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun y => ?_
   congr 1
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun H => ?_
   congr 1
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun z => ?_
   by_cases hz : z ∈ support (runV V (x • g₂, y • g₂) H (fun m => (x + y * m.2) • H m.1))
   · have hc := fixed_consistent H (fun m => (x + y * m.2) • H m.1)
       (V.main (x • g₂, y • g₂)) ([], []) (by simp [Consistent]) z hz
     congr 1
-    simp only [probEvent_pure]
+    simp only [prEvent_pure_prop]
     apply if_congr _ rfl rfl
     obtain ⟨out, tr⟩ := z
     rw [accepts, Bool.and_eq_true, decide_eq_true_eq, decide_eq_true_eq,
       verification_iff g₁ g₂ x y out tr H _ hc]
     simp only [valid, succ, toOffsetForgery, toForgery_messages, toForgery_fresh, project]
     tauto
-  · simp [probOutput_eq_zero_of_not_mem_support hz]
+  · simp [(prEvent_eq_zero_of_not_mem_support _) hz]
 
 /-! ## Non-degeneracy: one signature per period and a fresh message -/
 
@@ -382,21 +388,21 @@ theorem security (g₁ : G₁) (g₂ : G₂) (adversary : Reduction.Adversary F 
   have h := adaptive_security (Gₜ := Gₜ) weight scalar g₁ g₂ (extracted (view adversary g₁)) valid attacked
     hgen (fun fo hv hf => nondegenerate fo hv hf) hpair
   have hX : Model.dlog11Advantage g₁ g₂ (Reduction.challengeInX adversary) =
-      Pr[= true | dlog11Exp g₁ g₂ (reductionX weight scalar (extracted (view adversary g₁)))] := by
-    rw [Model.dlog11Advantage, evalDist_apply_singleton]
-    congr 1
+      Pr{let x ← dlog11Exp g₁ g₂ (reductionX weight scalar (extracted (view adversary g₁)))}[x = true] := by
+    rw [Model.dlog11Advantage, ← prEvent_eq_evalDist_singleton]
+    congr 2
     unfold dlog11Exp
     exact bind_congr fun α => by rw [challengeInX_eq]
   have hY : Model.dlog11Advantage g₁ g₂ (Reduction.challengeInY adversary) =
-      Pr[= true | dlog11Exp g₁ g₂ (reductionY weight scalar (extracted (view adversary g₁)))] := by
-    rw [Model.dlog11Advantage, evalDist_apply_singleton]
-    congr 1
+      Pr{let x ← dlog11Exp g₁ g₂ (reductionY weight scalar (extracted (view adversary g₁)))}[x = true] := by
+    rw [Model.dlog11Advantage, ← prEvent_eq_evalDist_singleton]
+    congr 2
     unfold dlog11Exp
     exact bind_congr fun α => by rw [challengeInY_eq]
   have hH : Model.dlog11Advantage g₁ g₂ (Reduction.challengeInHashes adversary) =
-      Pr[= true | dlog11Exp g₁ g₂ (reductionBad weight scalar attacked (extracted (view adversary g₁)))] := by
-    rw [Model.dlog11Advantage, evalDist_apply_singleton]
-    congr 1
+      Pr{let x ← dlog11Exp g₁ g₂ (reductionBad weight scalar attacked (extracted (view adversary g₁)))}[x = true] := by
+    rw [Model.dlog11Advantage, ← prEvent_eq_evalDist_singleton]
+    congr 2
     unfold dlog11Exp
     exact bind_congr fun α => by rw [challengeInHashes_eq]
   rw [hX, hY, hH]
