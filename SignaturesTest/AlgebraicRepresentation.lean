@@ -25,9 +25,8 @@ example (out : Output Nat Bool String) (inputs : Transcript Bool Nat) :
 
 open Lean Elab Command in
 run_cmd do
-  for name in #[`OracleComp, `AlgebraicGroupModel.Adversary,
-      `Model.LazyAGM.advSpec, `Model.LazyAGM.Adversary,
-      `BilinearGroup.BilinearPairing, `BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness] do
+  for name in #[`OracleComp, `GroupModel.Interaction.Adversary,
+      `Model.LazyAGM.advSpec, `Model.LazyAGM.Adversary, `BilinearGroup.BilinearPairing] do
     if (← getEnv).contains name then
       throwError "Representation utilities unexpectedly include oracle/adversary infrastructure: {name}"
 

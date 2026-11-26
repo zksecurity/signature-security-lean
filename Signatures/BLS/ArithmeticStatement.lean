@@ -12,15 +12,9 @@ import Proofs.Runtime.AGMBadMachine
 import Proofs.Runtime.KeyEquality
 import Proofs.Runtime.ProximityWeight
 
-/-! Detailed arithmetic-source BLS co-CDH security.
-
-The public general-attacker endpoints are `BLS.agm_security` and
-`BLS.cocdh_security` in `Statement.lean`. The superseded eager-table AGM wrapper
-and its arithmetic-attacker alias have been retired. The co-CDH source-certified
-endpoint below remains useful for the distinct arithmetic implementation model.
-Original eager probability and resource lemmas remain in their supporting modules;
-see `docs/API-MIGRATION.md` for the replacement interfaces.
--/
+/-! BLS co-CDH security for arithmetic-source attackers, a separate implementation
+model from the general-attacker endpoints `BLS.agm_security` and `BLS.cocdh_security`
+in `Statement.lean`. -/
 
 open BilinearGroup
 

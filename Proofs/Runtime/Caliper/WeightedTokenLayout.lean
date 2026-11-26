@@ -2,7 +2,7 @@ import Proofs.Runtime.Caliper.WeightedCoefficientBounds
 
 /-! A signing transcript row carries a message, its delivered point and its
 positional coefficient. Extraction copies the message/coefficient and current
-state into the weighted evaluator; the delivered point is no longer needed. -/
+state into the weighted evaluator; the delivered point is not needed afterwards. -/
 namespace Signatures.Runtime.CaliperBackend.WeightedToken
 open Caliper BoundedSource ByteRoute
 

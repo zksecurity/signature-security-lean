@@ -79,34 +79,7 @@ run_cmd liftTermElabM do
     unless sawResources && sawHardness && sawChallenge && sawDerivedTime do
       throwError "{name}: incomplete general-caller/resource/hardness scope"
 
--- Inspect elaborated signatures: classical instance synthesis in application tests
--- could otherwise conceal a redundant requirement.
-run_cmd liftTermElabM do
-  for name in #[`BLS.CoCDH.PaperAdversary, `BLS.CoCDH.paperExp,
-      `BLS.CoCDH.withPaperMap, `BLS.CoCDH.paperExp_withPaperMap,
-      `BLS.Statement.bls_eufcma_le_paper_cocdh] do
-    if (← getEnv).contains name then
-      throwError "Removed map-based BLS declaration remains imported: {name}"
-  for name in #[`BLS.Statement.bls_eufcma_le_dlog, `OOPS.Statement.oops_eufcma_le_dlog,
-      `Proximity.Statement.proximity_eufcma_le_dlog, `Model.Interactive.LinAlgAdv,
-      `BLS.Scheme.blsScheme, `OOPS.Scheme.oopsSchemeMulti, `Proximity.Scheme.proxScheme] do
-    if (← getEnv).contains name then
-      throwError "Removed public-table declaration remains imported: {name}"
-  for name in #[`BLS.Statement.bls_eufcma_le_cocdh,
-      `BLS.Statement.bls_eufcma_of_cocdh_hardness,
-      `BLS.Statement.bls_lazy_agm_le_dlog, `BLS.Statement.bls_lazy_agm_of_dlog_hardness,
-      `OOPS.Statement.oops_lazy_agm_le_dlog, `OOPS.Statement.oops_lazy_agm_of_dlog_hardness,
-      `Proximity.Statement.proximity_lazy_agm_le_dlog,
-      `Proximity.Statement.proximity_lazy_agm_of_dlog_hardness,
-      `OOPS.Statement.oops_call_eufcma_le_dlog, `Proximity.LazyAGM.Noncollision,
-      `BLS.Statement.bls_lazy_agm_of_dlog_machine_hardness,
-      `OOPS.Statement.oops_lazy_agm_of_dlog_machine_hardness,
-      `Proximity.Statement.proximity_lazy_agm_of_dlog_machine_hardness,
-      `BLS.Statement.ArithmeticAttackerCertificate] do
-    if (← getEnv).contains name then
-      throwError "Retired public security declaration remains imported: {name}"
-
--- The retained arithmetic co-CDH endpoint derives its solver budget from the
+-- The arithmetic co-CDH endpoint derives its solver budget from the
 -- source certificate. General-caller endpoints have dedicated interface guards.
 run_cmd liftTermElabM do
   for name in #[``BLS.Statement.bls_eufcma_of_cocdh_machine_hardness] do

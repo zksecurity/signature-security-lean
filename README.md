@@ -71,15 +71,15 @@ Two libraries, split by what a reviewer has to read.
   per scheme, `Game.lean`, `Statement.lean`, the `*FamilyStatement.lean` corollaries, `Spec/`
   (the scheme and its oracles), `QueryAllowance`, and the `*SecurityModel`/`*Parameters`/`*Resources`
   records that fix the execution model and derived budgets, and `Runtime/` with the
-  hardness-family hypotheses of the asymptotic statements. 103 modules.
+  hardness-family hypotheses of the asymptotic statements. 105 modules.
 - `Proofs/` — everything else: the proofs of the statements (`Proofs/<Scheme>/`), the executed
   reductions and their resource accounting (`Proofs/Runtime/`, `Proofs/Runtime/Caliper/`), and
   supporting lemmas (`Proofs/Model/`). Nothing here needs to be read to know what is claimed.
 - `SignaturesTest/` — regression tests and audit guards (module location, explicit arguments,
   axioms of every public theorem, and that statements mention only review-surface definitions).
 - `docs/` — [review guide](docs/review-guide.md), [security games](docs/SECURITY-GAMES.md),
-  [computational-security status](docs/COMPUTATIONAL-SECURITY.md), [Schnorr review path](docs/SCHNORR.md),
-  [Caliper backend](docs/CALIPER-BACKEND-PLAN.md), [API migration](docs/API-MIGRATION.md).
+  [computational security](docs/COMPUTATIONAL-SECURITY.md), [Schnorr review path](docs/SCHNORR.md),
+  [bit complexity](docs/BIT-COMPLEXITY.md).
 
 ## Build
 
@@ -91,10 +91,10 @@ lake build Signatures Proofs SignaturesTest
 ```
 
 CI runs exactly this. Pinned upstreams:
-[VCVio](https://github.com/Verified-zkEVM/VCVio) `70c422d6`, which now carries the
-generic algebraic-adversary interface (`GroupModel.Interaction`, formerly the separate
-`agm-lean` package), and [Caliper](https://github.com/zksecurity/caliper) `1d9c510f` (the
-Lean 4.36 port proposed in zksecurity/caliper#2, taken from the fork until it merges).
+[VCVio](https://github.com/Verified-zkEVM/VCVio) `70c422d6`, which provides the generic
+algebraic-adversary interface `GroupModel.Interaction`, and
+[Caliper](https://github.com/zksecurity/caliper) `1d9c510f` (the Lean 4.36 port proposed in
+zksecurity/caliper#2, taken from the fork until it merges).
 
 ## Scope
 

@@ -1,4 +1,4 @@
-# Current security games
+# Security games
 
 Seven general-attacker security routes, all with lazy random-oracle source games.
 Each bound names explicit reduction algorithms. Their axiom footprints are exactly
@@ -12,16 +12,16 @@ and resource formulas stay in the supporting layer.
 The [paper-facing OOPS corollary](review-guide.md#paper-facing-statements) uses a
 fixed-degree signing-call limit. BLS intentionally retains the type-3 co-CDH formulation
 with an explicit co-hint and no G2-to-G1 map. These paper-facing choices preserve
-the underlying games and probability bounds; the current execution interfaces
+the underlying games and probability bounds; the execution interfaces
 are described below.
 
-The public statements accept general backend-realized callers and derive complete
-native solver budgets. The eager-table AGM wrappers are retired; see the
-[API migration guide](API-MIGRATION.md). Arithmetic-source BLS co-CDH and Schnorr
-endpoints retain their distinct implementation scopes.
+The public statements accept general backend-realized callers and bound forgery by
+the success of named reductions built from them, each with a `*_reduction_within`
+theorem placing it within a derived solver budget. Arithmetic-source BLS co-CDH and
+Schnorr endpoints (`ArithmeticStatement.lean`) have their own implementation scope.
 Hardness always ranges over the specified implementation/resource class.
-The numerical bounds are `coronFactor(qS) * epsilon` for co-CDH and
-`goodEpsilon + badEpsilon + 1/|F|` for AGM, plus the fresh-collision probability for Proximity.
+The numerical bounds are `coronFactor(qS) * ε(R)` for co-CDH and
+`ε(good) + ε(bad) + 1/|F|` for AGM, plus the fresh-collision probability for Proximity.
 Both AGM solver budgets are derived, not assumed.
 See the [computational-security audit](COMPUTATIONAL-SECURITY.md).
 
@@ -32,12 +32,12 @@ See the [computational-security audit](COMPUTATIONAL-SECURITY.md).
 | BLS to co-CDH | [`bls_eufcma_of_cocdh_machine_hardness`](../Signatures/BLS/ArithmeticStatement.lean) | [`blsEufLazyPK`](../Signatures/BLS/CoCDH/Spec/LazyGame.lean) |
 | BLS AGM, general caller | [`BLS.agm_security`](../Signatures/BLS/Statement.lean) | Curve, security parameter, query allowances, algebraic adversary; same lazy game and complete solver budgets, arbitrary messages |
 | BLS co-CDH, general caller | [`BLS.cocdh_security`](../Signatures/BLS/Statement.lean) | Curve, security parameter, query allowances, unrestricted adversary; same lazy game and complete native solver budget, arbitrary messages |
-| OOPS AGM, general caller | [`OOPS.agm_security`](../Signatures/OOPS/Statement.lean) | Curve, security parameter, degree, query allowances, algebraic adversary; original distinct-message rule, arbitrary topics |
-| Proximity AGM, general caller | [`Proximity.agm_security`](../Signatures/Proximity/Statement.lean) | Curve, security parameter, dimension, query allowances, algebraic adversary; original vector/slot game and actual collision term, arbitrary slots |
-| Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/Statement.lean) | [Schnorr game](../Signatures/Schnorr/Spec/ROM.lean) |
+| OOPS AGM, general caller | [`OOPS.agm_security`](../Signatures/OOPS/Statement.lean) | Curve, security parameter, degree, query allowances, algebraic adversary; distinct-message rule, arbitrary topics |
+| Proximity AGM, general caller | [`Proximity.agm_security`](../Signatures/Proximity/Statement.lean) | Curve, security parameter, dimension, query allowances, algebraic adversary; vector/slot game and actual collision term, arbitrary slots |
+| Schnorr ROM | [`schnorr_eufcma_of_dlog_machine_hardness`](../Signatures/Schnorr/ArithmeticStatement.lean) | [Schnorr game](../Signatures/Schnorr/Spec/ROM.lean) |
 | Schnorr ROM, general caller | [`Schnorr.rom_security`](../Signatures/Schnorr/Statement.lean) | Full-field nonces, unrestricted attacker, quadratic/square-root DLog bound |
 | Schnorr nonzero ROM, general caller | [`Schnorr.NonzeroNonce.rom_security`](../Signatures/Schnorr/Statement.lean) | Nonzero nonces, unrestricted attacker, signing denominator `|F|-1` |
-| Schnorr AGM, general caller | [`Schnorr.agm_security`](../Signatures/Schnorr/Statement.lean) | Algebraic attacker, original adaptive AGM game and query losses |
+| Schnorr AGM, general caller | [`Schnorr.agm_security`](../Signatures/Schnorr/Statement.lean) | Algebraic attacker, adaptive AGM game and query losses |
 | Schnorr ROM, bit heap | [`schnorr_eufcma_of_dlog_bit_hardness`](../Signatures/Schnorr/BitStatement.lean) | Same game, compiled solver with explicit accumulated sampling error |
 
 The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and
@@ -45,7 +45,7 @@ The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and
 derive polynomial solver code and time from component resources in one fixed
 backend, including polynomial degree/dimension. OOPS gives negligible forgery
 under DLog hardness and negligible inverse field size. Proximity gives the
-original collision probability plus negligible error; negligible forgery also
+collision probability plus negligible error; negligible forgery also
 requires negligible collisions for the same source-adversary family.
 
 Synchronized Pointcheval–Sanders has the same general route. The attacker's caller, realized in
@@ -72,10 +72,6 @@ For nonzero nonces, the signing-loss denominator is `|F|-1`; the fork term still
 uses `|F|`. Both full runs are charged;
 see [Schnorr's game and runtime review](SCHNORR.md).
 
-The old public-table schemes, adversary interface, security wrappers, and source-game bridges
-are removed. This is an interface retirement, not an assertion that public-table and query-only
-adversaries were the same model.
-
 ## BLS to co-CDH
 
 The adversary receives the verification key and adaptively queries private randomness, hashes,
@@ -89,7 +85,7 @@ The signing-call bound's implication for the distinct-message count
 is proved. Both the reduction's scalar cache and its Coron-coin cache are lazy.
 
 The message type may be infinite. The probability proof restricts the attacker's
-adaptive tree to a finite proof domain and transports the original lazy game and
+adaptive tree to a finite proof domain and transports the lazy game and
 solver exactly. That cover includes final forgeries and all generated public keys;
 it is never enumerated by the executable reduction.
 
@@ -137,7 +133,7 @@ group inputs.
 The [internal proof view](../Proofs/Model/DirectAGM.lean) derives the grouped
 `β`, `γ`, and `ξ` coefficients from every shared attacker. `run_eq` preserves its
 message, actual signature, signing history and signing coefficients, and
-`adversary_query_bound` preserves the query allowances. `game_le` transfers the existing
+`adversary_query_bound` preserves the query allowances. `game_le` transfers the grouped-view
 security bounds: the native game additionally rejects malformed protocol messages.
 Proximity's [collision event](../Signatures/Proximity/Spec/DirectAGM.lean) is preserved
 [exactly](../Proofs/Proximity/DirectAGM.lean), including malformed attempts.
@@ -145,13 +141,11 @@ Proximity's [collision event](../Signatures/Proximity/Spec/DirectAGM.lean) is pr
 The concrete and family statements also use this shared source attacker. Their backend
 realization contract implements the derived coefficient encoding, and its caller budget
 includes producing that encoding and regrouping the explanation. This does not assume
-that arbitrary code has a free conversion, nor establish a conventional-machine
-instantiation. The existing solver composition proofs charge the remainder. Schnorr and
-the non-AGM BLS co-CDH game are unchanged.
+that arbitrary code has a free conversion. The solver composition proofs charge the remainder.
 
-The minimal generic interface and its tests live upstream in VCVio
-(`VCVio/CryptoFoundations/GroupModel/Interaction.lean`, originally the `agm-lean`
-package). Token/output utilities and signature adapters live here.
+The minimal generic interface and its tests live in VCVio
+(`VCVio/CryptoFoundations/GroupModel/Interaction.lean`). Token/output utilities and
+signature adapters live here.
 
 ## Query-only lazy AGM
 
@@ -169,7 +163,7 @@ signing queries.
 
 `Output.toAlgebraic` and `Transcript.inputs` retain the signature interface's token-indexed output interpretation.
 The generator and the two reply channels have disjoint positional tokens. `materialize` uses
-the token evaluator; `materialize_eq_weightedReplies` proves exact agreement with the original
+the token evaluator; `materialize_eq_weightedReplies` proves exact agreement with the weighted-reply
 signature expression. The adapter preserves missing/extra coefficient handling and does not
 change any queries, freshness conditions, security assumptions, or reduction budgets.
 
@@ -185,13 +179,13 @@ complete actual signing transcript.
 
 [The lazy bridge](../Proofs/LinearFunctional/LazyAGM.lean) proves exact probability
 and transcript correspondence with a hidden-table simulator. These private finite tables are
-still needed by the proof and the explicit AGM solvers; they are never given to the source
+needed by the proof and the explicit AGM solvers; they are never given to the source
 adversary. Lazy source games do not establish efficient lazy reductions.
 
 ## Bounds and premises
 
-The BLS/OOPS AGM bound is `Adv_source <= goodEpsilon + badEpsilon + 1/|F|`, with hardness
-assumed at the two derived machine budgets. Proximity adds `Pr[fresh collision]` to this bound.
+The BLS/OOPS AGM bound is `Adv_source <= ε(good) + ε(bad) + 1/|F|`, with both
+reductions within their derived budgets. Proximity adds `Pr[fresh collision]` to this bound.
 The extraction proof bounds noncolliding forgeries by the two solvers' success rates and `1/|F|`.
 The good reduction extracts when the denominator is nonzero; the bad reduction uses a known
 signing key and independently masked affine bases for the adaptive zero-denominator branch.
@@ -202,7 +196,7 @@ All four endpoints require surjective scalar generation by `g1` and
 no separate `Fintype F` requirement is needed. The public collision term uses `Nat.card F`,
 equal to `Fintype.card F` inside the proof.
 
-- **BLS:** finite message indices; freshness supplies a nonzero target coefficient.
+- **BLS:** arbitrary message types; freshness supplies a nonzero target coefficient.
   The source certificate bounds every query kind, local computation, and coefficient-list sizes.
 - **OOPS:** messages are scalar/topic pairs. The final target topic alone determines the
   degree cap: at most `d` distinct signed scalars, allowing equality with `d`.
@@ -212,7 +206,7 @@ equal to `Fintype.card F` inside the proof.
   vector equals the signing-coefficient-weighted sum of all signed vectors, including repeats
   and other slots. Missing coefficients are zero. It is measured under actual key sampling and
   lazy-oracle execution, not over arbitrary replies. It includes invalid signatures and does not
-  alter the original winning event. In dimension zero every fresh output is a collision.
+  alter the winning event. In dimension zero every fresh output is a collision.
   The theorem does not assume noncollision or prove that this extra probability is small.
 
 BLS and OOPS need no analogous extra term: the probability of a fresh symbolic collision
@@ -225,21 +219,21 @@ still evaluate to zero; the proof bounds the relevant independent hidden-slope c
 `1/|F|`. This is not a bound on finding any collision among all adaptive hash queries.
 [Regression proofs](../SignaturesTest/GameBoundaries.lean) check these
 zero probabilities for any distribution of transcripts. The BLS co-CDH endpoint likewise
-has no noncollision premise; its separate Coron reduction is unchanged.
+has no noncollision premise; its Coron reduction is separate.
 
 OOPS and Proximity use oracle-derived bases here, not standard-model public setup parameters.
 
 ## Limits and checks
 
-The source definitions allow infinite base-index types; the current security bounds and
-reductions require finite ones. There is no PPT cost theorem, efficient lazy AGM reduction,
-concrete-hash instantiation, standard-model OOPS theorem, small Proximity bound independent of collisions,
-or proof of equivalence to ArkLib's experimental adversary runner.
+The source games and public bounds allow infinite message, topic and slot types. Reduction
+costs are Caliper budgets, not running times on a conventional machine. There is no
+concrete-hash instantiation, standard-model OOPS theorem, or small Proximity bound
+independent of collisions.
 
 `lake build Signatures SignaturesTest` checks the four public axiom footprints, the adaptive
 extraction core, the lazy bridge, and regressions for query counting, freshness, degree rules,
 adaptive hash/sign interleaving, cache reuse, token visibility, and zero-denominator behavior.
-The removed public-table schemes' completeness theorems are no longer part of this inventory.
-No hardness axiom is added to Lean. Guards reject the removed weaker public wrappers.
+No hardness axiom is added to Lean.
+
 The four machine-bounded statements have exact axiom and signature guards, including
 application tests for certificate-inferred adversaries, primitive costs, and resource indices.
