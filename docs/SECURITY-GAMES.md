@@ -1,7 +1,8 @@
 # Security games
 
-Seven general-attacker security routes, all with lazy random-oracle source games.
-Each bound names explicit reduction algorithms. Their axiom footprints are exactly
+General-attacker security for BLS, OOPS, Proximity, Schnorr and synchronized
+Pointcheval–Sanders, all with lazy random-oracle source games. Each bound names explicit
+reduction algorithms, and every public statement depends on exactly
 `[propext, Classical.choice, Quot.sound]`.
 
 Start with the [short game and bound presentation](review-guide.md).
@@ -191,7 +192,7 @@ The good reduction extracts when the denominator is nonzero; the bad reduction u
 signing key and independently masked affine bases for the adaptive zero-denominator branch.
 The division-only bound is insufficient.
 
-All four endpoints require surjective scalar generation by `g1` and
+The BLS co-CDH, BLS AGM, OOPS and Proximity endpoints require surjective scalar generation by `g1` and
 `pairing(g1,g2) != 0`. VCVio's uniform sampler already implies finite, nonempty scalars;
 no separate `Fintype F` requirement is needed. The public collision term uses `Nat.card F`,
 equal to `Fintype.card F` inside the proof.
@@ -230,10 +231,11 @@ costs are Caliper budgets, not running times on a conventional machine. There is
 concrete-hash instantiation, standard-model OOPS theorem, or small Proximity bound
 independent of collisions.
 
-`lake build Signatures SignaturesTest` checks the four public axiom footprints, the adaptive
+`lake build Signatures SignaturesTest` checks every public statement's axiom footprint, the adaptive
 extraction core, the lazy bridge, and regressions for query counting, freshness, degree rules,
 adaptive hash/sign interleaving, cache reuse, token visibility, and zero-denominator behavior.
 No hardness axiom is added to Lean.
 
-The four machine-bounded statements have exact axiom and signature guards, including
+The machine-bounded statements (BLS co-CDH, and Schnorr ROM in its machine, bit and seeded-bit
+forms) have exact axiom and signature guards, including
 application tests for certificate-inferred adversaries, primitive costs, and resource indices.
