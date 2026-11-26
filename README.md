@@ -90,8 +90,8 @@ lake build Signatures Proofs SignaturesTest
 CI runs exactly this. Pinned upstreams:
 [VCVio](https://github.com/Verified-zkEVM/VCVio) `70c422d6`, which now carries the
 generic algebraic-adversary interface (`GroupModel.Interaction`, formerly the separate
-`agm-lean` package), and [Caliper](https://github.com/zksecurity/caliper) on its `lean-4.36`
-branch, required from a sibling checkout at `../../caliper` until that branch is published.
+`agm-lean` package), and [Caliper](https://github.com/zksecurity/caliper) `1d9c510f` (the
+Lean 4.36 port proposed in zksecurity/caliper#2, taken from the fork until it merges).
 
 ## Scope
 
