@@ -240,7 +240,8 @@ within the derived budget, so a hardness assumption such as
 AGM retains both reduction branches and `1/|F|`; Proximity additionally
 retains collision probability. Co-CDH preserves the Coron factor.
 
-**Concrete operation bounds cover all four routes**, including both AGM branches; see
+**Concrete operation bounds cover BLS co-CDH and the BLS, OOPS and Proximity AGM routes**,
+including both AGM branches; see
 [`OperationBounds.lean`](../Proofs/OperationBounds.lean). Erasing the ledgers gives the
 plain solvers. Review the `qH`/`qS`, coefficient-size, finite-domain, and weight-cost factors.
 **The arithmetic-source BLS co-CDH endpoint** in [BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean) uses
@@ -418,10 +419,10 @@ The generic AGM library is VCVio's `GroupModel.Interaction`. Its standalone test
 `lake build VCVioTest` in that repository. Token/output utilities and
 signature integration tests live here; the library has one indexed interaction module.
 
-The [four public axiom guards](../SignaturesTest/Upstream.lean) require exactly
-`[propext, Classical.choice, Quot.sound]`. The
-[signature guards](../SignaturesTest/StatementAssumptions.lean) check simplified premises,
-all four machine statements' exact axiom footprints and source-certificate premises, and
+The [axiom guard](../SignaturesTest/Upstream.lean) requires every theorem in a statement
+module to depend on exactly `[propext, Classical.choice, Quot.sound]`; it reads the list from
+the environment. The [signature guards](../SignaturesTest/StatementAssumptions.lean) check
+simplified premises, the machine statements' source-certificate premises, and
 test applications using only their explicit arguments.
 The [hardness boundary tests](../SignaturesTest/Hardness.lean) distinguish query counts from
 runtime bounds and check the games' verification and freshness steps.
@@ -453,7 +454,7 @@ runtime bounds and check the games' verification and freshness steps.
 - [Adaptive denominator and collision boundaries](../SignaturesTest/AdaptiveDenominator.lean).
 
 These are checked source assertions, not a live CI badge. A reviewer should record the revision
-and build evidence. Probability-API deprecation warnings are outside the four public axiom footprints.
+and build evidence. Deprecation warnings do not affect the axiom footprints.
 
 
 ## Review checklist

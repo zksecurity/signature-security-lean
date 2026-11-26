@@ -1010,11 +1010,10 @@ the natural tag `n+2`, and
 Very large random-request ranges can therefore make the certified bound large,
 even when sampling itself is cheap. Small-range requests avoid that issue.
 
-The audit checked the source reply contract, shared-prefix randomness, cache
+The proofs cover the source reply contract, shared-prefix randomness, cache
 reset and final challenge, extraction guards, exact named-solver equality,
-and loading/cost premises. No correctness defect was found in those checked
-connections. This does not constitute an independent audit of every upstream
-VCVio proof or a proof that chosen primitive prices match a concrete implementation.
+and loading/cost premises. They do not re-verify upstream VCVio, and they do not
+prove that the chosen primitive prices match a concrete implementation.
 
 ## Proof Review Order
 

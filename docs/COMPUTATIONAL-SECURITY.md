@@ -361,7 +361,7 @@ does not prove this extra probability small. The term is not a random-hash colli
 
 ## Concrete operation bounds
 
-[`Signatures.OperationBounds`](../Proofs/OperationBounds.lean) exports the bounds.
+[`OperationBounds.lean`](../Proofs/OperationBounds.lean) exports the bounds.
 These are pathwise upper bounds, not averages. Hash/sign query bounds hold on every adaptive
 continuation; repeated queries count again. AGM also requires bounds `Lh`, `Ls` on the lengths
 of the adversary's returned coefficient lists. The hypotheses concern the source adversary,
@@ -435,7 +435,7 @@ runtime certificates. The closed-machine [good](../Proofs/Runtime/AGMGoodMachine
 
 [OperationBounds tests](../SignaturesTest/OperationBounds.lean) check all six AGM erasures,
 adaptive/repeated queries, the inserted forgery hash, coefficient scans, degree/coordinate costs,
-and the standard axiom footprints of all four bound endpoints and their erasure lemmas.
+and the standard axiom footprints of the co-CDH, BLS, OOPS and Proximity bounds and their erasure lemmas.
 
 ## What the papers say
 
