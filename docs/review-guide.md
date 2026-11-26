@@ -54,8 +54,8 @@ order. The bound names the two `(1,1)`-DLog solvers built from the attacker, and
 the budget theorems state that each runs as Caliper code within the **derived
 complete reduction budget**, in the same execution model as the attacker. A
 hardness assumption for solvers within that budget therefore bounds both terms.
-The short names are local notation: Lean still sees the original game and
-reductions. No hypothesis or loss is removed.
+The short names are local notation: Lean still sees the full game and
+reductions. No hypothesis or loss is hidden.
 
 Writing `h` and `s` for hash and signing allowances and `ε(R)` for a named
 reduction's success, the concrete bounds are:
@@ -78,14 +78,13 @@ growth assumptions, polynomial-resource attacker families have negligible forger
 probability. Proximity gives collision probability plus negligible error, and
 requires negligible collisions for negligible forgery. These family results
 retain one fixed execution model and account for polynomial stored code/advice;
-see the [completed plan and family endpoints](GENERAL-ADVERSARY-REDUCTION-PLAN.md).
+they are the `*FamilyStatement.lean` files next to each `Statement.lean`.
 
 Only the supporting layer needs execution contracts, primitive and encoding
 costs, sampler profiles, native solver certificates, and the expanded resource
-formulas. They remain inspectable in each `General*SecurityModel.lean` and
-`General*Parameters.lean`; proof bodies stay in `Proofs/`. The mathematical games
-import no runtime modules. The future Caliper/conventional-machine instantiation
-is separate from this public presentation.
+formulas. They are inspectable in each scheme's `*SecurityModel.lean` and
+`*Parameters.lean`; proof bodies stay in `Proofs/`. The mathematical games
+import no runtime modules.
 
 For a deeper Schnorr review, follow [the game, rewinding, and cost review](SCHNORR.md).
 Its separately scoped [bit-machine endpoint](../Signatures/Schnorr/BitStatement.lean)
@@ -119,11 +118,11 @@ The BLS, OOPS, and Proximity AGM games accept the shared library's
 3. [Internal extraction view](../Proofs/Model/DirectAGM.lean): every certified
    attacker has a derived grouped coefficient view. `run_eq` preserves the candidate
    and signing history; `adversary_query_bound` preserves query allowances. `game_le`
-   transfers the old extraction bound because malformed attempts cannot win the native
+   transfers the grouped-view extraction bound because malformed attempts cannot win the native
    game. Proximity's collision term is preserved exactly.
 4. Execution contracts implement the derived output encoding, with regrouping included
-   in the caller's charged budget. The existing solver composition proofs then give
-   concrete and family bounds. No conventional-machine instantiation is added.
+   in the caller's charged budget. The solver composition proofs then give
+   concrete and family bounds.
 
 The scheme-specific hash inputs and signing rules are:
 
@@ -161,7 +160,7 @@ the signing log; the AGM interface also retains the signed-message state and mal
 flag. Both ROM nonce conventions and the AGM game display the equation
 `response • generator = commitment + challenge • publicKey` in
 [`Schnorr.Game`](../Signatures/Schnorr/Game.lean). Their
-[exact game equalities](../Proofs/Schnorr/Game.lean) preserve the existing source games.
+[exact game equalities](../Proofs/Schnorr/Game.lean) preserve the source games.
 
 ## Results
 
@@ -169,8 +168,8 @@ The short BLS statements are [`BLS.agm_security` and `BLS.cocdh_security`](../Si
 Their model and adversary definitions expose the distinct execution and resource assumptions.
 The short [OOPS](../Signatures/OOPS/Statement.lean) and
 [Proximity](../Signatures/Proximity/Statement.lean) statements additionally take
-the degree or dimension. They preserve their original source games and derive
-both native reduction budgets from general caller resources. Their mathematical
+the degree or dimension. They keep the source games of `Spec/LazyAGM.lean` and derive
+both reduction budgets from general caller resources. Their mathematical
 games are in `Game.lean`; execution contracts and hardness budgets are in
 `GeneralSecurityModel.lean`; their proof bodies are in
 `Proofs/GeneralSecurity.lean`.
@@ -179,10 +178,8 @@ The [OOPS](../Signatures/OOPS/GeneralAGMFamilyStatement.lean) and
 derive polynomial solver time/code under one fixed backend and polynomial
 component/degree/dimension bounds. Proximity's collision-relative statement
 does not assume negligible collisions; its negligible-forgery corollary does.
-The eager-table AGM wrappers are retired. The [migration guide](API-MIGRATION.md)
-explains the replacement models and hardness classes. Original eager probability
-and runtime lemmas remain supporting references. Arithmetic-source BLS co-CDH and
-Schnorr endpoints retain their distinct implementation scopes.
+The arithmetic-source BLS co-CDH and Schnorr endpoints (`ArithmeticStatement.lean`)
+have their own implementation scope.
 
 ### BLS: lazy ROM to co-CDH
 
@@ -197,7 +194,7 @@ Schnorr endpoints retain their distinct implementation scopes.
 
 ### BLS: query-only lazy AGM
 
-- [Statement](../Signatures/BLS/Statement.lean): `BLS.agm_security` (two separate budgets: `BLS.Proofs.agm_security`).
+- [Statement](../Signatures/BLS/Statement.lean): `BLS.agm_security`, with `agm_good_reduction_within` and `agm_bad_reduction_within`.
 - [Source game](../Signatures/BLS/Spec/LazyAGM.lean) and [proof](../Proofs/BLS/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F|`, with hardness at each derived solver budget.
 - Arbitrary message types; measured all-path execution, encoding and coefficient-size bounds.
@@ -211,7 +208,7 @@ Schnorr endpoints retain their distinct implementation scopes.
 - [General-caller statement](../Signatures/OOPS/Statement.lean): `OOPS.agm_security`, with arbitrary topics and complete lazy solver budgets.
 - [Source game and degree rule](../Signatures/OOPS/Spec/LazyAGM.lean) and
   [proof](../Proofs/OOPS/LazyAGM.lean).
-- Same two-reduction bound and oracle-derived topic bases. The retired eager implementation required a finite topic type.
+- Same two-reduction bound and oracle-derived topic bases.
 - At most `d` distinct signed scalar messages on the eventual forgery topic. Repetitions and
   other topics do not consume this cap. Freshness concerns the entire message/topic pair.
 - Freshness and this winning degree rule imply a nonzero symbolic coefficient by Vandermonde.
@@ -225,26 +222,27 @@ Schnorr endpoints retain their distinct implementation scopes.
 - [Source game and collision event](../Signatures/Proximity/Spec/LazyAGM.lean) and
   [proof](../Proofs/Proximity/LazyAGM.lean).
 - Bound: `Adv_source <= goodEpsilon + badEpsilon + 1/|F| + Pr[fresh collision]`.
-  Oracle-derived coordinate bases; the retired eager implementation required a finite slot type.
+  Oracle-derived coordinate bases.
 - `Collision out signed` means the full vector/slot output is fresh and its vector equals
   the sum of signed vectors weighted by the output's signing coefficients. Repeats and other
   slots contribute; missing coefficients are zero. Signature validity is not required by this event.
-- `collisionGame` measures that event under the original key sampling and lazy adaptive oracles.
+- `collisionGame` measures that event under the game's key sampling and lazy adaptive oracles.
   The proof establishes equality with an observer of certified execution, then lazy/table equality.
   There is no all-path noncollision premise and no change to the forgery winning check.
   No small upper bound on this extra probability is proved; it can be one.
 
 ## Conditional hardness bounds
 
-Public endpoints bound forgery using resource-indexed DLog/co-CDH success
-suprema. Their supporting theorems apply [`Model.HardWithin`](../Proofs/Model/Hardness.lean)
-to actual solver witnesses constructed from the original contracts and attacker
-resources. AGM retains both reduction branches and `1/|F|`; Proximity additionally
+Public endpoints bound forgery by the DLog/co-CDH success of named reductions
+built from the attacker; each reduction's `*_reduction_within` theorem places it
+within the derived budget, so a hardness assumption such as
+[`Model.HardWithin`](../Proofs/Model/Hardness.lean) at that budget bounds the term.
+AGM retains both reduction branches and `1/|F|`; Proximity additionally
 retains collision probability. Co-CDH preserves the Coron factor.
 
-**Concrete operation bounds now cover all four routes**, including both AGM branches; see
+**Concrete operation bounds cover all four routes**, including both AGM branches; see
 [`OperationBounds.lean`](../Proofs/OperationBounds.lean). Erasing the ledgers gives the
-original solvers. Review the `qH`/`qS`, coefficient-size, finite-domain, and weight-cost factors.
+plain solvers. Review the `qH`/`qS`, coefficient-size, finite-domain, and weight-cost factors.
 **The arithmetic-source BLS co-CDH endpoint** in [BLS/ArithmeticStatement.lean](../Signatures/BLS/ArithmeticStatement.lean) uses
 the [Coron source certificate](../Proofs/Runtime/CoronCertificate.lean).
 Review its source certificate, all-key trace equality,
@@ -252,46 +250,45 @@ adaptive source budget, and charged fixed data. The compiler proves the exact na
 budget; no `hbudget` premise is required. Primitive operation/sampling prices are explicit
 contracts, not bit-runtime proofs.
 
-**The eager AGM resource lemmas** remain in the
+**The full-domain-table AGM resource lemmas** are in the
 [good package](../Proofs/Runtime/AGMGoodMachine.lean) and
 [bad package](../Proofs/Runtime/AGMBadMachine.lean). They charge full-domain
 tables, canonical-enumeration loading, simulation and extraction. These are
-reference implementations with explicit domain-size costs; their superseded
-public security wrappers have been removed. The current public AGM statements
-use lazy general-caller reductions with derived runtime and stored-code budgets.
+reference implementations with explicit domain-size costs, not used by the public
+AGM statements, which use lazy general-caller reductions with derived runtime and
+stored-code budgets.
 Read the [runtime audit](COMPUTATIONAL-SECURITY.md) for their conditional backend scope.
 
 ## Paper-facing statements
 
 [BLS.Statement](../Signatures/BLS/ArithmeticStatement.lean) intentionally retains the **type-3**
-formulation, not the original paper's map-based setting. The co-CDH solver receives
+formulation, not the BLS paper's map-based setting. The co-CDH solver receives
 `(g1, g2, x*g1, x*g2, h)` and must output `x*h`. The explicit `x*g1` co-hint is part of
 the hardness challenge, not a map or a value supplied to the signature adversary.
 Neither the reduction proof nor the concrete-machine statement assumes or uses a
-G2-to-G1 map. The map-based adapter has been removed.
+G2-to-G1 map.
 
 [PaperStatements.lean](../Signatures/PaperStatements.lean) supplies an OOPS
 game comparison without adding another security endpoint:
 
 - `OOPS.LazyAGM.callGame` keeps **one degree `d` fixed for the whole
   game** and requires at most `d` signing calls on the final target topic. Repeated
-  calls count again; other topics do not consume that limit. The original theorem
+  calls count again; other topics do not consume that limit. `OOPS.agm_security`
   allows up to `d` distinct messages instead. `OOPS.LazyAGM.callGame_le_game` proves
   the call-count game has no greater success probability, so the same named solvers
-  and their resource bounds remain applicable by transitivity. The weaker call-count security
-  wrapper has been removed. This game comparison needs no finite
-  topic type; the actual DLog reduction still requires finite topics.
+  and their resource bounds apply by transitivity. Neither the comparison nor the
+  reduction needs a finite topic type.
 
 Scalar equality in the DLog and OOPS winning checks is classical, as in the other lazy
 source games' winning checks. The probability statements therefore need no caller-supplied
-`DecidableEq F`. Exact experiment-equality proofs preserve the former checks with any
+`DecidableEq F`. Exact experiment-equality proofs show the classical checks agree with any
 supplied decider. This removes no instruction or cost from a solver: executable machine
 certificates retain their equality instances and costs. The computable OOPS `admissible`
-helper still accepts a decider; the game supplies one internally.
+helper accepts a decider; the game supplies one internally.
 
 BLS also uses classical target-group equality for final signature verification. Its
 co-CDH machine-bounded statement requires no `DecidableEq Gₜ`.
-The lazy game is proved identical to the former version with a supplied decider,
+The lazy game is proved identical to the version with a supplied decider,
 including the final hash lookup and freshness check. Solver operations and costs
 are unchanged; this check is performed by the security experiment, not the solver.
 
@@ -302,20 +299,17 @@ statement retains G1 equality for executable operations and their costs, not for
 **Which OOPS degree convention?** The local December 2025 revision of
 [OOPS, Section 5.1.1](https://eprint.iacr.org/2025/2340) says each signing query contains
 a message, topic, and degree; Section 5's `Setup` supplies group/hash parameters,
-while `GenerateTopic` accepts `d`. Thus the current Lean statements are a fixed-degree
+while `GenerateTopic` accepts `d`. Thus the Lean statements are a fixed-degree
 specialization of that revision, not a mixed-degree game. A deployment can fix its
 degree in advance, and the formalization retains that convention. This comparison
 is against the local PDF, not a claim about an unverified newer revision.
 
-Remaining differences are intentional and visible: finite topic/slot domains in
-the current OOPS/Proximity endpoints;
-the exact Coron factor instead of the paper's `e*(qS+1)` relaxation; arithmetic-machine
-costs instead of a proved translation to the paper's time units; and the explicit
-fresh-collision probability term for Proximity. The legacy AGM reductions initialize private
-full-domain tables; the general BLS AGM endpoint uses the proved lazy implementation
-over arbitrary message types. Our DLog challenge samples from all of `F`, including zero;
-the local OOPS paper defines its hardness challenge over nonzero scalars. These
-adapters do not change that distribution or prove an equivalence between them.
+Remaining differences are intentional and visible: the exact Coron factor instead of
+the paper's `e*(qS+1)` relaxation; machine costs instead of a proved translation to
+the paper's time units; and the explicit fresh-collision probability term for
+Proximity. Our DLog challenge samples from all of `F`, including zero; the local
+OOPS paper defines its hardness challenge over nonzero scalars, and no equivalence
+between the two distributions is proved.
 No conventional-machine PPT coverage or small Proximity forgery bound without
 controlling collisions is asserted.
 
@@ -350,7 +344,7 @@ the final colon hold, then the highlighted forgery-probability bound follows.**
    `ENNReal` means nonnegative extended reals. This is a programmable-random-oracle result
    with arithmetic-machine costs, not a standard-model or bit-complexity theorem.
 
-The image omits the surrounding section's typeclass assumptions and the proof body;
+This reading omits the surrounding section's typeclass assumptions and the proof body;
 the [source file](../Signatures/BLS/ArithmeticStatement.lean) contains the full context.
 
 ### The machine and local time
@@ -400,8 +394,7 @@ machine steps; relating them to bit-level runtime would require a separate proof
    [Coron counting and extraction](../Proofs/BLS/CoCDH/Coron.lean), and
    [signing-call accounting](../Proofs/BLS/CoCDH/QueryBound.lean).
 
-The former public-table source variants are removed, not relabeled as lazy.
-Private tables remain proof/simulator machinery and are never supplied to the source adversary.
+Private tables are proof/simulator machinery and are never supplied to the source adversary.
 
 ## Assumptions and limits
 
@@ -411,11 +404,9 @@ Private tables remain proof/simulator machinery and are never supplied to the so
   `Nat.card F` denotes the same cardinality as the proof's internal `Fintype.card F`.
 - The DLog challenge supplies both `alpha*g1` and `alpha*g2`. See the
   [hardness experiments](../Signatures/Model/CoCDH.lean).
-- The lazy source definitions allow infinite base-index types; the current reductions and bounds do not.
+- The lazy source games and the public reductions allow infinite message, topic and slot types.
 - No standard-model OOPS theorem, concrete-hash instantiation, unrestricted Proximity theorem,
-  PPT preservation, or equivalence to ArkLib's experimental runner is established here.
-- Retiring the old public-table schemes also retires their three completeness checks.
-  This guide does not present those as completeness theorems for the lazy games.
+  PPT preservation, or completeness theorem for the lazy games is established here.
 
 ## Verification evidence
 
@@ -423,19 +414,17 @@ Private tables remain proof/simulator machinery and are never supplied to the so
 lake build Signatures SignaturesTest
 ```
 
-The generic AGM library is VCVio's `GroupModel.Interaction` (the former
-`zksecurity/agm-lean` package, absorbed upstream). Its standalone tests run with
+The generic AGM library is VCVio's `GroupModel.Interaction`. Its standalone tests run with
 `lake build VCVioTest` in that repository. Token/output utilities and
 signature integration tests live here; the library has one indexed interaction module.
 
 The [four public axiom guards](../SignaturesTest/Upstream.lean) require exactly
 `[propext, Classical.choice, Quot.sound]`. The
-[signature guards](../SignaturesTest/StatementAssumptions.lean) check simplified premises
-and reject the removed public-table interface.
+[signature guards](../SignaturesTest/StatementAssumptions.lean) check simplified premises,
+all four machine statements' exact axiom footprints and source-certificate premises, and
+test applications using only their explicit arguments.
 The [hardness boundary tests](../SignaturesTest/Hardness.lean) distinguish query counts from
-runtime bounds and check the unchanged games. The signature guards reject removed weaker
-endpoints, check all four machine statements' exact axiom footprints and source-certificate
-premises, and test applications using only their explicit arguments.
+runtime bounds and check the games' verification and freshness steps.
 
 - [Cache reuse and visible tokens](../SignaturesTest/LazyAGM.lean).
 - [Signature token representations](../SignaturesTest/AlgebraicRepresentation.lean) and
@@ -456,16 +445,16 @@ premises, and test applications using only their explicit arguments.
   the shared library, interleaved and repeated replies, distinct group bases, malformed
   requests/outputs, and public game aliases. The [general proof](../Proofs/Model/DirectAGM.lean)
   covers every certified attacker; [Proximity](../Proofs/Proximity/DirectAGM.lean)
-  proves exact collision preservation. The old signature execution bridge remains an
-  internal supporting theorem for the grouped view.
+  proves exact collision preservation. An internal signature execution bridge
+  supports the grouped view.
 - [Reply-dependent queries and stopping](../SignaturesTest/AdaptiveQueries.lean).
 - [Freshness, topic counting, and collision probabilities](../SignaturesTest/GameBoundaries.lean).
 - [Coron signing budgets](../SignaturesTest/CoronBudget.lean).
 - [Adaptive denominator and collision boundaries](../SignaturesTest/AdaptiveDenominator.lean).
 
 These are checked source assertions, not a live CI badge. A reviewer should record the revision
-and build evidence. Existing probability-API deprecation warnings and an upstream experimental
-runner's admission are outside the four public axiom footprints.
+and build evidence. Probability-API deprecation warnings are outside the four public axiom footprints.
+
 
 ## Review checklist
 

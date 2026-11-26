@@ -2,22 +2,24 @@
 
 The [public AGM statement](../Signatures/Schnorr/Statement.lean) takes a single-group
 curve, security parameter, query allowances and general realized algebraic
-adversary. It bounds forgery by DLog success at the proved native runtime plus
-the original query losses. Its game, hardness class and backend contracts are
-[inspectable](../Signatures/Schnorr/GeneralSecurityModel.lean); proofs are separate.
+adversary. It bounds forgery by the DLog success of `agmReduction`, built from
+the attacker, plus the query losses; `agm_reduction_within` places that reduction
+in Caliper within its derived code, memory and time budget. Its game, reduction
+and budget are [inspectable](../Signatures/Schnorr/GeneralSecurityModel.lean); proofs are separate.
 
 The [public ROM statement](../Signatures/Schnorr/Statement.lean) has the same four
 inputs and permits an unrestricted attacker. Its full-field nonce bound is signing
-loss plus `(qH+1)/|F|` plus the square root of `(qH+1)` times DLog success at the
-derived reduction budget. The [original quadratic bound](../Proofs/Schnorr/GeneralROM.lean)
-is also available. The complete replaying solver has a derived executable
+loss plus `(qH+1)/|F|` plus the square root of `(qH+1)` times the DLog success of
+`romReduction`, and `rom_reduction_within` places that replaying reduction in
+Caliper within its derived budget. The [quadratic form](../Proofs/Schnorr/GeneralROM.lean)
+of the bound is also proved. The complete replaying solver has a derived executable
 certificate and runtime/code bounds in the same fixed backend as the attacker.
 The [family corollary](../Signatures/Schnorr/GeneralROMFamilyStatement.lean) concludes
 negligible forgery for polynomial unrestricted attacker families under nonuniform
 DLog hardness and negligible inverse field size. The separate nonzero-nonce
-variant now has the parallel public `Schnorr.NonzeroNonce.rom_security` statement,
+variant has the parallel public `Schnorr.NonzeroNonce.rom_security` statement,
 with signing denominator `|F|-1`, and a [nonuniform family corollary](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean).
-Both use the proved nonzero solver certificate and preserve the original game.
+Both use the proved nonzero solver certificate and keep the source game.
 
 The [arithmetic-source ROM statement](../Signatures/Schnorr/ArithmeticStatement.lean)
 proves ordinary programmable-ROM EUF-CMA security from fixed-generator DLog
@@ -85,7 +87,7 @@ composes extraction, averaging over keys, and the signing-simulation bound.
 Its [regressions](../SignaturesTest/SchnorrFixedTape.lean) check private draws
 after the fork, the final-query slot, and the axiom footprint.
 
-The general-caller work now includes a
+The general-caller route uses a
 [lazy retained tape](../Proofs/Runtime/SchnorrLazySeed.lean) that samples only
 encountered draws. Reset preserves both caller and simulator private randomness,
 including draws after the changed challenge. Its
@@ -96,22 +98,22 @@ sampling families. Native execution and encoded memory costs remain separate
 obligations.
 
 The [joint deferred-sampling law](../Proofs/Runtime/SeededDeferredTrace.lean)
-now preserves the first output, complete transcript and original seed while
+preserves the first output, complete transcript and initial seed while
 moving generation of unused entries after the first run. The
 [suffix-sampling law](../Proofs/Runtime/SeededSuffixSampling.lean) removes
 those independent entries from a second execution after a valid reset.
-[SeededLazyFork](../Proofs/Runtime/SeededLazyFork.lean) now composes these
+[SeededLazyFork](../Proofs/Runtime/SeededLazyFork.lean) composes these
 laws with replacement sampling, the unchanged-challenge guard and second-run
 selector agreement, proving equality of the complete joint output distribution.
 [SeededForkReachability](../Proofs/Runtime/SeededForkReachability.lean) derives
-the valid-slot premise from the existing intrinsic selector-reachability property.
+the valid-slot premise from the intrinsic selector-reachability property.
 [SchnorrLazyFork](../Proofs/Runtime/SchnorrLazyFork.lean) implements that
 controller using the finite retained tape and proves its exact correspondence.
 All probability endpoints use native measures.
 
 The named [lazy ROM reduction](../Proofs/Schnorr/LazyROMReduction.lean)
-now has its [full security bound](../Proofs/Schnorr/LazyROM.lean)
-proved through extraction and averaging over keys, with the original signing
+has its [full security bound](../Proofs/Schnorr/LazyROM.lean)
+proved through extraction and averaging over keys, with the source signing
 loss and `qH + 1` fork denominator. Neither its executable nor `LazyROM.security`
 takes a family cover or private-query capacity. The
 [reference-cover proof](../Proofs/Schnorr/LazyQueryBounds.lean) derives
@@ -124,12 +126,12 @@ assert that the cover is small or efficiently computable.
 adaptive replay, an attacker with large adaptive sampling arities and no
 hash/sign calls, the message-type scope and the standard axiom footprint.
 
-[SchnorrRawTape](../Proofs/Runtime/SchnorrRawTape.lean) now implements the
+[SchnorrRawTape](../Proofs/Runtime/SchnorrRawTape.lean) implements the
 same raw families using the shared finite cell lists and scan/reset operations.
 [SchnorrRawFork](../Proofs/Runtime/SchnorrRawFork.lean) proves exact computation
 equality with the named lazy controller and DLog reduction, including extraction,
 and transfers its security theorem. Caller and simulator private draws keep
-their original ordering within each family; no randomness-family change is assumed.
+their source ordering within each family; no randomness-family change is assumed.
 
 [Tape validity](../Proofs/Runtime/SchnorrRawTapeValid.lean) is preserved by
 draws, complete runs and reset, so stored private replies fit their requested
@@ -138,14 +140,14 @@ uses that fact to return a stored natural on a hit, or performs one dynamic
 uniform query and records it on a miss. Its code and proved description bound
 are independent of the input arity and tape length. Its complete state
 correspondence is proved. [Raw tape capacity bounds](../Proofs/Runtime/SchnorrRawTapeBounds.lean)
-now charge at most one saved cell and one live sampling call per requested draw.
+charge at most one saved cell and one live sampling call per requested draw.
 After two runs the saved/remaining capacities are `q₁ + q₂ + 1` and `q₁ + 1`.
 [Encoded-size invariants](../Proofs/Runtime/BackendSchnorrRawUniformSize.lean)
 bound both lists separately and are preserved by native draw execution and reset.
 [Native return/save costs](../Proofs/Runtime/BackendSchnorrRawUniformLocalCost.lean)
 charge the chronological append's two traversals and the full retained input.
-[Native scan costs](../Proofs/Runtime/BackendSeedTapeScanCost.lean) now charge
-the forward traversal, growing accumulator, original context and final reversal.
+[Native scan costs](../Proofs/Runtime/BackendSeedTapeScanCost.lean) charge
+the forward traversal, growing accumulator, retained context and final reversal.
 The [complete private-draw budget](../Proofs/Runtime/BackendSchnorrRawUniformBudget.lean)
 combines preparation, scan, sampling, append and routing for the actual program.
 Its [polynomial closure](../Proofs/Runtime/BackendSchnorrRawUniformPolynomial.lean)
@@ -171,7 +173,7 @@ also charges argument construction and both output tape copies. Its runtime
 has polynomial closure in encoded widths, capacities and primitive costs, with
 no iteration factor for the numeric reset position.
 
-The [native fork controller](../Proofs/Runtime/BackendSchnorrRawFork.lean) now
+The [native fork controller](../Proofs/Runtime/BackendSchnorrRawFork.lean)
 assembles both executions, selection, replacement sampling, old-challenge lookup,
 reset and acceptance checks. Its source law equals the named raw-tape fork after
 scalar interpretation, requiring pass laws only at the initial and reached
@@ -184,27 +186,27 @@ and field zero. Its [complete runtime and polynomial closure](../Proofs/Runtime/
 charge the stored-tape scan and retained input, without constructing a prefix or
 iterating over the numeric position. The
 [complete controller runtime](../Proofs/Runtime/BackendSchnorrRawForkBudget.lean)
-now charges both executions, both selector calls, replacement sampling,
+charges both executions, both selector calls, replacement sampling,
 lookup/reset, all adapters, branches and retained copies. Its frame invariants
 include the first output and configuration retained during replay. The runtime
 formula has proved polynomial closure from separate pass budgets, tape capacities,
-encoded widths and backend operation costs. The general-caller pass is now
+encoded widths and backend operation costs. The general-caller pass is
 assembled with exact source correspondence, complete stored-code/runtime bounds
-and polynomial runtime closure. The selector now also has complete runtime,
+and polynomial runtime closure. The selector also has complete runtime,
 stored-code and polynomial bounds. Both are installed in the native controller,
 with exact source correspondence, a complete stored-code bound and a derived
 runtime bound for both installed passes, selection and replacement sampling.
 
 The [general finite-cache pass](../Proofs/Runtime/SchnorrROMListPass.lean)
-now has exact adaptive source/trace correspondence for arbitrary attacker
+has exact adaptive source/trace correspondence for arbitrary attacker
 computations, without requiring arithmetic source code. Its
 [cache capacities](../Proofs/Runtime/SchnorrROMListGrowth.lean) are `qS + qH`
 managed entries and `qH + 1` live entries from empty stores. The
 [complete finite-cache/tape reduction](../Proofs/Runtime/SchnorrROMListReduction.lean)
 equals the named reduction by computation equality, including extraction and
-fallback. The original probability bound transfers directly.
+fallback. The source probability bound transfers directly.
 [Native cache/signing kernels](../Proofs/Runtime/BackendSchnorrROMCache.lean)
-now implement those routines with a state-passing scalar draw, exact semantics
+implement those routines with a state-passing scalar draw, exact semantics
 and stored-code bounds. [Live-cache runtime](../Proofs/Runtime/BackendSchnorrROMLiveBudget.lean)
 is derived from the actual structured-key scan, primitive comparisons and draw
 budget. Hits preserve the store; misses may advance its invariant. The result
@@ -213,43 +215,41 @@ bounds returned entry widths and at most one extra cache entry.
 also has a derived runtime and width/capacity bound. Both formulas have polynomial
 closure without a message-domain factor.
 [Managed-cache runtime](../Proofs/Runtime/BackendSchnorrROMManagedBudget.lean)
-now includes both caches and every hit/miss path.
+includes both caches and every hit/miss path.
 [Complete signing runtime](../Proofs/Runtime/BackendSchnorrROMSigningBudget.lean)
 charges both sequential draws, commitment arithmetic, programming and return
 construction. Its three store invariants account for each draw's state change;
 the cache-width allowance remains fixed across repeated signing calls.
 [Native private sampling](../Proofs/Runtime/BackendSchnorrPrivateSampling.lean)
-now transforms the actual scalar sampler to share the raw tape with attacker
+transforms the actual scalar sampler to share the raw tape with attacker
 draws, with exact source correspondence even on malformed input tapes. Its
 [stored-code bound](../Proofs/Runtime/BackendSchnorrPrivateSamplingDescription.lean)
 counts the sampler and installed handlers; the
 [typed per-draw runtime bound](../Proofs/Runtime/BackendSchnorrPrivateSamplingBudget.lean)
 charges actual interface conversion, scan/draw/save and routing costs and has
-proved polynomial closure. The [original execution profile](../Proofs/Runtime/BackendExecutionProfile.lean)
-now measures local work, control visits, intermediate encoded widths, counters
+proved polynomial closure. The sampler's [execution profile](../Proofs/Runtime/BackendExecutionProfile.lean)
+measures local work, control visits, intermediate encoded widths, counters
 and requests. [Resource recovery](../Proofs/Runtime/BackendStateSimulationResources.lean)
 pairs these source resources with the transformed program's actual costed run;
 both computation projections are proved exact. [Structural cost bounds](../Proofs/Runtime/BackendStateSimulationRouting.lean)
 charge the added adapters and retained state from primitive backend laws.
 The [complete sampler resource theorem](../Proofs/Runtime/BackendSchnorrPrivateSamplingResources.lean)
-now proves total runtime, output widths and cumulative tape capacities across
-all internal draws. Its time is original local work plus executed visits times
+proves total runtime, output widths and cumulative tape capacities across
+all internal draws. Its time is the sampler's local work plus executed visits times
 a derived routing allowance plus internal queries times the proved handler cost.
 The saved tape grows by at most the internal query allowance, and the remaining
 tape stays within its initial capacity. Polynomial closure is proved without
 enumerating numeric arities or loop counters.
 [The installed-kernel theorem](../Proofs/Runtime/BackendSchnorrROMPrivateBudget.lean)
-derives live-cache, managed-cache and full signing budgets from the original
+derives live-cache, managed-cache and full signing budgets from the
 sampler profile and primitive laws. Hashing uses the
 [challenge adapter](../Proofs/Runtime/BackendSchnorrROMDraws.lean): it consumes a
-challenge-family cell on replay, or runs the original sampler and appends one
+challenge-family cell on replay, or runs the untransformed sampler and appends one
 challenge cell. Its internal uniform queries are not private replay events.
 Signing uses the transformed private sampler, sharing its uniform families with
-attacker randomness. This corrects the initial installation in `1cc6529`, which
-incorrectly used private sampling for hashing too; its cost theorem was valid
-for that code but supplied no source correspondence for that installation.
+attacker randomness.
 [Ordinary sampler runtime](../Proofs/Runtime/BackendExecutionProfileCost.lean)
-is now derived from the same original profile, so neither sampler nor kernel
+is derived from the same profile, so neither sampler nor kernel
 runtime is an assumed completed budget. Hashing reserves one extra tape cell;
 signing reserves twice the internal query allowance and charges the second draw
 at the increased saved capacity. All three runtime formulas have proved
@@ -257,38 +257,38 @@ polynomial closure. [Kernel tests](../SignaturesTest/SchnorrROMKernelBudget.lean
 check both draw families, preservation of unrelated tape cells, fresh challenge
 append and skipped draws on cache hits.
 [Common-store adapters](../Proofs/Runtime/BackendSchnorrROMHandlerComponents.lean)
-now preserve the public configuration, both caches and the same raw tape across
+preserve the public configuration, both caches and the same raw tape across
 random, hash, signing and final-live-hash operations. Their
 [source laws](../Proofs/Runtime/BackendSchnorrROMHandlerSource.lean) connect to
-the original list-cache handler on every tape state, including modulo decoding
+the source list-cache handler on every tape state, including modulo decoding
 of malformed raw naturals. The [shared-state interpretation](../Proofs/Runtime/SchnorrROMSharedState.lean)
 commutes with adaptive oracle simulation. Actual
 [request/reply ports](../Proofs/Runtime/BackendSchnorrROMInterface.lean) and
-[indexed dispatch](../Proofs/Runtime/BackendSchnorrROMHandler.lean) now realize
+[indexed dispatch](../Proofs/Runtime/BackendSchnorrROMHandler.lean) realize
 the full source interaction for arbitrary quantitative callers. Measured query
 resources establish termination without cutoff. The
 [stored-code bounds](../Proofs/Runtime/BackendSchnorrROMHandlerDescription.lean)
-count all adapters, ports, kernels, the original/transformed sampler and caller
+count all adapters, ports, kernels, the untransformed/transformed sampler and caller
 code. [Handler regressions](../SignaturesTest/SchnorrROMHandler.lean) check cache
 separation, signing/private replay ordering, typed random replies and source scope.
 [All eight adapter costs](../Proofs/Runtime/BackendSchnorrROMHandlerLocalCost.lean)
-are now derived, including default-zero construction for hashing.
+are derived, including default-zero construction for hashing.
 [Shared-store invariants](../Proofs/Runtime/BackendSchnorrROMHandlerSize.lean)
 charge the configuration, both caches and both tape lists with fixed cache-entry
 width allowances. [Complete component composition](../Proofs/Runtime/BackendSchnorrROMHandlerComponentBudget.lean)
 charges every control boundary and retained copy.
 [Primitive-derived component certificates](../Proofs/Runtime/BackendSchnorrROMHandlerPrimitiveBudget.lean)
-now cover random, hash, signing and final-live-hash operations without completed
+cover random, hash, signing and final-live-hash operations without completed
 kernel/sampler/adapter-budget premises. Each adds
 `2061 * overhead (8192 * ((32 * (managedCap + liveCap) + 128) * width))`
 to its native kernel budget, plus the zero primitive for hash/final preparation.
 All four formulas have polynomial closure without a numeric arity/counter factor.
 [Indexed routing](../Proofs/Runtime/BackendSchnorrROMHandlerRoutingBudget.lean)
-now charges request conversion, both sum dispatches, retained requests/state and
+charges request conversion, both sum dispatches, retained requests/state and
 dependent reply tagging. [Actual port contracts](../Proofs/Runtime/BackendSchnorrROMHandlerPorts.lean)
 include modulo decoding of malformed raw random replies.
 The [complete dispatcher budget](../Proofs/Runtime/BackendSchnorrROMHandlerBudget.lean)
-derives all component costs from original sampler profiles and primitive laws.
+derives all component costs from sampler profiles and primitive laws.
 At frame `H = 8 * (W + portWidth)`, its time is bounded by the maximum of the
 three component times, plus request/tag costs and `40 * overhead (128 * H)`.
 [Adaptive reservations](../Proofs/Runtime/BackendSchnorrROMHandlerReserve.lean)
@@ -298,10 +298,10 @@ invariant with the same proved time allowance.
 [Polynomial closure](../Proofs/Runtime/BackendSchnorrROMHandlerPolynomial.lean)
 covers the complete formula without numeric-arity/counter or message-domain
 factors. [Request recovery](../Proofs/Runtime/BackendSchnorrROMRequestRecovery.lean)
-now derives native request bounds from measured caller encodings, with identity
+derives native request bounds from measured caller encodings, with identity
 recovery for equal-size representations.
 [Whole-caller composition](../Proofs/Runtime/BackendSchnorrROMCallerBudget.lean)
-charges original caller work, every dispatcher call, initialization, retained
+charges the caller's own work, every dispatcher call, initialization, retained
 state and loop/control work. The
 [measured-resource endpoint](../Proofs/Runtime/BackendSchnorrROMCallerResources.lean)
 derives all caller invariants and budgets from `RunsWithin`; it assumes no
@@ -309,11 +309,11 @@ completed handler/caller efficiency certificate or arithmetic attacker program.
 [Return bounds](../Proofs/Runtime/BackendSchnorrROMCallerOutput.lean) cover the
 entire output encoding, including zero-fuel returns.
 [Polynomial closure](../Proofs/Runtime/BackendSchnorrROMCallerPolynomial.lean)
-now covers the full caller runtime.
+covers the full caller runtime.
 [Caller regressions](../SignaturesTest/SchnorrROMCaller.lean) check zero-fuel
 return/cutoff behavior and guard the measured-resource scope and axiom footprint.
 The [assembled native pass](../Proofs/Runtime/BackendSchnorrROMPass.lean)
-now initializes both caches, runs the general caller and queries the live hash
+initializes both caches, runs the general caller and queries the live hash
 cache for final verification. Actual input, output and optional-return conversions
 are part of the code. Empty/singleton result lists distinguish cutoff from
 completion without a default message. Its
@@ -327,11 +327,11 @@ the forgery, both caches, list construction and both tape lists.
 charges retained data, packing and control around the live-hash component.
 [Initialization](../Proofs/Runtime/BackendSchnorrROMPassSetup.lean) and
 [terminal composition](../Proofs/Runtime/BackendSchnorrROMPassTerminalComposition.lean)
-now charge the actual [boundary conversions](../Proofs/Runtime/BackendSchnorrROMPassPorts.lean),
+charge the actual [boundary conversions](../Proofs/Runtime/BackendSchnorrROMPassPorts.lean),
 cache construction, optional dispatch, singleton creation and cutoff.
 The [complete pass runtime](../Proofs/Runtime/BackendSchnorrROMPassBudget.lean)
 derives all component budgets from measured arbitrary caller executions,
-original sampler profiles and primitive/encoding/control laws. It assumes no
+sampler profiles and primitive/encoding/control laws. It assumes no
 finished pass/component budget and preserves complete output/cache/tape bounds.
 Its [polynomial closure](../Proofs/Runtime/BackendSchnorrROMPassPolynomial.lean)
 covers the entire installed runtime formula without a polynomial numeric-arity,
@@ -340,7 +340,7 @@ empty initial tapes and bounded replay tapes; sufficient query fuel excludes cut
 [Pass regressions](../SignaturesTest/SchnorrROMPass.lean) check live-cache selection,
 private-cell ordering and sampler independence of the costed cutoff branch,
 and guard the full runtime theorem's measured-resource scope and axiom footprint.
-The [native selector](../Proofs/Runtime/BackendSchnorrROMSelection.lean) now
+The [native selector](../Proofs/Runtime/BackendSchnorrROMSelection.lean)
 checks the signature equation, locates the chronological live-cache entry and
 checks `index < qH + 1`. It rejects empty results without inventing a message,
 agrees with the source selector on singleton results, and has defined normalized
@@ -348,11 +348,11 @@ semantics on every result list. Its
 [stored-code bound](../Proofs/Runtime/BackendSchnorrROMSelectionDescription.lean)
 counts every compiled component and the query-limit literal.
 The [complete lookup runtime](../Proofs/Runtime/BackendSchnorrROMLiveIndexBudget.lean)
-charges reversal, the scan, growing ordinal, original/reversed caches and trailing
+charges reversal, the scan, growing ordinal, input/reversed caches and trailing
 environments. It derives scan and reversal costs from actual primitive bounds
 and encountered-cache capacity, without iterating over the message space.
 [Complete selector runtime](../Proofs/Runtime/BackendSchnorrROMSelectionBudget.lean)
-now composes verification, lookup, guard, the empty/singleton outer fold and input
+composes verification, lookup, guard, the empty/singleton outer fold and input
 framing, deriving every component from pass encodings and primitive contracts.
 With `W = (32*(managedCap+liveCap)+128)*width`, its bound is the complete lookup
 cost at `W`, plus `2*scaleTime+addTime+pointTime+comparisonTime` and
@@ -363,8 +363,8 @@ covers the entire selector runtime and description.
 final-query slot, chronological order, cutoff, failed verification, missing live
 entries, duplicate keys and malformed multi-result lists, and guard theorem scope.
 The [installed native fork](../Proofs/Runtime/BackendSchnorrROMFork.lean)
-now uses the actual pass and selector. Its source law derives both runs from
-measured caller resources and equals the original finite-cache/raw-tape fork,
+uses the actual pass and selector. Its source law derives both runs from
+measured caller resources and equals the source finite-cache/raw-tape fork,
 with singleton output encoding. Every supported costed result rejects or contains
 two singleton completed passes. Its
 [complete stored-code bound](../Proofs/Runtime/BackendSchnorrROMForkDescription.lean)
@@ -372,27 +372,27 @@ counts both pass/selector occurrences and all controller components.
 [Fork guards](../SignaturesTest/SchnorrROMFork.lean) check those installed components,
 source scope, measured-resource premises and axiom footprint.
 The [installed fork runtime](../Proofs/Runtime/BackendSchnorrROMForkBudget.lean)
-now derives both actual pass budgets, selection and fresh sampling from
-[original caller/sampler resources](../Proofs/Runtime/BackendSchnorrROMPassResources.lean)
+derives both actual pass budgets, selection and fresh sampling from
+[caller/sampler resources](../Proofs/Runtime/BackendSchnorrROMPassResources.lean)
 and primitive contracts. No completed component budget is assumed. The controller
 preserves [separate tape-entry and retained-output widths](../Proofs/Runtime/BackendSchnorrRawForkTapeWidth.lean),
 so charging the full output does not inflate every tape cell or create circular
 storage requirements. Replay reserves the first pass's saved capacity plus two
-cells before charging its own draws. The old equal-width controller theorem is
-preserved as a specialization; the two-width formula also has polynomial closure.
+cells before charging its own draws. The equal-width controller theorem is a
+specialization; the two-width formula also has polynomial closure.
 The [fully instantiated fork formula](../Proofs/Runtime/BackendSchnorrROMForkPolynomial.lean)
-now has polynomial closure from original numerical resource families. Its
+has polynomial closure from numerical resource families. Its
 [pass inputs](../Proofs/Runtime/BackendSchnorrROMPassTime.lean) contain only
 sampler work/visits/queries, widths/capacities and primitive/port/control costs;
 they assume no finished component efficiency and do not fix curve/message types.
 The exact same numerical formula occurs in the installed fork's runtime theorem.
 
 The [complete native solver](../Proofs/Runtime/BackendSchnorrROMSolver.lean)
-now assembles configuration setup, the installed fork and
+assembles configuration setup, the installed fork and
 [guarded extraction](../Proofs/Runtime/BackendSchnorrROMExtraction.lean).
 Extraction compares commitments and challenges, returns `(z-z')/(c-c')` only
 when the commitments agree and challenges differ, and otherwise executes the
-original uniform fallback. Failed forks also sample uniformly. Nested folds
+source uniform fallback. Failed forks also sample uniformly. Nested folds
 process the empty/singleton output representation without a default message.
 The whole native solver is proved equal to the named lazy DLog reduction from
 measured attacker resources and its implementation law, preserving the full
@@ -402,7 +402,7 @@ the complete installed fork. [Solver regressions](../SignaturesTest/SchnorrROMSo
 exercise successful extraction, both fallback paths, equal challenges, unequal
 commitments and empty outputs, and guard source scope and standard axioms.
 The [complete runtime theorem](../Proofs/Runtime/BackendSchnorrROMSolverBudget.lean)
-now derives setup, both fork executions, extraction and fallback internally from
+derives setup, both fork executions, extraction and fallback internally from
 measured caller/sampler resources and primitive contracts. It also bounds the
 returned scalar encoding. [Setup](../Proofs/Runtime/BackendSchnorrROMSolverSetup.lean)
 charges configuration packing and local control. The
@@ -410,17 +410,17 @@ charges configuration packing and local control. The
 charges both nested folds, guards, field subtraction/division, output sizes,
 retained caches/results and both fallback paths. The actual fork's successful
 outputs have at most one entry per list, so extraction does not enumerate any
-message domain. Its only supplied component budget is the original sampler's;
+message domain. Its only supplied component budget is the sampler's;
 the complete solver derives even that budget from the sampler execution profile.
 The [polynomial theorem](../Proofs/Runtime/BackendSchnorrROMSolverPolynomial.lean)
-covers the exact complete runtime formula from original numerical resource
+covers the exact complete runtime formula from numerical resource
 families, with no finished pass/fork/extractor efficiency premise. Curve and
 message types may vary with the security parameter. Regression guards inspect
 the whole theorem and primitive-operation contracts for those restrictions.
 The [stored-code family theorem](../Proofs/Runtime/BackendSchnorrROMDescriptionPolynomial.lean)
-now proves polynomial closure from the original caller, sampler, primitive and
+proves polynomial closure from the caller, sampler, primitive and
 port descriptions. Its [numerical inputs](../Proofs/Runtime/BackendSchnorrROMDescriptionInputs.lean)
-equal the existing complete code budget exactly; they assume no finished component
+equal the complete code budget exactly; they assume no finished component
 has polynomial stored code. Generic [structural closure](../Proofs/Runtime/BackendDescriptionPolynomial.lean)
 counts fixed reduction expressions, effectful bodies and argument frames while
 leaving the caller unrestricted.
@@ -432,32 +432,32 @@ at every input. That algorithm uses the supplied generator; at the scheme
 generator, its entire DLog experiment equals the named lazy reduction's experiment.
 The [concrete security theorem](../Proofs/Runtime/BackendSchnorrROMSecurity.lean)
 applies hardness in the [same execution class](../Proofs/Runtime/BackendSchnorrROMDLog.lean)
-and preserves the original quadratic forking and signing-simulation losses.
+and preserves the quadratic forking and signing-simulation losses.
 Every DLog challenge must fit the encoded input cap. No finished solver efficiency
 or executable witness is assumed. [Resource guards](../SignaturesTest/SchnorrROMResources.lean)
 check this scope, exact description and experiment connections, and standard axioms.
-The [public interface](../Signatures/Schnorr/Statement.lean) now displays the
-original game, query losses and DLog success at the derived budget. Its
+The [public interface](../Signatures/Schnorr/Statement.lean) displays the
+game, query losses and the DLog success of `romReduction`, with `rom_reduction_within`
+placing it within the derived Caliper budget. Its
 [execution model](../Signatures/Schnorr/GeneralROMSecurityModel.lean) is independent
 of the AGM model. Group sampling is derived from the curve's scalar sampler and
-generator bijection. The model fixes original component contracts and a caller
+generator bijection. The model fixes Caliper component contracts and a caller
 code allowance before the attacker is chosen; the attacker supplies arbitrary
 implemented local code, measured execution resources and query bounds.
 
 The [family resource proof](../Signatures/Schnorr/GeneralROMFamilyResources.lean)
 derives polynomial complete solver time/code and membership in the common
-nonuniform class. It bounds original work, queries, widths, sampler profiles and
+nonuniform class. It bounds the attacker's work, queries, widths, sampler profiles and
 primitive/port descriptions, with one backend and cost convention fixed across
 security parameters. No finished solver efficiency certificate is assumed.
 The [family security proof](../Proofs/Schnorr/GeneralROMFamily.lean)
-applies nonuniform DLog hardness and proves negligible original-game forgery;
+applies nonuniform DLog hardness and proves negligible forgery in the source game;
 [square-root closure](../Proofs/Model/ForkingNegligible.lean) handles the
 quadratic forking loss. [Public/family guards](../SignaturesTest/SchnorrGeneralROMStatement.lean)
-check unrestricted scope, original-game correspondence, varying curve/message
-types, derived budgets and standard axioms. This completes the conditional
-full-field ROM route; a conventional-machine instantiation and the nonzero-nonce
-variant are separate claims.
-Original local-work bounds alone do not bound visits or intermediate widths
+check unrestricted scope, source-game correspondence, varying curve/message
+types, derived budgets and standard axioms. No conventional-machine instantiation
+is claimed; the nonzero-nonce variant is a separate route.
+Local-work bounds alone do not bound visits or intermediate widths
 without further backend laws; these source resources remain explicit.
 
 [Regressions](../SignaturesTest/SchnorrRawTape.lean) check private draw ordering,
@@ -476,8 +476,8 @@ guards permit supplied whole-code budgets only for the two actual passes and
 fresh sampler; no completed controller, lookup, reset or adapter budget is assumed.
 
 [SchnorrSeededSecurity.security](../Proofs/Runtime/SchnorrSeededSecurity.lean)
-now proves the same native EUF-CMA inequality for a source-derived fixed-tape
-reduction. Its original `SourceCertificate` supplies both semantics and resources;
+proves the same native EUF-CMA inequality for a source-derived fixed-tape
+reduction. Its `SourceCertificate` supplies both semantics and resources;
 there is no separate seed-bound premise. The seed families come from the source
 syntax, and the capacity is derived from its local-time and query budgets.
 Private scalar sampling has a separate typed family, so a scalar sampler may
@@ -487,7 +487,7 @@ The [coverage theorem](../Proofs/Runtime/SchnorrSeededFork.lean)
 proves that neither run uses live private randomness. Sparse-family regressions
 check that a large sampler arity does not allocate every smaller family.
 
-[SchnorrSeededPass](../Proofs/Runtime/SchnorrSeededPass.lean) now compiles one
+[SchnorrSeededPass](../Proofs/Runtime/SchnorrSeededPass.lean) compiles one
 complete seeded pass, including the source adversary, signing simulation, cache
 access and final verification query. Its erasure is exact equality with the
 typed seeded computation used in the probability proof.
@@ -504,30 +504,30 @@ setup with primitive sampling loops, codecs and list concatenation. Its exact
 erasure is VCVio's `generateSeed`, including repeated family entries and draw
 order. Its budget includes capacity literals and every generated cell.
 [SchnorrSeededPassBudget](../Proofs/Runtime/SchnorrSeededPassBudget.lean)
-derives a complete pass budget from the original source budget, accounting for
+derives a complete pass budget from the source budget, accounting for
 shrinking tapes, growing caches, simulated signatures and final verification.
 
-[SchnorrSeededMachine](../Proofs/Runtime/SchnorrSeededMachine.lean) now composes
+[SchnorrSeededMachine](../Proofs/Runtime/SchnorrSeededMachine.lean) composes
 setup, both passes, selection, reset, extraction and fallback into a complete
-first-order controller. It preserves the original seed in a register, resets
+first-order controller. It preserves the initial seed in a register, resets
 only the selected hash family, and starts each pass with empty caches. An absent
 seed entry proceeds to the second pass; only an existing equal answer triggers
 the collision guard.
 [SchnorrSeededMachineBudget](../Proofs/Runtime/SchnorrSeededMachineBudget.lean)
-derives the entire package budget from the original source certificate,
+derives the entire package budget from the source certificate,
 including literal loading and fixed data. The second pass uses the proved bound
-that a reset seed has at most one more cell than the original.
+that a reset seed has at most one more cell than the initial seed.
 [SchnorrSeededMachineCorrectness](../Proofs/Runtime/SchnorrSeededMachineCorrectness.lean)
 proves exact equality to `Seeded.reduction`, places the named source solver in
 `Machine.Within`, and gives the arithmetic hardness endpoint `SeedTape.security`.
 
 [SchnorrSeededBits](../Proofs/Runtime/SchnorrSeededBits.lean) compiles this
-package to the existing bit backend, with online cost `(B+4)*seededBitFactor`
+package to the bit backend, with online cost `(B+4)*seededBitFactor`
 and sampling error at most `B*2^(-k)`, where `B` is the complete seeded package
 budget. [SeededBitStatement](../Signatures/Schnorr/SeededBitStatement.lean) combines
 those results with fixed-tape security and hardness against bit packages bounded
 in runtime and stored code/data. Its width and codec premises are the same kind
-as the contextual endpoint below. The query limit is now a charged code literal,
+as the contextual endpoint below. The query limit is a charged code literal,
 so it does not need a separate input-data width premise.
 
 ## Nonzero Signing Nonces
@@ -552,50 +552,50 @@ bound `1/(|F|-1)`. The named reduction uses this simulator directly.
 This theorem is a probability reduction; the full-field machine and bit
 certificates above are not claimed for this variant.
 
-The [named lazy reduction](../Proofs/Schnorr/NonzeroLazyROMReduction.lean) now
+The [named lazy reduction](../Proofs/Schnorr/NonzeroLazyROMReduction.lean)
 has the [same security bound](../Proofs/Schnorr/NonzeroLazyROM.lean).
 It records encountered private draws and retains them across replay, including
 draws after the selected challenge. It takes neither a private-family list nor
 an eager seed budget. The [generic replay proof](../Proofs/Schnorr/LazyFiatShamir.lean)
 derives its reference cover internally and transports the complete extracted
 witness distribution. Arbitrary message types and source query allowances are
-preserved; the simulator and both original denominators are unchanged.
+preserved; the simulator and both denominators are those of the source theorem.
 
 The [signing program](../Proofs/Runtime/SchnorrNonzeroSigning.lean) implements
 two field draws, one unconditional nonzero draw, commitment repair and cache
 programming. Its [native compilation](../Proofs/Runtime/BackendSchnorrNonzeroSigning.lean)
 has exact state-passing semantics and a complete stored-code bound, with polynomial
-closure from original sampler/primitive descriptions. The
+closure from sampler/primitive descriptions. The
 [source law](../Proofs/Runtime/BackendSchnorrNonzeroSigningSource.lean) identifies
-the actual compiled routine with the established nonzero simulator and cache
+the actual compiled routine with the nonzero simulator and cache
 update. The [repair expression](../Proofs/Runtime/BackendSchnorrNonzeroRepairCost.lean)
 has derived local runtime, output-size and polynomial bounds. The
 [complete signing budget](../Proofs/Runtime/BackendSchnorrNonzeroSigningBudget.lean)
-now composes all three actual sampler costs, arithmetic, cache programming and
+composes all three actual sampler costs, arithmetic, cache programming and
 retained environments, with distinct intermediate store invariants and polynomial
-closure from original resource families.
+closure from resource families.
 
 The [finite-cache pass](../Proofs/Runtime/SchnorrNonzeroListPass.lean) has exact
 adaptive trace correspondence, and the
 [finite replay/extraction solver](../Proofs/Runtime/SchnorrNonzeroListReduction.lean)
-has exactly the named lazy reduction's computation and original security bound.
+has exactly the named lazy reduction's computation and security bound.
 [Capacities](../Proofs/Runtime/SchnorrNonzeroListGrowth.lean) are at most
 `qS + qH` managed entries and `qH + 1` live entries, independent of the message
 universe.
 
-Both original samplers now have a
+Both samplers have a
 [native private-tape installation](../Proofs/Runtime/BackendSchnorrNonzeroPrivateSigning.lean)
-with exact source correspondence on every tape. Their separate original execution
+with exact source correspondence on every tape. Their separate execution
 profiles derive the [complete installed runtime](../Proofs/Runtime/BackendSchnorrNonzeroPrivateBudget.lean),
 including `2*qField + qNonzero` saved-cell growth. The
 [common-store signer](../Proofs/Runtime/BackendSchnorrNonzeroComponents.lean)
 preserves the configuration and live cache while executing both adapters. Its
 [complete budget](../Proofs/Runtime/BackendSchnorrNonzeroComponentsBudget.lean)
 and [polynomial closure](../Proofs/Runtime/BackendSchnorrNonzeroComponentsPolynomial.lean)
-follow from original sampler, primitive, width and interface resources.
+follow from sampler, primitive, width and interface resources.
 The [nonzero dispatcher](../Proofs/Runtime/BackendSchnorrNonzeroHandler.lean)
 and [arbitrary caller budget](../Proofs/Runtime/BackendSchnorrNonzeroCallerResources.lean)
-now compose this signer with the unchanged hash/random operations. Adaptive
+compose this signer with the unchanged hash/random operations. Adaptive
 reservations charge `2*qField + qNonzero + 1` tape cells per request, with caller
 invariants recovered from measured attacker resources. The
 [actual complete pass](../Proofs/Runtime/BackendSchnorrNonzeroPass.lean)
@@ -604,12 +604,12 @@ it has exact source correspondence on every raw tape,
 [complete runtime/output bounds](../Proofs/Runtime/BackendSchnorrNonzeroPassBudget.lean),
 [stored-code accounting](../Proofs/Runtime/BackendSchnorrNonzeroPassDescription.lean)
 and [polynomial runtime closure](../Proofs/Runtime/BackendSchnorrNonzeroPassPolynomial.lean)
-from original resources. The [installed fork](../Proofs/Runtime/BackendSchnorrNonzeroFork.lean)
-now runs both actual nonzero passes. The [complete solver](../Proofs/Runtime/BackendSchnorrNonzeroSolver.lean)
+from attacker and component resources. The [installed fork](../Proofs/Runtime/BackendSchnorrNonzeroFork.lean)
+runs both actual nonzero passes. The [complete solver](../Proofs/Runtime/BackendSchnorrNonzeroSolver.lean)
 executes setup, replay, guarded extraction and fallback with exact source equality
 to the named nonzero lazy reduction. Its [runtime/output bound](../Proofs/Runtime/BackendSchnorrNonzeroSolverBudget.lean)
 and [stored-code bound](../Proofs/Runtime/BackendSchnorrNonzeroSolverDescription.lean)
-follow from original caller, sampler, primitive and representation resources.
+follow from caller, sampler, primitive and representation resources.
 Both [runtime](../Proofs/Runtime/BackendSchnorrNonzeroSolverPolynomial.lean)
 and [stored code](../Proofs/Runtime/BackendSchnorrNonzeroDescriptionPolynomial.lean)
 have polynomial closure. The [executable certificate](../Proofs/Runtime/BackendSchnorrNonzeroSolverWithin.lean)
@@ -620,23 +620,24 @@ applies fixed-backend DLog hardness. The signing loss keeps its denominator
 The [public statement](../Signatures/Schnorr/Statement.lean),
 `Schnorr.NonzeroNonce.rom_security`, takes the curve, security parameter, query
 allowances and unrestricted adversary. It displays the actual game's probability,
-the two distinct denominators and DLog success at the derived time budget.
+the two distinct denominators and the DLog success of `NonzeroNonce.romReduction`;
+`NonzeroNonce.rom_reduction_within` places that reduction within the derived Caliper budget.
 The [model](../Signatures/Schnorr/GeneralNonzeroROMSecurityModel.lean) exposes its
-game and fixed-backend hardness supremum; [original contracts](../Signatures/Schnorr/GeneralNonzeroROMParameters.lean)
+game and reduction; [component contracts](../Signatures/Schnorr/GeneralNonzeroROMParameters.lean)
 retain both sampler programs and both nonzero pass resource records. The shared
 execution model does not require full-field pass budgets. The attacker supplies
 its own implementation, measured work, code/advice and query bounds, with no
 algebraic restriction or finite-message premise. [Supporting proofs](../Proofs/Schnorr/GeneralNonzeroROM.lean)
 construct executable membership and preserve both the quadratic and square-root bounds;
-[public proofs](../Proofs/Schnorr/GeneralNonzeroROMSecurity.lean) remain separate.
+[public proofs](../Proofs/Schnorr/GeneralNonzeroROMSecurity.lean) are separate.
 
 The [family resources](../Signatures/Schnorr/GeneralNonzeroROMFamilyResources.lean)
 derive complete polynomial time/code and nonuniform executable membership.
 The [family statement](../Signatures/Schnorr/GeneralNonzeroROMFamilyStatement.lean)
-concludes negligible original-game forgery under DLog hardness in one fixed backend
+concludes negligible source-game forgery under DLog hardness in one fixed backend
 and negligible `1/|F|`. Its [proof](../Proofs/Schnorr/GeneralNonzeroROMFamily.lean)
 derives negligible `1/(|F|-1)` internally; fields, groups and messages may vary with
-the security parameter. This completes the conditional nonzero-nonce ROM route.
+the security parameter.
 
 [Field-growth closure](../Proofs/Model/NonzeroFieldGrowth.lean) proves
 `1/(|F|-1) <= 2/|F|`; negligible inverse field size suffices for the nonzero loss.
@@ -644,27 +645,27 @@ the security parameter. This completes the conditional nonzero-nonce ROM route.
 types, adaptive private sampling, the final-verifier hash slot, exact draw order,
 both repair branches, cache collisions, zero public keys, finite solver equality,
 cache capacities and standard axioms. [Budget guards](../SignaturesTest/SchnorrNonzeroSigningBudget.lean)
-ensure the signing theorem assumes only the three original sampler budgets and
+ensure the signing theorem assumes only the three sampler budgets and
 primitive/local costs, rather than a finished component budget.
 [Installed-code regressions](../SignaturesTest/SchnorrNonzeroPrivateSigning.lean)
 execute interleaved replay families on the actual common-store signer, including
 cache collisions and both repair branches. Its budget guards permit only the
-two original sampler execution profiles and primitive/local resource contracts.
-They also execute all three new dispatcher branches and guard exact nonzero pass
+two sampler execution profiles and primitive/local resource contracts.
+They also execute all three dispatcher branches and guard exact nonzero pass
 semantics, measured arbitrary-caller resource recovery, the extra tape reservation,
 complete pass runtime and standard axioms.
 [Complete-solver regressions](../SignaturesTest/SchnorrNonzeroSolver.lean) additionally
 check adaptive private sampling over an uncountable message type, exact whole-solver
-source equality, both original sampling profiles, the actual installed nonzero
-passes, derived executable membership and the original signing loss.
+source equality, both sampling profiles, the actual installed nonzero
+passes, derived executable membership and the source signing loss.
 [Public/family guards](../SignaturesTest/SchnorrGeneralNonzeroROMStatement.lean)
-check the four-input interface, inspectable game/hardness definitions, original
+check the four-input interface, inspectable game/hardness definitions,
 sampler contracts, fixed backend, varying types and standard axiom footprints.
 
 ## Adaptive Algebraic Group Model
 
 [AGMSecurity.security](../Proofs/Schnorr/AGMSecurity.lean) proves
-security of the original adaptive [AGM game](../Signatures/Schnorr/Spec/AGM.lean)
+security of the source adaptive [AGM game](../Signatures/Schnorr/Spec/AGM.lean)
 with a named single-pass DLog solver:
 
 ```text
@@ -691,7 +692,7 @@ charges at most `1/|F|` for each adversarial hash and final verification query.
 [AGMSigningSimulation](../Proofs/Schnorr/AGMSigningSimulation.lean)
 charges `qS*(qS+qH)/|F|` for signing collisions, using cache cardinality and
 adaptive composition. [AGMSourceGame](../Proofs/Schnorr/AGMSourceGame.lean)
-proves exact equality of the honest instrumented and original game distributions,
+proves exact equality of the honest instrumented and source game distributions,
 including shared cache reads, signing history, malformed requests, and final
 verification. The public theorem uses the native probability measure.
 
@@ -700,18 +701,18 @@ and bit-machine certificates for the ordinary ROM reduction are separate; they
 are not runtime certificates for this AGM solver.
 
 The [finite-list implementation](../Proofs/Runtime/SchnorrAGMExecution.lean)
-now has exact joint output/state query-tree correspondence to that reduction,
+has exact joint output/state query-tree correspondence to that reduction,
 including malformed requests and final extraction. Its cache stores only
 encountered message/commitment pairs. Repeated hashes and colliding signatures
 retain the first challenge and explanation. The [capacity proof](../Proofs/Runtime/SchnorrAGMGrowth.lean)
 bounds the whole run by `qS + qH + 1` cache entries, `qS + 2` affine basis
 entries, and `qS` signed messages. No finite message or group type is required.
 The [probability endpoint](../Proofs/Runtime/SchnorrAGMSecurity.lean)
-preserves both original loss terms. Its solver uses the supplied generator;
+preserves both loss terms. Its solver uses the supplied generator;
 equality to the source's fixed-generator solver is proved for the complete DLog
 experiment.
 
-The [native cache core](../Proofs/Runtime/BackendSchnorrAGMCache.lean) now
+The [native cache core](../Proofs/Runtime/BackendSchnorrAGMCache.lean)
 implements the tuple/list encoding, message/commitment comparisons, first-hit
 lookup, scalar sampling, entry insertion, and the exceptional-challenge flag.
 The affine explanation is explicit runtime data retained before sampling. A
@@ -726,8 +727,8 @@ adds the actual setup, return and control costs. Separate bounds on the two
 unchanged histories are preserved across reads; the cache grows by at most one
 entry. Only primitive, scalar-sampler and representation contracts are assumed.
 [Native representation flattening](../Proofs/Runtime/SchnorrAGMFlatten.lean)
-now matches the source's chronological coefficient convention for every list,
-including missing or extra coefficients. It uses the existing positional
+matches the source's chronological coefficient convention for every list,
+including missing or extra coefficients. It uses the shared positional
 coefficient matcher and computes the two affine coordinates with field products
 and sums. Its [complete native cost](../Proofs/Runtime/BackendSchnorrAGMFlattenBudget.lean)
 charges coefficient matching, both coordinates, temporary rows and retained
@@ -735,8 +736,8 @@ context; the full coefficient length appears even for an unused suffix.
 Stored code is bounded independently of the basis/coefficient lengths, and the
 output holds two field elements.
 
-The [decoded hash path](../Proofs/Runtime/BackendSchnorrAGMHash.lean) now
-composes flattening and the complete read, retaining the original state during
+The [decoded hash path](../Proofs/Runtime/BackendSchnorrAGMHash.lean)
+composes flattening and the complete read, retaining the incoming state during
 coefficient processing. Its [budget](../Proofs/Runtime/BackendSchnorrAGMHashBudget.lean)
 adds the actual preparation and control costs to the proved flattening/read
 bounds. It agrees with the finite source for every coefficient vector, preserves
@@ -748,7 +749,7 @@ the entire list and a constant stored-code bound. Duplicate elements do not
 turn a multiple-element list into a singleton.
 
 The [all-shape dispatcher](../Proofs/Runtime/BackendSchnorrAGMHashDispatch.lean)
-now runs both scans and selects the decoded hash or rejection path. Rejection
+runs both scans and selects the decoded hash or rejection path. Rejection
 returns zero and sets malformed while preserving the cache, both histories and
 bad flag; replacing the sampler leaves the full costed rejection run unchanged.
 The source correspondence covers arbitrary group and coefficient-row lists,
@@ -770,7 +771,7 @@ implemented message/group comparisons and storage contracts. It performs no
 sampling.
 
 The [accepted signing core](../Proofs/Runtime/BackendSchnorrAGMSigning.lean)
-now composes those components with both scalar draws and response arithmetic.
+composes those components with both scalar draws and response arithmetic.
 It exactly realizes the source's accepted signing branch, preserving cache
 entries on collisions and appending both histories in order. Its
 [derived budget](../Proofs/Runtime/BackendSchnorrAGMSigningBudget.lean)
@@ -802,16 +803,16 @@ size. Its exact source correspondence relates the natural-number result to the
 source's dependent `Fin (n+1)` reply.
 
 The [native dispatcher](../Proofs/Runtime/BackendSchnorrAGMHandler.lean)
-now installs all three components. Its common store contains the generator,
+installs all three components. Its common store contains the generator,
 public key and encoded reduction state. Compiled adapters retain this config,
 construct the hash reply's empty group list, and rearrange component arguments.
-The original request is retained across each call and passed to an implemented
+The incoming request is retained across each call and passed to an implemented
 dependent reply tagger. Every group and coefficient row remains part of that
 request. Random tagging restores the exact `Fin (n+1)` reply on reachable outputs.
 
 [Adaptive source correspondence](../Proofs/Runtime/BackendSchnorrAGMHandlerSource.lean)
 proves that a general quantitative caller sees the same joint replies and states
-as the established finite-list reduction. It preserves arbitrary output types
+as the finite-list reduction. It preserves arbitrary output types
 and observable query-fuel cutoff; the implementation/termination contract rules
 out cutoff for the source program. The
 [stored-code bound](../Proofs/Runtime/BackendSchnorrAGMHandlerDescription.lean)
@@ -819,7 +820,7 @@ includes all installed components, request conversion, reply tagging and caller
 routing, without tables over messages or random arities.
 
 The [shared size invariant](../Proofs/Runtime/BackendSchnorrAGMHandlerSize.lean)
-accounts for the public configuration, original request and every coefficient
+accounts for the public configuration, incoming request and every coefficient
 row. It converts cell-count bounds on histories to the read invariant without
 inflating them after each hash. The
 [compiled adapter costs](../Proofs/Runtime/BackendSchnorrAGMHandlerLocalCost.lean)
@@ -827,14 +828,14 @@ cover all three input conversions, common reply packing and construction of the
 hash reply's empty group list. The
 [common-store component bounds](../Proofs/Runtime/BackendSchnorrAGMHandlerPrimitiveBudget.lean)
 derive each complete component budget from primitive contracts. Each adds at
-most `2061 * overhead (8192 * W)` to its established native dispatch budget,
+most `2061 * overhead (8192 * W)` to its native dispatch budget,
 where `W` is the explicit shared frame bound. This includes config retention,
 both local adapters and their control boundaries. Random requests preserve all
 capacities; hash requests can add one cache entry while preserving both actual
 histories; signing can grow all three capacities by one.
 
 The [complete indexed handler bound](../Proofs/Runtime/BackendSchnorrAGMHandlerBudget.lean)
-now composes those certificates with request conversion, original-request
+composes those certificates with request conversion, incoming-request
 retention, reply tagging and routing. Its primitive contracts cover the dynamic
 uniform-query ports and scalar sampler; its separate
 [port contracts](../Proofs/Runtime/BackendSchnorrAGMHandlerPorts.lean) charge
@@ -850,7 +851,7 @@ and query allowances. These runtime reserves conservatively allow one new cell
 in each list per request; the sharper source-game capacities remain unchanged.
 
 [Measured-resource substitution](../Proofs/Runtime/BackendSchnorrAGMCallerResources.lean)
-now derives reachable-request conditions and state/head sizes from the attacker's
+derives reachable-request conditions and state/head sizes from the attacker's
 own `RunsWithin` bound. The instantiated caller bound requires no custom caller
 invariant or separate caller budget. Its local allowance is
 `work + 2*queries + 2`, with a conservative `queries` allowance per request kind.
@@ -868,13 +869,13 @@ from that return, including malformed outputs. Equal-size boundary encodings
 give identity size recovery; the actual conversion is charged by the adapter below.
 
 [Native final extraction](../Proofs/Runtime/BackendSchnorrAGMExtraction.lean)
-now handles every output shape. It scans both lists, retains the response,
+handles every output shape. It scans both lists, retains the response,
 flattens coefficients, reads the first cached entry and performs the scalar
 extraction. Missing explanations return zero; malformed outputs return zero
 without changing the state or sampling. The
 [source projection proof](../Proofs/Runtime/SchnorrAGMExtraction.lean)
-shows exact scalar/state agreement with the original final step: its verification
-Boolean is discarded by the original DLog solver. The entry read returns the
+shows exact scalar/state agreement with the source final step: its verification
+Boolean is discarded by the source DLog solver. The entry read returns the
 cached explanation directly, avoiding another scan while preserving first-entry
 semantics, fresh draws and the bad-event flag.
 
@@ -884,25 +885,25 @@ are derived from primitives, encoding and scalar-sampler contracts. They charge
 both shape scans, retained response, accepted extraction, rejection and control
 transitions. [Extraction input recovery](../Proofs/Runtime/BackendSchnorrAGMExtractionResources.lean)
 derives all required group/row bounds from the full encoded output and the caller
-store, preserving the existing history bound.
+store, preserving the history bound.
 
 The [executable output adapter](../Proofs/Runtime/BackendSchnorrAGMSolverOutput.lean)
-now preserves every returned group and coefficient row and the complete private
+preserves every returned group and coefficient row and the complete private
 state. Its actual local conversion, rearrangement, state retention and control
 costs are charged, with a stored-code bound as well.
 
 The [complete native solver](../Proofs/Runtime/BackendSchnorrAGMSolver.lean)
-now builds the initial basis and empty state, runs the general caller, handles
+builds the initial basis and empty state, runs the general caller, handles
 cutoff and converts/extracts the returned forgery. Its
 [source theorem](../Proofs/Runtime/BackendSchnorrAGMSolverCorrectness.lean)
-proves exact agreement with the original DLog reduction from the attacker's
+proves exact agreement with the source DLog reduction from the attacker's
 measured resources and implementation law. Its
 [stored-code bound](../Proofs/Runtime/BackendSchnorrAGMSolverDescription.lean)
 includes the attacker, samplers, local adapters and all reduction branches.
 [Setup](../Proofs/Runtime/BackendSchnorrAGMSolverSetup.lean),
 [cutoff and projection](../Proofs/Runtime/BackendSchnorrAGMSolverLocalCost.lean)
 have derived runtime bounds. The [complete terminal budget](../Proofs/Runtime/BackendSchnorrAGMSolverTerminalBudget.lean)
-now charges actual output conversion, every extraction path, optional-result
+charges actual output conversion, every extraction path, optional-result
 inspection, cutoff and projection. Source-output and native-output widths may
 differ; only the actual local conversion's size expansion and cost are assumed.
 
@@ -911,33 +912,32 @@ adds setup, measured caller work and query overhead, terminal execution, and bot
 outer sequence charges. Its [backend witness](../Proofs/Runtime/BackendSchnorrAGMSolverWithin.lean)
 combines this bound, the complete stored program and exact source semantics.
 The [concrete security endpoint](../Proofs/Runtime/BackendSchnorrAGMSecurity.lean)
-uses that witness in DLog hardness and retains the original bound
+uses that witness in DLog hardness and retains the bound
 `epsilon + (qH+1)/|F| + qS*(qS+qH)/|F|`. Every DLog challenge must fit the input cap.
 No finite message domain or arithmetic-language attacker is required. This remains
 conditional on the fixed backend and its local implementation/encoding contracts.
-The [short public statement](../Signatures/Schnorr/Statement.lean) now exposes
-that result as `Schnorr.agm_security curve securityParameter queries adversary`.
+The [short public statement](../Signatures/Schnorr/Statement.lean)
+`Schnorr.agm_security curve securityParameter queries adversary` states the bound
+for `agmReduction`, with `agm_reduction_within` placing it in the derived Caliper budget.
 Its [single-group curve](../Signatures/Model/CyclicCurve.lean) requires no pairing.
 The [supporting parameters](../Signatures/Schnorr/GeneralAGMParameters.lean)
 contain only local contracts and attacker allowances. The
 [resource proof](../Proofs/Schnorr/GeneralAGM.lean) constructs the
 complete solver witness, while the [public proof](../Proofs/Schnorr/GeneralSecurity.lean)
-connects the displayed game exactly to the source game and its DLog supremum.
+connects the displayed game and reduction exactly to the source game and solver.
 The [polynomial closure proof](../Proofs/Runtime/BackendSchnorrAGMPolynomial.lean)
-now covers the actual complete runtime and stored-code formulas, through cache
+covers the actual complete runtime and stored-code formulas, through cache
 reads, coefficient processing, the full handler, final extraction and solver
 composition. [Family resources](../Signatures/Schnorr/GeneralAGMFamilyResources.lean)
 construct a polynomial DLog solver family from those component bounds and the
 pointwise executable witnesses. The backend, cost convention and description
-measure remain fixed across parameters. Fields, groups and messages may vary;
+measure are fixed across parameters. Fields, groups and messages may vary;
 neither the message universe nor numerical random arity must be polynomial.
 The [family theorem](../Signatures/Schnorr/GeneralAGMFamilyStatement.lean), with
 its [separate proof](../Proofs/Schnorr/GeneralAGMFamily.lean), gives
 negligible forgery under nonuniform DLog hardness and negligible inverse field
-size. Both original query losses are polynomial multiples of that inverse.
-This remains a conditional fixed-backend result. The full-field ROM endpoint is
-also complete, as is the separate nonzero-nonce ROM route, including its short
-public statement and derived nonuniform family theorem.
+size. Both query losses are polynomial multiples of that inverse.
+This is a conditional fixed-backend result.
 
 ## What Efficiency Is Certified
 
@@ -952,18 +952,18 @@ This is an implementation-backed bound, not an assumed runtime for an abstract
 extractor. However, it does not by itself prove polynomial time in a security
 parameter. The bit backend described below supplies a separate execution bound
 and an end-to-end probability comparison with the ideal reduction.
-The deterministic scalar extractor now has a separate, verified cubic-size
-Boolean circuit for odd prime fields; see [Bit-Level Implementation Status](BIT-COMPLEXITY.md).
+The deterministic scalar extractor has a separate, verified cubic-size
+Boolean circuit for odd prime fields; see [the bit-level implementation](BIT-COMPLEXITY.md).
 Separate field/word circuits and a bounded fair-bit rejection sampler are also
 verified, along with elliptic-curve point operations and secret-scalar
 multiplication on curve subgroups. A separate costed bit-list circuit interpreter
 agrees with these circuits' semantics and charges memory scans and output reads.
-All `CryptoOp` instructions now have assignment-independent precompiled code
+All `CryptoOp` instructions have assignment-independent precompiled code
 with correctness, code-size, and cell-cost proofs. Local expression budgets
 imply bounds for every executed Nat/Fin intermediate. Program output/state range
 proofs cover adaptive handlers; the closed machine's sampling effects need an
 explicit result-width lower bound on sampling prices. A shared bit-tape heap
-now implements primitive operand loading and result allocation with refinement
+implements primitive operand loading and result allocation with refinement
 and cost bounds. Every source expression also compiles to a bit-tape controller,
 with matching values, preserved sharing, and a bound on actual execution steps
 including frame copies, branches, and list folds. Procedure argument compilation
@@ -971,20 +971,20 @@ and the binary counted-loop controller also have correctness and cost proofs.
 The whole-program controller has exact query-tree, allocation, and aggregate
 bit-step refinement under handler refinement/cost premises, with executed
 expression/reply widths derived from source budgets. All four concrete
-closed-machine handlers now instantiate this theorem for precompiled bodies,
-using the original ideal-machine budget via support inclusion. Initialization
-and input/fixed-data loading now compose into a complete package theorem.
+closed-machine handlers instantiate this theorem for precompiled bodies,
+using the ideal-machine budget via support inclusion. Initialization
+and input/fixed-data loading compose into a complete package theorem.
 `SourceCertificate.bitCode_costed` instantiates it on the actual two-pass
 extractor, with bound `(targetBudget + 4) * bitFactor` in the explicit bit-cell
 model. Encoded input is the representation boundary; compiler runtime is not
 included. Sampling-abort propagation into the security bound is also proved.
-The fair-bit rejection sampler itself now has an executable controller, CPU and
+The fair-bit rejection sampler itself has an executable controller, CPU and
 query bounds, and an exact distributional refinement. Its optional zero fallback
 retains a failure flag, with padding and heap allocation charged. Adaptive
-sampling-tree composition now proves accumulated error at most
-`targetBudget * 2^(-k)`, with the query bound derived from the original runtime
+sampling-tree composition proves accumulated error at most
+`targetBudget * 2^(-k)`, with the query bound derived from the ideal runtime
 certificate. Exact whole-package probability bridges connect this tree law to
-the existing ideal game and compiled bit runner, including its scalar output encoding.
+the ideal game and compiled bit runner, including its scalar output encoding.
 
 For the bit endpoint, the conclusion becomes
 
@@ -1019,7 +1019,7 @@ VCVio proof or a proof that chosen primitive prices match a concrete implementat
 ## Proof Review Order
 
 - [SourceCertificate](../Proofs/Runtime/SchnorrSource.lean): first-order source
-  code, fixed data, equality to the original adversary at every key, and resource bounds.
+  code, fixed data, equality to the source adversary at every key, and resource bounds.
 - [SchnorrForkMachine](../Proofs/Runtime/SchnorrForkMachine.lean): the actual
   two-pass controller, selection, checks, extraction, and fallback.
 - [SchnorrForkBudget](../Proofs/Runtime/SchnorrForkBudget.lean): `forkPrice` and
@@ -1030,7 +1030,8 @@ VCVio proof or a proof that chosen primitive prices match a concrete implementat
   game trace and proof that the final challenge is present in the live cache.
 - [SchnorrReduction](../Proofs/Runtime/SchnorrReduction.lean): exact equality
   to VCVio's `Schnorr.dlogReduction` and the resulting `Machine.Within` certificate.
-- [Statement](../Signatures/Schnorr/Statement.lean): combine the probability lower
+- [ArithmeticStatement](../Signatures/Schnorr/ArithmeticStatement.lean): combine the probability lower
+
   bound and universal budget-bounded hardness upper bound.
 
 ## Tests

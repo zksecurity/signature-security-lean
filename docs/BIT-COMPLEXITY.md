@@ -1,10 +1,10 @@
-# Bit-Level Implementation Status
+# Bit-Level Implementation
 
 The scalar primitives and deterministic Schnorr scalar extractor have verified
 Boolean-circuit implementations for `ZMod p`, where `p` is prime and `p > 2`.
 Natural-number operations have range-checked word implementations. A separate
 bounded rejection sampler has a fair-bit distribution proof. The complete
-Schnorr extractor now has a compiled bit-cell implementation and pathwise cost
+Schnorr extractor has a compiled bit-cell implementation and pathwise cost
 bound, including input/data loading and both replay passes. The public
 [bit-machine security theorem](../Signatures/Schnorr/BitStatement.lean) includes
 the accumulated rejection error, with no ideal-sampling assumption for the solver.
@@ -80,7 +80,7 @@ proofs below compose them through closed-machine execution and Schnorr security.
 
 ## Instruction Compiler
 
-[CryptoCircuit](../Proofs/Runtime/CryptoCircuit.lean) lowers all 27 existing
+[CryptoCircuit](../Proofs/Runtime/CryptoCircuit.lean) lowers all 27
 `CryptoOp` constructors to actual circuits, including both group types, and
 proves their gate bounds. It uses one conservative common word width `w`.
 The scalar prime `r` and the two curve-coordinate primes `p1`, `p2` may differ.
@@ -181,7 +181,7 @@ Here `T` is the current tape length, `h` its node count, `m` the input width,
 their lengths are at most `3*w+1`, preserving a common heap payload cap.
 
 The tape-size theorem is about this explicit representation, not Lean VM
-allocation or garbage collection. Source expressions are now compiled to it as
+allocation or garbage collection. Source expressions are compiled to it as
 described below, including closed-machine effects, initialization, input/data
 loading, and both replay passes. Sampling-error composition is proved below.
 
@@ -248,7 +248,7 @@ and its cost bound are explicit premises to discharge for compiled programs.
 relation, composition, support transport, and equality of agreeing observations;
 it requires no probability distribution or semantic decoder.
 
-[HeapProgram](../Proofs/Runtime/HeapProgram.lean) now supplies executable
+[HeapProgram](../Proofs/Runtime/HeapProgram.lean) supplies executable
 code and compilation for all program constructors, including adaptive queries,
 binding, branches, counted loops, and calls. Query handlers receive heap roots.
 [HeapProgramCorrectness](../Proofs/Runtime/HeapProgramCorrectness.lean)
@@ -307,7 +307,7 @@ For heap limit `H`, let `A = allocBudget(3*w+1,H)` and
 `handler_costed` proves typed results, heap extension, state/flag refinement,
 and these bounds for every bit path, including exhausted samplers.
 `compileBody_costed` discharges the generic compiler's handler obligations and
-uses a total budget from the **original ideal-randomness machine**. The
+uses a total budget from the **ideal-randomness machine**. The
 [support-refinement proof](../Proofs/Runtime/SupportRefinement.lean) shows
 that each marked fair-bit execution has the same source result and source step
 count as an allowed ideal execution after dropping the flag. This transports
@@ -320,9 +320,9 @@ storage. The following composition removes those heap/storage premises.
 ## Complete Packages
 
 [HeapMachineCode](../Proofs/Runtime/HeapMachineCode.lean) compiles and charges
-the initialization expression before the body, using the original ideal-machine
+the initialization expression before the body, using the ideal-machine
 budget to bound both. [HeapData](../Proofs/Runtime/HeapData.lean) loads encoded
-data through the existing expression and argument-frame controllers. It handles
+data through the expression and argument-frame controllers. It handles
 all value types, including nested lists and pairs, preserving old heap roots.
 Natural and `Fin` leaves must fit the initial width; fixed field/group/key/message
 encodings are the same as the primitive backend's. Encoding specifies the input
@@ -338,9 +338,9 @@ refinement, equality of the sticky failure flag, and the bound
 (inputLoad + B + 1) * packageFactor(w, r, retries, inputLoad+B, registers, code)
 ```
 
-Here `B` is a bound on the original ideal `Machine.Package.run`, `inputLoad` is
+Here `B` is a bound on the ideal `Machine.Package.run`, `inputLoad` is
 the structural source load cost of the input, and `registers` counts input plus
-fixed-data registers. The additional input term is necessary because the original
+fixed-data registers. The additional input term is necessary because the ideal
 package budget assumes supplied input registers. `packageFactor` is the maximum
 of the explicit loader/frame and code budgets, using one common heap envelope.
 [HeapBudget](../Proofs/Runtime/HeapBudget.lean) proves their monotonicity.
@@ -365,7 +365,7 @@ An unexecuted lookup table therefore still consumes the static budget.
 `dlogAdvantage` samples the external DLog challenge uniformly and observes the
 returned heap root as a scalar encoding. The challenge interface needs only
 the first curve subgroup and word width, not the second group or key/message
-codecs. It uses exactly the circuit port's existing point encoding. This decoder
+codecs. It uses exactly the circuit port's point encoding. This decoder
 is the mathematical success test, not an uncharged operation inside the solver.
 The [public bit endpoint](../Signatures/Schnorr/BitStatement.lean) proves
 
@@ -408,7 +408,7 @@ arbitrary oracles return small values.
 sampling effects provided `n < 2^(sampling.uniform n)`. An unconstrained abstract
 sampling price does not imply this condition. `machine_bound` then bounds the
 closed code's output, including initialization.
-[ProgramTrace](../Proofs/Runtime/ProgramTrace.lean) now derives bounds on
+[ProgramTrace](../Proofs/Runtime/ProgramTrace.lean) derives bounds on
 every reached expression and oracle reply, including adaptive loops and calls.
 It requires nonempty oracle reply types: otherwise an empty continuation could
 make a terminal cost bound vacuous. Untaken branches need no range certificate.
@@ -443,7 +443,7 @@ is deliberately conservative and quadratic in `N`, not an optimized RAM engine.
 
 This is an explicit bit-list cell-cost model, not a Lean VM timing theorem or
 a Turing-machine translation. Circuit construction happens outside the counted
-interpreter: its running time is not proved here. This evaluator is now the
+interpreter: its running time is not proved here. This evaluator is the
 primitive backend of the full typed source/replay machine, with shared-heap
 operand loading, result allocation, and input/data loading charged separately.
 
@@ -517,7 +517,7 @@ exactly uniform over an odd prime number of outputs. Equal-sized output fibers
 would require that prime to divide a power of two. The theorem is about fixed
 tapes; a formal padding translation from adaptive bounded samplers is not included.
 
-[RejectionSampling](../Proofs/Runtime/RejectionSampling.lean) now implements
+[RejectionSampling](../Proofs/Runtime/RejectionSampling.lean) implements
 bounded rejection. `fairWord` draws independent fair bits and is proved uniform
 on `Fin (2^w)`. `runTape` is an executable early-stopping interpreter, and
 `runTape_distribution` connects it to that sampler. For `n <= 2^w` and `k` attempts:
@@ -531,7 +531,7 @@ bits consumed <= w*k
 For `n > 0`, choosing `w = n.size` gives failure at most `2^(-k)`. Zero retries,
 singleton outputs, zero-width words, and power-of-two ranges are covered.
 That tape bound counts randomness consumption. The separate
-[BitRejection](../Proofs/Runtime/BitRejection.lean) implementation now draws
+[BitRejection](../Proofs/Runtime/BitRejection.lean) implementation draws
 individual Boolean oracle replies, constructs little-endian bit lists, compares
 them against a precompiled limit, and retries with static unary fuel. Its online
 code does not decode words to unbounded naturals. It charges word construction,
@@ -561,7 +561,7 @@ proof. Tests exhaust small tapes and compare values, consumed prefixes, costs,
 and flags against `runTape`; the `n=5,w=3,k=3` case has 27 failures and 97 copies
 of each accepted value among 512 tapes.
 
-[PaddedSampling](../Proofs/Runtime/PaddedSampling.lean) now connects the
+[PaddedSampling](../Proofs/Runtime/PaddedSampling.lean) connects the
 sampler to machine-width words. For range size `n` and machine width `w`, it
 samples at `v = min(n.size,w)` and constructs/appends `w-v` high zero bits with
 charged operations. Its complete cost is `k*(10*v+6)+2*v+2*w+8`; it preserves
@@ -575,24 +575,24 @@ fees above additionally include allocation.
 adaptive, weighted-query composition bound: unmarked output mass is dominated
 by the ideal law, and accumulated marked probability is at most `B * 2^(-k)`.
 [MachineSampling](../Proofs/Runtime/MachineSampling.lean) derives the needed
-query bound from the original machine/package execution budget `B`, without a
+query bound from the ideal machine/package execution budget `B`, without a
 separate sampling-count assumption. Each request costs its primitive sampling
 price plus the query instruction's one unit. The same budget, together with the
 sampling-price width contract, bounds every reached uniform domain.
 [HeapProbability](../Proofs/Runtime/HeapProbability.lean) proves the exact
-per-effect distribution bridge to the existing padded fair-bit implementation.
+per-effect distribution bridge to the padded fair-bit implementation.
 `Program.run_mmap` lifts these equalities through complete programs and packages.
 [MachineProbability](../Proofs/Runtime/MachineProbability.lean) proves that
-the ideal tree law equals the original machine's probability law, using the
+the ideal tree law equals the ideal machine's probability law, using the
 native measure theorem for `uniformSample`. `HeapProbability.package_error`
-therefore compares the complete marked reference with the original ideal package.
+therefore compares the complete marked reference with the ideal package.
 Exact query-tree refinement then transfers the result to the compiled Schnorr
 runner in `bitCode_error` and the public bit security theorem.
 
-This is a new sampler with an explicit bad event, not an exact replacement for
-the existing ideal sampler. Complete machine and two-pass implementation
+This is a separate sampler with an explicit bad event, not an exact replacement for
+the ideal sampler. Complete machine and two-pass implementation
 integration and error propagation into the bit security inequality are proved.
-The separate arithmetic-machine security theorem is unchanged.
+The arithmetic-machine security theorem keeps ideal sampling.
 Exact non-aborting sampling would instead require unbounded rejection retries
 and expected-time or tail bounds.
 
@@ -601,27 +601,27 @@ and expected-time or tail bounds.
 [BitComplexity](../SignaturesTest/BitComplexity.lean) executes generated circuits
 on wraparound, zero-secret, zero-denominator, and two-modulus examples. It also
 builds a nonconstant circuit, checks the bound, connects circuit correctness to
-the existing arithmetic extractor, and checks the theorem axiom footprints.
+the arithmetic extractor, and checks the theorem axiom footprints.
 [PrimitiveBits](../SignaturesTest/PrimitiveBits.lean) exhaustively checks all
 4-bit input pairs on nonconstant arithmetic/comparison circuits and tests modular
 field operations and `Fin` boundaries.
 [RejectionSampling tests](../SignaturesTest/RejectionSampling.lean) enumerate all
 512 three-word tapes for sampling five values: 27 failures and 97 copies of each
-accepted value, with stopping counts checked separately. The new correctness,
+accepted value, with stopping counts checked separately. The correctness,
 size, and sampling theorems have checked axiom footprints.
 [EllipticCurveBits](../SignaturesTest/EllipticCurveBits.lean) executes point
 circuits against mathlib operations on infinity, equal, distinct, and inverse
 points. It includes a point whose double is infinity and a general Weierstrass
 curve with nonzero first and third coefficients. It also checks nonconstant
 addition-circuit allocation against the bound, exercises field-code bindings and
-both selection branches, and checks the new theorem axiom footprints.
+both selection branches, and checks the theorem axiom footprints.
 [EllipticCurveScale tests](../SignaturesTest/EllipticCurveScale.lean) cover zero,
 leading zeros, multiple scalar values, and a nonconstant secret-bit selector.
 They instantiate the scalar-action theorem with scalar field `ZMod 3` and a
 subgroup of a curve over `ZMod 5`, and check correctness/size axiom footprints.
 [CircuitExecution tests](../SignaturesTest/CircuitExecution.lean) check shared
 gates, both complement polarities, zero-input/output cases, memory size, static
-code size, and execution bounds. A symbolic test transfers the existing wire
+code size, and execution bounds. A symbolic test transfers the wire
 representation predicate to executable output bits. Its correctness and cost
 theorems also pass axiom-footprint checks.
 [CryptoCircuit tests](../SignaturesTest/CryptoCircuit.lean) execute every
@@ -631,7 +631,7 @@ input ports, saturating subtraction, Fin range boundaries, and cell-step bounds.
 [NaturalRange tests](../SignaturesTest/NaturalRange.lean) detect overflow in a
 discarded sum and a later fold iteration, accept a sufficiently wide word, and
 check that untaken branches do not enter the execution trace. Both suites guard
-the new theorem axiom footprints.
+the theorem axiom footprints.
 
 [HeapMachine tests](../SignaturesTest/HeapMachine.lean) check all 1024 ten-bit
 tapes for the sampling/store body and the initialized closed code, including

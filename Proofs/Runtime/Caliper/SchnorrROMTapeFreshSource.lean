@@ -34,7 +34,7 @@ theorem rawDraw (scalarSource : ProbComp layout.scalar.Value) (i : (Schnorr.RawT
   · simp [Schnorr.RawTape.tag, Schnorr.RawTape.family, Schnorr.SeedTape.familyTag,
       Schnorr.RawTape.encode, Schnorr.encodeReply, sample, Functor.map_map]
 
-/-- The replay handler no longer assumes a complete fresh-cell implementation. -/
+/-- The replay handler does not assume a complete fresh-cell implementation. -/
 theorem read_rawOracle (scalarSource : ProbComp layout.scalar.Value)
     (i : (Schnorr.RawTape.Spec F).Domain) (state : Schnorr.RawTape.State F)
     (valid : (Read.input layout).valid (Read.rawInput i state)) :

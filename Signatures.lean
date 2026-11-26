@@ -42,7 +42,6 @@ import Signatures.Model.QueryAllowance
 import Signatures.Model.RandomOracle
 import Signatures.Model.SignatureInteraction
 import Signatures.Model.SignatureInterface
-import Signatures.OOPS.ArithmeticStatement
 import Signatures.OOPS.CaliperAGMFamilyStatement
 import Signatures.OOPS.CaliperAGMParameters
 import Signatures.OOPS.Game
@@ -52,7 +51,6 @@ import Signatures.OOPS.GeneralSecurityModel
 import Signatures.OOPS.Spec.LazyAGM
 import Signatures.OOPS.Statement
 import Signatures.PaperStatements
-import Signatures.Proximity.ArithmeticStatement
 import Signatures.Proximity.CaliperAGMFamilyStatement
 import Signatures.Proximity.CaliperAGMParameters
 import Signatures.Proximity.Game
