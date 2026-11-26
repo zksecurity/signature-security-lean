@@ -6,7 +6,7 @@ Authors: Kobi Gurkan
 import Signatures.OOPS.Statement
 
 /-! Migration import for the retired eager-table arithmetic AGM endpoint.
-Use `OOPS.agm_security` from `Statement.lean` (two separate DLog budgets: `OOPS.Proofs.agm_security`).
+Use `OOPS.agm_security` from `Statement.lean` (two named DLog reductions, with budget theorems `OOPS.agm_good_reduction_within` and `OOPS.agm_bad_reduction_within`).
 These quantify over general implemented algebraic attackers and use derived lazy
 solver resources. The old eager wrapper is no longer declared. Supporting
 probability/resource lemmas remain available; see `docs/API-MIGRATION.md`.

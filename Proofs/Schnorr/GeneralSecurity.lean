@@ -29,20 +29,19 @@ theorem Proofs.agm_security
     (securityParameter : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter queries) :
     𝒟[agmEufCmaGame curve securityParameter adversary] {true} ≤
-      dlogSuccessBound curve securityParameter queries (agmReductionTime curve securityParameter queries) +
+      𝒟[DiffieHellman.dlogExperiment (curve.generator securityParameter) (agmReduction curve adversary)] {true} +
       (queries.hash + 1 : ENNReal) * (curve.order securityParameter : ENNReal)⁻¹ +
       (queries.sign : ENNReal) * (queries.sign + queries.hash) * (curve.order securityParameter : ENNReal)⁻¹ := by
-  simpa only [agmEufCmaGame_eq, dlogSuccessBound, CaliperAGM.Parameters.dlogBound,
-    Signatures.Runtime.CaliperBackend.cyclicDLogSuccessBound, Model.advantageBound,
-    Model.CyclicCurve.order, agmReductionTime] using
-    CaliperAGM.security (model.parameters securityParameter queries) adversary (curve.generates securityParameter).1
+  simpa only [agmEufCmaGame_eq, agmReduction, Model.CyclicCurve.order] using
+    Signatures.Runtime.SchnorrAGM.security (curve.generator securityParameter) (curve.generates securityParameter).1
+      adversary.source queries.sign queries.hash adversary.signingQueries adversary.hashQueries
 
-theorem dlogSuccessBound_mono (securityParameter : Nat) (queries : QueryAllowance) :
-    Monotone (dlogSuccessBound curve securityParameter queries) :=
-  fun _ _ elapsed => Signatures.Runtime.CaliperBackend.cyclicDLogSuccessBound_mono
-    (model.parameters securityParameter queries).layout.service.random.port
-    (model.parameters securityParameter queries).layout.service.scheme.config
-    (model.parameters securityParameter queries).layout.service.scheme.scalar
-    (curve.generator securityParameter) le_rfl le_rfl elapsed
+theorem Proofs.agm_reduction_within
+    (curve : Model.CyclicCurve) [model : AGMSecurityModel curve]
+    (securityParameter : Nat) (queries : QueryAllowance)
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    DLogSolverWithin curve securityParameter queries (agmReductionTime curve securityParameter queries)
+      (agmReduction curve adversary) :=
+  CaliperAGM.reduction_within (model.parameters securityParameter queries) adversary
 
 end Schnorr

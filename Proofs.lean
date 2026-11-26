@@ -51,7 +51,6 @@ import Proofs.LinearFunctional.OperationCost
 import Proofs.LinearFunctional.PerfectSim
 import Proofs.LinearFunctional.Spec.Handle
 import Proofs.LinearFunctional.Spec.LazyAGMReduction
-import Proofs.Model.AdvantageBound
 import Proofs.Model.AlgebraicOracle
 import Proofs.Model.CoronLoss
 import Proofs.Model.DirectAGM

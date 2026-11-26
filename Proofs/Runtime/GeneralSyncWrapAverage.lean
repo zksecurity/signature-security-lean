@@ -5,9 +5,9 @@ import VCVio.OracleComp.Constructions.SampleableType.Measure
 /-! # Averaging over a sampled known key
 
 A solver that first draws a uniform scalar and then runs a fixed-key solver succeeds with the
-average of the fixed-key successes, hence no better than the best of them. This is how the
-four synchronized PS solvers, which sample the known key, are bounded by the DLog class of the
-backend: every fixed-key solver is realized within the budget, and the class bound is a supremum. -/
+average of the fixed-key successes, hence no better than the best of them. The four synchronized
+PS solvers sample the known key outside the certified program, so their success is stated as this
+average over the per-key solvers, each of which is certified within the budget. -/
 
 open OracleComp OracleSpec
 
@@ -54,5 +54,27 @@ theorem dlog11Advantage_sample_le (g₁ : G₁) (g₂ : G₂)
     exact (EvalDistEq.bind_bind_swap _ _ _).evalDist_eq
   rw [hswap]
   exact evalDist_bind_apply_le_of_support _ _ (measurableSet_singleton true) fun k _ => h k
+
+omit [DecidableEq F] in
+/-- Drawing the known key first and running the corresponding fixed-key solver succeeds with the
+average of the fixed-key successes. -/
+theorem dlog11Advantage_sample_eq [Fintype F] (g₁ : G₁) (g₂ : G₂)
+    (solver : F → AlgebraicGroupModel.DLog11Adversary F G₁ G₂) :
+    Model.dlog11Advantage g₁ g₂
+      (fun g X h₂ Y => do let k ← ($ᵗ F : ProbComp F); solver k g X h₂ Y) =
+      (∑ k, Model.dlog11Advantage g₁ g₂ (solver k)) / (Fintype.card F : ENNReal) := by
+  unfold Model.dlog11Advantage
+  have hswap : 𝒟[AlgebraicGroupModel.dlog11Exp g₁ g₂
+      (fun g X h₂ Y => do let k ← ($ᵗ F : ProbComp F); solver k g X h₂ Y)] =
+      𝒟[do let k ← ($ᵗ F : ProbComp F); AlgebraicGroupModel.dlog11Exp g₁ g₂ (solver k)] := by
+    simp only [AlgebraicGroupModel.dlog11Exp, bind_assoc]
+    exact (EvalDistEq.bind_bind_swap _ _ _).evalDist_eq
+  have event (mx : ProbComp Bool) : 𝒟[mx] {true} = Pr{let b ← mx}[b = true] := by
+    rw [prEvent_eq_evalDist_of_discrete]
+    rfl
+  have average := SampleableType.natCast_card_mul_prEvent_uniformSample_bind
+    (fun k => AlgebraicGroupModel.dlog11Exp g₁ g₂ (solver k)) (fun b => b = true)
+  rw [hswap, ENNReal.eq_div_iff (by simp) (by simp), event, average]
+  simp only [event]
 
 end Signatures.Runtime.SyncWrapGeneral

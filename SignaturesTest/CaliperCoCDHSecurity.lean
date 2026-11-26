@@ -8,10 +8,10 @@ open Lean Meta Signatures.Runtime Signatures.Runtime.CaliperBackend
 
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
-  for name in #[``Interactive.Within.viewInput, ``coCDHWithin.mono, ``coCDHSuccessBound_mono,
+  for name in #[``Interactive.Within.viewInput, ``coCDHWithin.mono,
       ``CoronFull.scalar_valid, ``CoronFull.point_valid, ``CoronFull.challenge_valid,
       ``CoronFull.coCDH_within, ``BLS.CaliperCoCDH.reduction_within,
-      ``BLS.Proofs.cocdh_probability, ``BLS.cocdh_security,
+      ``BLS.Proofs.cocdh_probability, ``BLS.cocdh_security, ``BLS.cocdh_reduction_within,
       ``coCDHNonuniformWithin.of_pointwise,
       ``BLS.CaliperCoCDH.Family.PolynomialResources.solverTime,
       ``BLS.CaliperCoCDH.Family.PolynomialResources.solverCode,
@@ -62,7 +62,7 @@ example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
 run_meta do
   for name in #[``BLS.CoCDHSecurityModel.mk, ``BLS.UnrestrictedAdversary,
       ``BLS.CaliperCoCDH.Parameters.mk, ``BLS.CaliperCoCDH.Adversary.mk,
-      ``BLS.coCDHSuccessBound, ``BLS.Proofs.cocdh_security,
+      ``BLS.CoCDHSolverWithin, ``BLS.cocdhReduction, ``BLS.Proofs.cocdh_security, ``BLS.Proofs.cocdh_reduction_within,
       ``BLS.CaliperCoCDH.Family.Proofs.security] do
     let info ← getConstInfo name
     for expression in #[info.type, (info.value? true).getD info.type] do
@@ -75,9 +75,9 @@ run_meta do
           throwError "{name}: unexpected abstract-backend or algebraic dependency {forbidden}"
   for (name, required) in #[( ``BLS.CoCDHSecurityModel.mk, #[``BLS.CaliperCoCDH.Parameters]),
       (``BLS.UnrestrictedAdversary, #[``BLS.CaliperCoCDH.Adversary]),
-      (``BLS.coCDHSuccessBound, #[``coCDHWithin,
+      (``BLS.CoCDHSolverWithin, #[``coCDHWithin,
         ``BLS.CaliperCoCDH.Parameters.solverCode, ``BLS.CaliperCoCDH.Parameters.solverMemory]),
-      (``BLS.Proofs.cocdh_security, #[``BLS.CaliperCoCDH.reduction_within]),
+      (``BLS.Proofs.cocdh_reduction_within, #[``BLS.CaliperCoCDH.reduction_within]),
       (``BLS.CaliperCoCDH.Family.Proofs.security, #[``BLS.CaliperCoCDH.Family.reduction_nonuniform])] do
     let info ← getConstInfo name
     for symbol in required do
@@ -109,8 +109,9 @@ run_meta do
       throwError "{name}: keep the statement and proof in their separate files"
 
 example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
-    (n : Nat) (queries : BLS.QueryAllowance) (time : Nat) :
-    BLS.coCDHSuccessBound curve n queries time = (model.parameters n queries).coCDHBound time := rfl
+    (n : Nat) (queries : BLS.QueryAllowance) (time : Nat)
+    (solver : BLS.CoCDH.CoCDHAdversary (curve.Scalar n) (curve.SignatureGroup n) (curve.KeyGroup n)) :
+    BLS.CoCDHSolverWithin curve n queries time solver ↔ (model.parameters n queries).within time solver := Iff.rfl
 
 -- The derived certificate covers all challenges sampled by the original game.
 example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
@@ -138,8 +139,10 @@ example (curve : Model.PairingCurve) [model : BLS.CoCDHSecurityModel curve]
     (allowances : BLS.CaliperCoCDH.CallerQueries (model.parameters n queries) (curve.generates n).surjective caller) :
     let adversary := BLS.CaliperCoCDH.Adversary.ofCaller (model.parameters n queries) (curve.generates n).surjective caller resources allowances
     𝒟[BLS.cocdhEufCmaGame curve n adversary] {true} ≤
-      Model.coronFactor queries.sign * BLS.coCDHSuccessBound curve n queries (BLS.cocdhReductionTime curve n queries) :=
-  BLS.cocdh_security curve n queries
-    (BLS.CaliperCoCDH.Adversary.ofCaller (model.parameters n queries) (curve.generates n).surjective caller resources allowances)
+        Model.coronFactor queries.sign *
+          𝒟[BLS.CoCDH.coCDHExp (curve.generator n) (curve.keyGenerator n) (BLS.cocdhReduction curve adversary)] {true} ∧
+      BLS.CoCDHSolverWithin curve n queries (BLS.cocdhReductionTime curve n queries) (BLS.cocdhReduction curve adversary) :=
+  let adversary := BLS.CaliperCoCDH.Adversary.ofCaller (model.parameters n queries) (curve.generates n).surjective caller resources allowances
+  ⟨BLS.cocdh_security curve n queries adversary, BLS.cocdh_reduction_within curve n queries adversary⟩
 
 end SignaturesTest.CaliperCoCDHSecurity

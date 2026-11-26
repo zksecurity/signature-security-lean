@@ -2,7 +2,7 @@ import Proofs.Runtime.GeneralWeightedParameters
 
 /-! The two weighted reductions belong to the fixed backend's concrete DLog
 class. Whole-solver certificates are derived from component contracts and a
-general attacker's own resources, then used to bound its two reduction advantages.
+general attacker's own resources; hardness at those budgets bounds the two advantages.
 No source-game probability theorem or completed-solver budget is an assumption. -/
 
 open BilinearGroup
@@ -78,16 +78,6 @@ theorem reductions_within :
   exact ⟨⟨hchallenge, Within.mono P.backend P.descriptionSizes P.factor P.description
     goodCertificate hcode le_rfl⟩, ⟨hchallenge,
     Within.mono P.backend P.descriptionSizes P.factor P.description badCertificate hcode le_rfl⟩⟩
-
-theorem reduction_advantages :
-    Model.dlog11Advantage P.generator P.keyGenerator
-      (Model.LazyAGM.WeightedReduction.goodReductionList (index.sourceTerms P.cost) A.source) ≤
-        P.dlogBound P.goodTime ∧
-    Model.dlog11Advantage P.generator P.keyGenerator
-      (Model.LazyAGM.WeightedReduction.badReductionList (index.sourceTerms P.cost) A.source) ≤
-        P.dlogBound P.badTime := by
-  obtain ⟨goodFits, badFits⟩ := reductions_within P A
-  exact ⟨Model.le_advantageBound _ _ _ goodFits, Model.le_advantageBound _ _ _ badFits⟩
 
 theorem reduction_advantages_of_hardness (goodEpsilon badEpsilon : ENNReal)
     (goodHardness : Model.HardWithin (Model.dlog11Advantage (F := F) P.generator P.keyGenerator)

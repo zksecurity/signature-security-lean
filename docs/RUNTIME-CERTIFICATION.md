@@ -248,7 +248,7 @@ attacker's, so at every known key both weighted solvers are pipeline certificate
 ([parameters](../Proofs/Runtime/GeneralSyncWrapParameters.lean),
 [adversary](../Proofs/Runtime/GeneralSyncWrapAdversary.lean)). The four synchronized solvers sample
 the key, so their advantages are averages of in-budget solvers:
-[concrete security](../Proofs/SynchronizedPS/GeneralAGM.lean) is `4·εDL + 2/p` at the curve, and
+[concrete security](../Proofs/SynchronizedPS/GeneralAGM.lean) is four per-key reductions averaged over the known key `+ 2/p` at the curve, and
 the [family corollary](../Signatures/SynchronizedPS/GeneralAGMFamilyStatement.lean) picks the best
 key per security parameter, a solver family of the same class, to conclude negligible forgery under
 nonuniform DLog hardness and negligible inverse field size.

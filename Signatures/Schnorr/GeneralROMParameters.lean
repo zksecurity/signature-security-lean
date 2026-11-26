@@ -1,6 +1,5 @@
 import Proofs.Runtime.BackendSchnorrROMSecurity
 import Proofs.Runtime.BackendSchnorrROMDescriptionAllowance
-import Proofs.Model.AdvantageBound
 import Signatures.Schnorr.QueryAllowance
 
 /-! Original component contracts and attacker allowances for ordinary-ROM
@@ -147,13 +146,6 @@ def solverTime : Nat :=
   NativeSolver.resourcesTime P.overhead P.execution P.width P.tapeWidth P.queries.total P.queries.total
     P.queries.total P.first.timeInputs P.second.timeInputs P.scaleTime P.addTime P.messageTime P.pointTime
     P.incrementTime P.comparisonTime P.scalarComparisonTime P.subtractTime P.extractionScalarTime P.fieldSubTime P.divTime
-
-/-- Maximum success among DLog solvers in the same fixed backend at the
-derived input/code bounds and supplied time. Hardness can make it small. -/
-noncomputable def dlogBound (time : Nat) : ENNReal :=
-  Model.advantageBound (fun solver => 𝒟[DiffieHellman.dlogExperiment P.generator solver] {true})
-    (NativeSolver.dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
-      P.generator P.inputWidth P.solverCode time)
 
 end Parameters
 

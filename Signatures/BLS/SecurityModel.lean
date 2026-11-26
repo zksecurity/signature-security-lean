@@ -10,22 +10,12 @@ namespace BLS
 `AGMSecurityModel` or `CoCDHSecurityModel` explicitly. -/
 abbrev SecurityModel := AGMSecurityModel
 
-/-- Compatibility name preserving the original two-budget AGM-to-DLog theorem. -/
+/-- Compatibility name for the AGM-to-DLog theorem. -/
 alias security := Proofs.agm_security
 
 /-- Compatibility name for the AGM game. -/
 noncomputable abbrev eufCmaGame := agmEufCmaGame
 
 alias eufCmaGame_eq := agmEufCmaGame_eq
-
-variable (curve : Model.PairingCurve) [model : SecurityModel curve]
-
-/-- Compatibility name for DLog success at the derived good-branch budget. -/
-noncomputable def goodDLogBound (securityParameter : Nat) (queries : QueryAllowance) : ENNReal :=
-  dlogSuccessBound curve securityParameter queries (model.parameters securityParameter queries).goodTime
-
-/-- Compatibility name for DLog success at the derived bad-branch budget. -/
-noncomputable def badDLogBound (securityParameter : Nat) (queries : QueryAllowance) : ENNReal :=
-  dlogSuccessBound curve securityParameter queries (model.parameters securityParameter queries).badTime
 
 end BLS

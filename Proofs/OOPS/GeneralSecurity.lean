@@ -3,8 +3,8 @@ import Proofs.OOPS.LazyAGMArbitraryTopics
 import Proofs.OOPS.Game
 
 /-! Proofs for the public OOPS statements. The displayed games equal the
-original source games exactly. The constructed Caliper implementations meet the derived
-resources and therefore belong to the explicit DLog success supremum. -/
+original source games exactly. The bound names the two constructed DLog
+reductions, and their Caliper implementations meet the derived resources. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime
@@ -35,53 +35,37 @@ theorem Proofs.agm_security
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter degree : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter degree queries) :
-    let resources := model.parameters securityParameter degree queries
     𝒟[agmEufCmaGame curve securityParameter degree adversary] {true} ≤
-      dlogSuccessBound curve securityParameter degree queries resources.goodTime +
-      dlogSuccessBound curve securityParameter degree queries resources.badTime +
+      𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+        (agmGoodReduction curve adversary)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+        (agmBadReduction curve adversary)] {true} +
       1 / (curve.order securityParameter : ENNReal) := by
-  let resources := model.parameters securityParameter degree queries
   have probabilityBound := LazyAGM.Proofs.security_arbitrary_topics
     (curve.generator securityParameter) (curve.keyGenerator securityParameter) degree adversary.proofView (curve.generates securityParameter) (curve.pairingInjective securityParameter)
   rw [LazyAGM.game_eq_of_decidableEq] at probabilityBound
-  obtain ⟨goodFits, badFits⟩ := WeightedCaliper.reductions_within resources adversary
-  have goodBound : Model.dlog11Advantage (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      (Model.LazyAGM.WeightedReduction.goodReductionList (LazyAGM.terms degree) adversary.proofView) ≤
-      dlogSuccessBound curve securityParameter degree queries resources.goodTime :=
-    le_iSup_of_le _ (le_iSup_of_le goodFits le_rfl)
-  have badBound : Model.dlog11Advantage (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      (Model.LazyAGM.WeightedReduction.badReductionList (LazyAGM.terms degree) adversary.proofView) ≤
-      dlogSuccessBound curve securityParameter degree queries resources.badTime :=
-    le_iSup_of_le _ (le_iSup_of_le badFits le_rfl)
   have sourceBound := Model.DirectAGM.game_le (Gₜ := curve.TargetGroup securityParameter) (LazyAGM.terms degree) (LazyAGM.admissible degree)
     (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source
-  simpa only [WeightedCaliper.AlgebraicAdversary.proofView, resources, agmEufCmaGame_eq,
-    Model.PairingCurve.order] using
-    sourceBound.trans (probabilityBound.trans (add_le_add (add_le_add goodBound badBound) le_rfl))
+  simpa only [WeightedCaliper.AlgebraicAdversary.proofView, agmEufCmaGame_eq,
+    agmGoodReduction, agmBadReduction, Model.PairingCurve.order, Model.dlog11Advantage] using
+    sourceBound.trans probabilityBound
 
-theorem dlogSuccessBound_mono (securityParameter degree : Nat) (queries : QueryAllowance) :
-    Monotone (dlogSuccessBound curve securityParameter degree queries) := by
-  intro time largerTime ht
-  let resources := model.parameters securityParameter degree queries
-  exact CaliperBackend.dlogSuccessBound_mono resources.layout.port
-    resources.layout.goodSetup.challenge resources.scalar
-    (curve.generator securityParameter) (curve.keyGenerator securityParameter) le_rfl le_rfl ht
-
-theorem Proofs.agm_security_common_budget
+theorem Proofs.agm_good_reduction_within
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter degree : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter degree queries) :
-    𝒟[agmEufCmaGame curve securityParameter degree adversary] {true} ≤
-      2 * dlogSuccessBound curve securityParameter degree queries
-        (agmReductionTime curve securityParameter degree queries) +
-      1 / (curve.order securityParameter : ENNReal) := by
-  let resources := model.parameters securityParameter degree queries
-  have goodBound := dlogSuccessBound_mono curve securityParameter degree queries
-    (Nat.le_max_left resources.goodTime resources.badTime)
-  have badBound := dlogSuccessBound_mono curve securityParameter degree queries
-    (Nat.le_max_right resources.goodTime resources.badTime)
-  have bound := (Proofs.agm_security curve securityParameter degree queries adversary).trans
-    (add_le_add (add_le_add goodBound badBound) le_rfl)
-  simpa only [two_mul, agmReductionTime, resources] using bound
+    DLog11SolverWithin curve securityParameter degree queries (agmReductionTime curve securityParameter degree queries)
+      (agmGoodReduction curve adversary) :=
+  ((WeightedCaliper.reductions_within (model.parameters securityParameter degree queries) adversary).1).mono
+    le_rfl le_rfl (Nat.le_max_left _ _)
+
+theorem Proofs.agm_bad_reduction_within
+    (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
+    (securityParameter degree : Nat) (queries : QueryAllowance)
+    (adversary : AlgebraicAdversary curve securityParameter degree queries) :
+    DLog11SolverWithin curve securityParameter degree queries (agmReductionTime curve securityParameter degree queries)
+      (agmBadReduction curve adversary) :=
+  ((WeightedCaliper.reductions_within (model.parameters securityParameter degree queries) adversary).2).mono
+    le_rfl le_rfl (Nat.le_max_right _ _)
 
 end OOPS

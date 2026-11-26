@@ -3,8 +3,9 @@ import Proofs.Schnorr.CaliperROM
 import Proofs.Schnorr.Game
 
 /-! Proofs for the short ordinary-ROM Schnorr statement. The displayed game is
-the original source game, and its DLog term ranges over the fixed Caliper class
-that contains the constructed complete replaying solver. -/
+the original source game; the forking bound is in the success of the named
+replaying solver, and a separate theorem places that solver in the fixed Caliper
+budget. -/
 
 open OracleComp OracleSpec
 
@@ -35,10 +36,6 @@ theorem romEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
       ROM.game (curve.generator securityParameter) adversary.source :=
   Game.rom_eq_source curve securityParameter adversary.source
 
-theorem romDLogSuccessBound_eq (securityParameter : Nat) (queries : QueryAllowance) (time : Nat) :
-    romDLogSuccessBound curve securityParameter queries time =
-      (model.parameters securityParameter queries).dlogBound time := rfl
-
 theorem Proofs.rom_security
     (curve : Model.CyclicCurve) [model : ROMSecurityModel curve]
     (securityParameter : Nat) (queries : QueryAllowance)
@@ -47,17 +44,23 @@ theorem Proofs.rom_security
       (queries.sign : ENNReal) * (queries.sign + queries.hash) * (curve.order securityParameter : ENNReal)⁻¹ +
       (queries.hash + 1 : ENNReal) * (curve.order securityParameter : ENNReal)⁻¹ +
       ((queries.hash + 1 : ENNReal) *
-        romDLogSuccessBound curve securityParameter queries (romReductionTime curve securityParameter queries)) ^ (1 / 2 : ℝ) := by
-  rw [romEufCmaGame_eq, romDLogSuccessBound_eq]
-  exact CaliperROM.security (model.parameters securityParameter queries) adversary
-    (model.sampling securityParameter queries) (model.fullField securityParameter queries) (curve.generates securityParameter)
+        𝒟[DiffieHellman.dlogExperiment (curve.generator securityParameter) (romReduction curve adversary)] {true}) ^
+        (1 / 2 : ℝ) := by
+  have fork := Schnorr.LazyROM.security (curve.generator securityParameter) (curve.generates securityParameter)
+    adversary.source queries.sign queries.hash (fun pk => ⟨adversary.signingQueries pk, adversary.hashQueries pk⟩)
+  rw [← Signatures.Runtime.Schnorr.ListROM.NativeSolver.reduction_experiment (G₂ := curve.Group securityParameter)
+    (K := model.Message securityParameter)] at fork
+  rw [romEufCmaGame_eq]
+  exact Model.forking_inverse queries.hash (MeasureTheory.measure_ne_top _ _)
+    (ENNReal.inv_ne_top.mpr (Nat.cast_ne_zero.mpr Fintype.card_ne_zero)) fork
 
-theorem romDLogSuccessBound_mono (securityParameter : Nat) (queries : QueryAllowance) :
-    Monotone (romDLogSuccessBound curve securityParameter queries) :=
-  fun _ _ elapsed => Signatures.Runtime.CaliperBackend.cyclicDLogSuccessBound_mono
-    (Signatures.Runtime.CaliperBackend.SchnorrROMTape.Fresh.port (model.parameters securityParameter queries).config.handler.sampler.tape)
-    (Signatures.Runtime.CaliperBackend.SchnorrROM.Pass.Initialization.points (model.parameters securityParameter queries).config)
-    (model.parameters securityParameter queries).config.handler.sampler.tape.scalar
-    (curve.generator securityParameter) le_rfl le_rfl elapsed
+theorem Proofs.rom_reduction_within
+    (curve : Model.CyclicCurve) [model : ROMSecurityModel curve]
+    (securityParameter : Nat) (queries : QueryAllowance)
+    (adversary : UnrestrictedAdversary curve securityParameter queries) :
+    ROMDLogSolverWithin curve securityParameter queries (romReductionTime curve securityParameter queries)
+      (romReduction curve adversary) :=
+  CaliperROM.reduction_within (model.parameters securityParameter queries) adversary
+    (model.sampling securityParameter queries) (model.fullField securityParameter queries)
 
 end Schnorr

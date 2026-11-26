@@ -39,31 +39,39 @@ The main BLS AGM theorem then reads:
 ```lean
 theorem agm_security
     (adversary : AlgebraicAdversary curve securityParameter queries) :
-    𝒟[EUFCMA adversary] {true} ≤ 2 * εDL + 1 / p :=
-  Proofs.agm_security_common_budget curve securityParameter queries adversary
+    𝒟[EUFCMA adversary] {true} ≤
+      𝒟[AlgebraicGroupModel.dlog11Exp g₁ g₂ (agmGoodReduction curve adversary)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp g₁ g₂ (agmBadReduction curve adversary)] {true} + 1 / p
+
+theorem agm_good_reduction_within
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    DLog11SolverWithin curve securityParameter queries
+      (agmReductionTime curve securityParameter queries) (agmGoodReduction curve adversary)
 ```
 
-Here `p` is the group order. `εDL` is the DLog success bound at the **derived
-complete reduction budget**, in the same execution model as the attacker.
-For pairing-based AGM routes this is `(1,1)`-DLog; for Schnorr it is ordinary
-DLog. The short names are local notation: Lean still sees the original game,
-hardness supremum and derived time bound. No hypothesis or loss is removed.
+and `agm_bad_reduction_within` for the other reduction. Here `p` is the group
+order. The bound names the two `(1,1)`-DLog solvers built from the attacker, and
+the budget theorems state that each runs as Caliper code within the **derived
+complete reduction budget**, in the same execution model as the attacker. A
+hardness assumption for solvers within that budget therefore bounds both terms.
+The short names are local notation: Lean still sees the original game and
+reductions. No hypothesis or loss is removed.
 
-Writing `h` and `s` for hash and signing allowances, the concrete bounds are:
+Writing `h` and `s` for hash and signing allowances and `ε(R)` for a named
+reduction's success, the concrete bounds are:
 
 | Route | Forgery probability at most |
 | --- | --- |
-| BLS AGM, OOPS AGM | `2 εDL + 1/p` |
-| BLS co-CDH ROM | `coronFactor(s) εcoCDH` |
-| Schnorr AGM | `εDL + (h+1)/p + s(s+h)/p` |
-| Schnorr ROM, full-field nonces | `s(s+h)/p + (h+1)/p + sqrt((h+1) εDL)` |
-| Schnorr ROM, nonzero nonces | `s(s+h)/(p−1) + (h+1)/p + sqrt((h+1) εDL)` |
-| Proximity AGM | `2 εDL + 1/p + Pr[fresh collision]` |
+| BLS AGM, OOPS AGM | `ε(good) + ε(bad) + 1/p` |
+| BLS co-CDH ROM | `coronFactor(s) ε(R)` |
+| Schnorr AGM | `ε(R) + (h+1)/p + s(s+h)/p` |
+| Schnorr ROM, full-field nonces | `s(s+h)/p + (h+1)/p + sqrt((h+1) ε(R))` |
+| Schnorr ROM, nonzero nonces | `s(s+h)/(p−1) + (h+1)/p + sqrt((h+1) ε(R))` |
+| Proximity AGM | `ε(good) + ε(bad) + 1/p + Pr[fresh collision]` |
 
-Each hardness quantity uses its own route's proved budget. It becomes a useful
-numerical bound under the corresponding hardness assumption. The Coron factor
-is `((s+1)⁻¹ (s/(s+1))^s)⁻¹`, including factor one at `s = 0`.
-The separate-budget AGM refinements remain available below the main theorems.
+Each reduction has a `*_reduction_within` theorem for its own route's proved
+budget. The Coron factor is `((s+1)⁻¹ (s/(s+1))^s)⁻¹`, including factor one at
+`s = 0`.
 
 The asymptotic reading is: under the relevant nonuniform hardness and parameter
 growth assumptions, polynomial-resource attacker families have negligible forgery

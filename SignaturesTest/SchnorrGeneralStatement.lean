@@ -16,11 +16,12 @@ namespace SignaturesTest.SchnorrGeneralStatement
 run_meta do
   unless (← findModuleOf? ``Schnorr.agm_security) == some `Signatures.Schnorr.Statement do
     throwError "The public Schnorr theorem must stay in Statement.lean"
-  for name in #[``Schnorr.Proofs.agm_security, ``Schnorr.agmEufCmaGame_eq,
-      ``Schnorr.dlogSuccessBound_mono, ``Schnorr.AlgebraicAdversary.query_allowances] do
+  for name in #[``Schnorr.Proofs.agm_security, ``Schnorr.Proofs.agm_reduction_within,
+      ``Schnorr.agmEufCmaGame_eq, ``Schnorr.AlgebraicAdversary.query_allowances] do
     unless (← findModuleOf? name) == some `Proofs.Schnorr.GeneralSecurity do
       throwError "{name}: supporting proof must stay in the separate proof file"
-  forallTelescope (← getConstInfo ``Schnorr.agm_security).type fun params _ => do
+  for name in #[``Schnorr.agm_security, ``Schnorr.agm_reduction_within] do
+   forallTelescope (← getConstInfo name).type fun params _ => do
     unless params.size == 5 do
       throwError "Expected four explicit inputs and one declared execution model"
     for (param, expected) in params.zip #[`curve, `inst, `securityParameter, `queries, `adversary] do
@@ -34,10 +35,10 @@ run_meta do
 
 run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
-  for name in #[``Schnorr.agm_security, ``Schnorr.GeneralAGM.reduction_within,
+  for name in #[``Schnorr.agm_security, ``Schnorr.agm_reduction_within, ``Schnorr.GeneralAGM.reduction_within,
       ``Schnorr.GeneralAGM.security, ``Schnorr.agmEufCmaGame_eq,
       ``Schnorr.CaliperAGM.reduction_within, ``Schnorr.CaliperAGM.security,
-      ``Schnorr.dlogSuccessBound_mono, ``Schnorr.AlgebraicAdversary.query_allowances] do
+      ``Schnorr.AlgebraicAdversary.query_allowances] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
         throwError "{name}: unexpected axiom {axiomName}"
@@ -67,26 +68,32 @@ run_meta do
                   throwError "{name}: finite message or group domain premise"
 
 run_meta do
-  let type := (← getConstInfo ``Schnorr.agm_security).type
-  for visible in #[``Schnorr.agmEufCmaGame, ``Schnorr.dlogSuccessBound,
-      ``Schnorr.agmReductionTime, ``Model.CyclicCurve.order,
-      ``Model.QueryAllowance.hash, ``Model.QueryAllowance.sign] do
-    unless (type.find? (fun e => e.isConstOf visible)).isSome do
-      throwError "Public statement must display {visible}"
-  if (type.find? (fun e => match e with | .letE .. => true | _ => false)).isSome then
-    throwError "Resource records must stay out of the main public statement"
-  for name in #[``Schnorr.dlogSuccessBound, ``Schnorr.agmEufCmaGame,
+  for (name, shown) in #[(``Schnorr.agm_security, #[``Schnorr.agmEufCmaGame, ``Schnorr.agmReduction,
+        ``DiffieHellman.dlogExperiment, ``Model.CyclicCurve.order,
+        ``Model.QueryAllowance.hash, ``Model.QueryAllowance.sign]),
+      (``Schnorr.agm_reduction_within, #[``Schnorr.DLogSolverWithin, ``Schnorr.agmReduction,
+        ``Schnorr.agmReductionTime])] do
+    let type := (← getConstInfo name).type
+    for visible in shown do
+      unless (type.find? (fun e => e.isConstOf visible)).isSome do
+        throwError "{name} must display {visible}"
+    if (type.find? (fun e => match e with | .letE .. => true | _ => false)).isSome then
+      throwError "Resource records must stay out of the public statements"
+  for name in #[``Schnorr.agmReduction, ``Schnorr.DLogSolverWithin, ``Schnorr.agmEufCmaGame,
       ``Schnorr.CaliperAGM.Parameters.solverTime, ``Schnorr.CaliperAGM.Parameters.solverCode,
       ``Schnorr.CaliperAGM.Parameters.solverMemory] do
     unless (← getConstInfo name).value?.isSome do
       throwError "{name}: definition must remain inspectable"
 
 run_meta do
-  let bounded := (← getConstInfo ``Schnorr.dlogSuccessBound).value?.get!
+  let bounded := (← getConstInfo ``Schnorr.CaliperAGM.Parameters.within).value?.get!
   unless (bounded.find? (fun e => e.isConstOf ``Signatures.Runtime.CaliperBackend.cyclicDLogWithin)).isSome do
-    throwError "public Schnorr hardness must quantify over actual Caliper solvers"
+    throwError "the public budget must be execution as an actual Caliper solver"
   unless (bounded.find? (fun e => e.isConstOf ``Schnorr.CaliperAGM.Parameters.solverMemory)).isSome do
-    throwError "public Schnorr hardness must include derived total memory"
+    throwError "the public budget must include derived total memory"
+  let named := (← getConstInfo ``Schnorr.agmReduction).value?.get!
+  unless (named.find? (fun e => e.isConstOf ``Signatures.Runtime.SchnorrAGM.dlogReduction)).isSome do
+    throwError "the public reduction must be the constructed single-pass solver"
   let reductionInfo ← getConstInfo ``Schnorr.CaliperAGM.reduction_within
   let reduction := (reductionInfo.value? true).getD reductionInfo.type
   unless (reduction.find? (fun e => e.isConstOf ``Signatures.Runtime.CaliperBackend.SchnorrAGM.Full.dlogWithin)).isSome do
@@ -118,19 +125,12 @@ example (curve : Model.CyclicCurve) [Schnorr.AGMSecurityModel curve]
 
 example (curve : Model.CyclicCurve) [model : Schnorr.AGMSecurityModel curve]
     (securityParameter : Nat) (queries : Schnorr.QueryAllowance) (time : Nat) :
-    Schnorr.dlogSuccessBound curve securityParameter queries time =
-      (model.parameters securityParameter queries).dlogBound time := rfl
+    Schnorr.DLogSolverWithin curve securityParameter queries time =
+      (model.parameters securityParameter queries).within time := rfl
 
 example (curve : Model.CyclicCurve) [model : Schnorr.AGMSecurityModel curve]
     (securityParameter : Nat) (queries : Schnorr.QueryAllowance) :
     Schnorr.agmReductionTime curve securityParameter queries =
       (model.parameters securityParameter queries).solverTime := rfl
-
-example (curve : Model.CyclicCurve) [Schnorr.AGMSecurityModel curve]
-    (securityParameter : Nat) (queries : Schnorr.QueryAllowance) (time largerTime : Nat)
-    (h : time ≤ largerTime) :
-    Schnorr.dlogSuccessBound curve securityParameter queries time ≤
-      Schnorr.dlogSuccessBound curve securityParameter queries largerTime :=
-  Schnorr.dlogSuccessBound_mono curve securityParameter queries h
 
 end SignaturesTest.SchnorrGeneralStatement

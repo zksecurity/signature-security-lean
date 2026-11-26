@@ -62,9 +62,6 @@ def solverMemory : Nat := SchnorrROM.Full.memoryBudget P.config P.shape P.limits
 def within (time : Nat) (solver : DiffieHellman.DLogAdversary F G) : Prop :=
   cyclicDLogWithin (SchnorrROMTape.Fresh.port P.config.handler.sampler.tape) (SchnorrROM.Pass.Initialization.points P.config)
     P.config.handler.sampler.tape.scalar generator P.solverCode P.solverMemory time solver
-noncomputable def dlogBound [SampleableType F] (time : Nat) : ENNReal :=
-  cyclicDLogSuccessBound (SchnorrROMTape.Fresh.port P.config.handler.sampler.tape) (SchnorrROM.Pass.Initialization.points P.config)
-    P.config.handler.sampler.tape.scalar generator P.solverCode P.solverMemory time
 end Parameters
 
 end Schnorr.CaliperROM

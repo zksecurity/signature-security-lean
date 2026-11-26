@@ -3,9 +3,10 @@ import Proofs.Model.DirectAGM
 
 /-! BLS AGM security for general realized attackers at explicit resource/query
 allowances. The supporting parameters fix the curve, backend, primitive prices,
-and encodings. The bound uses maximum DLog advantage in that same backend at
-the derived solver budgets. Numerical hardness assumptions can bound those
-terms separately; no completed solver's efficiency is assumed. -/
+and encodings. The bound is the `(1,1)`-DLog success of the two named reductions
+built from the attacker, and `good_reduction_within`/`bad_reduction_within` place
+each in that same backend at its derived solver budget, so a hardness assumption
+there makes the bound small; no completed solver's efficiency is assumed. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram
@@ -79,20 +80,39 @@ theorem reductions_within
     goodCertificate hcode le_rfl⟩, ⟨hchallenge,
     Within.mono P.backend P.descriptionSizes P.factor P.description badCertificate hcode le_rfl⟩⟩
 
+omit [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ] in
+/-- The good reduction runs in the backend within the derived code, input and good-branch time. -/
+theorem good_reduction_within
+    (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
+    (A : AlgebraicAdversary P) :
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.goodTime
+      (BLS.LazyAGM.Reduction.goodReductionList A.proofView) :=
+  (reductions_within P A).1
+
+omit [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ] in
+/-- The bad reduction runs in the backend within the derived code, input and bad-branch time. -/
+theorem bad_reduction_within
+    (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
+    (A : AlgebraicAdversary P) :
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.badTime
+      (BLS.LazyAGM.Reduction.badReductionList A.proofView) :=
+  (reductions_within P A).2
+
 /-- At the declared curve, resource limits, and query allowances, any realized
-algebraic adversary has success bounded by the two DLog terms and `1 / |F|`. -/
+algebraic adversary has success bounded by the two reductions' DLog success and `1 / |F|`. -/
 theorem security (P : Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (M := M))
     (A : AlgebraicAdversary P) :
     𝒟[Model.DirectAGM.game (Gₜ := Gₜ) BLS.LazyAGM.terms (fun _ _ => True)
-      P.generator P.keyGenerator A.source] {true} ≤ P.securityBound := by
-  obtain ⟨goodFits, badFits⟩ := reductions_within P A
-  have goodBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ goodFits
-  have badBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ badFits
-  apply (Model.DirectAGM.game_le BLS.LazyAGM.terms (fun _ _ => True)
-    P.generator P.keyGenerator A.source).trans
-  exact (BLS.LazyAGM.Reduction.security_arbitrary_messages_list
-    P.generator P.keyGenerator A.proofView P.generates P.pairingInjective).trans
-      (add_le_add (add_le_add goodBound badBound) le_rfl)
+      P.generator P.keyGenerator A.source] {true} ≤
+      𝒟[AlgebraicGroupModel.dlog11Exp P.generator P.keyGenerator
+        (BLS.LazyAGM.Reduction.goodReductionList A.proofView)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp P.generator P.keyGenerator
+        (BLS.LazyAGM.Reduction.badReductionList A.proofView)] {true} + 1 / (Fintype.card F : ENNReal) :=
+  (Model.DirectAGM.game_le BLS.LazyAGM.terms (fun _ _ => True) P.generator P.keyGenerator A.source).trans
+    (BLS.LazyAGM.Reduction.security_arbitrary_messages_list
+      P.generator P.keyGenerator A.proofView P.generates P.pairingInjective)
 
 end BLS.GeneralAGM
 
@@ -120,7 +140,11 @@ theorem security
     (securityParameter : Nat) (A : AlgebraicAdversary (parameters securityParameter)) :
     𝒟[Model.DirectAGM.game (Gₜ := Gₜ securityParameter) BLS.LazyAGM.terms (fun _ _ => True)
       (parameters securityParameter).generator (parameters securityParameter).keyGenerator A.source] {true} ≤
-      (parameters securityParameter).securityBound :=
+      𝒟[AlgebraicGroupModel.dlog11Exp (parameters securityParameter).generator
+        (parameters securityParameter).keyGenerator (BLS.LazyAGM.Reduction.goodReductionList A.proofView)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp (parameters securityParameter).generator
+        (parameters securityParameter).keyGenerator (BLS.LazyAGM.Reduction.badReductionList A.proofView)] {true} +
+      1 / (Fintype.card (F securityParameter) : ENNReal) :=
   BLS.GeneralAGM.security (parameters securityParameter) A
 
 end BLS.GeneralAGM.Family

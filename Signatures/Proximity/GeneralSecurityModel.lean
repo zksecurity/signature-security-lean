@@ -1,7 +1,7 @@
 import Signatures.Proximity.Game
 import Signatures.Proximity.CaliperAGMParameters
 
-/-! Inspectable games and Caliper DLog bounds for Proximity. The mathematical
+/-! Inspectable games, DLog reductions and their Caliper budget for Proximity. The mathematical
 curve and dimension stay explicit. Fixed local implementations, encodings and
 caller allowances determine both complete reduction time, code and memory bounds.
 The game stays independent of these implementation contracts. -/
@@ -53,20 +53,33 @@ noncomputable def freshCollisionGame (securityParameter dimension : Nat) {querie
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) : ProbComp Bool :=
   Game.collision curve securityParameter dimension adversary.source
 
-/-- Supremum of `(1,1)`-DLog success for Caliper solvers receiving
-`(g₁, x • g₁, g₂, x • g₂)`. The fixed code and total-memory bounds are derived
-from local routines and caller limits; `time` is explicit. Every sampled challenge
-is representable, as proved from the scalar sampler and local implementations.
-Memory includes the stored program, input and every intermediate state.
-See `Runtime/Caliper/WeightedSecurity.lean` for the two constructed certificates. -/
-noncomputable def dlogSuccessBound (securityParameter dimension : Nat) (queries : QueryAllowance)
-    (time : Nat) : ENNReal :=
-  let resources := model.parameters securityParameter dimension queries
-  ⨆ solver, ⨆ (_ : CaliperBackend.dlogWithin
-      resources.layout.port resources.layout.goodSetup.challenge resources.scalar
-      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      resources.solverCode resources.solverMemory time solver),
-    𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter)
-      (curve.keyGenerator securityParameter) solver] {true}
+/-- The first `(1,1)`-DLog solver built from the attacker: it uses the challenge
+`x • g₁` as the signing key, answers hashes with known multiples of `g₁`, and
+solves for `x` from the forgery's algebraic explanation. Its Caliper
+implementation is in `Proofs/Runtime/Caliper/WeightedGood.lean`. -/
+noncomputable def agmGoodReduction {securityParameter dimension : Nat} {queries : QueryAllowance}
+    (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
+    AlgebraicGroupModel.DLog11Adversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter) :=
+  Model.LazyAGM.WeightedReduction.goodReductionList LazyAGM.terms adversary.proofView
+
+/-- The second solver, for forgeries the first cannot use: it samples the signing
+key itself, embeds the challenge in every hash answer, and solves for `x` from
+the forgery's explanation. Its Caliper implementation is in
+`Proofs/Runtime/Caliper/WeightedBad.lean`. -/
+noncomputable def agmBadReduction {securityParameter dimension : Nat} {queries : QueryAllowance}
+    (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
+    AlgebraicGroupModel.DLog11Adversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter) :=
+  Model.LazyAGM.WeightedReduction.badReductionList LazyAGM.terms adversary.proofView
+
+/-- A `(1,1)`-DLog solver given `(g₁, x • g₁, g₂, x • g₂)` that runs as Caliper
+code on the fixed port and layouts within the derived code and total-memory
+limits and the displayed time limit. Memory includes the stored program, input
+and every intermediate state, and every sampled challenge must be representable. -/
+def DLog11SolverWithin (securityParameter dimension : Nat) (queries : QueryAllowance) (time : Nat)
+    (solver : AlgebraicGroupModel.DLog11Adversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter)) : Prop :=
+  (model.parameters securityParameter dimension queries).within time solver
 
 end Proximity

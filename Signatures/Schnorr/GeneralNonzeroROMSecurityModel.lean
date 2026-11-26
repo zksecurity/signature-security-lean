@@ -46,16 +46,20 @@ noncomputable def romEufCmaGame (securityParameter : Nat) {queries : QueryAllowa
     (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
   Schnorr.Game.nonzeroRom curve securityParameter adversary.source.main
 
-/-- Supremum of DLog success in the fixed Caliper model at the derived code and
-total-memory limits and the displayed runtime limit (see `Schnorr.romDLogSuccessBound`). -/
-noncomputable def romDLogSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
-    (time : Nat) : ENNReal :=
-  let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.cyclicDLogWithin
-      (Signatures.Runtime.CaliperBackend.SchnorrROMTape.Fresh.port resources.config.handler.sampler.tape)
-      (Signatures.Runtime.CaliperBackend.SchnorrROM.Pass.Initialization.points resources.config)
-      resources.config.handler.sampler.tape.scalar (curve.generator securityParameter)
-      resources.solverCode resources.solverMemory time solver),
-    𝒟[DiffieHellman.dlogExperiment (curve.generator securityParameter) solver] {true}
+/-- The replaying DLog solver built from the attacker, as in `Schnorr.romReduction`
+but replaying the nonzero-nonce signing branch. Its construction is in
+`Proofs/Runtime/BackendSchnorrNonzeroReduction.lean`. -/
+noncomputable def romReduction {securityParameter : Nat} {queries : QueryAllowance}
+    (adversary : UnrestrictedAdversary curve securityParameter queries) :
+    DiffieHellman.DLogAdversary (curve.Scalar securityParameter) (curve.Group securityParameter) :=
+  Signatures.Runtime.Schnorr.NonzeroListROM.NativeSolver.reduction (G₂ := curve.Group securityParameter)
+    (K := model.Message securityParameter) adversary.source.main queries.hash
+
+/-- A DLog solver within the fixed Caliper model's derived code and total-memory
+limits and the displayed time limit (see `Schnorr.ROMDLogSolverWithin`). -/
+def ROMDLogSolverWithin (securityParameter : Nat) (queries : QueryAllowance) (time : Nat)
+    (solver : DiffieHellman.DLogAdversary (curve.Scalar securityParameter) (curve.Group securityParameter)) :
+    Prop :=
+  (model.parameters securityParameter queries).within time solver
 
 end Schnorr.NonzeroNonce

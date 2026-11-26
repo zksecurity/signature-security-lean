@@ -3,9 +3,9 @@ import Proofs.Runtime.GeneralSyncWrapAdversary
 import Proofs.SynchronizedPS.PeriodTransport
 import Proofs.SynchronizedPS.Game
 
-/-! Concrete synchronized PS security for general realized algebraic attackers. The four wrapped
-solvers at every known key fit the derived budgets, and the sampled solvers' advantages are their
-averages, so the coefficient game and the public game are bounded by four hardness quantities. -/
+/-! Concrete synchronized PS security for general realized algebraic attackers. The coefficient
+game and the public game are bounded by the average over the known key `k` of the four named
+per-key solvers' DLog successes, and each per-key solver is in its derived budget at every `k`. -/
 
 open BilinearGroup
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
@@ -47,14 +47,35 @@ theorem reductions_within₂ (k : F) :
       (Model.LazyAGM.WeightedReduction.badReductionList Wrapped.terms₂ (Wrapped.wrap₂ k keyGenerator A.view)) :=
   A.reductions_within₂ k
 
+/-- Each per-key solver is backend code within its derived budget, at every known key. -/
+theorem good₁_reduction_within (k : F) : P.DLogSolverWithin P.goodTime₁ (A.goodReduction₁ k) :=
+  (reductions_within₁ P A k).1
+
+theorem bad₁_reduction_within (k : F) : P.DLogSolverWithin P.badTime₁ (A.badReduction₁ k) :=
+  (reductions_within₁ P A k).2
+
+theorem good₂_reduction_within (k : F) : P.DLogSolverWithin P.goodTime₂ (A.goodReduction₂ k) :=
+  (reductions_within₂ P A k).1
+
+theorem bad₂_reduction_within (k : F) : P.DLogSolverWithin P.badTime₂ (A.badReduction₂ k) :=
+  (reductions_within₂ P A k).2
+
 variable [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ]
 
-/-- The coefficient game is bounded by the four hardness quantities and the two field losses. -/
+/-- The coefficient game is bounded by the four per-key solvers' successes averaged over the known
+key, and the two field losses. -/
 theorem security :
-    𝒟[Proofs.lazyGame (Gₜ := Gₜ) generator keyGenerator A.view] {true} ≤ P.securityBound :=
-  (Transport.security_wrapped A.view generator keyGenerator P.generates P.pairingInjective).trans
-    (add_le_add (add_le_add (add_le_add (add_le_add A.good₁_advantage A.bad₁_advantage) A.good₂_advantage)
-      A.bad₂_advantage) le_rfl)
+    let ε := Model.dlog11Advantage generator keyGenerator
+    𝒟[Proofs.lazyGame (Gₜ := Gₜ) generator keyGenerator A.view] {true} ≤
+      (∑ k, ε (A.goodReduction₁ k)) / (Fintype.card F : ENNReal) +
+      (∑ k, ε (A.badReduction₁ k)) / (Fintype.card F : ENNReal) +
+      (∑ k, ε (A.goodReduction₂ k)) / (Fintype.card F : ENNReal) +
+      (∑ k, ε (A.badReduction₂ k)) / (Fintype.card F : ENNReal) +
+      2 / (Fintype.card F : ENNReal) := by
+  intro ε
+  have wrapped := Transport.security_wrapped A.view generator keyGenerator P.generates P.pairingInjective
+  rw [A.good₁_advantage, A.bad₁_advantage, A.good₂_advantage, A.bad₂_advantage] at wrapped
+  exact wrapped
 
 theorem security_of_hardness (ε₁ ε₂ ε₃ ε₄ : ENNReal)
     (h₁ : Model.HardWithin (Model.dlog11Advantage (F := F) generator keyGenerator)
@@ -88,14 +109,56 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
   [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive] [OptionCode (Q := Q)]
 
-/-- The public algebraic game at a curve, bounded by the derived hardness quantities. -/
+/-- The public algebraic game at a curve, bounded by the four per-key solvers' DLog successes
+averaged over the known key, and two inverse-field-size losses. -/
 theorem agm_security (curve : Model.PairingCurve) (securityParameter : Nat) {K M : Type}
     [DecidableEq K] [DecidableEq M]
     (P : Parameters (Q := Q) (F := curve.Scalar securityParameter) (G₁ := curve.SignatureGroup securityParameter)
       (G₂ := curve.KeyGroup securityParameter) (Gₜ := curve.TargetGroup securityParameter) (K := K) (M := M)
       (curve.generator securityParameter) (curve.keyGenerator securityParameter))
     (A : AlgebraicAdversary P) :
-    𝒟[Game.agm curve securityParameter A.source] {true} ≤ P.securityBound :=
+    let ε := Model.dlog11Advantage (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+    let p := (Fintype.card (curve.Scalar securityParameter) : ENNReal)
+    𝒟[Game.agm curve securityParameter A.source] {true} ≤
+      (∑ k, ε (A.goodReduction₁ k)) / p + (∑ k, ε (A.badReduction₁ k)) / p +
+        (∑ k, ε (A.goodReduction₂ k)) / p + (∑ k, ε (A.badReduction₂ k)) / p + 2 / p :=
   (Game.agm_le curve securityParameter A.source).trans (security P A)
+
+/-- Each of the four per-key solvers is backend code within its derived budget, at every key. -/
+theorem agm_good₁_reduction_within (curve : Model.PairingCurve) (securityParameter : Nat) {K M : Type}
+    [DecidableEq K] [DecidableEq M]
+    (P : Parameters (Q := Q) (F := curve.Scalar securityParameter) (G₁ := curve.SignatureGroup securityParameter)
+      (G₂ := curve.KeyGroup securityParameter) (Gₜ := curve.TargetGroup securityParameter) (K := K) (M := M)
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter))
+    (A : AlgebraicAdversary P) (k : curve.Scalar securityParameter) :
+    P.DLogSolverWithin P.goodTime₁ (A.goodReduction₁ k) :=
+  good₁_reduction_within P A k
+
+theorem agm_bad₁_reduction_within (curve : Model.PairingCurve) (securityParameter : Nat) {K M : Type}
+    [DecidableEq K] [DecidableEq M]
+    (P : Parameters (Q := Q) (F := curve.Scalar securityParameter) (G₁ := curve.SignatureGroup securityParameter)
+      (G₂ := curve.KeyGroup securityParameter) (Gₜ := curve.TargetGroup securityParameter) (K := K) (M := M)
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter))
+    (A : AlgebraicAdversary P) (k : curve.Scalar securityParameter) :
+    P.DLogSolverWithin P.badTime₁ (A.badReduction₁ k) :=
+  bad₁_reduction_within P A k
+
+theorem agm_good₂_reduction_within (curve : Model.PairingCurve) (securityParameter : Nat) {K M : Type}
+    [DecidableEq K] [DecidableEq M]
+    (P : Parameters (Q := Q) (F := curve.Scalar securityParameter) (G₁ := curve.SignatureGroup securityParameter)
+      (G₂ := curve.KeyGroup securityParameter) (Gₜ := curve.TargetGroup securityParameter) (K := K) (M := M)
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter))
+    (A : AlgebraicAdversary P) (k : curve.Scalar securityParameter) :
+    P.DLogSolverWithin P.goodTime₂ (A.goodReduction₂ k) :=
+  good₂_reduction_within P A k
+
+theorem agm_bad₂_reduction_within (curve : Model.PairingCurve) (securityParameter : Nat) {K M : Type}
+    [DecidableEq K] [DecidableEq M]
+    (P : Parameters (Q := Q) (F := curve.Scalar securityParameter) (G₁ := curve.SignatureGroup securityParameter)
+      (G₂ := curve.KeyGroup securityParameter) (Gₜ := curve.TargetGroup securityParameter) (K := K) (M := M)
+      (curve.generator securityParameter) (curve.keyGenerator securityParameter))
+    (A : AlgebraicAdversary P) (k : curve.Scalar securityParameter) :
+    P.DLogSolverWithin P.badTime₂ (A.badReduction₂ k) :=
+  bad₂_reduction_within P A k
 
 end SynchronizedPS.GeneralAGM

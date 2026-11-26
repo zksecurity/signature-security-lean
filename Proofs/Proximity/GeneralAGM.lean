@@ -4,7 +4,8 @@ import Proofs.Runtime.GeneralWeightedCertificates
 import Proofs.Proximity.LazyAGMArbitrarySlots
 
 /-! Concrete Proximity security for general realized algebraic attackers.
-Both complete native reduction certificates are derived before applying hardness.
+The bound is the `(1,1)`-DLog success of the two named reductions, each with its own
+complete native budget theorem; `security_of_hardness` applies hardness at those budgets.
 The original source game and its probability loss are preserved. -/
 
 open BilinearGroup
@@ -46,20 +47,35 @@ theorem reductions_within :
   · rw [← badReduction_encoded (M := M) P.cost A.proofView]
     exact h.2
 
+/-- The good reduction runs in the backend within the derived code, input and good-branch time. -/
+theorem good_reduction_within :
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.goodTime
+      (Model.LazyAGM.WeightedReduction.goodReductionList (Proximity.LazyAGM.terms) A.proofView) :=
+  (reductions_within P A).1
+
+/-- The bad reduction runs in the backend within the derived code, input and bad-branch time. -/
+theorem bad_reduction_within :
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.badTime
+      (Model.LazyAGM.WeightedReduction.badReductionList (Proximity.LazyAGM.terms) A.proofView) :=
+  (reductions_within P A).2
+
 variable [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ]
 
 theorem security :
     𝒟[Model.DirectAGM.game (Gₜ := Gₜ) Proximity.LazyAGM.terms (fun _ _ => True)
-      P.generator P.keyGenerator A.source] {true} ≤ P.securityBound +
+      P.generator P.keyGenerator A.source] {true} ≤
+      𝒟[AlgebraicGroupModel.dlog11Exp P.generator P.keyGenerator
+        (Model.LazyAGM.WeightedReduction.goodReductionList Proximity.LazyAGM.terms A.proofView)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp P.generator P.keyGenerator
+        (Model.LazyAGM.WeightedReduction.badReductionList Proximity.LazyAGM.terms A.proofView)] {true} +
+      1 / (Fintype.card F : ENNReal) +
       𝒟[Proximity.DirectAGM.collisionGame P.generator P.keyGenerator A.source] {true} := by
-  obtain ⟨goodFits, badFits⟩ := reductions_within P A
-  have goodBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ goodFits
-  have badBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ badFits
   rw [Proximity.DirectAGM.collisionGame_eq]
   apply (Model.DirectAGM.game_le Proximity.LazyAGM.terms (fun _ _ => True)
     P.generator P.keyGenerator A.source).trans
-  exact (Proximity.LazyAGM.Proofs.security_arbitrary_slots P.generator P.keyGenerator A.proofView P.generates P.pairingInjective).trans
-    (add_le_add (add_le_add (add_le_add goodBound badBound) le_rfl) le_rfl)
+  exact Proximity.LazyAGM.Proofs.security_arbitrary_slots P.generator P.keyGenerator A.proofView P.generates P.pairingInjective
 
 theorem security_of_hardness (goodEpsilon badEpsilon : ENNReal)
     (goodHardness : Model.HardWithin (Model.dlog11Advantage (F := F) P.generator P.keyGenerator)

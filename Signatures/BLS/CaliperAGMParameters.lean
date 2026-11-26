@@ -129,7 +129,5 @@ def solverMemory : Nat := max P.goodMemory P.badMemory
 
 def within (time : Nat) (solver : AlgebraicGroupModel.DLog11Adversary F G K) : Prop :=
   dlogWithin P.layout.port P.layout.setup.challenge P.layout.scheme.cache.value generator keyGenerator P.solverCode P.solverMemory time solver
-noncomputable def dlogBound (time : Nat) : ENNReal :=
-  dlogSuccessBound P.layout.port P.layout.setup.challenge P.layout.scheme.cache.value generator keyGenerator P.solverCode P.solverMemory time
 end Parameters
 end BLS.CaliperAGM

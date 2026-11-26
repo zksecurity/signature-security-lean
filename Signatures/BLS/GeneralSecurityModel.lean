@@ -10,9 +10,9 @@ import Signatures.BLS.CaliperCoCDHParameters
 to co-CDH. Both use actual Caliper word programs and the common query-allowance type. Their
 component contracts, output types, reductions and hardness classes differ.
 
-The games are in `Game.lean`; each success measure below is an explicit supremum
-over solvers in the fixed resource model. Both bounds include code, runtime
-and total memory. These are concrete resource models. Polynomial families and
+The games are in `Game.lean`. Each route names the solvers its proof builds from
+the attacker, and a budget predicate (code, runtime and total memory) that they
+are proved to satisfy. These are concrete resource models. Polynomial families and
 a conventional-machine instantiation need further hypotheses when making those stronger claims.
 The public statements are in `Statement.lean`; their proofs and exact game
 correspondences are in `Proofs/GeneralSecurity.lean`. -/
@@ -77,29 +77,38 @@ noncomputable def agmEufCmaGame (securityParameter : Nat) {queries : QueryAllowa
     (adversary : AlgebraicAdversary curve securityParameter queries) : ProbComp Bool :=
   Game.agm curve securityParameter adversary.source
 
-/-- Supremum of success probabilities for `(1,1)`-DLog: sample `x` uniformly,
-give a solver `(g₁, x • g₁, g₂, x • g₂)`, and test whether it returns `x`.
+/-- The DLog solver for forgeries whose algebraic explanation gives a nonzero
+denominator: it runs the attacker on the challenge key, answers hashes and
+signatures from a lazy table of known exponents, and solves for the key from
+the explanation. Built in `Spec/LazyAGMList.lean`. -/
+noncomputable def agmGoodReduction {securityParameter : Nat} {queries : QueryAllowance}
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    AlgebraicGroupModel.DLog11Adversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter) :=
+  LazyAGM.Reduction.goodReductionList adversary.proofView
 
-`dlogWithin` requires actual Caliper code, exact solver semantics on every
-represented input, stored code at most `resources.solverCode`, total memory at
-most `resources.solverMemory`, and time at most `time`. The memory bound covers
-code, initial data and every visited state. Every sampled DLog challenge must
-be representable. See `Runtime/Caliper/DLog.lean` and `Runtime/Caliper/Within.lean`.
-No optimal solver is assumed to exist.
+/-- The DLog solver for the zero-denominator case: it hides the key behind
+independent affine masks and solves from the forgery's explanation.
+Built in `Spec/LazyAGMList.lean`. -/
+noncomputable def agmBadReduction {securityParameter : Nat} {queries : QueryAllowance}
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    AlgebraicGroupModel.DLog11Adversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter) :=
+  LazyAGM.Reduction.badReductionList adversary.proofView
 
-The budgets are computed in `CaliperAGMParameters.lean`; their proofs are
-`CaliperAGM.reductions_within`. They charge setup, local attacker execution,
-lazy oracle simulation and extraction. A hardness assumption is needed to make
-this supremum small. -/
-noncomputable def dlogSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
-    (time : Nat) : ENNReal :=
+/-- A `(1,1)`-DLog solver given `(g₁, x • g₁, g₂, x • g₂)` that runs as Caliper
+code on the fixed port and layouts within the derived stored-code and
+total-memory limits and the displayed time limit. Memory covers code, initial
+data and every visited state, and every sampled challenge must be represented.
+See `Runtime/Caliper/DLog.lean` and the budgets in `CaliperAGMParameters.lean`. -/
+def DLog11SolverWithin (securityParameter : Nat) (queries : QueryAllowance) (time : Nat)
+    (solver : AlgebraicGroupModel.DLog11Adversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter)) : Prop :=
   let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.dlogWithin
-      resources.layout.port resources.layout.setup.challenge resources.layout.scheme.cache.value
-      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      resources.solverCode resources.solverMemory time solver),
-    𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter)
-      (curve.keyGenerator securityParameter) solver] {true}
+  Signatures.Runtime.CaliperBackend.dlogWithin
+    resources.layout.port resources.layout.setup.challenge resources.layout.scheme.cache.value
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+    resources.solverCode resources.solverMemory time solver
 
 end AGM
 
@@ -127,25 +136,29 @@ noncomputable def cocdhEufCmaGame (securityParameter : Nat) {queries : QueryAllo
     (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
   Game.eufCma curve securityParameter adversary.source
 
-/-- Supremum of co-CDH success: sample a scalar `x` and group point `h`, give a
-solver `(g₁, g₂, x • g₁, x • g₂, h)`, and test whether it returns `x • h`.
+/-- Coron's co-CDH solver built from the attacker: it answers hashes with
+`h + ρ • g₁` on a random subset of messages and `ρ • g₁` elsewhere, signs the
+latter, and turns a forgery on the former into `x • h`. Built in
+`CoCDH/Spec/Coron.lean`. -/
+noncomputable def cocdhReduction {securityParameter : Nat} {queries : QueryAllowance}
+    (adversary : UnrestrictedAdversary curve securityParameter queries) :
+    CoCDH.CoCDHAdversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter) :=
+  CoCDH.coronReductionLazyPK queries.sign (ROM.cacheForgeryPK adversary.source)
 
-`coCDHWithin` requires actual Caliper code, exact solver semantics and fixed
-code, time and total-memory bounds. Memory includes stored code, initial data
-and every visited state. Every sampled challenge must fit the fixed layout.
-See `Runtime/Caliper/CoCDH.lean` and `Within.lean` for the resource class and
-`CaliperCoCDHParameters.lean` for the derived budgets. The reduction's membership
-is proved in `CaliperCoCDH.reduction_within` from its full constructed program.
-A numerical hardness assumption is needed to bound this supremum. -/
-noncomputable def coCDHSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
-    (time : Nat) : ENNReal :=
+/-- A co-CDH solver given `(g₁, g₂, x • g₁, x • g₂, h)` that runs as Caliper code
+on the fixed port and layouts within the derived stored-code and total-memory
+limits and the displayed time limit. Memory covers code, initial data and every
+visited state, and every sampled challenge must fit the layout. See
+`Runtime/Caliper/CoCDH.lean` and the budgets in `CaliperCoCDHParameters.lean`. -/
+def CoCDHSolverWithin (securityParameter : Nat) (queries : QueryAllowance) (time : Nat)
+    (solver : CoCDH.CoCDHAdversary (curve.Scalar securityParameter)
+      (curve.SignatureGroup securityParameter) (curve.KeyGroup securityParameter)) : Prop :=
   let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.coCDHWithin (F := curve.Scalar securityParameter)
-      resources.service.port resources.challenge resources.service.point
-      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      resources.solverCode resources.solverMemory time solver),
-    𝒟[CoCDH.coCDHExp (F := curve.Scalar securityParameter)
-      (curve.generator securityParameter) (curve.keyGenerator securityParameter) solver] {true}
+  Signatures.Runtime.CaliperBackend.coCDHWithin (F := curve.Scalar securityParameter)
+    resources.service.port resources.challenge resources.service.point
+    (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+    resources.solverCode resources.solverMemory time solver
 
 end CoCDH
 

@@ -141,8 +141,6 @@ def solverMemory : Nat := max P.goodMemory P.badMemory
 
 def within (time : Nat) (solver : AlgebraicGroupModel.DLog11Adversary F G PK) : Prop :=
   dlogWithin P.layout.port P.layout.goodSetup.challenge P.scalar generator keyGenerator P.solverCode P.solverMemory time solver
-noncomputable def dlogBound (time : Nat) : ENNReal :=
-  dlogSuccessBound P.layout.port P.layout.goodSetup.challenge P.scalar generator keyGenerator P.solverCode P.solverMemory time
 end Parameters
 
 structure AlgebraicAdversary where

@@ -9,7 +9,8 @@ import Proofs.BLS.LazyAGMSecurity
 One attacker caller, realized in the fixed backend within its own allowances, is wrapped for each
 of the two weighted schemes at every known key. Each wrapped caller is a pipeline adversary for
 the weighted scheme, so both weighted solvers at every key fit the derived budgets; the four
-synchronized PS solvers sample the key, so their advantages are averages of in-budget solvers. -/
+synchronized PS solvers sample the key, so their advantages are the averages over the key of the
+per-key solvers. -/
 
 open BilinearGroup
 open OracleComp OracleSpec PFunctor AlgebraicGroupModel
@@ -145,7 +146,7 @@ theorem reductions_within₂ (k : F) :
   rw [terms_true] at h
   exact h
 
-/-! ## The sampled solvers' advantages -/
+/-! ## The sampled solvers' advantages are per-key averages -/
 
 theorem solverGood₁_eq : Model.dlog11Advantage generator keyGenerator (solverGood₁ A.view) =
     Model.dlog11Advantage generator keyGenerator (fun g X h₂ Y => do
@@ -200,21 +201,25 @@ theorem bad₂_le (ε : ENNReal)
   rw [solverBad₂_eq]
   exact dlog11Advantage_sample_le generator keyGenerator _ ε h
 
-theorem good₁_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₁ A.view) ≤
-    (P.toGeneral false).dlogBound (P.toGeneral false).goodTime :=
-  A.good₁_le _ fun k => Model.le_advantageBound _ _ _ (A.reductions_within₁ k).1
+theorem good₁_advantage [Fintype F] : Model.dlog11Advantage generator keyGenerator (solverGood₁ A.view) =
+    (∑ k, Model.dlog11Advantage generator keyGenerator (A.goodReduction₁ k)) / (Fintype.card F : ENNReal) := by
+  rw [solverGood₁_eq]
+  exact dlog11Advantage_sample_eq generator keyGenerator _
 
-theorem bad₁_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₁ A.view) ≤
-    (P.toGeneral false).dlogBound (P.toGeneral false).badTime :=
-  A.bad₁_le _ fun k => Model.le_advantageBound _ _ _ (A.reductions_within₁ k).2
+theorem bad₁_advantage [Fintype F] : Model.dlog11Advantage generator keyGenerator (solverBad₁ A.view) =
+    (∑ k, Model.dlog11Advantage generator keyGenerator (A.badReduction₁ k)) / (Fintype.card F : ENNReal) := by
+  rw [solverBad₁_eq]
+  exact dlog11Advantage_sample_eq generator keyGenerator _
 
-theorem good₂_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₂ A.view) ≤
-    (P.toGeneral true).dlogBound (P.toGeneral true).goodTime :=
-  A.good₂_le _ fun k => Model.le_advantageBound _ _ _ (A.reductions_within₂ k).1
+theorem good₂_advantage [Fintype F] : Model.dlog11Advantage generator keyGenerator (solverGood₂ A.view) =
+    (∑ k, Model.dlog11Advantage generator keyGenerator (A.goodReduction₂ k)) / (Fintype.card F : ENNReal) := by
+  rw [solverGood₂_eq]
+  exact dlog11Advantage_sample_eq generator keyGenerator _
 
-theorem bad₂_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₂ A.view) ≤
-    (P.toGeneral true).dlogBound (P.toGeneral true).badTime :=
-  A.bad₂_le _ fun k => Model.le_advantageBound _ _ _ (A.reductions_within₂ k).2
+theorem bad₂_advantage [Fintype F] : Model.dlog11Advantage generator keyGenerator (solverBad₂ A.view) =
+    (∑ k, Model.dlog11Advantage generator keyGenerator (A.badReduction₂ k)) / (Fintype.card F : ENNReal) := by
+  rw [solverBad₂_eq]
+  exact dlog11Advantage_sample_eq generator keyGenerator _
 
 end AlgebraicAdversary
 

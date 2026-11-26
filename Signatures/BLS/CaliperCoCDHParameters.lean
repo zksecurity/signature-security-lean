@@ -50,9 +50,6 @@ def names : Nat := CoronFull.nameLimit P.service P.routines P.sampler P.arithmet
 def solverMemory : Nat := CoronFull.memoryLimit P.service P.layout P.routines P.sampler P.arithmetic P.callerLimits queries.total
 def within (time : Nat) (solver : CoCDH.CoCDHAdversary F G K) : Prop :=
   coCDHWithin (F := F) P.service.port P.challenge P.service.point generator keyGenerator P.solverCode P.solverMemory time solver
-
-noncomputable def coCDHBound [SampleableType G] (time : Nat) : ENNReal :=
-  coCDHSuccessBound (F := F) P.service.port P.challenge P.service.point generator keyGenerator P.solverCode P.solverMemory time
 end Parameters
 
 structure Adversary where

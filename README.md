@@ -11,20 +11,22 @@ on `propext`, `Classical.choice` and `Quot.sound`.
 
 | Scheme | Attacker model | Theorem | Bound |
 | --- | --- | --- | --- |
-| BLS | algebraic (AGM) | [`BLS.agm_security`](Signatures/BLS/Statement.lean) | `2·εDL + 1/p` |
-| BLS | ordinary (ROM) | [`BLS.cocdh_security`](Signatures/BLS/Statement.lean) | `coronFactor qS · εcoCDH` |
-| OOPS | algebraic | [`OOPS.agm_security`](Signatures/OOPS/Statement.lean) | `2·εDL + 1/p`, target-topic degree rule |
-| Proximity | algebraic | [`Proximity.agm_security`](Signatures/Proximity/Statement.lean) | `2·εDL + 1/p` + fresh-collision probability |
-| Schnorr | ordinary (ROM) | [`Schnorr.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound, full-field nonces |
-| Schnorr | ordinary (ROM) | [`Schnorr.NonzeroNonce.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound, nonzero nonces |
-| Schnorr | algebraic | [`Schnorr.agm_security`](Signatures/Schnorr/Statement.lean) | `εDL + (qH+1)/p + qS(qS+qH)/p` |
+| BLS | algebraic (AGM) | [`BLS.agm_security`](Signatures/BLS/Statement.lean) | `ε(good A) + ε(bad A) + 1/p` |
+| BLS | ordinary (ROM) | [`BLS.cocdh_security`](Signatures/BLS/Statement.lean) | `coronFactor qS · εcoCDH(R A)` |
+| OOPS | algebraic | [`OOPS.agm_security`](Signatures/OOPS/Statement.lean) | `ε(good A) + ε(bad A) + 1/p`, target-topic degree rule |
+| Proximity | algebraic | [`Proximity.agm_security`](Signatures/Proximity/Statement.lean) | `ε(good A) + ε(bad A) + 1/p` + fresh-collision probability |
+| Schnorr | ordinary (ROM) | [`Schnorr.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound in `ε(R A)`, full-field nonces |
+| Schnorr | ordinary (ROM) | [`Schnorr.NonzeroNonce.rom_security`](Signatures/Schnorr/Statement.lean) | forking bound in `ε(R A)`, nonzero nonces |
+| Schnorr | algebraic | [`Schnorr.agm_security`](Signatures/Schnorr/Statement.lean) | `ε(R A) + (qH+1)/p + qS(qS+qH)/p` |
 | Synchronized PS | algebraic | [`SynchronizedPS.agm_security`](Signatures/SynchronizedPS/Statement.lean) | `εX + εY + εH + 1/p`, one honest signature per period |
-| Synchronized PS | algebraic | [`SynchronizedPS.agm_security_budgeted`](Signatures/SynchronizedPS/Statement.lean) | `4·εDL + 2/p`, Caliper-costed |
+| Synchronized PS | algebraic | [`SynchronizedPS.agm_security_budgeted`](Signatures/SynchronizedPS/Statement.lean) | four named reductions `+ 2/p`, Caliper-costed |
 
-`εDL`/`εcoCDH` are DLog/co-CDH success suprema at the proved reduction budget in
-the same execution model; `p` is the group order. Each statement has a
-polynomial-family corollary (`*FamilyStatement.lean`) and the two-budget form
-of each AGM bound is its scheme's `Proofs.agm_security`. Synchronized
+Each bound is in the success `ε` of reductions built from the attacker `A` (DLog,
+`(1,1)`-DLog or co-CDH), named in the scheme's security model; `p` is the group
+order. Every such reduction has its own `*_reduction_within` theorem next to the
+bound, stating that it is Caliper code within the derived code, memory and time
+budget, so a hardness assumption for budgeted solvers applies to it. Each
+statement also has a polynomial-family corollary (`*FamilyStatement.lean`). Synchronized
 Pointcheval–Sanders has two forms: `εX`, `εY`, `εH` are the DLog successes of its
 [three named solvers](Signatures/SynchronizedPS/Spec/Reduction.lean) (challenge as the first key,
 as the second key, or in the period hashes), uncosted and for a finite period type since they
@@ -37,7 +39,8 @@ in [`SignaturesTest/CaliperSyncWrap.lean`](SignaturesTest/CaliperSyncWrap.lean).
 is also done in the general PolyFun backend ([`GeneralSyncWrap*`](Proofs/Runtime/GeneralSyncWrapParameters.lean)):
 the attacker's realized caller is wrapped at every known key, each wrapped caller is an adversary of
 the weighted pipeline, and the sampled solvers' advantages are averages of in-budget ones, giving
-[`SynchronizedPS.GeneralAGM.agm_security`](Proofs/SynchronizedPS/GeneralAGM.lean) (`4·εDL + 2/p`) and
+[`SynchronizedPS.GeneralAGM.agm_security`](Proofs/SynchronizedPS/GeneralAGM.lean) (four per-key reductions'
+successes averaged over the known key, each in budget at every key, `+ 2/p`) and
 the [family corollary](Signatures/SynchronizedPS/GeneralAGMFamilyStatement.lean), which picks the best
 key per security parameter as a solver family of the same class.
 
@@ -63,7 +66,7 @@ not in scope.
 Two libraries, split by what a reviewer has to read.
 
 - `Signatures/` — **the review surface**: everything a public statement's meaning depends on.
-  `Model/` (random oracle, EUF-CMA experiment, curves, algebraic group model, hardness suprema,
+  `Model/` (random oracle, EUF-CMA experiment, curves, algebraic group model, advantage notions,
   the attacker's query allowance) and,
   per scheme, `Game.lean`, `Statement.lean`, the `*FamilyStatement.lean` corollaries, `Spec/`
   (the scheme and its oracles), `QueryAllowance`, and the `*SecurityModel`/`*Parameters`/`*Resources`

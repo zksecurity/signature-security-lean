@@ -3,7 +3,8 @@ import Proofs.Runtime.GeneralWeightedCertificates
 import Proofs.OOPS.LazyAGMArbitraryTopics
 
 /-! Concrete OOPS security for general realized algebraic attackers.
-Both complete native reduction certificates are derived before applying hardness.
+The bound is the `(1,1)`-DLog success of the two named reductions, each with its own
+complete native budget theorem; `security_of_hardness` applies hardness at those budgets.
 The original source game and its probability loss are preserved. -/
 
 open BilinearGroup
@@ -43,20 +44,34 @@ theorem reductions_within :
     funext (Index.oops_sourceTerms P.cost degree)
   simpa only [ht, AlgebraicAdversary.native] using h
 
+/-- The good reduction runs in the backend within the derived code, input and good-branch time. -/
+theorem good_reduction_within :
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.goodTime
+      (Model.LazyAGM.WeightedReduction.goodReductionList (OOPS.LazyAGM.terms degree) A.proofView) :=
+  (reductions_within P A).1
+
+/-- The bad reduction runs in the backend within the derived code, input and bad-branch time. -/
+theorem bad_reduction_within :
+    dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      P.generator P.keyGenerator P.inputWidth P.solverCode P.badTime
+      (Model.LazyAGM.WeightedReduction.badReductionList (OOPS.LazyAGM.terms degree) A.proofView) :=
+  (reductions_within P A).2
+
 variable [Fintype F] [SampleableType G₁] [Fintype G₁] [DecidableEq Gₜ]
 
 theorem security :
     𝒟[Model.DirectAGM.game (Gₜ := Gₜ) (OOPS.LazyAGM.terms degree) (OOPS.LazyAGM.admissible degree)
-      P.generator P.keyGenerator A.source] {true} ≤ P.securityBound := by
-  obtain ⟨goodFits, badFits⟩ := reductions_within P A
-  have goodBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ goodFits
-  have badBound := Model.le_advantageBound (Model.dlog11Advantage P.generator P.keyGenerator) _ _ badFits
+      P.generator P.keyGenerator A.source] {true} ≤
+      𝒟[AlgebraicGroupModel.dlog11Exp P.generator P.keyGenerator
+        (Model.LazyAGM.WeightedReduction.goodReductionList (OOPS.LazyAGM.terms degree) A.proofView)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp P.generator P.keyGenerator
+        (Model.LazyAGM.WeightedReduction.badReductionList (OOPS.LazyAGM.terms degree) A.proofView)] {true} +
+      1 / (Fintype.card F : ENNReal) := by
   apply (Model.DirectAGM.game_le (OOPS.LazyAGM.terms degree) (OOPS.LazyAGM.admissible degree)
     P.generator P.keyGenerator A.source).trans
-  simpa only [OOPS.LazyAGM.game_eq_of_decidableEq, AlgebraicAdversary.proofView,
-    General.Parameters.securityBound, General.Parameters.dlogBound] using
-    (OOPS.LazyAGM.Proofs.security_arbitrary_topics P.generator P.keyGenerator degree A.proofView P.generates P.pairingInjective).trans
-    (add_le_add (add_le_add goodBound badBound) le_rfl)
+  simpa only [OOPS.LazyAGM.game_eq_of_decidableEq, AlgebraicAdversary.proofView, Model.dlog11Advantage] using
+    OOPS.LazyAGM.Proofs.security_arbitrary_topics P.generator P.keyGenerator degree A.proofView P.generates P.pairingInjective
 
 theorem security_of_hardness (goodEpsilon badEpsilon : ENNReal)
     (goodHardness : Model.HardWithin (Model.dlog11Advantage (F := F) P.generator P.keyGenerator)
@@ -71,8 +86,7 @@ theorem security_of_hardness (goodEpsilon badEpsilon : ENNReal)
   obtain ⟨goodFits, badFits⟩ := reductions_within P A
   apply (Model.DirectAGM.game_le (OOPS.LazyAGM.terms degree) (OOPS.LazyAGM.admissible degree)
     P.generator P.keyGenerator A.source).trans
-  simpa only [OOPS.LazyAGM.game_eq_of_decidableEq, AlgebraicAdversary.proofView,
-    General.Parameters.securityBound, General.Parameters.dlogBound] using
+  simpa only [OOPS.LazyAGM.game_eq_of_decidableEq, AlgebraicAdversary.proofView] using
     (OOPS.LazyAGM.Proofs.security_arbitrary_topics P.generator P.keyGenerator degree A.proofView P.generates P.pairingInjective).trans
     (add_le_add (add_le_add (goodHardness _ goodFits) (badHardness _ badFits)) le_rfl)
 

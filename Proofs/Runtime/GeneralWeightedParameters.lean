@@ -1,6 +1,5 @@
 import Signatures.Model.QueryAllowance
 import Proofs.Runtime.BackendWeightedDLog
-import Proofs.Model.AdvantageBound
 
 /-! Shared concrete resource contracts for weighted AGM signatures. The degree
 or dimension is explicit. Parameters fix encodings, native implementations and
@@ -172,17 +171,6 @@ def badTime : Nat :=
   badProgramTime index P.overhead P.execution P.inputWidth P.width P.outputWidth P.routeWidth
     P.queries.total P.queries.total P.comparisonTime P.scalarTime P.opTime P.handlerAdapterTime P.solverAdapterTime
     P.dynamicTime P.handlerTickTime P.callerTickTime P.extractionTickTime
-
-/-- Maximum DLog success among programs in this same fixed backend, at the
-specified online time and the derived stored-code/input limits. -/
-noncomputable def dlogBound (time : Nat) : ENNReal :=
-  Model.advantageBound (Model.dlog11Advantage (F := F) P.generator P.keyGenerator)
-    (dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
-      P.generator P.keyGenerator P.inputWidth P.solverCode time)
-
-/-- The two reduction branches plus the original inverse-field-size loss. -/
-noncomputable def securityBound [Fintype F] : ENNReal :=
-  P.dlogBound P.goodTime + P.dlogBound P.badTime + 1 / (Fintype.card F : ENNReal)
 
 end Parameters
 
