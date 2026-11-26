@@ -57,32 +57,4 @@ theorem dlogWithin :
     within_original config shape caller ops law nonzero budget qH indexFits limits bounded arith arithBudget handlerRoom slotsRoom
       fuel tables tapes sampled witness attacker same⟩
 
-section Security
-variable [Fintype F] [SampleableType G]
-    (generates : Function.Bijective (fun x : F => x • generator.val))
-    (adversary : _root_.Schnorr.NonzeroNonce.Adversary (F := F) (M := M) generator.val) (qS : Nat)
-
-include bounded handlerRoom slotsRoom tables tapes sampled nonzero generates in
-/-- The nonzero-nonce forking bound: signing loss over `|F| − 1`, fork loss over
-`|F|`, and the DLog term over the fixed Caliper class at the shape-level budgets. -/
-theorem security
-    (same : ∀ pk : config.point.Value, Subtype.val <$> witness.program (witness.inputView pk) = adversary.main pk.val)
-    (queries : ∀ pk, FiatShamir.signHashQueryBound (M := M) (oa := adversary.main pk) qS qH) :
-    𝒟[_root_.Schnorr.NonzeroNonce.game generator.val adversary] {true} ≤
-      (qS : ENNReal) * (qS + qH) * ((Fintype.card F - 1 : Nat) : ENNReal)⁻¹ +
-      (qH + 1 : ENNReal) * (Fintype.card F : ENNReal)⁻¹ +
-      ((qH + 1 : ENNReal) * cyclicDLogSuccessBound (Fresh.port config.handler.sampler.tape)
-        (Pass.Initialization.points config) config.handler.sampler.tape.scalar generator.val
-        (codeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
-        (memoryBudget config shape limits ops budget qH indexFits arith arithBudget fuel)
-        (timeBudget config shape limits ops budget qH indexFits arith arithBudget fuel)) ^ (1 / 2 : ℝ) := by
-  have fits := dlogWithin config shape caller ops law nonzero budget qH indexFits limits bounded arith arithBudget handlerRoom slotsRoom
-    fuel tables tapes sampled witness adversary.main same generator
-  have hardness := Model.le_advantageBound
-    (fun solver => 𝒟[DiffieHellman.dlogExperiment generator.val solver] {true}) _ _ fits
-  rw [Schnorr.NonzeroListROM.NativeSolver.reduction_experiment (G₂ := G) (K := M) generator.val adversary qH] at hardness
-  apply Model.forking_inverse qH (MeasureTheory.measure_ne_top _ _) (ENNReal.inv_ne_top.mpr (by positivity))
-  exact (_root_.Schnorr.NonzeroNonce.LazyROM.security generator.val generates adversary qS qH queries).trans hardness
-end Security
-
 end Signatures.Runtime.CaliperBackend.SchnorrROM.Full.Nonzero

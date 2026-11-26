@@ -2,8 +2,8 @@ import Signatures.SynchronizedPS.GeneralAGMFamilyStatement
 import Lean.Util.CollectAxioms
 
 /-! Guard the general-backend synchronized PS route: module placement, axioms, no packaged solver
-budget or finite period/message/public-key domain in the public records, and one shared solver
-class for both weighted schemes. -/
+budget or finite period/message/public-key domain in the public records, the named per-key
+reductions in the statements, and one shared solver class for both weighted schemes. -/
 
 open Lean Meta
 open OracleComp OracleSpec PFunctor
@@ -25,12 +25,14 @@ run_meta do
   let allowed := #[``propext, ``Classical.choice, ``Quot.sound]
   for name in #[``SyncWrapGeneral.runsWithin, ``SyncWrapGeneral.storedCode, ``SyncWrapGeneral.implements,
       ``SyncWrapGeneral.implementsWithin, ``SyncWrapGeneral.decode_translate_eq_wrap,
-      ``SyncWrapGeneral.dlog11Advantage_sample_le,
+      ``SyncWrapGeneral.dlog11Advantage_sample_le, ``SyncWrapGeneral.dlog11Advantage_sample_eq,
       ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.reductions_within₁, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.reductions_within₂,
       ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.good₁_advantage, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.bad₁_advantage,
       ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.good₂_advantage, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.bad₂_advantage,
       ``SynchronizedPS.GeneralAGM.security, ``SynchronizedPS.GeneralAGM.security_of_hardness,
-      ``SynchronizedPS.GeneralAGM.agm_security, ``SynchronizedPS.GeneralAGM.Family.reductions_nonuniform,
+      ``SynchronizedPS.GeneralAGM.agm_security, ``SynchronizedPS.GeneralAGM.agm_good₁_reduction_within,
+      ``SynchronizedPS.GeneralAGM.agm_bad₁_reduction_within, ``SynchronizedPS.GeneralAGM.agm_good₂_reduction_within,
+      ``SynchronizedPS.GeneralAGM.agm_bad₂_reduction_within, ``SynchronizedPS.GeneralAGM.Family.reductions_nonuniform,
       ``SynchronizedPS.GeneralAGM.Family.Proofs.security, ``SynchronizedPS.GeneralAGM.agm_security_asymptotic] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
@@ -41,6 +43,8 @@ run_meta do
 run_meta do
   for name in #[``SyncWrapGeneral.Parameters.mk, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.mk,
       ``SynchronizedPS.GeneralAGM.security, ``SynchronizedPS.GeneralAGM.agm_security,
+      ``SynchronizedPS.GeneralAGM.agm_good₁_reduction_within, ``SynchronizedPS.GeneralAGM.agm_bad₁_reduction_within,
+      ``SynchronizedPS.GeneralAGM.agm_good₂_reduction_within, ``SynchronizedPS.GeneralAGM.agm_bad₂_reduction_within,
       ``SynchronizedPS.GeneralAGM.agm_security_asymptotic] do
     forallTelescope (← getConstInfo name).type fun params _ => do
       for param in params do
@@ -57,11 +61,22 @@ run_meta do
               if #[`K, `M, `G₂].contains decl.userName && (premise.find? (fun e => e == base)).isSome then
                 throwError "{name}: finite period/message/public-key domain"
 
--- The statements display the public game and the derived hardness quantities.
+-- The statements display the public game, the four named per-key solvers' DLog successes and
+-- their budget predicate.
 run_meta do
   for (name, visible) in #[
       (``SynchronizedPS.GeneralAGM.agm_security,
-        #[``SynchronizedPS.Game.agm, ``SynchronizedPS.GeneralAGM.Parameters.securityBound]),
+        #[``SynchronizedPS.Game.agm, ``Model.dlog11Advantage,
+          ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.goodReduction₁, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.badReduction₁,
+          ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.goodReduction₂, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.badReduction₂]),
+      (``SynchronizedPS.GeneralAGM.agm_good₁_reduction_within,
+        #[``SynchronizedPS.GeneralAGM.Parameters.DLogSolverWithin, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.goodReduction₁]),
+      (``SynchronizedPS.GeneralAGM.agm_bad₁_reduction_within,
+        #[``SynchronizedPS.GeneralAGM.Parameters.DLogSolverWithin, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.badReduction₁]),
+      (``SynchronizedPS.GeneralAGM.agm_good₂_reduction_within,
+        #[``SynchronizedPS.GeneralAGM.Parameters.DLogSolverWithin, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.goodReduction₂]),
+      (``SynchronizedPS.GeneralAGM.agm_bad₂_reduction_within,
+        #[``SynchronizedPS.GeneralAGM.Parameters.DLogSolverWithin, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.badReduction₂]),
       (``SynchronizedPS.GeneralAGM.agm_security_asymptotic,
         #[``SynchronizedPS.Game.agm, ``SynchronizedPS.GeneralAGM.Family.dlogHardness, ``SynchronizedPS.GeneralAGM.Family.PolynomialResources,
           ``Model.PairingCurve.order])] do
@@ -69,7 +84,9 @@ run_meta do
     for symbol in visible do
       unless (type.find? (fun e => e.isConstOf symbol)).isSome do
         throwError "{name}: must display {symbol}"
-  for name in #[``SynchronizedPS.GeneralAGM.Parameters.securityBound, ``SynchronizedPS.GeneralAGM.Parameters.dlogBound] do
+  for name in #[``SynchronizedPS.GeneralAGM.Parameters.DLogSolverWithin,
+      ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.goodReduction₁, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.badReduction₁,
+      ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.goodReduction₂, ``SynchronizedPS.GeneralAGM.AlgebraicAdversary.badReduction₂] do
     unless (← getConstInfo name).value?.isSome do
       throwError "{name} must be a transparent definition"
 
@@ -87,8 +104,10 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   (P : SynchronizedPS.GeneralAGM.Parameters (Q := Q) (F := F) (G₁ := G₁) (G₂ := G₂) (Gₜ := Gₜ) (K := K) (M := M)
     generator keyGenerator)
 
--- Both weighted schemes' pipelines share the solver class and its hardness quantity.
-example (time : Nat) : (P.toGeneral true).dlogBound time = P.dlogBound time := rfl
+-- Both weighted schemes' pipelines share the solver class.
+example (time : Nat) (solver : AlgebraicGroupModel.DLog11Adversary F G₁ G₂) :
+    P.DLogSolverWithin time solver = NativeSolver.dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
+      generator keyGenerator P.inputWidth (P.toGeneral true).solverCode time solver := rfl
 
 -- The wrapper's budgets are the attacker's plus the derived wrapper costs, in the pipeline's own record.
 example : (P.toGeneral false).execution = P.execution := rfl

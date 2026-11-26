@@ -17,7 +17,7 @@ run_meta do
   unless (← findModuleOf? ``Schnorr.rom_security) == some `Signatures.Schnorr.Statement do
     throwError "The public ROM theorem must stay in Statement.lean"
   for name in #[``Schnorr.Proofs.rom_security, ``Schnorr.romEufCmaGame_eq,
-      ``Schnorr.romDLogSuccessBound_eq, ``Schnorr.romDLogSuccessBound_mono,
+      ``Schnorr.Proofs.rom_reduction_within,
       ``Schnorr.UnrestrictedAdversary.query_allowances] do
     unless (← findModuleOf? name) == some `Proofs.Schnorr.GeneralROMSecurity do
       throwError "{name}: supporting proofs must stay separate from the public statement"
@@ -32,13 +32,22 @@ run_meta do
       else
         unless declaration.binderInfo == .instImplicit do
           throwError "The execution model must be a declared instance"
-    for required in #[``Schnorr.romEufCmaGame, ``Schnorr.romDLogSuccessBound,
-        ``Schnorr.romReductionTime, ``Model.CyclicCurve.order,
-        ``Model.QueryAllowance.hash, ``Model.QueryAllowance.sign] do
+    for required in #[``Schnorr.romEufCmaGame, ``DiffieHellman.dlogExperiment, ``Schnorr.romReduction,
+        ``Model.CyclicCurve.order, ``Model.QueryAllowance.hash, ``Model.QueryAllowance.sign] do
       unless (conclusion.find? (fun e => e.isConstOf required)).isSome do
-        throwError "Keep the game, DLog budget and original query losses visible"
+        throwError "Keep the game, the named reduction's DLog success and original query losses visible"
     if (conclusion.find? (fun e => match e with | .letE .. => true | _ => false)).isSome then
       throwError "Resource records must stay out of the public conclusion"
+  unless (← findModuleOf? ``Schnorr.rom_reduction_within) == some `Signatures.Schnorr.Statement do
+    throwError "The public budget theorem must stay in Statement.lean"
+  forallTelescope (← getConstInfo ``Schnorr.rom_reduction_within).type fun params conclusion => do
+    unless params.size == 5 do
+      throwError "Expected the same four explicit inputs and one declared execution model"
+    unless conclusion.isAppOf ``Schnorr.ROMDLogSolverWithin do
+      throwError "Conclude that the reduction is within the fixed Caliper budget"
+    for required in #[``Schnorr.romReductionTime, ``Schnorr.romReduction] do
+      unless (conclusion.find? (fun e => e.isConstOf required)).isSome do
+        throwError "Keep the derived reduction budget and the named reduction visible"
 
 run_meta do
   unless (← findModuleOf? ``Schnorr.rom_security_asymptotic) == some `Signatures.Schnorr.CaliperROMFamilyStatement do
@@ -48,7 +57,7 @@ run_meta do
       ``Schnorr.CaliperROM.Family.reduction_nonuniform, ``Schnorr.CaliperROM.Family.Proofs.security,
       ``Schnorr.CaliperROM.Family.PolynomialResources.solverTime, ``Schnorr.CaliperROM.Family.PolynomialResources.solverCode,
       ``Schnorr.CaliperROM.Family.PolynomialResources.solverMemory,
-      ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.security, ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.dlogWithin,
+      ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.dlogWithin,
       ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.time_eq, ``Signatures.Runtime.CaliperBackend.SchnorrROM.Full.code_eq] do
     for axiomName in (← collectAxioms name) do
       unless allowed.contains axiomName do
@@ -60,7 +69,7 @@ run_meta do
       ``NativeSolver.DescriptionInputs.solver_withCaller, ``Schnorr.rom_security,
       ``Schnorr.GeneralROM.reduction_within, ``Schnorr.GeneralROM.security_quadratic,
       ``Schnorr.GeneralROM.security, ``Schnorr.romEufCmaGame_eq,
-      ``Schnorr.romDLogSuccessBound_eq, ``Schnorr.romDLogSuccessBound_mono,
+      ``Schnorr.rom_reduction_within, ``Schnorr.Proofs.rom_reduction_within,
       ``Schnorr.UnrestrictedAdversary.query_allowances,
       ``Schnorr.GeneralROM.Family.PolynomialResources.totalQueries,
       ``Schnorr.GeneralROM.Family.PolynomialResources.executionQueries,
@@ -130,7 +139,7 @@ run_meta do
     throwError "Keep the family statement in its statement file"
   unless (← findModuleOf? ``Schnorr.GeneralROM.Family.Proofs.security) == some `Proofs.Schnorr.GeneralROMFamily do
     throwError "Keep the family proof separate"
-  for name in #[``Schnorr.romDLogSuccessBound, ``Schnorr.romEufCmaGame,
+  for name in #[``Schnorr.romReduction, ``Schnorr.ROMDLogSolverWithin, ``Schnorr.romEufCmaGame,
       ``Schnorr.GeneralROM.Parameters.descriptions, ``Schnorr.GeneralROM.Parameters.solverTime,
       ``Schnorr.GeneralROM.Parameters.solverCode] do
     unless (← getConstInfo name).value?.isSome do

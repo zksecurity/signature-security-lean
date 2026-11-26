@@ -743,7 +743,7 @@ run_cmd do
       ``fullGoodCertificate, ``fullBadCertificate, ``full_good_fits, ``full_bad_fits,
       ``full_good_within, ``full_bad_within, ``all_challenges_fit, ``BLSFull.good_within, ``BLSFull.bad_within,
       ``BLSFull.scalar_valid, ``BLSFull.challenge_valid, ``BLSFull.good_dlogWithin, ``BLSFull.bad_dlogWithin,
-      ``dlogWithin.mono, ``dlogSuccessBound_mono, ``BLSFull.security, ``BLSFull.direct_security] do
+      ``dlogWithin.mono, ``BLS.LazyAGM.Reduction.security_arbitrary_messages_list] do
     for dependency in (← collectAxioms name) do
       unless dependency ∈ allowed do throwError "unexpected axiom {dependency} in {name}"
 

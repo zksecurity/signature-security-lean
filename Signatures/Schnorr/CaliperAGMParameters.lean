@@ -64,8 +64,5 @@ def solverMemory : Nat := CaliperBackend.SchnorrAGM.Full.memoryBudget P.layout P
 def within (time : Nat) (solver : DiffieHellman.DLogAdversary F G) : Prop :=
   cyclicDLogWithin P.layout.service.random.port P.layout.service.scheme.config P.layout.service.scheme.scalar generator
     P.solverCode P.solverMemory time solver
-noncomputable def dlogBound (time : Nat) : ENNReal :=
-  cyclicDLogSuccessBound P.layout.service.random.port P.layout.service.scheme.config P.layout.service.scheme.scalar generator
-    P.solverCode P.solverMemory time
 end Parameters
 end Schnorr.CaliperAGM

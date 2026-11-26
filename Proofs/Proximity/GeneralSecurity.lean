@@ -3,8 +3,8 @@ import Proofs.Proximity.LazyAGMArbitrarySlots
 import Proofs.Proximity.Game
 
 /-! Proofs for the public Proximity statements. The displayed games equal the
-original source games exactly. The constructed Caliper implementations meet the derived
-resources and therefore belong to the explicit DLog success supremum. -/
+original source games exactly. The bound names the two constructed DLog
+reductions, and their Caliper implementations meet the derived resources. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime
@@ -42,54 +42,37 @@ theorem Proofs.agm_security
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter dimension : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
-    let resources := model.parameters securityParameter dimension queries
     𝒟[agmEufCmaGame curve securityParameter dimension adversary] {true} ≤
-      dlogSuccessBound curve securityParameter dimension queries resources.goodTime +
-      dlogSuccessBound curve securityParameter dimension queries resources.badTime +
+      𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+        (agmGoodReduction curve adversary)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+        (agmBadReduction curve adversary)] {true} +
       1 / (curve.order securityParameter : ENNReal) +
       𝒟[freshCollisionGame curve securityParameter dimension adversary] {true} := by
-  let resources := model.parameters securityParameter dimension queries
   have probabilityBound := LazyAGM.Proofs.security_arbitrary_slots
     (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.proofView (curve.generates securityParameter) (curve.pairingInjective securityParameter)
-  obtain ⟨goodFits, badFits⟩ := WeightedCaliper.reductions_within resources adversary
-  have goodBound : Model.dlog11Advantage (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      (Model.LazyAGM.WeightedReduction.goodReductionList (LazyAGM.terms) adversary.proofView) ≤
-      dlogSuccessBound curve securityParameter dimension queries resources.goodTime :=
-    le_iSup_of_le _ (le_iSup_of_le goodFits le_rfl)
-  have badBound : Model.dlog11Advantage (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      (Model.LazyAGM.WeightedReduction.badReductionList (LazyAGM.terms) adversary.proofView) ≤
-      dlogSuccessBound curve securityParameter dimension queries resources.badTime :=
-    le_iSup_of_le _ (le_iSup_of_le badFits le_rfl)
   have sourceBound := Model.DirectAGM.game_le (Gₜ := curve.TargetGroup securityParameter) LazyAGM.terms (fun _ _ => True)
     (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source
-  simpa only [WeightedCaliper.AlgebraicAdversary.proofView, resources, agmEufCmaGame_eq, freshCollisionGame_eq,
-    Model.PairingCurve.order] using
-    sourceBound.trans (probabilityBound.trans (add_le_add (add_le_add (add_le_add goodBound badBound) le_rfl) le_rfl))
+  simpa only [WeightedCaliper.AlgebraicAdversary.proofView, agmEufCmaGame_eq, freshCollisionGame_eq,
+    agmGoodReduction, agmBadReduction, Model.PairingCurve.order, Model.dlog11Advantage] using
+    sourceBound.trans probabilityBound
 
-theorem dlogSuccessBound_mono (securityParameter dimension : Nat) (queries : QueryAllowance) :
-    Monotone (dlogSuccessBound curve securityParameter dimension queries) := by
-  intro time largerTime ht
-  let resources := model.parameters securityParameter dimension queries
-  exact CaliperBackend.dlogSuccessBound_mono resources.layout.port
-    resources.layout.goodSetup.challenge resources.scalar
-    (curve.generator securityParameter) (curve.keyGenerator securityParameter) le_rfl le_rfl ht
-
-theorem Proofs.agm_security_common_budget
+theorem Proofs.agm_good_reduction_within
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter dimension : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
-    𝒟[agmEufCmaGame curve securityParameter dimension adversary] {true} ≤
-      2 * dlogSuccessBound curve securityParameter dimension queries
-        (agmReductionTime curve securityParameter dimension queries) +
-      1 / (curve.order securityParameter : ENNReal) +
-      𝒟[freshCollisionGame curve securityParameter dimension adversary] {true} := by
-  let resources := model.parameters securityParameter dimension queries
-  have goodBound := dlogSuccessBound_mono curve securityParameter dimension queries
-    (Nat.le_max_left resources.goodTime resources.badTime)
-  have badBound := dlogSuccessBound_mono curve securityParameter dimension queries
-    (Nat.le_max_right resources.goodTime resources.badTime)
-  have bound := (Proofs.agm_security curve securityParameter dimension queries adversary).trans
-    (add_le_add (add_le_add (add_le_add goodBound badBound) le_rfl) le_rfl)
-  simpa only [two_mul, agmReductionTime, resources] using bound
+    DLog11SolverWithin curve securityParameter dimension queries (agmReductionTime curve securityParameter dimension queries)
+      (agmGoodReduction curve adversary) :=
+  ((WeightedCaliper.reductions_within (model.parameters securityParameter dimension queries) adversary).1).mono
+    le_rfl le_rfl (Nat.le_max_left _ _)
+
+theorem Proofs.agm_bad_reduction_within
+    (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
+    (securityParameter dimension : Nat) (queries : QueryAllowance)
+    (adversary : AlgebraicAdversary curve securityParameter dimension queries) :
+    DLog11SolverWithin curve securityParameter dimension queries (agmReductionTime curve securityParameter dimension queries)
+      (agmBadReduction curve adversary) :=
+  ((WeightedCaliper.reductions_within (model.parameters securityParameter dimension queries) adversary).2).mono
+    le_rfl le_rfl (Nat.le_max_right _ _)
 
 end Proximity

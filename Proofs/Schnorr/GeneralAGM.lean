@@ -1,7 +1,8 @@
 import Signatures.Schnorr.GeneralAGMParameters
 
-/-! The complete native reduction meets the derived resource bounds. Only
-local operation/encoding contracts and the attacker's own resources are assumed. -/
+/-! The complete native reduction meets the derived resource bounds, and the
+forgery bound is stated in that reduction's DLog success. Only local
+operation/encoding contracts and the attacker's own resources are assumed. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram
@@ -58,13 +59,11 @@ theorem reduction_within (P : Parameters (Q := Q) (F := F) (G := G) (M := M))
 
 theorem security (P : Parameters (Q := Q) (F := F) (G := G) (M := M))
     (A : AlgebraicAdversary P) :
-    𝒟[AGM.game P.generator A.source] {true} ≤ P.dlogBound P.solverTime +
+    𝒟[AGM.game P.generator A.source] {true} ≤
+      𝒟[DiffieHellman.dlogExperiment P.generator (SchnorrAGM.dlogReduction A.source)] {true} +
       (P.queries.hash + 1 : ENNReal) * (Fintype.card F : ENNReal)⁻¹ +
-      (P.queries.sign : ENNReal) * (P.queries.sign + P.queries.hash) * (Fintype.card F : ENNReal)⁻¹ := by
-  have fits := reduction_within P A
-  have hdlog := Model.le_advantageBound
-    (fun solver => 𝒟[DiffieHellman.dlogExperiment P.generator solver] {true}) _ _ fits
-  exact (SchnorrAGM.security P.generator P.generates.1 A.source P.queries.sign P.queries.hash
-    A.signingQueries A.hashQueries).trans (add_le_add (add_le_add hdlog le_rfl) le_rfl)
+      (P.queries.sign : ENNReal) * (P.queries.sign + P.queries.hash) * (Fintype.card F : ENNReal)⁻¹ :=
+  SchnorrAGM.security P.generator P.generates.1 A.source P.queries.sign P.queries.hash
+    A.signingQueries A.hashQueries
 
 end Schnorr.GeneralAGM

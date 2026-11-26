@@ -265,8 +265,6 @@ def solverMemory : Nat := max (max P.goodMemory₁ P.badMemory₁) (max P.goodMe
 
 def within (time : Nat) (solver : AlgebraicGroupModel.DLog11Adversary F G₁ G₂) : Prop :=
   dlogWithin P.outer.port P.shape.challenge P.outer.good.extraction.scalar generator keyGenerator P.solverCode P.solverMemory time solver
-noncomputable def dlogBound (time : Nat) : ENNReal :=
-  dlogSuccessBound P.outer.port P.shape.challenge P.outer.good.extraction.scalar generator keyGenerator P.solverCode P.solverMemory time
 end Parameters
 
 /-! ## The certificates -/
@@ -352,14 +350,6 @@ theorem caliperGood_within' (codeLe : P.goodWords side gs post.words ≤ P.solve
     P.within (P.goodTime side gs post.time) (A.caliperGood (terms := terms) side postFn) :=
   (A.caliperGood_within side reserve gs post postFn postLaw).mono codeLe memoryLe le_rfl
 
-include postEq corrLaw finLaw keysValid postLaw reserve in
-theorem good_advantage (codeLe : P.goodWords side gs post.words ≤ P.solverCode)
-    (memoryLe : P.goodMemory side gs post.time post.words post.slots ≤ P.solverMemory) :
-    Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
-      goodReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) ≤
-    P.dlogBound (P.goodTime side gs post.time) :=
-  (A.good_advantage_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid).trans_le
-    (Model.le_advantageBound _ _ _ (A.caliperGood_within' side reserve gs post postFn postLaw codeLe memoryLe))
 end Good
 
 section Bad
@@ -455,14 +445,6 @@ theorem caliperBad_within' (codeLe : P.badWords side bs post.words ≤ P.solverC
     P.within (P.badTime side bs post.time) (A.caliperBad (terms := terms) side postFn) :=
   (A.caliperBad_within side reserve bs post postFn postLaw).mono codeLe memoryLe le_rfl
 
-include postEq corrLaw finLaw keysValid postLaw reserve in
-theorem bad_advantage (codeLe : P.badWords side bs post.words ≤ P.solverCode)
-    (memoryLe : P.badMemory side bs post.time post.words post.slots ≤ P.solverMemory) :
-    Model.dlog11Advantage generator keyGenerator (fun g X g₂ Z₂ => ($ᵗ F : ProbComp F) >>= fun y =>
-      badReductionList terms (wrap (correction y) (final y) (keysOf y g₂) (SynchronizedPS.Proofs.view A.source generator)) g X g₂ Z₂) ≤
-    P.dlogBound (P.badTime side bs post.time) :=
-  (A.bad_advantage_eq side postFn correction final keysOf postEq corrLaw finLaw keysValid).trans_le
-    (Model.le_advantageBound _ _ _ (A.caliperBad_within' side reserve bs post postFn postLaw codeLe memoryLe))
 end Bad
 
 /-! ## The four solvers -/
@@ -479,23 +461,6 @@ theorem finLaw₂ (d : P.core.scalar.Value) (m : Period × F) :
     P.wrap₂.finish.negFn (P.wrap₂.finish.finFn (d.val, m)) = -(final₂ d.val m) := by
   rw [P.wrap₂.finLaw, P.wrap₂.negLaw]
   simp [final₂]
-
-theorem good₁_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₁ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.goodTime₁ :=
-  A.good_advantage P.wrap₁ P.reserve₁ P.good₁ P.postGood₁ (fun value => value) (KeyedSetup.keepStage_source P.shape.keyed P.outer.port)
-    correction₁ final₁ (fun y g₂ pk => (pk, y • g₂)) (fun _ _ _ _ _ => rfl) P.wrap₁.corrLaw finLaw₁ keysValid₁
-    (le_trans (le_max_left _ _) (le_max_left _ _)) (le_trans (le_max_left _ _) (le_max_left _ _))
-theorem bad₁_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₁ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.badTime₁ :=
-  A.bad_advantage P.wrap₁ P.reserve₁ P.bad₁ P.postBad₁ (fun value => value) (KeyedSetup.keepStage_source P.shape.badKeyed P.outer.port)
-    correction₁ final₁ (fun y g₂ pk => (pk, y • g₂)) (fun _ _ _ _ _ => rfl) P.wrap₁.corrLaw finLaw₁ keysValid₁
-    (le_trans (le_max_right _ _) (le_max_left _ _)) (le_trans (le_max_right _ _) (le_max_left _ _))
-theorem good₂_advantage : Model.dlog11Advantage generator keyGenerator (solverGood₂ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.goodTime₂ :=
-  A.good_advantage P.wrap₂ P.reserve₂ P.good₂ P.postGood₂ KeyedSetup.swapValue (KeyedSetup.swapStage_source P.shape.keyed P.outer.port)
-    correction₂ final₂ (fun x g₂ pk => (x • g₂, pk)) (fun _ _ _ _ _ => rfl) P.wrap₂.corrLaw finLaw₂ keysValid₂
-    (le_trans (le_max_left _ _) (le_max_right _ _)) (le_trans (le_max_left _ _) (le_max_right _ _))
-theorem bad₂_advantage : Model.dlog11Advantage generator keyGenerator (solverBad₂ (SynchronizedPS.Proofs.view A.source generator)) ≤ P.dlogBound P.badTime₂ :=
-  A.bad_advantage P.wrap₂ P.reserve₂ P.bad₂ P.postBad₂ KeyedSetup.swapValue (KeyedSetup.swapStage_source P.shape.badKeyed P.outer.port)
-    correction₂ final₂ (fun x g₂ pk => (x • g₂, pk)) (fun _ _ _ _ _ => rfl) P.wrap₂.corrLaw finLaw₂ keysValid₂
-    (le_trans (le_max_right _ _) (le_max_right _ _)) (le_trans (le_max_right _ _) (le_max_right _ _))
 
 /-! ### The four executed solvers as a family -/
 

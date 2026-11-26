@@ -8,8 +8,8 @@ import Proofs.BLS.Game
 
 /-! Proofs for the public BLS AGM/DLog and unrestricted co-CDH statements.
 First connect the displayed games and allowances to the original source games.
-Then combine their probability reductions with constructed native resource
-certificates and membership in the explicit hardness suprema. -/
+Then bound each by its named reductions' success, and separately place those
+reductions in the Caliper budget from their constructed certificates. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram
@@ -41,70 +41,48 @@ theorem agmEufCmaGame_eq (securityParameter : Nat) {queries : QueryAllowance}
         (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source := by
   exact Game.agm_eq_source curve securityParameter adversary.source
 
-/-- Every algebraic attacker within the declared resources and query allowances obeys
-this EUF-CMA bound. `goodTime` and `badTime` are the complete derived reduction times.
-The good branch extracts from a nonzero denominator. The bad branch uses independent
-affine masks to handle the zero-denominator case; the proof's remaining loss is `1/|F|`. -/
+/-- Every algebraic attacker obeys this EUF-CMA bound. The good reduction extracts
+from a nonzero denominator. The bad one uses independent affine masks for the
+zero-denominator case; the remaining loss is `1/|F|`. -/
 theorem Proofs.agm_security
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter : Nat)
     (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter queries) :
-    let resources := model.parameters securityParameter queries
     𝒟[agmEufCmaGame curve securityParameter adversary] {true} ≤
-      dlogSuccessBound curve securityParameter queries resources.goodTime +
-      dlogSuccessBound curve securityParameter queries resources.badTime +
+      𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+        (agmGoodReduction curve adversary)] {true} +
+      𝒟[AlgebraicGroupModel.dlog11Exp (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+        (agmBadReduction curve adversary)] {true} +
       1 / (curve.order securityParameter : ENNReal) := by
-  let resources := model.parameters securityParameter queries
-  -- Probability: the two explicit lazy reductions account for every successful forgery,
-  -- apart from the original inverse-field-size loss. This step has no efficiency premise.
   have probabilityBound := LazyAGM.Reduction.security_arbitrary_messages_list
     (curve.generator securityParameter) (curve.keyGenerator securityParameter)
     adversary.proofView (curve.generates securityParameter) (curve.pairingInjective securityParameter)
-  -- Efficiency: construct both Caliper programs and prove their code/time/total-memory bounds.
-  obtain ⟨goodFits, badFits⟩ := CaliperAGM.reductions_within resources adversary
-  -- Each constructed solver is therefore a member of the supremum above.
-  have goodBound : Model.dlog11Advantage (curve.generator securityParameter)
-      (curve.keyGenerator securityParameter) (LazyAGM.Reduction.goodReductionList adversary.proofView) ≤
-      dlogSuccessBound curve securityParameter queries resources.goodTime :=
-    le_iSup_of_le _ (le_iSup_of_le goodFits le_rfl)
-  have badBound : Model.dlog11Advantage (curve.generator securityParameter)
-      (curve.keyGenerator securityParameter) (LazyAGM.Reduction.badReductionList adversary.proofView) ≤
-      dlogSuccessBound curve securityParameter queries resources.badTime :=
-    le_iSup_of_le _ (le_iSup_of_le badFits le_rfl)
   have sourceBound := Model.DirectAGM.game_le (Gₜ := curve.TargetGroup securityParameter) LazyAGM.terms (fun _ _ => True)
     (curve.generator securityParameter) (curve.keyGenerator securityParameter) adversary.source
-  simpa only [agmEufCmaGame_eq, Model.PairingCurve.order] using
-    sourceBound.trans (probabilityBound.trans (add_le_add (add_le_add goodBound badBound) le_rfl))
+  simpa only [agmEufCmaGame_eq, Model.PairingCurve.order, agmGoodReduction, agmBadReduction,
+    Model.dlog11Advantage] using sourceBound.trans probabilityBound
 
-/-- Increasing only the time allowance enlarges the same Caliper solver class.
-Its layouts, stored-code and total-memory bounds stay fixed. -/
-theorem dlogSuccessBound_mono (securityParameter : Nat) (queries : QueryAllowance) :
-    Monotone (dlogSuccessBound curve securityParameter queries) := by
-  intro time largerTime ht
-  let resources := model.parameters securityParameter queries
-  exact CaliperBackend.dlogSuccessBound_mono resources.layout.port
-    resources.layout.setup.challenge resources.layout.scheme.cache.value
-    (curve.generator securityParameter) (curve.keyGenerator securityParameter) le_rfl le_rfl ht
-
-/-- Both DLog solvers fit the maximum of their derived runtimes, yielding one
-hardness quantity with a factor of two. The separate-budget theorem is sharper. -/
-theorem Proofs.agm_security_common_budget
+/-- The good reduction is Caliper code within the common budget, the larger of
+the two proved complete reduction runtimes. -/
+theorem Proofs.agm_good_reduction_within
     (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
     (securityParameter : Nat) (queries : QueryAllowance)
     (adversary : AlgebraicAdversary curve securityParameter queries) :
-    𝒟[agmEufCmaGame curve securityParameter adversary] {true} ≤
-      2 * dlogSuccessBound curve securityParameter queries
-        (agmReductionTime curve securityParameter queries) +
-      1 / (curve.order securityParameter : ENNReal) := by
-  let resources := model.parameters securityParameter queries
-  have goodBound := dlogSuccessBound_mono curve securityParameter queries
-    (Nat.le_max_left resources.goodTime resources.badTime)
-  have badBound := dlogSuccessBound_mono curve securityParameter queries
-    (Nat.le_max_right resources.goodTime resources.badTime)
-  have bound := (Proofs.agm_security curve securityParameter queries adversary).trans
-    (add_le_add (add_le_add goodBound badBound) le_rfl)
-  simpa only [two_mul, agmReductionTime, resources] using bound
+    DLog11SolverWithin curve securityParameter queries (agmReductionTime curve securityParameter queries)
+      (agmGoodReduction curve adversary) :=
+  CaliperBackend.dlogWithin.mono
+    (CaliperAGM.reductions_within (model.parameters securityParameter queries) adversary).1 le_rfl le_rfl (Nat.le_max_left _ _)
+
+/-- The bad reduction is Caliper code within the same common budget. -/
+theorem Proofs.agm_bad_reduction_within
+    (curve : Model.PairingCurve) [model : AGMSecurityModel curve]
+    (securityParameter : Nat) (queries : QueryAllowance)
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    DLog11SolverWithin curve securityParameter queries (agmReductionTime curve securityParameter queries)
+      (agmBadReduction curve adversary) :=
+  CaliperBackend.dlogWithin.mono
+    (CaliperAGM.reductions_within (model.parameters securityParameter queries) adversary).2 le_rfl le_rfl (Nat.le_max_right _ _)
 
 end AGM
 
@@ -152,30 +130,30 @@ theorem Proofs.cocdh_probability (securityParameter : Nat) (queries : QueryAllow
     (curve.generates securityParameter) pairingInjective
     (fun r => adversary.signingQueries (r • curve.keyGenerator securityParameter))
 
-/-- Every unrestricted attacker within the declared resources and query allowances
-obeys this EUF-CMA bound. `solverTime` charges the complete Caliper Coron reduction,
-including the caller, lazy oracle simulation, setup and extraction. For `s` signing
-queries, `coronFactor s = ((s+1)⁻¹ * (s/(s+1))^s)⁻¹`, approximately `e*s`
-for large `s` and exactly `1` when `s = 0`. -/
+/-- Every unrestricted attacker obeys this EUF-CMA bound. For `s` signing queries,
+`coronFactor s = ((s+1)⁻¹ * (s/(s+1))^s)⁻¹`, approximately `e*s` for large `s`
+and exactly `1` when `s = 0`. -/
 theorem Proofs.cocdh_security
+    (curve : Model.PairingCurve) [model : CoCDHSecurityModel curve]
+    (securityParameter : Nat)
+    (queries : QueryAllowance)
+    (adversary : UnrestrictedAdversary curve securityParameter queries) :
+    𝒟[cocdhEufCmaGame curve securityParameter adversary] {true} ≤
+      Model.coronFactor queries.sign *
+        𝒟[CoCDH.coCDHExp (curve.generator securityParameter) (curve.keyGenerator securityParameter)
+          (cocdhReduction curve adversary)] {true} :=
+  Proofs.cocdh_probability curve securityParameter queries adversary
+
+/-- Coron's reduction is Caliper code within its proved complete budget, which
+charges the caller, lazy oracle simulation, setup and extraction. -/
+theorem Proofs.cocdh_reduction_within
     (curve : Model.PairingCurve) [model : CoCDHSecurityModel curve]
     (securityParameter : Nat) (queries : QueryAllowance)
     (adversary : UnrestrictedAdversary curve securityParameter queries) :
-    let resources := model.parameters securityParameter queries
-    𝒟[cocdhEufCmaGame curve securityParameter adversary] {true} ≤
-      Model.coronFactor queries.sign *
-        coCDHSuccessBound curve securityParameter queries resources.solverTime := by
-  let resources := model.parameters securityParameter queries
-  -- Construct the complete Caliper code/time/total-memory witness, including challenge coverage.
-  have fits := CaliperCoCDH.reduction_within resources adversary (curve.generates securityParameter).surjective
-  have solverBound : Model.coCDHAdvantage (F := curve.Scalar securityParameter)
-      (curve.generator securityParameter) (curve.keyGenerator securityParameter)
-      (CoCDH.coronReductionLazyPK (F := curve.Scalar securityParameter) queries.sign
-        (BLS.ROM.cacheForgeryPK adversary.source)) ≤
-      coCDHSuccessBound curve securityParameter queries resources.solverTime :=
-    le_iSup_of_le _ (le_iSup_of_le fits le_rfl)
-  exact (Proofs.cocdh_probability curve securityParameter queries adversary).trans
-    (mul_le_mul_right solverBound (Model.coronFactor queries.sign))
+    CoCDHSolverWithin curve securityParameter queries (cocdhReductionTime curve securityParameter queries)
+      (cocdhReduction curve adversary) :=
+  CaliperCoCDH.reduction_within (model.parameters securityParameter queries) adversary
+    (curve.generates securityParameter).surjective
 
 end CoCDH
 

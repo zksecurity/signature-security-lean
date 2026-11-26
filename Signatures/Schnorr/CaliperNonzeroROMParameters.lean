@@ -39,15 +39,17 @@ theorem nonzero_reduction_within :
     P.limits A.bounds P.arithmetic P.arithmeticBudget P.handlerRoom P.slotsRoom queries.total P.tables P.tapes sampled
     A.correspondence A.source.main A.source_eq ⟨generator, P.generatorValid⟩
 
-include sampled nonzero in
 theorem nonzero_security [Fintype F] (generates : Function.Bijective (fun scalar : F => scalar • generator)) :
     𝒟[NonzeroNonce.game generator A.source] {true} ≤
       (queries.sign : ENNReal) * (queries.sign + queries.hash) * ((Fintype.card F - 1 : Nat) : ENNReal)⁻¹ +
       (queries.hash + 1 : ENNReal) * (Fintype.card F : ENNReal)⁻¹ +
-      ((queries.hash + 1 : ENNReal) * P.dlogBound P.solverTime) ^ (1 / 2 : ℝ) :=
-  SchnorrROM.Full.Nonzero.security P.config P.shape A.caller P.operations P.law nonzero P.handlerBudget queries.hash P.indexFits
-    P.limits A.bounds P.arithmetic P.arithmeticBudget P.handlerRoom P.slotsRoom queries.total P.tables P.tapes sampled
-    A.correspondence ⟨generator, P.generatorValid⟩ generates A.source queries.sign A.source_eq
+      ((queries.hash + 1 : ENNReal) * 𝒟[DiffieHellman.dlogExperiment generator
+        (Schnorr.NonzeroListROM.NativeSolver.reduction (G₂ := G) (K := M) A.source.main queries.hash)] {true}) ^
+        (1 / 2 : ℝ) := by
+  have fork := Schnorr.NonzeroNonce.LazyROM.security generator generates A.source queries.sign queries.hash
     (fun pk => ⟨A.signingQueries pk, A.hashQueries pk⟩)
+  rw [← Schnorr.NonzeroListROM.NativeSolver.reduction_experiment (G₂ := G) (K := M)] at fork
+  exact Model.forking_inverse queries.hash (MeasureTheory.measure_ne_top _ _)
+    (ENNReal.inv_ne_top.mpr (Nat.cast_ne_zero.mpr Fintype.card_ne_zero)) fork
 
 end Schnorr.CaliperROM

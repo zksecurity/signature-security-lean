@@ -1,5 +1,4 @@
 import Proofs.Runtime.BackendSchnorrAGMSecurity
-import Proofs.Model.AdvantageBound
 import Signatures.Schnorr.QueryAllowance
 
 /-! Concrete contracts for general Schnorr AGM attackers. The parameters fix
@@ -148,13 +147,6 @@ def solverTime : Nat :=
   Solver.programTime P.overhead P.execution P.inputWidth P.width P.outputWidth P.routeWidth
     P.queries.total (P.queries.total + 2) P.queries.total P.width P.width P.width P.portWidth
     P.queries.total P.tickTime P.adapterTime P.divisionTime P.times
-
-/-- Maximum DLog success at the fixed backend's input, code and time bounds.
-A separate hardness assumption is needed to make this supremum small. -/
-noncomputable def dlogBound (time : Nat) : ENNReal :=
-  Model.advantageBound (fun solver => 𝒟[DiffieHellman.dlogExperiment P.generator solver] {true})
-    (Solver.dlogWithin P.rep P.backend P.descriptionSizes P.factor P.description
-      P.generator P.inputWidth P.solverCode time)
 
 end Parameters
 

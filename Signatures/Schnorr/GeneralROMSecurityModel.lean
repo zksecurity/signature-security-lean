@@ -77,20 +77,23 @@ noncomputable def romEufCmaGame (securityParameter : Nat) {queries : QueryAllowa
     (adversary : UnrestrictedAdversary curve securityParameter queries) : ProbComp Bool :=
   Schnorr.Game.rom curve securityParameter adversary.source.main
 
-/-- Supremum of DLog success in the fixed Caliper model: sample `x`, run the
-solver on `(g, x • g)`, and test its answer against `x`. Solvers use the fixed
-port and layouts with the derived code and total-memory limits and the displayed
-runtime limit. Every challenge must be represented. An optimal solver need not
-exist. `CaliperROM.reduction_within` constructs the actual reduction witness;
-a hardness assumption makes this quantity small. -/
-noncomputable def romDLogSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
-    (time : Nat) : ENNReal :=
-  let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.cyclicDLogWithin
-      (Signatures.Runtime.CaliperBackend.SchnorrROMTape.Fresh.port resources.config.handler.sampler.tape)
-      (Signatures.Runtime.CaliperBackend.SchnorrROM.Pass.Initialization.points resources.config)
-      resources.config.handler.sampler.tape.scalar (curve.generator securityParameter)
-      resources.solverCode resources.solverMemory time solver),
-    𝒟[DiffieHellman.dlogExperiment (curve.generator securityParameter) solver] {true}
+/-- The replaying DLog solver built from the attacker: it runs the attacker
+twice on a shared private tape, forking at the selected hash query, and solves
+for the key from the two forgeries, falling back to a uniform guess. Its
+construction is in `Proofs/Runtime/BackendSchnorrROMReduction.lean`. -/
+noncomputable def romReduction {securityParameter : Nat} {queries : QueryAllowance}
+    (adversary : UnrestrictedAdversary curve securityParameter queries) :
+    DiffieHellman.DLogAdversary (curve.Scalar securityParameter) (curve.Group securityParameter) :=
+  Signatures.Runtime.Schnorr.ListROM.NativeSolver.reduction (G₂ := curve.Group securityParameter)
+    (K := model.Message securityParameter) adversary.source.main queries.hash
+
+/-- A DLog solver given `(g, x • g)` that runs as Caliper code on the fixed port
+and layouts within the derived code and total-memory limits and the displayed
+time limit. Memory includes stored code, initial data and all visited buffers,
+and every sampled challenge must be represented. -/
+def ROMDLogSolverWithin (securityParameter : Nat) (queries : QueryAllowance) (time : Nat)
+    (solver : DiffieHellman.DLogAdversary (curve.Scalar securityParameter) (curve.Group securityParameter)) :
+    Prop :=
+  (model.parameters securityParameter queries).within time solver
 
 end Schnorr

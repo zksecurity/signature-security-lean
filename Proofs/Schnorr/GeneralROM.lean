@@ -52,22 +52,20 @@ theorem security_quadratic (P : Parameters (Q := Q) (F := F) (G := G) (M := M))
     (A : UnrestrictedAdversary P) :
     let eps := 𝒟[ROM.game P.generator A.source] {true} -
       (P.queries.sign : ENNReal) * (P.queries.sign + P.queries.hash) * (Fintype.card F : ENNReal)⁻¹
-    eps * (eps / (P.queries.hash + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤ P.dlogBound P.solverTime := by
-  have fits := reduction_within P A
-  have hdlog := Model.le_advantageBound
-    (fun solver => 𝒟[DiffieHellman.dlogExperiment P.generator solver] {true}) _ _ fits
-  change 𝒟[DiffieHellman.dlogExperiment P.generator
-    (NativeSolver.reduction (G₂ := G) (K := M) A.source.main P.queries.hash)] {true} ≤ P.dlogBound P.solverTime at hdlog
-  rw [NativeSolver.reduction_experiment (G₂ := G) (K := M) P.generator A.source P.queries.hash] at hdlog
-  exact (LazyROM.security P.generator P.generates A.source P.queries.sign P.queries.hash
-    (fun pk => ⟨A.signingQueries pk, A.hashQueries pk⟩)).trans hdlog
+    eps * (eps / (P.queries.hash + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
+      𝒟[DiffieHellman.dlogExperiment P.generator
+        (NativeSolver.reduction (G₂ := G) (K := M) A.source.main P.queries.hash)] {true} := by
+  rw [NativeSolver.reduction_experiment (G₂ := G) (K := M) P.generator A.source P.queries.hash]
+  exact LazyROM.security P.generator P.generates A.source P.queries.sign P.queries.hash
+    (fun pk => ⟨A.signingQueries pk, A.hashQueries pk⟩)
 
 theorem security (P : Parameters (Q := Q) (F := F) (G := G) (M := M))
     (A : UnrestrictedAdversary P) :
     𝒟[ROM.game P.generator A.source] {true} ≤
       (P.queries.sign : ENNReal) * (P.queries.sign + P.queries.hash) * (Fintype.card F : ENNReal)⁻¹ +
       (P.queries.hash + 1 : ENNReal) * (Fintype.card F : ENNReal)⁻¹ +
-      ((P.queries.hash + 1 : ENNReal) * P.dlogBound P.solverTime) ^ (1 / 2 : ℝ) := by
+      ((P.queries.hash + 1 : ENNReal) * 𝒟[DiffieHellman.dlogExperiment P.generator
+        (NativeSolver.reduction (G₂ := G) (K := M) A.source.main P.queries.hash)] {true}) ^ (1 / 2 : ℝ) := by
   apply Model.forking_inverse P.queries.hash
   · exact MeasureTheory.measure_ne_top _ _
   · exact ENNReal.inv_ne_top.mpr (by positivity)

@@ -110,7 +110,8 @@ private theorem reduction_within :
 
 private theorem security [Fintype F] (generates : Function.Injective (fun scalar : F => scalar • generator)) :
     𝒟[Schnorr.AGM.game generator (constructed P caller allowances resources algebraic).source] {true} ≤
-      P.dlogBound P.solverTime +
+      𝒟[DiffieHellman.dlogExperiment generator
+          (Signatures.Runtime.SchnorrAGM.dlogReduction (constructed P caller allowances resources algebraic).source)] {true} +
         (queries.hash + 1 : ENNReal) * (Fintype.card F : ENNReal)⁻¹ +
         (queries.sign : ENNReal) * (queries.sign + queries.hash) * (Fintype.card F : ENNReal)⁻¹ :=
   Schnorr.CaliperAGM.security P (constructed P caller allowances resources algebraic) generates

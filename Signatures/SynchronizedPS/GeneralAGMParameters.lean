@@ -4,7 +4,8 @@ import Proofs.Runtime.GeneralWeightedFamilyResources
 /-! General implemented algebraic attackers for synchronized PS. The attacker supplies one caller
 realized in the fixed backend at the single-signer interface, within its own query, execution and
 stored-code allowances; the two weighted schemes' routines at every known key and the pipeline's
-components are the model. All four reduction budgets are derived. -/
+components are the model. The four DLog reductions are named per known key, and each is in the
+derived budget at every key. -/
 
 open OracleComp OracleSpec PFunctor
 open Signatures.Runtime Signatures.Runtime.BackendProgram Signatures.Runtime.WeightedAGM
@@ -51,6 +52,35 @@ structure AlgebraicAdversary where
     (source.main ⟨(), Model.LazyAGM.Interactive.groupLists [generator] [pk.1, pk.2]⟩)
     (fun i => General.queryKind i.value.data = 2) P.innerQueries.sign
 
+namespace AlgebraicAdversary
+
+variable {P} (A : AlgebraicAdversary P)
+
+/-- The scheme₁ (`x•H(t)`, second key `k` known) good-branch `(1,1)`-DLog solver at the known key
+`k`: it runs the attacker wrapped for scheme₁ once inside the weighted good program and solves from
+the forgery's algebraic explanation. Its backend realization is the pipeline's, built in
+`Proofs/Runtime/GeneralSyncWrapAdversary.lean`. -/
+noncomputable def goodReduction₁ (k : F) : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ :=
+  Model.LazyAGM.WeightedReduction.goodReductionList SynchronizedPS.Wrapped.terms₁
+    (SynchronizedPS.Wrapped.wrap₁ k keyGenerator (SynchronizedPS.Proofs.view A.source generator))
+
+/-- The scheme₁ bad-branch solver at the known key `k`. -/
+noncomputable def badReduction₁ (k : F) : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ :=
+  Model.LazyAGM.WeightedReduction.badReductionList SynchronizedPS.Wrapped.terms₁
+    (SynchronizedPS.Wrapped.wrap₁ k keyGenerator (SynchronizedPS.Proofs.view A.source generator))
+
+/-- The scheme₂ (`y•(m•H(t))`, first key `k` known) good-branch solver at the known key `k`. -/
+noncomputable def goodReduction₂ (k : F) : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ :=
+  Model.LazyAGM.WeightedReduction.goodReductionList SynchronizedPS.Wrapped.terms₂
+    (SynchronizedPS.Wrapped.wrap₂ k keyGenerator (SynchronizedPS.Proofs.view A.source generator))
+
+/-- The scheme₂ bad-branch solver at the known key `k`. -/
+noncomputable def badReduction₂ (k : F) : AlgebraicGroupModel.DLog11Adversary F G₁ G₂ :=
+  Model.LazyAGM.WeightedReduction.badReductionList SynchronizedPS.Wrapped.terms₂
+    (SynchronizedPS.Wrapped.wrap₂ k keyGenerator (SynchronizedPS.Proofs.view A.source generator))
+
+end AlgebraicAdversary
+
 namespace Parameters
 
 /-- The derived runtimes of the four complete reductions. -/
@@ -59,14 +89,11 @@ def badTime₁ : Nat := (P.toGeneral false).badTime
 def goodTime₂ : Nat := (P.toGeneral true).goodTime
 def badTime₂ : Nat := (P.toGeneral true).badTime
 
-/-- Supremum of `(1,1)`-DLog success over solvers of the fixed backend within the derived stored
-code, the pipeline's input width and the given time. The two schemes share the class. -/
-noncomputable def dlogBound (time : Nat) : ENNReal := (P.toGeneral false).dlogBound time
-
-/-- The four reduction branches plus the original two inverse-field-size losses. -/
-noncomputable def securityBound [Fintype F] : ENNReal :=
-  P.dlogBound P.goodTime₁ + P.dlogBound P.badTime₁ + P.dlogBound P.goodTime₂ + P.dlogBound P.badTime₂ +
-    2 / (Fintype.card F : ENNReal)
+/-- A `(1,1)`-DLog solver that runs on the fixed backend within the derived stored code, the
+pipeline's input width and the given time. The two schemes share the class. -/
+def DLogSolverWithin (time : Nat) (solver : AlgebraicGroupModel.DLog11Adversary F G₁ G₂) : Prop :=
+  Signatures.Runtime.WeightedAGM.NativeSolver.dlogWithin P.rep P.backend P.descriptionSizes P.factor
+    P.description generator keyGenerator P.inputWidth (P.toGeneral false).solverCode time solver
 
 end Parameters
 

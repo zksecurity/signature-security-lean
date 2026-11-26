@@ -41,21 +41,21 @@ noncomputable def agmEufCmaGame (securityParameter : Nat) {queries : QueryAllowa
     (adversary : AlgebraicAdversary curve securityParameter queries) : ProbComp Bool :=
   Game.agm curve securityParameter adversary.source
 
-/-- Supremum of success for ordinary DLog: sample uniform x, supply `(g,x • g)`
-and check the returned scalar. Solvers use the fixed Caliper port and layouts,
-with the derived code and total-memory limits and the displayed runtime limit.
-Memory includes stored code, initial data and all visited buffers. Every
-sampled challenge must be represented. No optimal solver need exist.
+/-- The single-pass DLog solver built from the attacker: it runs the attacker,
+answers its queries, and solves for the key from the forgery's algebraic
+explanation. Its construction is in `Proofs/Runtime/SchnorrAGMExecution.lean`. -/
+noncomputable def agmReduction {securityParameter : Nat} {queries : QueryAllowance}
+    (adversary : AlgebraicAdversary curve securityParameter queries) :
+    DiffieHellman.DLogAdversary (curve.Scalar securityParameter) (curve.Group securityParameter) :=
+  Signatures.Runtime.SchnorrAGM.dlogReduction adversary.source
 
-The budgets are in `CaliperAGM.Parameters`; `CaliperAGM.reduction_within`
-constructs the actual reduction witness. A hardness assumption makes this
-quantity small. Polynomial families are handled in separate statements. -/
-noncomputable def dlogSuccessBound (securityParameter : Nat) (queries : QueryAllowance)
-    (time : Nat) : ENNReal :=
-  let resources := model.parameters securityParameter queries
-  ⨆ solver, ⨆ (_ : Signatures.Runtime.CaliperBackend.cyclicDLogWithin
-      resources.layout.service.random.port resources.layout.service.scheme.config resources.layout.service.scheme.scalar
-      (curve.generator securityParameter) resources.solverCode resources.solverMemory time solver),
-    𝒟[DiffieHellman.dlogExperiment (curve.generator securityParameter) solver] {true}
+/-- A DLog solver given `(g, x • g)` that runs as Caliper code on the fixed port
+and layouts within the derived code and total-memory limits and the displayed
+time limit. Memory includes stored code, initial data and all visited buffers,
+and every sampled challenge must be represented. -/
+def DLogSolverWithin (securityParameter : Nat) (queries : QueryAllowance) (time : Nat)
+    (solver : DiffieHellman.DLogAdversary (curve.Scalar securityParameter) (curve.Group securityParameter)) :
+    Prop :=
+  (model.parameters securityParameter queries).within time solver
 
 end Schnorr
