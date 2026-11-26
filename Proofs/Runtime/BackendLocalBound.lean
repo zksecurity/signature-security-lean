@@ -32,7 +32,7 @@ def castFunction {A B : Type} {a : C.Str A} {b : C.Str B} {f g : A → B}
   time := bound.time
   cost_le input := by simpa using bound.cost_le input
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {overhead : Nat → Nat} (laws : LocalCostLaws Q overhead)
 
 def identity {A : Type} (a : C.Str A) : LocalBound (Q.identity a) where

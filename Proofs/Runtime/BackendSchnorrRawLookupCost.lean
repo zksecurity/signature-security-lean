@@ -77,7 +77,7 @@ theorem input_size (width cap slotCap : Nat) (hh : header ≤ width)
   change Q.size (rep.ty inputTy) input ≤ _ at hp
   nlinarith
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

@@ -77,7 +77,7 @@ private def check {a b : Ty CryptoAtom} (name : String) (op : CryptoOp a b)
 
 -- Nonconstant input ports are read from the supplied bit vector, not evaluated at compile time.
 #eval show IO Unit from do
-  let x := AIG.mkAtom (AIG.empty : AIG (Fin 1)) 0
+  let x := AIG.mkAtomCached (AIG.empty : AIG (Fin 1)) 0
   let z := AIG.mkConstCached x.aig false
   let lhs := (AIG.RefVec.empty.push x.ref).push z |>.push z |>.push z |>.push z |>.push z
   let rhs := blastConst x.aig (BitVec.ofNat 6 2)

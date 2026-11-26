@@ -1,7 +1,7 @@
 import Proofs.Runtime.Caliper.SyncWrapParameters
 import Proofs.BLS.LazyAGMSecurity
 import VCVio.OracleComp.QueryTracking.RandomOracle.DeferredSampling
-import VCVio.OracleComp.Constructions.SampleableType.MeasureCompatibility
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-! The four complete Caliper solvers for synchronized PS and their certificates. For each
 scheme the attacker's inner caller is wrapped (`SyncWrap`), the outer caller is run by the keyed
@@ -428,8 +428,7 @@ theorem bad_eq (X : G₁) (α : F) :
       badReductionList terms (wrap (correction y) (final y) (keysOf y keyGenerator) (SynchronizedPS.Proofs.view A.source generator)) generator X keyGenerator (α • keyGenerator)] =
     𝒟[A.caliperBad (terms := terms) side postFn generator X keyGenerator (α • keyGenerator)] := by
   unfold caliperBad badReductionList
-  refine evalDist_eq_of_evalSPMF_eq _ _ ?_
-  rw [OracleComp.DeferredSampling.evalSPMF_bind_comm]
+  rw [OracleComp.evalDist_bind_bind_swap_of_uniform]
   congr 1
   rw [← P.scalarLaw]
   simp only [bind_map_left]

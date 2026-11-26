@@ -1,5 +1,5 @@
 import Signatures.Model.SignatureInterface
-import AlgebraicGroupModel.Interaction
+import VCVio.CryptoFoundations.GroupModel.Interaction
 
 /-!
 # Signature games through the interactive AGM
@@ -20,22 +20,22 @@ def Output.explain {F Token Payload G : Type} [Zero F] [AddMonoid G] [SMul F G]
     -- inputs is the ordered received basis; out provides one coefficient for each token.
     (out : Output F Token Payload) (inputs : Transcript Token G) :
     -- This helper has one group label, Unit, and preserves the ordinary payload type.
-    Interaction.Explained F Payload (fun _ : Unit => G) :=
+    GroupModel.Interaction.Explained F Payload (fun _ : Unit => G) :=
   -- Construct the point and its explanation together over the received group values.
-  Interaction.Explained.ofVectors (fun _ => inputs.map Prod.snd) out.value
+  GroupModel.Interaction.Explained.ofVectors (fun _ => inputs.map Prod.snd) out.value
     -- Supply one vector with exactly one coefficient per received position, selected by its token.
     (fun _ => [fun i => out.coefficients (inputs[i.val]'(by simpa using i.isLt)).1])
 
 theorem Output.explain_valid {F Token Payload G : Type} [Zero F] [AddMonoid G] [SMul F G]
     (out : Output F Token Payload) (inputs : Transcript Token G) :
     (out.explain inputs).Valid (fun _ => inputs.map Prod.snd) :=
-  Interaction.Explained.valid_ofVectors _ _ _
+  GroupModel.Interaction.Explained.valid_ofVectors _ _ _
 
 /-- The adapter supplies witnesses without changing the original materialized group element. -/
 theorem Output.explain_value {F Token Payload G : Type} [Zero F] [AddMonoid G] [SMul F G]
     (out : Output F Token Payload) (inputs : Transcript Token G) :
     (out.explain inputs).value = ⟨out.value, fun _ => [out.coefficients.eval inputs]⟩ := by
-  simp [Output.explain, Interaction.Explained.ofVectors, Interaction.evaluate,
+  simp [Output.explain, GroupModel.Interaction.Explained.ofVectors, GroupModel.Interaction.evaluate,
     Representation.eval, List.mapIdx_eq_ofFn]
   funext s
   apply congrArg (fun g => [g])
@@ -78,20 +78,20 @@ instance (priority := high) {F G₁ G₂ : Type} [SMul F G₁] [SMul F G₂] (s 
 -- Package two ordinary typed lists as the dependent family expected by the AGM library.
 def groupLists {G₁ G₂ : Type} (signatures : List G₁) (keys : List G₂) :
     -- Each label returns a list whose element type is selected by Group.
-    Interaction.Groups (Group G₁ G₂)
+    GroupModel.Interaction.Groups (Group G₁ G₂)
   -- Project the supplied signature-group list.
   | .signature => signatures
   -- Project the supplied verification-group list.
   | .verification => keys
 
 @[simp] theorem extend_groupLists {G₁ G₂ : Type} (xs ys : List G₁) (ks ls : List G₂) :
-    Interaction.extend (groupLists xs ks) (groupLists ys ls) =
+    GroupModel.Interaction.extend (groupLists xs ks) (groupLists ys ls) =
       groupLists (xs ++ ys) (ks ++ ls) := by
   funext s
   cases s <;> rfl
 
 -- The game initially supplies one generator and one public key, with no ordinary input data.
-def initialInput {G₁ G₂ : Type} (g : G₁) (pk : G₂) : Interaction.Message Unit (Group G₁ G₂) :=
+def initialInput {G₁ G₂ : Type} (g : G₁) (pk : G₂) : GroupModel.Interaction.Message Unit (Group G₁ G₂) :=
   -- Both group inputs are tracked explicitly rather than hidden in the Unit payload.
   ⟨(), groupLists [g] [pk]⟩
 
@@ -114,10 +114,10 @@ variable {F ι M G G₂ : Type} [Zero F] [AddCommMonoid G] [SMul F G]
   [AddMonoid G₂] [SMul F G₂]
 
 -- Rejection has no output points, so all explanation lists are empty as well.
-def reject : Interaction.Explained F (Result F M) (Group G G₂) := ⟨⟨none, fun _ => []⟩, fun _ => []⟩
+def reject : GroupModel.Interaction.Explained F (Result F M) (Group G G₂) := ⟨⟨none, fun _ => []⟩, fun _ => []⟩
 
 -- Wrap a signature query in the generic explained-request envelope.
-def request (q : Query ι M) : Interaction.Explained F (Query ι M) (Group G G₂) :=
+def request (q : Query ι M) : GroupModel.Interaction.Explained F (Query ι M) (Group G G₂) :=
   -- This adapter always sends zero group arguments; the generic envelope type alone is broader.
   ⟨⟨q, fun _ => []⟩, fun _ => []⟩
 
@@ -126,7 +126,7 @@ def finish (out : Output F M) (tr : Transcript ι M G)
     -- seen records generator/hash/signature tokens in their actual order of receipt.
     (seen : AlgebraicGroupModel.Transcript Token G) :
     -- The final envelope supports both group labels, but this adapter outputs only a signature.
-    Interaction.Explained F (Result F M) (Group G G₂) :=
+    GroupModel.Interaction.Explained F (Result F M) (Group G G₂) :=
   -- Evaluate A's coefficients and build an exact-length explanation over seen.
   let explained := out.toAlgebraic.explain seen
   -- Supply the actual signed-message log as data and the constructed signature as a G point.
@@ -143,17 +143,17 @@ def compile (program : OracleComp (advSpec ι M G) (Output F M))
     -- Carry both chronological tokens and grouped transcripts while translating each path.
     (seen : AlgebraicGroupModel.Transcript Token G) (tr : Transcript ι M G) :
     -- The translated program uses the AGM interface whose outgoing requests require explanations.
-    OracleComp (Interaction.explainedSpec F (Group G G₂) (Query ι M) Reply)
+    OracleComp (GroupModel.Interaction.explainedSpec F (Group G G₂) (Query ι M) Reply)
       -- Its final result likewise carries ordinary data, group points, and explanation vectors.
-      (Interaction.Explained F (Result F M) (Group G G₂)) :=
+      (GroupModel.Interaction.Explained F (Result F M) (Group G G₂)) :=
   -- Recurse over pure return and oracle-query nodes of the original program.
   OracleComp.recOn
     -- Each recursively translated continuation still accepts the two evolving transcripts.
     (motive := fun _ => AlgebraicGroupModel.Transcript Token G → Transcript ι M G →
       -- It produces a program using the same explained-request interface.
-      OracleComp (Interaction.explainedSpec F (Group G G₂) (Query ι M) Reply)
+      OracleComp (GroupModel.Interaction.explainedSpec F (Group G G₂) (Query ι M) Reply)
         -- Every branch eventually returns the same explained-result type.
-        (Interaction.Explained F (Result F M) (Group G G₂))) program
+        (GroupModel.Interaction.Explained F (Result F M) (Group G G₂))) program
     -- At a return node, construct the final point from coefficients and actual received inputs.
     (fun out seen tr => pure (finish out tr seen))
     -- next is the recursively translated reply-dependent continuation; dispatch on the request.
@@ -187,9 +187,21 @@ def compile (program : OracleComp (advSpec ι M G) (Output F M))
           -- Reject malformed signing replies; initialize this recursion with the supplied state.
           | _ => pure reject) seen tr
 
+/-- Upstream states `isAlgebraic_query` on `liftM (query q) >>= next`; the compiler produces the
+definitionally equal `queryBind` form, which the rewriter cannot see through. -/
+theorem isAlgebraic_queryBind {F : Type} {G : GroupSort → Type} {Query Result : Type}
+    {Reply : Query → Type} [Zero F] [∀ s, AddMonoid (G s)] [∀ s, SMul F (G s)]
+    (inputs : GroupModel.Interaction.Groups G) (q : GroupModel.Interaction.Explained F Query G)
+    (next : GroupModel.Interaction.Message (Reply q.value.data) G →
+      OracleComp (GroupModel.Interaction.explainedSpec F G Query Reply)
+        (GroupModel.Interaction.Explained F Result G)) :
+    GroupModel.Interaction.IsAlgebraic inputs (OracleComp.queryBind q next) ↔
+      q.Valid inputs ∧ ∀ reply, GroupModel.Interaction.IsAlgebraic
+        (GroupModel.Interaction.extend inputs reply.groups) (next reply) := Iff.rfl
+
 theorem compile_algebraic (program : OracleComp (advSpec ι M G) (Output F M))
     (seen : AlgebraicGroupModel.Transcript Token G) (tr : Transcript ι M G) (keys : List G₂) :
-    Interaction.IsAlgebraic (groupLists (seen.map Prod.snd) keys)
+    GroupModel.Interaction.IsAlgebraic (groupLists (seen.map Prod.snd) keys)
       (compile program seen tr) := by
   induction program using OracleComp.recOn generalizing seen tr keys with
   | pure out =>
@@ -200,8 +212,8 @@ theorem compile_algebraic (program : OracleComp (advSpec ι M G) (Output F M))
   | queryBind q next ih =>
       rcases q with ((n | i) | m)
       all_goals
-        change Interaction.IsAlgebraic _ (OracleComp.queryBind _ _)
-        rw [Interaction.isAlgebraic_query]
+        change GroupModel.Interaction.IsAlgebraic _ (OracleComp.queryBind _ _)
+        rw [isAlgebraic_queryBind]
         refine ⟨fun _ => List.Forall₂.nil, ?_⟩
         intro reply
         rcases reply with ⟨data, groups⟩
@@ -212,7 +224,7 @@ theorem compile_algebraic (program : OracleComp (advSpec ι M G) (Output F M))
         | nil =>
             first
             | exact fun _ => List.Forall₂.nil
-            | change Interaction.IsAlgebraic _ (compile (next data) seen tr)
+            | change GroupModel.Interaction.IsAlgebraic _ (compile (next data) seen tr)
               simpa only [List.append_nil] using ih data seen tr (keys ++ ks)
         | cons g rest =>
             first
@@ -220,12 +232,12 @@ theorem compile_algebraic (program : OracleComp (advSpec ι M G) (Output F M))
             | cases rest with
               | nil =>
                   first
-                  | change Interaction.IsAlgebraic _ (compile (next g)
+                  | change GroupModel.Interaction.IsAlgebraic _ (compile (next g)
                       (seen ++ [(.inr (.inl tr.1.length), g)]) (tr.1 ++ [(i, g)], tr.2))
                     have valid := ih g (seen ++ [(.inr (.inl tr.1.length), g)])
                       (tr.1 ++ [(i, g)], tr.2) (keys ++ ks)
                     simpa only [List.map_append, List.map_cons, List.map_nil] using valid
-                  | change Interaction.IsAlgebraic _ (compile (next g)
+                  | change GroupModel.Interaction.IsAlgebraic _ (compile (next g)
                       (seen ++ [(.inr (.inr tr.2.length), g)]) (tr.1, tr.2 ++ [(m, g)]))
                     have valid := ih g (seen ++ [(.inr (.inr tr.2.length), g)])
                       (tr.1, tr.2 ++ [(m, g)]) (keys ++ ks)
@@ -238,7 +250,7 @@ def impl {N : Type → Type} [Monad N] (random : QueryImpl unifSpec N)
     -- The actual game supplies cached base lookup and secret-key signing implementations.
     (hash : ι → N G) (sign : M → N G) :
     -- Read q from ordinary request data; compile produces no outgoing group arguments to inspect.
-    QueryImpl (Interaction.plainSpec (Group G G₂) (Query ι M) Reply) N := fun ⟨q, _⟩ =>
+    QueryImpl (GroupModel.Interaction.plainSpec (Group G G₂) (Query ι M) Reply) N := fun ⟨q, _⟩ =>
   -- Reply types depend on the request tag, while the implementation fixes group-list contents.
   match q with
   -- Randomness returns its number in data and leaves both group lists empty.
@@ -291,7 +303,7 @@ theorem aligned_sign (g : G) (seen : AlgebraicGroupModel.Transcript Token G)
 -- This is the final message reconstructed from the grouped-transcript proof view.
 def observe (g : G) (z : Output F M × Transcript ι M G) :
     -- Its ordinary data and group lists have exactly the types used by the source experiment.
-    Interaction.Message (Result F M) (Group G G₂) :=
+    GroupModel.Interaction.Message (Result F M) (Group G G₂) :=
   -- Derive signed messages from the transcript and the signature from the algebraic coefficients.
   ⟨some (z.1, z.2.2.map Prod.fst), groupLists [materialize g z.1 z.2] []⟩
 
@@ -301,11 +313,11 @@ theorem compile_run {N : Type → Type} [Monad N] [LawfulMonad N]
     (random : QueryImpl unifSpec N) (hash : ι → N G) (sign : M → N G)
     (program : OracleComp (advSpec ι M G) (Output F M))
     (g : G) (seen : AlgebraicGroupModel.Transcript Token G) (tr : Transcript ι M G)
-    (h : Aligned (F := F) g seen tr) (basis : Interaction.Groups (Group G G₂)) :
+    (h : Aligned (F := F) g seen tr) (basis : GroupModel.Interaction.Groups (Group G G₂)) :
     (fun z => z.1.value) <$>
         (simulateQ (fun q => StateT.mk fun inputs => do
           let reply ← impl random hash sign q.value
-          pure (reply, Interaction.extend inputs reply.groups)) (compile program seen tr)).run basis =
+          pure (reply, GroupModel.Interaction.extend inputs reply.groups)) (compile program seen tr)).run basis =
       observe g <$> (simulateQ (handler random hash sign) program).run tr := by
   induction program using OracleComp.recOn generalizing seen tr basis with
   | pure out =>
@@ -315,12 +327,12 @@ theorem compile_run {N : Type → Type} [Monad N] [LawfulMonad N]
   | queryBind q next ih =>
       rcases q with ((n | i) | m)
       all_goals
-        change (fun z : Interaction.Explained F (Result F M) (Group G G₂) ×
-            Interaction.Groups (Group G G₂) => z.1.value) <$>
-          (simulateQ (fun q : Interaction.Explained F (Query ι M) (Group G G₂) =>
+        change (fun z : GroupModel.Interaction.Explained F (Result F M) (Group G G₂) ×
+            GroupModel.Interaction.Groups (Group G G₂) => z.1.value) <$>
+          (simulateQ (fun q : GroupModel.Interaction.Explained F (Query ι M) (Group G G₂) =>
             StateT.mk fun inputs => do
               let reply ← impl random hash sign q.value
-              pure (reply, Interaction.extend inputs reply.groups)) (OracleComp.queryBind _ _)).run basis =
+              pure (reply, GroupModel.Interaction.extend inputs reply.groups)) (OracleComp.queryBind _ _)).run basis =
             observe g <$> (simulateQ (handler random hash sign)
               ((liftM ((advSpec ι M G).query _) : OracleComp (advSpec ι M G) _) >>= next)).run tr
         simp only [simulateQ, OracleComp.queryBind, PFunctor.FreeM.liftM,
@@ -350,7 +362,7 @@ def Adversary.toInteractive {F ι M G₁ G₂ : Type}
     -- A itself receives a public key, makes typed oracle requests, and returns coefficient lists.
     (A : Adversary F ι M G₁ G₂) :
     -- The generic adversary has two group labels and no ordinary initial payload beyond Unit.
-    AlgebraicGroupModel.Interaction.Adversary F (Interactive.Group G₁ G₂) Unit
+    GroupModel.Interaction.Adversary F (Interactive.Group G₁ G₂) Unit
       -- Fix its allowed query data, dependent reply data, and final result data types.
       (Interactive.Query ι M) Interactive.Reply (Interactive.Result F M) where
   -- Check the game-chosen initial group's lists before exposing the public key to A.

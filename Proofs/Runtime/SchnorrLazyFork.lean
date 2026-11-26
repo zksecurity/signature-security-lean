@@ -66,9 +66,7 @@ theorem fork_eq_recorded (main : OracleComp (replaySpec F) A)
       · rfl
       · rw [run'_seeded, restart_seed, toSeed_encode]
 
-variable [IsUniformSpec (replaySpec F)]
-  [∀ i, MeasurableSpace ((replaySpec F).Range i)]
-  [∀ i, DiscreteMeasurableSpace ((replaySpec F).Range i)]
+variable [OracleSpec.UniformAnswerMeasure (replaySpec F)]
   [unifSpec ˡ⊂ₒ replaySpec F] [MeasurableSpace A]
 
 /-- The complete finite-list fork has exactly the reference seeded fork's joint

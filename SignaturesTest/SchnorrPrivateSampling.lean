@@ -18,7 +18,7 @@ private abbrev F := ZMod 5
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
   (rep : LanguageRepresentation C (cryptoBase F F F Nat Nat))
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)
   (primitive : {a b : Ty CryptoAtom} → (instr : CryptoOp a b) →

@@ -5,7 +5,7 @@ representation before drawing its challenge; repeated requests retain that recor
 Signing replies extend the received representation list in chronological order.
 The adaptive probability comparison is a separate proof obligation. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 namespace Schnorr.AGM.Reduction
 

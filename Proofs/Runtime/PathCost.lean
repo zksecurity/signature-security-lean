@@ -10,7 +10,7 @@ namespace Signatures.Runtime
 
 variable {I A : Type} {spec : OracleSpec.{0, 0} I} [DecidableEq I]
 
-attribute [local implicit_reducible] PFunctor.Idx FreeMonoid
+attribute [local implicit_reducible] PFunctor.Idx
 
 theorem QueryCost.of_path (target : I) (main : OracleComp spec A) (path : Path main) :
     QueryCost (fun i => if i = target then 1 else 0) main (output main path)
@@ -21,7 +21,7 @@ theorem QueryCost.of_path (target : I) (main : OracleComp spec A) (path : Path m
       rcases path with ⟨reply, tail⟩
       have h := QueryCost.queryBind i next reply (ih reply tail)
       by_cases hi : i = target <;>
-        simpa [Path.trace, output, PFunctor.TraceList.occurrences, hi, Nat.add_comm] using h
+        simpa [Path.trace, output, PFunctor.TraceList.occurrences_of_mul, hi, Nat.add_comm] using h
 
 theorem pathCfReachable_of_queryCost (main : OracleComp spec A) (qb : I → Nat) (target : I)
     (select : A → Option (Fin (qb target + 1)))

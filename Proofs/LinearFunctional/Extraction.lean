@@ -18,7 +18,8 @@ algebra below. These definitions impose no ordering on when the representation i
 
 open BilinearGroup
 
-open OracleComp AlgebraicGroupModel AlgebraicGroupModel.LinFunctional Finset
+open OracleComp AlgebraicGroupModel AlgebraicGroupModel.LinFunctional Finset MeasureTheory
+  ProbabilityTheory
 
 namespace AlgebraicGroupModel.LinFunctional
 
@@ -29,7 +30,7 @@ variable {F ι : Type} [Field F] [SampleableType F] [Fintype F] [DecidableEq F]
 functional `L` with **some** nonzero coordinate `L_{jₖ}`, the relation `∑ᵢ Lᵢ ρᵢ = t` holds with
 probability `≤ 1/|F|`.  The "nonzero functional of a uniform vector" kernel, as one clean statement. -/
 theorem linear_functional_collision (L : ι → F) (jk : ι) (hLjk : L jk ≠ 0) (t : F) :
-    Pr[fun ρ : ι → F => ∑ i, L i * ρ i = t | ($ᵗ (ι → F) : ProbComp (ι → F))]
+    Pr{let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))}[∑ i, L i * ρ i = t]
       ≤ 1 / (Fintype.card F : ENNReal) := by
   have hsum : ∀ (g : ι → F) (u : F),
       (∑ i, L i * Function.update g jk u i) = L jk * u + ∑ i ∈ univ.erase jk, L i * g i := by
@@ -38,11 +39,26 @@ theorem linear_functional_collision (L : ι → F) (jk : ι) (hLjk : L jk ≠ 0)
       Function.update_self]
     congr 1
     exact Finset.sum_congr rfl fun i hi => by rw [Function.update_of_ne (Finset.ne_of_mem_erase hi)]
-  rw [probEvent_def, ← evalSPMF_uniformSample_bind_update (R := F) jk,
-    DeferredSampling.evalSPMF_bind_comm, ← probEvent_def]
-  simpa only [probEvent_bind_eq_tsum, probEvent_pure, hsum] using
-    affine_uniform_collision ($ᵗ (ι → F)) (fun _ => L jk)
-      (fun g => ∑ i ∈ univ.erase jk, L i * g i) (fun _ => t) (fun _ _ => hLjk)
+  let : MeasurableSpace F := ⊤
+  have hval : 𝒟[($ᵗ F : ProbComp F)] = uniformOn Set.univ := SampleableType.evalDist_uniformSample
+  have htab : 𝒟[($ᵗ (ι → F) : ProbComp (ι → F))] = uniformOn Set.univ :=
+    SampleableType.evalDist_uniformSample
+  calc Pr{let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F))}[∑ i, L i * ρ i = t]
+      = 𝒟[($ᵗ (ι → F) : ProbComp (ι → F)) >>= fun g => pure (∑ i, L i * g i = t)] {True} := by
+        rw [prEvent_def, ← bind_pure_comp]
+    _ = 𝒟[($ᵗ F : ProbComp F) >>= fun u => ($ᵗ (ι → F) : ProbComp (ι → F)) >>= fun g =>
+          pure (∑ i, L i * Function.update g jk u i = t)] {True} := by
+        rw [evalDist_bind_bind_update_map _ _ hval htab jk (fun g => ∑ i, L i * g i = t)]
+    _ = Pr{let u ← ($ᵗ F : ProbComp F); let g ← ($ᵗ (ι → F) : ProbComp (ι → F))}[
+          L jk * u + ∑ i ∈ univ.erase jk, L i * g i = t] := by
+        simp only [hsum, evalDist_singleton_true, prEvent_norm]
+    _ = Pr{let g ← ($ᵗ (ι → F) : ProbComp (ι → F)); let u ← ($ᵗ F : ProbComp F)}[
+          L jk * u + ∑ i ∈ univ.erase jk, L i * g i = t] :=
+        prEvent_bind_bind_swap_of_countable_left _ _ _
+    _ ≤ 1 / (Fintype.card F : ENNReal) := by
+        simpa only [prEvent_norm] using
+          affine_uniform_collision ($ᵗ (ι → F)) (fun _ => L jk)
+            (fun g => ∑ i ∈ univ.erase jk, L i * g i) (fun _ => t) (fun _ _ => hLjk)
 
 /-! ## Fixed-transcript algebra -/
 

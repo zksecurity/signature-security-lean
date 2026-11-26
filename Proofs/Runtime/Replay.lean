@@ -46,16 +46,16 @@ theorem rerun_map {B : Type} (f : A → B) (main : OracleComp spec A) (tape : Ta
     rerun (f <$> main) tape = f <$> rerun main tape := by
   simp [rerun, StateT.run'_eq, simulateQ_map, StateT.run_map, Functor.map_map]
 
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
+attribute [local implicit_reducible] PFunctor.Idx
 
 /-- Re-execution consumes precisely the recorded prefix and then runs the residual
 program with fresh oracle replies. This holds for every typed cursor, not only one game. -/
 theorem rerun_spine {main residual : OracleComp spec A}
-    (spine : Cursor.Spine main residual) : rerun main spine.trace = residual := by
+    (spine : Cursor.Spine main residual) : rerun main spine.trace.toList = residual := by
   induction spine with
   | root => exact rerun_empty _
   | @down i next residual answer tail ih =>
-    change rerun (OracleComp.queryBind i next) (⟨i, answer⟩ :: tail.trace) = _
+    change rerun (OracleComp.queryBind i next) (⟨i, answer⟩ :: tail.trace.toList) = _
     rw [rerun_queryBind]
     simpa [tapeImpl, StateT.run] using ih
 
@@ -63,7 +63,7 @@ theorem rerun_spine {main residual : OracleComp spec A}
 as is the suffix, while every earlier oracle reply is retained. -/
 theorem rerun_before {main : OracleComp spec A} {target : I} {n : Nat}
     (occ : Cursor.Occurrence target main n) :
-    rerun main occ.before = OracleComp.queryBind target occ.resume :=
+    rerun main occ.before.toList = OracleComp.queryBind target occ.resume :=
   rerun_spine occ.toSpine
 
 omit [DecidableEq I] in
@@ -79,8 +79,8 @@ theorem withQueryLog_queryBind (i : I) (next : spec.Range i → OracleComp spec 
 This is a joint transcript equality, stronger than equality of final-output distributions. -/
 theorem rerun_log_spine {main residual : OracleComp spec A}
     (spine : Cursor.Spine main residual) :
-    rerun main.withQueryLog spine.trace =
-      (fun p => (p.1, List.append (spine.trace : Tape spec) (p.2 : Tape spec))) <$>
+    rerun main.withQueryLog spine.trace.toList =
+      (fun p => (p.1, List.append spine.trace.toList (p.2 : Tape spec))) <$>
         residual.withQueryLog := by
   induction spine with
   | root program =>
@@ -89,11 +89,11 @@ theorem rerun_log_spine {main residual : OracleComp spec A}
       rerun_empty (OracleComp.withQueryLog program)
   | @down i next residual answer tail ih =>
     change rerun (OracleComp.queryBind i next).withQueryLog
-      (⟨i, answer⟩ :: tail.trace) = _
+      (⟨i, answer⟩ :: tail.trace.toList) = _
     rw [withQueryLog_queryBind, rerun_queryBind]
     simp only [tapeImpl, StateT.run, dite_true, pure_bind]
     rw [rerun_map, ih]
-    simp [Functor.map_map, Cursor.Spine.trace]
+    simp [Functor.map_map, Cursor.Spine.trace, FreeMonoid.toList_of_mul]
 
 /-- Split a recorded path immediately before the selected target occurrence. The focused
 answer is kept separately so replay can replace it rather than accidentally reuse it. -/
@@ -108,14 +108,15 @@ def splitBefore (target : I) : Nat → Tape spec → Option (Tape spec × spec.R
 
 theorem splitBefore_trace (target : I) (main : OracleComp spec A)
     (path : PFunctor.FreeM.Path main) (n : Nat) :
-    splitBefore target n (PFunctor.FreeM.Path.trace main path) =
+    splitBefore target n (PFunctor.FreeM.Path.trace main path).toList =
       (Cursor.locateAt? target main path n).map
-        (fun located => (located.occurrence.before, located.completion.answer)) := by
+        (fun located => (located.occurrence.before.toList, located.completion.answer)) := by
   induction main generalizing n with
   | pure a => rfl
   | queryBind i next ih =>
     rcases path with ⟨answer, suffix⟩
-    change splitBefore target n (⟨i, answer⟩ :: PFunctor.FreeM.Path.trace (next answer) suffix) =
+    change splitBefore target n
+        (⟨i, answer⟩ :: (PFunctor.FreeM.Path.trace (next answer) suffix).toList) =
       (Cursor.locateAt? (P := spec.toPFunctor) target
         (PFunctor.FreeM.liftBind i next) ⟨answer, suffix⟩ n).map _
     by_cases h : i = target
@@ -136,8 +137,8 @@ theorem splitBefore_trace (target : I) (main : OracleComp spec A)
 
 theorem splitBefore_before {main : OracleComp spec A} {target : I} {n : Nat}
     (occ : Cursor.Occurrence target main n) (answer : spec.Range target) (rest : Tape spec) :
-    splitBefore target n (List.append (occ.before : Tape spec) (⟨target, answer⟩ :: rest)) =
-      some (occ.before, answer) := by
+    splitBefore target n (List.append occ.before.toList (⟨target, answer⟩ :: rest)) =
+      some (occ.before.toList, answer) := by
   induction occ with
   | here => simp [Cursor.Occurrence.before, Cursor.Occurrence.toCursor,
       Cursor.trace, Cursor.Occurrence.toSpine, Cursor.Spine.trace, splitBefore]
@@ -154,14 +155,14 @@ theorem splitBefore_before {main : OracleComp spec A} {target : I} {n : Nat}
 
 theorem rerun_log_before {main : OracleComp spec A} {target : I} {n : Nat}
     (occ : Cursor.Occurrence target main n) :
-    rerun main.withQueryLog occ.before = (do
+    rerun main.withQueryLog occ.before.toList = (do
       let answer ← (spec.query target : OracleComp spec _)
       let p ← OracleComp.withQueryLog (occ.resume answer)
-      pure (p.1, List.append (occ.before : Tape spec) (⟨target, answer⟩ :: p.2))) := by
-  change rerun main.withQueryLog occ.toSpine.trace = _
+      pure (p.1, List.append occ.before.toList (⟨target, answer⟩ :: p.2))) := by
+  change rerun main.withQueryLog occ.toSpine.trace.toList = _
   rw [rerun_log_spine occ.toSpine]
   rw [withQueryLog_queryBind]
-  change (fun p => (p.1, List.append (occ.before : Tape spec) p.2)) <$>
+  change (fun p => (p.1, List.append occ.before.toList p.2)) <$>
     ((spec.query target : OracleComp spec _) >>= fun answer =>
       (fun p => (p.1, ⟨target, answer⟩ :: p.2)) <$>
         OracleComp.withQueryLog (occ.resume answer)) = _

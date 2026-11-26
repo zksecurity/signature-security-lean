@@ -11,7 +11,7 @@ open OracleComp OracleSpec MeasureTheory
 namespace FiatShamir.LazyTape
 
 variable {Stmt Wit Commit PrvState Chal Resp M : Type} {rel : Stmt → Wit → Bool}
-variable (σ : SigmaProtocol Stmt Wit Commit PrvState Chal Resp rel)
+variable (σ : SigmaProtocol ProbComp Stmt Wit Commit PrvState Chal Resp rel)
   (hr : GenerableRelation Stmt Wit rel) (M : Type)
   [DecidableEq M] [DecidableEq Commit] [DecidableEq Chal]
   [SampleableType Wit] [SampleableType Chal]
@@ -79,11 +79,8 @@ section Correspondence
 variable [MeasurableSpace Chal] [DiscreteMeasurableSpace Chal]
   [MeasurableSpace Wit]
 
-noncomputable local instance : IsUniformSpec (Unit →ₒ Chal) :=
-  IsUniformSpec.ofFintypeInhabited _
-
-noncomputable local instance : IsUniformMeasureSpec (Schnorr.FixedTape.Spec Chal) :=
-  OracleSpec.instIsUniformMeasureSpecOfIsUniformSpec
+noncomputable local instance : OracleSpec.UniformAnswerMeasure (Unit →ₒ Chal) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 /-- Equality covers the whole extracted witness law, including failure fallback. -/
 theorem reduction_eq_fixed (simulator : Stmt → ProbComp (Commit × Chal × Resp))
@@ -107,15 +104,13 @@ theorem reduction_eq_fixed (simulator : Stmt → ProbComp (Commit × Chal × Res
       (σ := σ) (hr := hr) (M := M) (cmaToNmaAdv σ hr M simulator adv) qH pk)
   have hfork := Schnorr.LazyROM.fork_eq_complete (main σ hr M simulator adv pk)
     privateFamilies qR qH (Fork.forkPoint Commit Chal Resp M qH) bound reachable
-  apply Signatures.Runtime.SeededDeferred.measure_of_compat
-  apply congrArg SPMF.toMeasure
-  rw [liftM_bind, liftM_bind]
-  congr 1
-  apply evalSPMF_ext
-  intro result
-  have h := congrArg (fun measure : Measure (Option
-    (Fork.Trace Commit Chal Resp M × Fork.Trace Commit Chal Resp M)) => measure {result}) hfork
-  simpa only [evalDist_apply_singleton] using h
+  have hfork' : Schnorr.LazyROM.fork (main σ hr M simulator adv pk) qH
+      (Fork.forkPoint Commit Chal Resp M qH) =ᵈ
+      Schnorr.FixedTape.completeFork (main σ hr M simulator adv pk) privateFamilies.dedup qR qH
+        (Fork.forkPoint Commit Chal Resp M qH) := by
+    refine evalDistEq_of_forall_prEvent_eq_output fun result => ?_
+    rw [prEvent_eq_evalDist_singleton, prEvent_eq_evalDist_singleton, hfork]
+  exact (hfork'.bind_left _).evalDist_eq
 
 end Correspondence
 
@@ -141,20 +136,20 @@ Only source query allowances enter; reference seed coverage is derived internall
 theorem security [Finite Stmt] [SampleableType Stmt]
     (hss : σ.SpeciallySound)
     (simulator : Stmt → ProbComp (Commit × Chal × Resp))
-    (ζ : ℝ) (hζ : 0 ≤ ζ) (hhvzk : σ.HVZK simulator ζ)
+    (ζ : ENNReal) (hhvzk : σ.HVZK simulator ζ)
     (β : ENNReal) (hpred : σ.simCommitPredictability simulator β)
     (adv : SignatureAlg.UnforgeableAdversary (inROM σ hr M)) (qS qH : Nat)
     (queries : ∀ pk, signHashQueryBound (M := M) (oa := adv.main pk) qS qH) :
     let eps := SignatureAlg.unforgeableAdvantage (runtime M) adv -
-      (ENNReal.ofReal ((qS : ℝ) * ζ) + (qS : ENNReal) * (qS + qH) * β)
+      ((qS : ENNReal) * ζ + (qS : ENNReal) * (qS + qH) * β)
     eps * (eps / (qH + 1 : ENNReal) - challengeSpaceInv Chal) ≤
       𝒟[hardRelationExperiment hr (reduction σ hr M simulator adv qH)] {true} := by
   obtain ⟨families, qR, bounded⟩ := exists_seed_bound σ hr M simulator adv qS qH queries
   rw [experiment_eq_fixed σ hr M simulator adv families qR qH bounded]
-  have h := FixedTape.euf_cma_bound σ hr M hss simulator ζ hζ hhvzk β hpred adv
+  have h := FixedTape.euf_cma_bound σ hr M hss simulator ζ hhvzk β hpred adv
     families.dedup qR qS qH queries (fun pk => by
       rw [Schnorr.LazyROM.finiteBounds_dedup]
       exact bounded pk)
-  simpa only [evalDist_apply_singleton] using h
+  simpa only [prEvent_eq_evalDist_singleton] using h
 
 end FiatShamir.LazyTape

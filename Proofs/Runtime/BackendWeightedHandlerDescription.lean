@@ -17,7 +17,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   {iface : Interface (C := C) unifSpec}
   {S : Type} (store : C.Str S)
   (sizes : DescriptionSize Q) (allowance : Nat) (laws : LocalDescriptionLaws sizes allowance)
@@ -59,7 +59,7 @@ variable {F G₁ G₂ K M Input Output : Type} {randomBound : Nat}
   (signReply : Code Q unifSpec iface
     (StepClass.HasProd.prod (rep.ty messageTy) store) (StepClass.HasProd.prod (rep.ty point₁) store))
 
-omit laws [Q.HasCategory] QP QS QD in
+omit laws [Q.HasComposition] QP QS QD in
 theorem random_description :
     (random rep indexTy messageTy bd ports sampler store).descriptionSize sizes =
       sampler.code.descriptionSize sizes + sizes.localSize ports.randomTag + 4 := by

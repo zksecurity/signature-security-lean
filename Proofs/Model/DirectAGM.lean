@@ -5,7 +5,7 @@ open OracleComp OracleSpec
 
 namespace Model.DirectAGM
 
-open AlgebraicGroupModel.Interaction
+open GroupModel.Interaction
 open LazyAGM.Interactive
 
 private theorem simulate_queryBind {I α : Type} {spec : OracleSpec I}
@@ -60,7 +60,7 @@ omit [AddCommGroup G₂] [Module F G₂] in
 theorem Aligned.request {generator : G₁} {positions : Positions}
     {basis : Groups (Group G₁ G₂)} {transcript : LazyAGM.Transcript Index Message G₁}
     (aligned : Aligned (F := F) generator positions basis transcript)
-    (request : AlgebraicGroupModel.Interaction.Message (Query Index Message) (Group G₁ G₂)) :
+    (request : GroupModel.Interaction.Message (Query Index Message) (Group G₁ G₂)) :
     Aligned (F := F) generator (positions.request request) basis transcript :=
   ⟨aligned.next_eq, aligned.hashes_length, aligned.signatures_length, aligned.evaluate_eq⟩
 
@@ -154,7 +154,7 @@ omit [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F
 theorem execute_query {Out : Type} {N : Type → Type} [Monad N] [LawfulMonad N]
     (random : QueryImpl unifSpec N) (hash : Index → N G₁) (sign : Message → N G₁)
     (request : Explained F (Query Index Message) (Group G₁ G₂))
-    (next : AlgebraicGroupModel.Interaction.Message (Reply request.value.data) (Group G₁ G₂) →
+    (next : GroupModel.Interaction.Message (Reply request.value.data) (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
         (Explained F Out (Group G₁ G₂)))
     (basis : Groups (Group G₁ G₂)) (state : State Message) :
@@ -166,33 +166,36 @@ theorem execute_query {Out : Type} {N : Type → Type} [Monad N] [LawfulMonad N]
 omit [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
 theorem program_random {Out : Type} (n : Nat) (groups : Groups (Group G₁ G₂))
     (explanations : GroupSort → List (List F))
-    (next : AlgebraicGroupModel.Interaction.Message (Fin (n + 1)) (Group G₁ G₂) →
+    (next : GroupModel.Interaction.Message (Fin (n + 1)) (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
         (Explained F Out (Group G₁ G₂))) (positions : Positions) :
     program (OracleComp.queryBind ⟨⟨.inl (.inl n), groups⟩, explanations⟩ next) positions =
-      OracleComp.queryBind (.inl (.inl n)) (fun number =>
+      OracleComp.queryBind (spec := LazyAGM.advSpec Index Message G₁) (.inl (.inl n))
+        (fun (number : Fin (n + 1)) =>
         program (next ⟨number, fun _ => []⟩)
           (positions.request (Index := Index) (Message := Message) ⟨.inl (.inl n), groups⟩)) := rfl
 
 omit [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
 theorem program_hash {Out : Type} (index : Index) (groups : Groups (Group G₁ G₂))
     (explanations : GroupSort → List (List F))
-    (next : AlgebraicGroupModel.Interaction.Message Unit (Group G₁ G₂) →
+    (next : GroupModel.Interaction.Message Unit (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
         (Explained F Out (Group G₁ G₂))) (positions : Positions) :
     program (OracleComp.queryBind ⟨⟨.inl (.inr index), groups⟩, explanations⟩ next) positions =
-      OracleComp.queryBind (.inl (.inr index)) (fun point =>
+      OracleComp.queryBind (spec := LazyAGM.advSpec Index Message G₁) (.inl (.inr index))
+        (fun (point : G₁) =>
         program (next ⟨(), groupLists [point] []⟩)
           (positions.request (Message := Message) ⟨.inl (.inr index), groups⟩).hash) := rfl
 
 omit [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] in
 theorem program_sign {Out : Type} (message : Message) (groups : Groups (Group G₁ G₂))
     (explanations : GroupSort → List (List F))
-    (next : AlgebraicGroupModel.Interaction.Message Unit (Group G₁ G₂) →
+    (next : GroupModel.Interaction.Message Unit (Group G₁ G₂) →
       OracleComp (explainedSpec F (Group G₁ G₂) (Query Index Message) Reply)
         (Explained F Out (Group G₁ G₂))) (positions : Positions) :
     program (OracleComp.queryBind ⟨⟨.inr message, groups⟩, explanations⟩ next) positions =
-      OracleComp.queryBind (.inr message) (fun point =>
+      OracleComp.queryBind (spec := LazyAGM.advSpec Index Message G₁) (.inr message)
+        (fun (point : G₁) =>
         program (next ⟨(), groupLists [point] []⟩)
           (positions.request (Index := Index) ⟨.inr message, groups⟩).sign) := rfl
 

@@ -22,7 +22,8 @@ theorem Synchronizes.with_support {relation : A → B → Prop}
   | pure h => exact .pure ⟨h, by simp, by simp⟩
   | query position _ ih =>
     exact .query position fun answer => (ih answer).mono fun _ _ h =>
-      ⟨h.1, Set.mem_iUnion.mpr ⟨answer, h.2.1⟩, Set.mem_iUnion.mpr ⟨answer, h.2.2⟩⟩
+      ⟨h.1, PFunctor.FreeM.mem_support_liftBind.mpr ⟨answer, h.2.1⟩,
+        PFunctor.FreeM.mem_support_liftBind.mpr ⟨answer, h.2.2⟩⟩
 
 namespace Interactive
 

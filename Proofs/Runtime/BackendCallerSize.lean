@@ -17,7 +17,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   {I A B S : Type} {source : OracleSpec I} [DecidableEq I]
   {bd : Boundary C source.toPFunctor A B}
@@ -26,7 +26,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
 
 include sizes
 
-omit [Q.HasCategory] QP QS QO QD OC in
+omit [Q.HasComposition] QP QS QO QD OC in
 theorem inspectSizes_le (input : R.machine.State × S) (n : Nat)
     (hn : n ∈ inspectSizes R store input) :
     n ≤ 3 * Q.size R.state input.1 + 3 * Q.size store input.2 +
@@ -38,7 +38,7 @@ theorem inspectSizes_le (input : R.machine.State × S) (n : Nat)
   dsimp only [frame, Boundary.head] at hn hf hp hr ⊢
   rcases hn with h | h | h | h | h | h <;> omega
 
-omit [Q.HasCategory] QP QS QO QD OC in
+omit [Q.HasComposition] QP QS QO QD OC in
 theorem updateSizes_le (input : R.machine.State × source.toPFunctor.Idx) (n : Nat)
     (hn : n ∈ updateSizes R input) :
     n ≤ 3 * Q.size R.state input.1 + Q.size bd.idx input.2 +

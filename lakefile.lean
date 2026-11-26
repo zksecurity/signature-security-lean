@@ -7,21 +7,12 @@ package «bls-lean» where
     ⟨`relaxedAutoImplicit, false⟩
   ]
 
--- Keep the direct VCVio pin authoritative over inherited requirements.
-require Arklib from git
-  "https://github.com/Verified-zkEVM/ArkLib" @
-  "7653a901ed466c88a2e61a3075011b73d7bb2316"
-
-require «agm-lean» from git
-  "https://github.com/zksecurity/agm-lean" @
-  "c207f29d1bba8b36fd6c09a0a3a6b4e82148b402"
-
 require VCVio from git
   "https://github.com/Verified-zkEVM/VCVio" @
-  "f5119c64ebb055d69c143704e12eba6df7dc386c"
+  "70c422d63c07fd3401dd85c51e8b3ed8fd587718"
 
--- Pinned upstream source with the existing minimal Lean 4.34 compatibility port.
-require caliper from "vendor/caliper"
+-- Caliper on its `lean-4.36` branch; a local checkout until that branch is published.
+require caliper from "../../caliper"
 
 @[default_target]
 lean_lib «Signatures» where

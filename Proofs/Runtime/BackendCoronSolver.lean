@@ -39,7 +39,7 @@ structure DataPorts where
   optional : Q.Realizer (StepClass.HasOption.option bd.out)
     (StepClass.HasSum.sum rep.data.unit bd.out) optionView
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   [Field F] [SampleableType F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]

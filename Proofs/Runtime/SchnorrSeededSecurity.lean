@@ -14,8 +14,8 @@ variable {F G₁ G₂ K M : Type} [Field F] [SampleableType F] [Fintype F] [Deci
   [AddCommGroup G₂] [Module F G₂] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
 
 local instance : Inhabited F := ⟨0⟩
-noncomputable local instance : IsUniformSpec (Unit →ₒ F) :=
-  IsUniformSpec.ofFintypeInhabited _
+noncomputable local instance : OracleSpec.UniformAnswerMeasure (Unit →ₒ F) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 def sourceReduction (cost : PrimitiveCosts) (randomBound localTime : Nat)
     (queries : Fin 3 → Nat) (g : G₁) (adv : _root_.Schnorr.ROM.Adversary (F := F) (M := M) g)
@@ -33,17 +33,14 @@ private theorem source_acceptance_eq (cost : PrimitiveCosts) (randomBound localT
     (queries : Fin 3 → Nat) (g : G₁) (adv : _root_.Schnorr.ROM.Adversary (F := F) (M := M) g)
     (cert : SourceCertificate (G₂ := G₂) (K := K) cost randomBound localTime queries adv.main)
     (pk : G₁) (qH : Nat) :
-    (∑ s, Pr[= some s | FiatShamir.Fork.forkPoint G₁ F F M qH <$>
-      main cost randomBound cert.code (pk, cert.data, ()) g pk]) =
-    Pr[fun x => (FiatShamir.Fork.forkPoint G₁ F F M qH x).isSome |
-      _root_.Schnorr.FixedTape.main g pk adv] := by
+    (∑ s, Pr{let x ← (FiatShamir.Fork.forkPoint G₁ F F M qH <$>
+      main cost randomBound cert.code (pk, cert.data, ()) g pk)}[x = some s]) =
+    Pr{let x ← _root_.Schnorr.FixedTape.main g pk adv}[(FiatShamir.Fork.forkPoint G₁ F F M qH x).isSome] := by
   have he := cert.trace cost randomBound localTime queries g adv pk
   rw [← simulateQ_map] at he
   unfold _root_.Schnorr.FixedTape.main
   rw [← he, probEvent_expandPrivate]
-  simpa only [probEvent_isSome_eq_tsum_probOutput_some, tsum_fintype, Function.comp_def] using
-    (probEvent_map (main cost randomBound cert.code (pk, cert.data, ()) g pk)
-      (FiatShamir.Fork.forkPoint G₁ F F M qH) (fun r => r.isSome))
+  simp only [prEvent_isSome_eq_sum, prEvent_map]
 
 theorem hardRelation_bound (cost : PrimitiveCosts) (randomBound localTime : Nat)
     (queries : Fin 3 → Nat) (g : G₁) (adv : _root_.Schnorr.ROM.Adversary (F := F) (M := M) g)
@@ -53,47 +50,40 @@ theorem hardRelation_bound (cost : PrimitiveCosts) (randomBound localTime : Nat)
       (FiatShamir.cmaToNmaAdv (_root_.Schnorr.sigma F G₁ g) (dlogGenerable F g) M
         (_root_.Schnorr.simTranscript F G₁ g) adv) qH
     a * (a / (qH + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
-      Pr[= true | hardRelationExperiment (dlogGenerable F g)
-        (sourceReduction cost randomBound localTime queries g adv cert qH)] := by
+      Pr{let x ← (hardRelationExperiment (dlogGenerable F g)
+        (sourceReduction cost randomBound localTime queries g adv cert qH))}[x = true] := by
   classical
   dsimp only
+  let : MeasurableSpace (G₁ × F) := ⊤
   let acc : G₁ → ENNReal := fun pk =>
-    Pr[fun x => (FiatShamir.Fork.forkPoint G₁ F F M qH x).isSome |
-      _root_.Schnorr.FixedTape.main g pk adv]
-  have hsample (mx : OracleComp (expandedSpec F) Bool) (p : Bool → Prop) :
-      Pr[p | simulateQ (QueryImpl.ofLift unifSpec ProbComp +
-        uniformSampleImpl (spec := Unit →ₒ F)) mx] = Pr[p | mx] :=
-    probEvent_sampleChallenges mx p
+    Pr{let x ← _root_.Schnorr.FixedTape.main g pk adv}[(FiatShamir.Fork.forkPoint G₁ F F M qH x).isSome]
+  let B : G₁ × F → ENNReal := fun pkw =>
+    Pr{let w ← sourceReduction cost randomBound localTime queries g adv cert qH pkw.1}[decide (w • g = pkw.1) = true]
   have hAdv : FiatShamir.Fork.advantage (_root_.Schnorr.sigma F G₁ g) (dlogGenerable F g) M
       (FiatShamir.cmaToNmaAdv (_root_.Schnorr.sigma F G₁ g) (dlogGenerable F g) M
         (_root_.Schnorr.simTranscript F G₁ g) adv) qH =
-      ∑' pkw : G₁ × F, Pr[= pkw | (dlogGenerable F g).gen] * acc pkw.1 := by
-    simp only [FiatShamir.Fork.advantage, FiatShamir.Fork.experiment,
-      ← probEvent_eq_eq_probOutput, hsample,
-      probEvent_bind_eq_tsum, bind_pure_comp, probEvent_map, Function.comp_def,
-      probEvent_liftComp, acc]
-  have hReduction : Pr[= true | hardRelationExperiment (dlogGenerable F g)
-        (sourceReduction cost randomBound localTime queries g adv cert qH)] =
-      ∑' pkw : G₁ × F, Pr[= pkw | (dlogGenerable F g).gen] *
-        Pr[fun w => decide (w • g = pkw.1) = true |
-          sourceReduction cost randomBound localTime queries g adv cert qH pkw.1] := by
-    simp only [hardRelationExperiment, ← probEvent_eq_eq_probOutput, bind_pure_comp,
-      probEvent_bind_eq_tsum, probEvent_map, Function.comp_def]
+      ∫⁻ pkw, acc pkw.1 ∂𝒟[(dlogGenerable F g).gen] := by
+    rw [FiatShamir.Fork.advantage, FiatShamir.Fork.experiment,
+      (FiatShamir.Fork.simulateQ_uniformImpl_evalDistEq _).prEvent_eq,
+      prEvent_bind_eq_lintegral_of_discrete, OracleComp.evalDist_liftComp_uniform]
+    refine MeasureTheory.lintegral_congr fun pkw => ?_
+    rcases pkw with ⟨pk, w⟩
+    simp only [acc, prEvent_norm]
+  have hReduction : Pr{let x ← (hardRelationExperiment (dlogGenerable F g)
+        (sourceReduction cost randomBound localTime queries g adv cert qH))}[x = true] =
+      ∫⁻ pkw, B pkw ∂𝒟[(dlogGenerable F g).gen] := by
+    rw [hardRelationExperiment, prEvent_bind_eq_lintegral_of_discrete]
+    refine MeasureTheory.lintegral_congr fun pkw => ?_
+    rcases pkw with ⟨pk, w⟩
+    simp only [B, prEvent_norm]
   have hPointwise : ∀ pk, acc pk * (acc pk / (qH + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
-      Pr[fun w => decide (w • g = pk) = true |
-        sourceReduction cost randomBound localTime queries g adv cert qH pk] := by
+      Pr{let w ← sourceReduction cost randomBound localTime queries g adv cert qH pk}[decide (w • g = pk) = true] := by
     intro pk
     simpa only [source_acceptance_eq, acc, sourceReduction] using
       pointwise_extraction_bound cost randomBound localTime queries g adv cert pk qH
   rw [hAdv, hReduction]
-  simpa only [DiscreteEvalDistCompatible.lintegral_evalDist _ (g := fun a => a) measurable_id,
-    ← OracleComp.EvalDist.expectedValue_def, OracleComp.EvalDist.expectedValue_map] using
-    OracleComp.EvalDist.marginalized_jensen_forking_bound_map (mx := (dlogGenerable F g).gen)
-      (acc := fun pkw => acc pkw.1)
-      (B := fun pkw => Pr[fun w => decide (w • g = pkw.1) = true |
-        sourceReduction cost randomBound localTime queries g adv cert qH pkw.1])
-      (q := (qH : ENNReal) + 1) (hinv := (Fintype.card F : ENNReal)⁻¹)
-      (fun _ => probEvent_le_one) (fun pkw => hPointwise pkw.1)
+  exact OracleComp.EvalDist.marginalized_jensen_forking_bound_of_discrete (dlogGenerable F g).gen
+    (fun pkw => acc pkw.1) B _ _ (fun _ => prEvent_le_one _) (fun pkw => hPointwise pkw.1)
 
 /-- The complete source-certified probability endpoint. Both runs share every
 private draw; only the selected hash answer and its hash suffix are resampled. -/
@@ -110,22 +100,25 @@ theorem security (cost : PrimitiveCosts) (randomBound localTime : Nat)
   haveI : Finite G₁ := Finite.of_surjective (fun x : F => x • g) hgen.2
   have hAdv := FiatShamir.cma_to_nma_advantage_bound
     (_root_.Schnorr.sigma F G₁ g) (dlogGenerable F g) M (_root_.Schnorr.simTranscript F G₁ g)
-    0 le_rfl ((ChallengeVerifyProtocol.perfectHVZK_iff_hvzk_zero _ _).mp
+    0 ((ChallengeVerifyProtocol.perfectHVZK_iff_hvzk_zero _ _).mp
       (_root_.Schnorr.sigma_hvzk F G₁ g)) ((Fintype.card F : ENNReal)⁻¹)
     (_root_.Schnorr.sigma_simCommitPredictability F G₁ g hgen) adv qS qH hQ
   simp only [mul_zero, ENNReal.ofReal_zero, add_zero] at hAdv
   have hbound := hardRelation_bound cost randomBound localTime queries g adv cert qH
-  have heq : Pr[= true | hardRelationExperiment (dlogGenerable F g)
-      (sourceReduction cost randomBound localTime queries g adv cert qH)] =
-      Pr[= true | dlogExperiment g (dlogReduction cost randomBound localTime queries g adv cert qH)] := by
-    simp only [hardRelationExperiment, dlogGenerable, dlogExperiment,
-      dlogReduction, bind_pure_comp, bind_map_left]
-    apply probOutput_bind_congr' _ true
-    intro x
-    simp [hgen.1.eq_iff]
+  have heq : Pr{let x ← (hardRelationExperiment (dlogGenerable F g)
+      (sourceReduction cost randomBound localTime queries g adv cert qH))}[x = true] =
+      Pr{let x ← dlogExperiment g (dlogReduction cost randomBound localTime queries g adv cert qH)}[x = true] := by
+    rw [show Pr{let x ← (hardRelationExperiment (dlogGenerable F g)
+        (sourceReduction cost randomBound localTime queries g adv cert qH))}[x = true] =
+      Pr{let y ← (do
+        let x ← $ᵗ F
+        let w ← sourceReduction cost randomBound localTime queries g adv cert qH (x • g)
+        pure (decide (w • g = x • g)))}[y = true] by
+      simp [hardRelationExperiment, dlogGenerable]]
+    simp [dlogExperiment, dlogReduction, prEvent_norm, hgen.1.eq_iff]
   rw [heq] at hbound
   rw [_root_.Schnorr.ROM.game_eq_advantage]
-  simp only [evalDist_apply_singleton]
+  simp only [← prEvent_eq_evalDist_singleton]
   refine le_trans ?_ hbound
   gcongr <;> exact tsub_le_iff_right.mpr (by
     simpa only [_root_.Schnorr.signature, FiatShamir.inROM] using hAdv)

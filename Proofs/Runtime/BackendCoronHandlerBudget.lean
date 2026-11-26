@@ -124,7 +124,7 @@ theorem random_bound (qS width cap adapterTime samplingTime : Nat) (hh : header 
   exact ⟨⟨hout.1, hout.2.1.trans (by omega), hout.2.2.1, hout.2.2.2.trans (Nat.le_succ cap)⟩, by
     omega⟩
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [SampleableType F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq M]
   (data : DataCode Q rep.data) (samplingCode : MachineCompiler.SamplingImplementation Q iface rep)

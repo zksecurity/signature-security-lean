@@ -51,7 +51,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {iface : Interface (C := C) unifSpec}
 
 /-- With the original sampler laws, the actual compiled signing program has

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
 import Proofs.AlgebraicGroupModel.Extraction
-import VCVio.OracleComp.Constructions.SampleableType
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-!
 # Generic AGM forgery game — the extraction-probability split
@@ -43,10 +43,10 @@ that *samples* `α` internally (as the EUF-CMA-to-DLog reductions do) — no nee
 theorem agm_forgery_extract_split (oa : ProbComp γ)
     (success : γ → Prop) (repr : γ → AffineForm F) (c : γ → F) (secret : γ → F)
     (hsound : ∀ z ∈ support oa, success z → (repr z).eval (secret z) = c z * secret z) :
-    Pr[fun z => success z | oa]
-      ≤ Pr[fun z => (repr z).const / (c z - (repr z).lin) = secret z | oa]
-        + Pr[fun z => success z ∧ (repr z).lin = c z | oa] := by
-  refine le_trans (probEvent_mono ?_) (probEvent_or_le oa _ _)
+    Pr{let z ← oa}[success z]
+      ≤ Pr{let z ← oa}[(repr z).const / (c z - (repr z).lin) = secret z]
+        + Pr{let z ← oa}[success z ∧ (repr z).lin = c z] := by
+  refine le_trans (prEvent_mono_of_support oa _ _ ?_) (prEvent_or_le oa _ _)
   intro z hz hsucc
   by_cases hlin : (repr z).lin = c z
   · exact Or.inr ⟨hsucc, hlin⟩
@@ -57,14 +57,13 @@ uniform `ρ` is sampled and `a ≠ 0`, then `a·ρ + b = t` is a singleton colli
 theorem affine_uniform_collision {F : Type} [Field F] [Fintype F] [SampleableType F] [DecidableEq F]
     {γ : Type} (oa : ProbComp γ)
     (a b t : γ → F) (ha : ∀ z ∈ support oa, a z ≠ 0) :
-    Pr[fun w => a w.1 * w.2 + b w.1 = t w.1
-        | (do let z ← oa; let ρ ← ($ᵗ F : ProbComp F); pure (z, ρ))]
+    Pr{let w ← (do let z ← oa; let ρ ← ($ᵗ F : ProbComp F); pure (z, ρ))}[a w.1 * w.2 + b w.1 = t w.1]
       ≤ 1 / (Fintype.card F : ENNReal) := by
-  apply probEvent_bind_le_of_forall_le
+  apply prEvent_bind_le_of_forall_le_of_support
   intro z hz
-  rw [bind_pure_comp, probEvent_map]
   have heq (ρ : F) : a z * ρ + b z = t z ↔ ρ = (t z - b z) / a z := by
     rw [eq_div_iff (ha z hz), mul_comm ρ, eq_sub_iff_add_eq]
-  simp [Function.comp_def, heq, probOutput_uniformSample, one_div]
+  simp only [prEvent_norm, heq, SampleableType.prEvent_uniformSample_eq_singleton, one_div]
+  exact le_rfl
 
 end AlgebraicGroupModel

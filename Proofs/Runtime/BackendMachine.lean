@@ -63,7 +63,7 @@ theorem effects_denote_state (sampling : Machine.SamplingCosts) (store : Ty Cryp
   simpa only [StateT.run_map, Prod.map] using
     effects_denote rep data samplingCode sampling store instr input saved
 
-variable [Q.HasCategory] [QS : Q.HasSum] [Field F]
+variable [Q.HasComposition] [QS : Q.HasSum] [Field F]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq K] [DecidableEq M]

@@ -24,7 +24,7 @@ def atomicTime (control : ControlCosts) {A B : Type} {a : C.Str A} {b : C.Str B}
 
 namespace Caller
 
-variable [C.HasOption] [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [C.HasOption] [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   {I A B S J : Type} {source : OracleSpec I} [DecidableEq I]
   {bd : Boundary C source.toPFunctor A B}

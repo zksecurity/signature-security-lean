@@ -18,7 +18,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   {iface : Interface (C := C) unifSpec}
 
 section Group
@@ -86,7 +86,7 @@ section Semantics
 set_option backward.isDefEq.respectTransparency false
 attribute [local implicit_reducible] PFunctor.Idx
 
-omit [Q.HasCategory] QP QS QD in
+omit [Q.HasComposition] QP QS QD in
 theorem random_denote (n : Fin (randomBound + 1)) (saved : S) :
     (random rep indexTy messageTy bd ports sampler store).denote (n, saved) =
       (fun r => (tagRandom (ι := indexTy.Value (cryptoBase F G₁ G₂ K M))

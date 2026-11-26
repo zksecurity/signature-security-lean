@@ -3,7 +3,7 @@ import Proofs.Schnorr.AGMHonestSupport
 
 /-! Primitive equations for the original source handler under the shared lazy cache. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 set_option backward.isDefEq.respectTransparency false
 
@@ -28,8 +28,10 @@ theorem handler_hash (g : G) (x : F) (m : M) (groups : Groups (Group G)) (R : G)
     (close (Schnorr.AGM.handler g x ⟨.hash m, groups⟩)).run (st, cache) =
       (do let (c, cache') ← ((M × G →ₒ F).randomOracle (m, R)).run cache
           pure (scalarReply c, (st, cache'))) := by
-  simp only [Schnorr.AGM.handler, hR, close_bind, close_pure, StateT.run_bind,
-    StateT.run_pure, close_hash, bind_map_left]
+  simp only [Schnorr.AGM.handler, hR, close_bind, close_pure, StateT.run_bind, StateT.run_pure]
+  -- the handler's query is typed `F`, the lemma's `Range (.inr _)`; they agree only by unfolding
+  erw [close_hash]
+  simp only [bind_map_left]
 
 theorem handler_sign (g : G) (x : F) (m : M) (groups : Groups (Group G))
     (he : groups () = []) (st : Schnorr.AGM.State M) (cache : Cache F G M) :
@@ -38,8 +40,10 @@ theorem handler_sign (g : G) (x : F) (m : M) (groups : Groups (Group G))
           let (c, cache') ← ((M × G →ₒ F).randomOracle (m, r • g)).run cache
           pure (signingReply (r • g) (r + c * x), ({st with signed := st.signed ++ [m]}, cache'))) := by
   simp only [Schnorr.AGM.handler, he, ne_eq, not_true_eq_false, ite_false,
-    close_bind, close_pure, StateT.run_bind, StateT.run_pure, close_sample, close_hash,
-    close_modify, bind_map_left, bind_assoc, pure_bind]
+    close_bind, close_pure, StateT.run_bind, StateT.run_pure, close_sample, bind_map_left]
+  refine bind_congr fun r => ?_
+  erw [close_hash]
+  simp only [bind_map_left, close_modify, pure_bind]
 
 /-- The reduction's first-representation bookkeeping leaves ordinary cache reads unchanged. -/
 theorem read_erase (s : Reduction.State F G M) (key : M × G) (a : Affine F) :

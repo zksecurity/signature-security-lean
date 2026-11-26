@@ -66,7 +66,7 @@ theorem schnorr_eufcma_of_dlog_bit_hardness
     simp only [dlogExperiment, simulateQ_bind, simulateQ_pure, MachineSampling.uniformSample_law,
       HeapMachine.dlogAdvantage, PMF.bind_apply]
     calc
-      _ ≤ ∑' x : ZMod r, PMF.uniformOfFintype (ZMod r) x *
+      _ ≤ ∑' x : ZMod r, Signatures.Runtime.RejectionSampling.uniformOfFintype (ZMod r) x *
           (((HeapMachine.scalarLaw r w pack ((x • g : H₁) : W₁.Point)).map
             (fun out => decide (out.1 = x))) true + cert.targetBudget sampling qH*(1/2 : ℝ≥0∞)^k) := by
         apply ENNReal.tsum_le_tsum
@@ -75,7 +75,13 @@ theorem schnorr_eufcma_of_dlog_bit_hardness
         simpa only [bind_pure_comp, PMF.monad_map_eq_map] using hevent x
       _ = _ := by
         simp only [mul_add, ENNReal.tsum_add, ENNReal.tsum_mul_right, PMF.tsum_coe, one_mul]
+  have hgame : Pr{let x ← Schnorr.ROM.game g adv}[x = true] = 𝒟[Schnorr.ROM.game g adv] {true} :=
+    prEvent_eq_evalDist_singleton _ _
+  have hdlog : Pr{let x ← dlogExperiment g (Schnorr.dlogReduction (ZMod r) H₁ g M adv qH)}[x = true] =
+      𝒟[dlogExperiment g (Schnorr.dlogReduction (ZMod r) H₁ g M adv qH)] {true} :=
+    prEvent_eq_evalDist_singleton _ _
   have hsecurity := Schnorr.ROM.Proofs.security g hgen adv qS qH hQ
+  simp only [hgame, hdlog] at hsecurity
   simpa only [Nat.card_eq_fintype_card] using hsecurity.trans
     (hprob.trans (add_le_add (hhard pack hcost) (le_refl _)))
 

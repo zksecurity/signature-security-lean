@@ -24,7 +24,7 @@ theorem initial_reserved (value config : Ty CryptoAtom) (width cap fuel : Nat) (
     ReservedState (Q := Q) rep index (value := value) (config := config) width cap fuel (cfg, [], ([], [])) := by
   exact reserved_empty rep index width cap fuel hcap cfg
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq K] [DecidableEq M]
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

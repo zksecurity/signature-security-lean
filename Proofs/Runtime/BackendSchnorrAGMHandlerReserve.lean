@@ -60,7 +60,7 @@ theorem primitiveCaps_restrict (width basisCap arityCap lowerBasis : Nat) (t : T
     subtract := fun n hn => h.subtract n (hn.trans hle)
     increment := fun n hn => h.increment n (hn.trans hle) }
 
-variable [C.HasOption] [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [C.HasOption] [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [QD : Q.IsDistributive] [QO : Q.HasOption] [OC : OptionCode (Q := Q)]
   (bd : Boundary C (sourceSpec F G₁ M).toPFunctor Input Output) (ports : Ports (Q := Q) rep bd)
   (data : DataCode Q rep.data)

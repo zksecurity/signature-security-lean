@@ -21,7 +21,7 @@ whereas a **real signer** holds `α` and computes
 
 `functional_perfect_sim` proves these give the adversary an **identical view**: programming the base
 points `Hᵢ = ρᵢ·g₁` for uniform `ρ` is distributed exactly like real uniform base points (a product
-"one-time pad", `evalSPMF_map_bijective_uniform_cross`, needing `(·•g₁)` bijective), and under that
+"one-time pad", `evalDist_bind_bijective_uniform_cross`, needing `(·•g₁)` bijective), and under that
 coupling the simulator's signature equals the real one (`simSign_eq_realSign`, the scheme-agnostic identity
 `α·(c·g₁) = c·(α·g₁)`).  Hence the reduction is a *perfect* simulation of the real signing oracle.
 
@@ -65,14 +65,17 @@ probability is unchanged. -/
 theorem functional_perfect_sim {γ : Type} [SampleableType (ι → F)] [SampleableType (ι → G₁)]
     (w : ι → M → F) (g₁ : G₁) (α : F) (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     (cont : (ι → G₁) → (M → G₁) → ProbComp γ) :
-    𝒮[do let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F)); cont (fun i => ρ i • g₁) (simSign w (α • g₁) ρ)]
-      = 𝒮[do let H ← ($ᵗ (ι → G₁) : ProbComp (ι → G₁)); cont H (realSign w α H)] := by
+    (do let ρ ← ($ᵗ (ι → F) : ProbComp (ι → F)); cont (fun i => ρ i • g₁) (simSign w (α • g₁) ρ)) =ᵈ (do let H ← ($ᵗ (ι → G₁) : ProbComp (ι → G₁)); cont H (realSign w α H)) := by
   have hf : Function.Bijective (fun ρ : ι → F => fun i => ρ i • g₁) :=
     (Equiv.piCongrRight fun _ => Equiv.ofBijective _ hgen).bijective
   have hsign (ρ : ι → F) : simSign w (α • g₁) ρ = realSign w α (fun i => ρ i • g₁) :=
     funext fun m => simSign_eq_realSign w g₁ α ρ m
   simp_rw [hsign]
-  exact evalSPMF_ext (probOutput_bind_bijective_uniform_cross (ι → F) _ hf
+  let : MeasurableSpace (ι → F) := ⊤
+  let : MeasurableSpace (ι → G₁) := ⊤
+  let : MeasurableSpace γ := ⊤
+  exact EvalDistEq.of_evalDist_eq (evalDist_bind_bijective_uniform_cross _ _
+    SampleableType.evalDist_uniformSample SampleableType.evalDist_uniformSample _ hf
     (fun H => cont H (realSign w α H)))
 
 end AlgebraicGroupModel.LinFunctional

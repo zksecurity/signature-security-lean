@@ -28,11 +28,10 @@ theorem adaptive_security (g₁ : G₁) (g₂ : G₂) (d : ℕ)
     (adv : AdaptiveAdv F (F × T) (T × Fin (d + 1)) G₁ G₂)
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     (hpair : Function.Injective (fun c : F => c • (pairing (F := F) g₁ g₂ : Gₜ))) :
-    Pr[fun x => (targetMessages x.1.2.v x.1.2.mstar.2).card ≤ d ∧
-        dynForgerySucc (Gₜ := Gₜ) (oopsWMulti d) g₁ g₂ x |
-      realGameDynAdaptive (G₁ := G₁) (oopsWMulti d) g₂ adv] ≤
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction (oopsWMulti d) adv)] +
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (oopsWMulti d) adv)] +
+    Pr{let x ← realGameDynAdaptive (G₁ := G₁) (oopsWMulti d) g₂ adv}[(targetMessages x.1.2.v x.1.2.mstar.2).card ≤ d ∧
+        dynForgerySucc (Gₜ := Gₜ) (oopsWMulti d) g₁ g₂ x] ≤
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction (oopsWMulti d) adv)}[x = true] +
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (oopsWMulti d) adv)}[x = true] +
       1 / (Fintype.card F : ENNReal) := by
   classical
   let valid : DynForgery F (F × T) (T × Fin (d + 1)) → Prop := fun fo =>

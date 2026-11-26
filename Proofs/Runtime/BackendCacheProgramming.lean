@@ -16,7 +16,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {Atom : Type} {base : Atom → Type} {Op : Ty Atom → Ty Atom → Type}
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)
   (P : Primitives base Op)
@@ -77,7 +77,7 @@ theorem withLookup_time_bound
       scanTime + 128 * overhead (128 * width) :=
   withLookup_time rep data P primitive sizes lists laws dataLaws primitiveBound mono scan env width scanTime hh hi hv ht
 
-omit sizes lists mono [C.HasOption] [C.HasSum] [Q.HasCategory] QP QS in
+omit sizes lists mono [C.HasOption] [C.HasSum] [Q.HasComposition] QP QS in
 theorem property [DecidableEq (key.Value base)]
     (width cap : Nat) (k : key.Value base) (v : val.Value base)
     (xs : List (key.Value base × val.Value base))

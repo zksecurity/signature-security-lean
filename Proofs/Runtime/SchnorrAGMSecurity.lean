@@ -6,7 +6,7 @@ solver. This file supplies the semantic/probability endpoint. The separate
 BackendSchnorrAGMSecurity module constructs the native resource certificate and
 applies time-bounded DLog hardness without assuming the solver's efficiency. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec GroupModel.Interaction Schnorr.AGM
 open scoped ENNReal
 
 namespace Signatures.Runtime.SchnorrAGM

@@ -35,7 +35,7 @@ theorem initial_reserved (width cap basisCap signedCap fuel : Nat)
   · simpa [encodeState, encodeMetadata, Schnorr.AGM.initialRepresentations, Nat.add_comm] using hn
   · simpa [encodeState, encodeMetadata] using hs
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

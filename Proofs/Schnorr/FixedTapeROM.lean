@@ -27,16 +27,15 @@ def dlogReduction (g : G) (adv : ROM.Adversary (F := F) (M := M) g)
 
 private theorem hardRelation_dlog (g : G) (hgen : Function.Bijective (fun x : F => x • g))
     (red : G → ProbComp F) :
-    Pr[= true | hardRelationExperiment (dlogGenerable F g) red] =
-      Pr[= true | dlogExperiment g (fun _ pk => red pk)] := by
-  rw [show Pr[= true | hardRelationExperiment (dlogGenerable F g) red] =
-      Pr[= true | do
+    Pr{let x ← hardRelationExperiment (dlogGenerable F g) red}[x = true] =
+      Pr{let x ← dlogExperiment g (fun _ pk => red pk)}[x = true] := by
+  rw [show Pr{let x ← hardRelationExperiment (dlogGenerable F g) red}[x = true] =
+      Pr{let y ← (do
         let x ← $ᵗ F
         let w ← red (x • g)
-        pure (decide (w • g = x • g))] by
+        pure (decide (w • g = x • g)))}[y = true] by
     simp [hardRelationExperiment, dlogGenerable]]
-  exact probOutput_bind_congr' _ true fun x =>
-    probOutput_bind_congr' _ true fun sk => by simp [hgen.1.eq_iff]
+  simp [dlogExperiment, prEvent_norm, hgen.1.eq_iff]
 
 /-- Fixed-private-tape Schnorr security, with the original signing-simulation
 loss and exactly `qH + 1` fork positions. The seed bound covers every reply path,
@@ -53,14 +52,14 @@ theorem security (g : G) (hgen : Function.Bijective (fun x : F => x • g))
   haveI : Finite G := Finite.of_surjective (fun x : F => x • g) hgen.2
   have hred := FiatShamir.FixedTape.euf_cma_bound
     (Schnorr.sigma F G g) (dlogGenerable F g) M (Schnorr.sigma_speciallySound F G g)
-    (Schnorr.simTranscript F G g) 0 le_rfl
+    (Schnorr.simTranscript F G g) 0
     ((ChallengeVerifyProtocol.perfectHVZK_iff_hvzk_zero _ _).mp (Schnorr.sigma_hvzk F G g))
     ((Fintype.card F : ENNReal)⁻¹) (Schnorr.sigma_simCommitPredictability F G g hgen)
     adv privateFamilies qR qS qH hQ hseed
   rw [ROM.game_eq_advantage]
   unfold dlogReduction
-  simp only [mul_zero, ENNReal.ofReal_zero, zero_add, FiatShamir.challengeSpaceInv] at hred
-  simpa only [evalDist_apply_singleton, Schnorr.signature, FiatShamir.inROM] using
+  simp only [mul_zero, zero_add, FiatShamir.challengeSpaceInv] at hred
+  simpa only [← prEvent_eq_evalDist_singleton, Schnorr.signature, FiatShamir.inROM] using
     hred.trans_eq (hardRelation_dlog g hgen
       (FiatShamir.FixedTape.cmaReduction (Schnorr.sigma F G g) (dlogGenerable F g) M
         (Schnorr.simTranscript F G g) adv privateFamilies qR qH))

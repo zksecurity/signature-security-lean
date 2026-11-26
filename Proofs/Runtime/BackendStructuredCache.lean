@@ -32,7 +32,7 @@ theorem lookup_encoded {K L V : Type} [DecidableEq K] [DecidableEq L]
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {Atom I S : Type} {base : Atom → Type}
   {spec : OracleSpec I} {iface : Interface (C := C) spec}
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)

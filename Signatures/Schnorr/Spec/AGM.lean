@@ -1,4 +1,4 @@
-import AlgebraicGroupModel.Interaction
+import VCVio.CryptoFoundations.GroupModel.Interaction
 import Signatures.Schnorr.Spec.ROM
 
 /-!
@@ -11,7 +11,7 @@ This is the full-field-nonce scheme of Fuchsbauer--Plouviez--Seurin,
 EUROCRYPT 2020, Figure 3. This file defines the source game, not its reduction.
 -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 namespace Schnorr.AGM
 
@@ -28,7 +28,7 @@ def Reply (F M : Type) : Request M → Type
   | .sign _ => F
 
 abbrev Adversary (F G M : Type) [Zero F] [AddMonoid G] [SMul F G] :=
-  AlgebraicGroupModel.Interaction.Adversary F (Group G) Unit (Request M)
+  GroupModel.Interaction.Adversary F (Group G) Unit (Request M)
     (Reply F M) (M × F)
 
 def initial {G : Type} (g pk : G) : Message Unit (Group G) := ⟨(), fun _ => [g, pk]⟩
@@ -65,7 +65,7 @@ def handler (g : G) (x : F) :
   | hash m => exact do
       match groups () with
       | [R] =>
-          let c ← liftM ((BaseSpec F G M).query (.inr (m, R)))
+          let c : F ← liftM ((BaseSpec F G M).query (.inr (m, R)))
           pure (scalarReply c)
       | _ => reject; pure (scalarReply (0 : F))
   | sign m => exact do
@@ -75,7 +75,7 @@ def handler (g : G) (x : F) :
       else
         let a ← liftComp ($ᵗ F) (BaseSpec F G M)
         let R := a • g
-        let c ← liftM ((BaseSpec F G M).query (.inr (m, R)))
+        let c : F ← liftM ((BaseSpec F G M).query (.inr (m, R)))
         modify fun s => { s with signed := s.signed ++ [m] }
         pure (signingReply R (a + c * x))
 
@@ -86,7 +86,7 @@ def experiment (g : G) (A : Adversary F G M) : OracleComp (BaseSpec F G M) Bool 
   match out.value.groups () with
   | [R] =>
       let (m, z) := out.value.data
-      let c ← (BaseSpec F G M).query (.inr (m, R))
+      let c : F ← (BaseSpec F G M).query (.inr (m, R))
       pure (!state.malformed && decide (m ∉ state.signed ∧ z • g = R + c • (x • g)))
   | _ => pure false
 

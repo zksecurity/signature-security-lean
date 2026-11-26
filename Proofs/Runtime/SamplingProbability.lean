@@ -11,13 +11,13 @@ open scoped ENNReal
 
 theorem marked_good_le (n w k : Nat) [NeZero n] (hfit : n ≤ 2^w) (fallback : Fin n) :
     MarkedProbability.GoodLe
-      ((sample n w k).map (fun x => (x.getD fallback, x.isNone))) (PMF.uniformOfFintype (Fin n)) := by
+      ((sample n w k).map (fun x => (x.getD fallback, x.isNone))) (Signatures.Runtime.RejectionSampling.uniformOfFintype (Fin n)) := by
   classical
   intro x
   have he : ((sample n w k).map (fun x => (x.getD fallback, x.isNone))) (x, false) =
       sample n w k (some x) := by
     simp [PMF.map_apply, tsum_fintype, Fintype.sum_option, Prod.ext_iff]
-  rw [he, sample_some n w k hfit, PMF.uniformOfFintype_apply, Fintype.card_fin]
+  rw [he, sample_some n w k hfit, Signatures.Runtime.RejectionSampling.uniformOfFintype_apply, Fintype.card_fin]
   rw [div_eq_mul_inv]
   simpa only [one_mul] using
     (mul_le_mul' (tsub_le_self : 1-(1-n*(2^w : ℝ≥0∞)⁻¹)^k ≤ 1) (le_refl (n : ℝ≥0∞)⁻¹))
@@ -32,12 +32,12 @@ open scoped ENNReal
 /-- Semantic decoding for the probability proof; the executable sampler
 continues to return a word and a flag without this decoder. -/
 noncomputable def decoded (n w k : Nat) [NeZero n] : PMF (Fin n × Bool) :=
-  (simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool) (run (compile n w k))).map
+  (simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool) (run (compile n w k))).map
     (fun out => (Fin.ofNat n (exponent out.value.1), out.value.2))
 
 theorem decoded_distribution (n w k : Nat) [NeZero n] (hfit : n ≤ 2^w) :
     decoded n w k = (RejectionSampling.sample n (width n w) k).map (fun x => (x.getD 0, x.isNone)) := by
-  let p := simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool) (run (compile n w k))
+  let p := simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool) (run (compile n w k))
   have h := PMF.map_comp (Run.value : Run (List Bool × Bool) → List Bool × Bool) p
     (fun x => (Fin.ofNat n (exponent x.1), x.2))
   dsimp only [Function.comp_def, p] at h
@@ -56,7 +56,7 @@ theorem decoded_distribution (n w k : Nat) [NeZero n] (hfit : n ≤ 2^w) :
     exact congrArg (fun a : Fin n => (a, false)) (Fin.ext (Nat.mod_eq_of_lt x.isLt))
 
 theorem decoded_good_le (n w k : Nat) [NeZero n] (hfit : n ≤ 2^w) :
-    MarkedProbability.GoodLe (decoded n w k) (PMF.uniformOfFintype (Fin n)) := by
+    MarkedProbability.GoodLe (decoded n w k) (Signatures.Runtime.RejectionSampling.uniformOfFintype (Fin n)) := by
   rw [decoded_distribution n w k hfit]
   exact RejectionSampling.marked_good_le n (width n w) k (fits n w hfit) 0
 

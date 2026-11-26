@@ -28,8 +28,7 @@ theorem logged_run_erase (main : OracleComp spec A) (seed : QuerySeed spec) :
   simpa only [simulateQ_map, StateT.run'_eq, StateT.run_map, Functor.map_map,
     Function.comp_def] using h
 
-variable [∀ i, SampleableType (spec.Range i)] [IsUniformSpec spec]
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
+variable [∀ i, SampleableType (spec.Range i)] [OracleSpec.UniformAnswerMeasure spec]
   [unifSpec ⊂ₒ spec] [unifSpec ˡ⊂ₒ spec] [MeasurableSpace B]
 
 /-- Replace a continuation using the full original seed by its lazy version,

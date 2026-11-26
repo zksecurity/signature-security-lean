@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kobi Gurkan
 -/
 import VCVio.OracleComp.Constructions.SampleableType
-import VCVio.OracleComp.QueryTracking.LoggingOracle
+import VCVio.OracleComp.QueryTracking.LoggingOracle.Core
 
 /-! The ordinary BLS query interface. Named request patterns expose the three
 operations while retaining the oracle-library encoding used by the reductions. -/

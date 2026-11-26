@@ -62,10 +62,9 @@ private def cacheProbe : OracleComp (baseSpec Bool (ZMod 5)) Bool := do
 
 -- This executes the actual lazy interpreter. Signing initializes the same cache used by later
 -- hashes; internal lookups add no visible tokens. A fresh verification lookup is cached too.
-example : 𝒮[(simulateQ (lazyImpl (ι := Bool) (G₁ := ZMod 5)) cacheProbe).run' ∅] =
-    𝒮[(pure true : ProbComp Bool)] := by
-  rw [show lazyImpl (ι := Bool) (G₁ := ZMod 5) = BLS.CoCDH.lazyCoinImpl from rfl,
-    BLS.CoCDH.evalSPMF_lazyCoin_eq_table]
+example : ((simulateQ (lazyImpl (ι := Bool) (G₁ := ZMod 5)) cacheProbe).run' ∅) =ᵈ (pure true : ProbComp Bool) := by
+  rw [show lazyImpl (ι := Bool) (G₁ := ZMod 5) = BLS.CoCDH.lazyCoinImpl from rfl]
+  refine (BLS.CoCDH.evalDistEq_lazyCoin_eq_table _ _).trans ?_
   simp only [tableExtending_empty]
   have htable (H : Bool → ZMod 5) :
       simulateQ (BLS.CoCDH.coinTableImpl H) cacheProbe = pure true := by
@@ -78,10 +77,9 @@ example : 𝒮[(simulateQ (lazyImpl (ι := Bool) (G₁ := ZMod 5)) cacheProbe).r
     simp [fixedRun, fixedImpl, handler, signFirst,
       AlgebraicGroupModel.LinFunctional.realSign, BLS.Proofs.indicatorWeight]
   simp_rw [htable]
-  apply evalSPMF_ext
-  intro b
-  rw [probOutput_bind_const]
-  simp
+  refine EvalDistEq.of_forall_prEvent_eq fun p => ?_
+  simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply,
+    OracleComp.prEvent_bind_const]
 
 /-- info: 'Model.LazyAGM.Proofs.advantage_eq_realGame' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

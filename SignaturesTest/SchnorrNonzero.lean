@@ -25,8 +25,7 @@ example : (sigma (F := ZMod 2) (1 : ZMod 2)).PerfectHVZK (simTranscript 1) := by
   simpa using h
 
 -- Zero secret keys need no exceptional simulator branch or additional assumption.
-example : 𝒮[(sigma (1 : ZMod 5)).realTranscript 0 0] =
-    𝒮[simTranscript (F := ZMod 5) 1 0] := by
+example : ((sigma (1 : ZMod 5)).realTranscript 0 0) =ᵈ simTranscript (F := ZMod 5) 1 0 := by
   apply sigma_hvzk
   · intro x y h; simpa using h
   · simp

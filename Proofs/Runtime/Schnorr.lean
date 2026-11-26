@@ -1,5 +1,5 @@
 import Proofs.Runtime.Machine
-import Examples.Schnorr.SigmaProtocol
+import VCVio.Schemes.Schnorr.SigmaProtocol
 
 /-! Concrete arithmetic for Schnorr's signing simulation and two-transcript extraction.
 The complete cache/replay solver and its certificate are in SchnorrReduction. -/

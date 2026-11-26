@@ -94,7 +94,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive] [Q.HasOption] [OptionCode (Q := Q)]
+  [Q.HasComposition] [Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive] [Q.HasOption] [OptionCode (Q := Q)]
   {F G₁ G₂ K M : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -132,7 +132,7 @@ def descriptionInputs : DescriptionInputs where
   rejectSize := sizes.localSize (QS.inl rep.data.unit (rep.ty (.pair NativePass.outputTy NativePass.outputTy)))
   acceptSize := sizes.localSize (QS.inr rep.data.unit (rep.ty (.pair NativePass.outputTy NativePass.outputTy)))
 
-omit [Q.HasCategory] [Q.HasProd] [Q.IsDistributive] [Q.HasOption] [OptionCode (Q := Q)] in
+omit [Q.HasComposition] [Q.HasProd] [Q.IsDistributive] [Q.HasOption] [OptionCode (Q := Q)] in
 theorem codeDescription_eq (allowance fuel qH : Nat) :
     codeDescription rep cost primitive sampler sizes allowance bd boundary ports uniform privatePorts R fuel qH =
       (descriptionInputs rep cost primitive sampler sizes bd boundary ports uniform privatePorts R).solver allowance fuel qH := rfl

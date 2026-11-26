@@ -12,7 +12,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QD : Q.IsDistributive]
   {I J S : Type} {source : OracleSpec I} {target : OracleSpec J}
   {src : Interface (C := C) source} {dst : Interface (C := C) target}
   (store : C.Str S) (control : ControlCosts)

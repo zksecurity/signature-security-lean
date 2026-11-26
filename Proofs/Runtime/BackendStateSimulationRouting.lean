@@ -13,7 +13,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   {S : Type} (store : C.Str S) (control : ControlCosts)
   {header : Nat} (sizes : SizeLaws Q header)
   {overhead : Nat → Nat} (laws : LocalCostLaws Q overhead) (mono : Monotone overhead)
@@ -38,7 +38,7 @@ theorem associate_cost {A E T : Type} (a : C.Str A) (e : C.Str E) (t : C.Str T)
 
 include routing
 
-omit QD [C.HasProd] [C.HasSum] [C.HasOption] [Q.HasCategory] QP QS sizes laws in
+omit QD [C.HasProd] [C.HasSum] [C.HasOption] [Q.HasComposition] QP QS sizes laws in
 theorem atomic_work {A B : Type} {a : C.Str A} {b : C.Str B} {f : A → B}
     (code : Q.Realizer a b f) (input : A) (saved : S) (width : Nat)
     (hi : Q.size a input ≤ width) (ho : Q.size b (f input) ≤ width)
@@ -50,7 +50,7 @@ theorem atomic_work {A B : Type} {a : C.Str A} {b : C.Str B} {f : A → B}
   dsimp only [localWork]
   omega
 
-omit QD [Q.HasCategory] QP QS laws in
+omit QD [Q.HasComposition] QP QS laws in
 theorem sequence_work {A B : Type} (a : C.Str A) (b : C.Str B)
     (input : A × S) (output : B × S) (width : Nat) (hh : header ≤ width)
     (hi : Q.size a input.1 ≤ width) (hs : Q.size store input.2 ≤ width)
@@ -107,7 +107,7 @@ variable (distribution : ∀ {A B T : Type} (a : C.Str A) (b : C.Str B) (t : C.S
 
 include distribution
 
-omit [Q.HasCategory] QP QS laws in
+omit [Q.HasComposition] QP QS laws in
 theorem branch_work {A B : Type} (a : C.Str A) (b : C.Str B) (input : A ⊕ B) (saved : S)
     (width : Nat) (hh : header ≤ width)
     (hi : Q.size (StepClass.HasSum.sum a b) input ≤ width) (hs : Q.size store saved ≤ width) :
@@ -124,7 +124,7 @@ theorem branch_work {A B : Type} (a : C.Str A) (b : C.Str B) (input : A ⊕ B) (
   dsimp only [branchWork, localWork, distributeValue] at *
   grind only
 
-omit [Q.HasCategory] QP QS laws in
+omit [Q.HasComposition] QP QS laws in
 theorem loop_body_work {A B : Type} (a : C.Str A) (b : C.Str B)
     (input : A × S) (output : (B ⊕ A) × S) (width : Nat) (hh : header ≤ width)
     (hi : Q.size a input.1 ≤ width) (hs : Q.size store input.2 ≤ width)

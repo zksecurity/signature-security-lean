@@ -27,13 +27,13 @@ private def adaptiveMain (_pk : F) : OracleComp (ListROM.NativeInterface.sourceS
   let second ← (ListROM.NativeInterface.sourceSpec F F M).query (.inl (.inl (first.val + 1)))
   let msg : M := fun n => decide (n = second.val)
   let sig ← (ListROM.NativeInterface.sourceSpec F F M).query (.inr msg)
-  let challenge ← (ListROM.NativeInterface.sourceSpec F F M).query (.inl (.inr (msg, sig.1)))
+  let challenge : F ← (ListROM.NativeInterface.sourceSpec F F M).query (.inl (.inr (msg, sig.1)))
   return (msg, sig.1, sig.2 + challenge)
 
 section Source
 
 variable {C : StepClass} [C.HasProd] [C.HasSum] [C.HasOption]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   [Q.IsDistributive] [Q.HasOption] [OptionCode (Q := Q)]
   [SampleableType F] [SampleableType Fˣ]
   {iface : Interface (C := C) unifSpec}

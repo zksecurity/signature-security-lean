@@ -3,8 +3,8 @@
 Machine-checked security of four signature schemes — BLS, OOPS, Proximity and
 Schnorr — in Lean 4 over [VCVio](https://github.com/Verified-zkEVM/VCVio): the
 games, the reductions, and concrete and asymptotic bounds whose reduction
-budgets are derived from executed attacker code (the vendored
-[Caliper](vendor/caliper/UPSTREAM.md) model). Every public theorem depends only
+budgets are derived from executed attacker code (the
+[Caliper](https://github.com/zksecurity/caliper) model). Every public theorem depends only
 on `propext`, `Classical.choice` and `Quot.sound`.
 
 ## Statements
@@ -80,7 +80,7 @@ Two libraries, split by what a reviewer has to read.
 
 ## Build
 
-Lean `v4.34.0` (from `lean-toolchain`, via elan).
+Lean `v4.36.0` (from `lean-toolchain`, via elan).
 
 ```sh
 lake exe cache get
@@ -88,10 +88,10 @@ lake build Signatures Proofs SignaturesTest
 ```
 
 CI runs exactly this. Pinned upstreams:
-[ArkLib](https://github.com/Verified-zkEVM/ArkLib) `7653a901`,
-[VCVio](https://github.com/Verified-zkEVM/VCVio) `f5119c64`,
-[agm-lean](https://github.com/zksecurity/agm-lean) `c207f29d`,
-[Caliper](https://github.com/zksecurity/caliper) `b62f7c8b` (vendored with a minimal Lean 4.34 port).
+[VCVio](https://github.com/Verified-zkEVM/VCVio) `70c422d6`, which now carries the
+generic algebraic-adversary interface (`GroupModel.Interaction`, formerly the separate
+`agm-lean` package), and [Caliper](https://github.com/zksecurity/caliper) on its `lean-4.36`
+branch, required from a sibling checkout at `../../caliper` until that branch is published.
 
 ## Scope
 

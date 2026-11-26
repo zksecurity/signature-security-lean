@@ -1,6 +1,6 @@
 import Proofs.Runtime.SeededDeferredTrace
 import Proofs.Runtime.SeededSuffixSampling
-import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 import Lean.Util.CollectAxioms
 
 /-! Deferred sampling must preserve unused entries jointly with an adaptive
@@ -94,7 +94,7 @@ run_meta do
     forallTelescope (← getConstInfo name).type fun params conclusion => do
       unless conclusion.isAppOf ``Eq do
         throwError "{name}: must preserve a complete distribution"
-      if (conclusion.find? (fun e => e.isConstOf ``instEvalDistSemanticsOfMonadLiftTSPMF)).isSome then
+      unless (conclusion.find? (fun e => e.isConstOf ``OracleComp.instEvalDistSemantics)).isSome do
         throwError "{name}: statement must use the native measure interpretation"
       for param in params do
         let declaration ← getFVarLocalDecl param

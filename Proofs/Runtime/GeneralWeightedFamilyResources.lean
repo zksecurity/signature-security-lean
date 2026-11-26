@@ -18,7 +18,7 @@ universe v w x
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive] [OptionCode (Q := Q)]
+  [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive] [OptionCode (Q := Q)]
 
 /-- Exactly the execution and description convention in the concrete parameters.
 Requiring this configuration to be constant across parameters fixes the backend;

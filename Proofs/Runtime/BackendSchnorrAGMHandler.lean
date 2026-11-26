@@ -6,7 +6,7 @@ import Proofs.Runtime.BackendCallerCorrectness
 is retained through each component call and supplied to the actual reply tagger.
 The indexed-handler view is only a proof factorization of this executed code. -/
 
-open OracleComp OracleSpec PFunctor AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec PFunctor GroupModel.Interaction Schnorr.AGM
 open PFunctor.DynSystem.DynComputation
 
 namespace Signatures.Runtime.SchnorrAGM.Native.Handler
@@ -17,7 +17,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   {F G₁ G₂ K M Input Output : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]

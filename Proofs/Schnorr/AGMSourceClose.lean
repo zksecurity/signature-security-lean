@@ -3,7 +3,7 @@ import Proofs.Schnorr.AGMHonest
 /-! Close the original AGM source handler under its lazy random oracle and
 project the reduction's extra representation metadata away. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 namespace Schnorr.AGM.Reduction.Source
 

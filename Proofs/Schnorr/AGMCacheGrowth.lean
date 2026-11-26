@@ -3,7 +3,7 @@ import Proofs.Schnorr.AGMReductionProbability
 
 /-! Cache growth is charged only to hash and signing requests, never private draws. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 namespace Schnorr.AGM.Reduction
 

@@ -65,7 +65,7 @@ structure LanguageRepresentation (C : StepClass.{0, v}) (base : Atom → Type) w
 
 namespace Expression
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)
   (P : Primitives base Op)
   (primitive : {a b : Ty Atom} → (instr : Op a b) →

@@ -1,5 +1,5 @@
 import Signatures.Model.LazyAGM
-import AlgebraicGroupModel.Interaction
+import VCVio.CryptoFoundations.GroupModel.Interaction
 
 /-! The signature adapter preserves source interactions and the full winning experiment. -/
 
@@ -22,8 +22,8 @@ private def adaptive : Adversary Nat Nat Nat Nat Nat where
     pure ⟨target, 2, [3, 5], [7]⟩
 
 private def execution :
-    (AlgebraicGroupModel.Interaction.Explained Nat (Interactive.Result Nat Nat) (Interactive.Group Nat Nat) ×
-      AlgebraicGroupModel.Interaction.Groups (Interactive.Group Nat Nat)) ×
+    (GroupModel.Interaction.Explained Nat (Interactive.Result Nat Nat) (Interactive.Group Nat Nat) ×
+      GroupModel.Interaction.Groups (Interactive.Group Nat Nat)) ×
       List (Interactive.Query Nat Nat) :=
   (adaptive.toInteractive.run
     (Interactive.impl
@@ -54,7 +54,7 @@ example : (Interactive.initialInput 2 42).data = () := rfl
 
 -- Missing group replies are rejected, not silently invented or put in plain data.
 private def missingReply :
-    QueryImpl (AlgebraicGroupModel.Interaction.plainSpec (Interactive.Group Nat Nat)
+    QueryImpl (GroupModel.Interaction.plainSpec (Interactive.Group Nat Nat)
       (Interactive.Query Nat Nat) Interactive.Reply) Id := fun ⟨q, _⟩ =>
   match q with
   | .inl (.inl n) => pure ⟨⟨0, Nat.zero_lt_succ n⟩, fun _ => []⟩

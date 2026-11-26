@@ -96,7 +96,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ K M))
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)
   (primitive : {a b : Ty CryptoAtom} → (instr : CryptoOp a b) →
@@ -140,7 +140,7 @@ theorem body_time {Γ : List (Ty CryptoAtom)} (x : TapeCell F) (acc : Nat × Lis
 
 omit [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
-  [Q.HasCategory] QP QS mono in
+  [Q.HasComposition] QP QS mono in
 theorem accumulator_size (width cap counterCap remaining : Nat) (hh : header ≤ width)
     (hn : ∀ n ≤ counterCap, Q.size rep.data.nat n ≤ width) (acc : Nat × List (TapeCell F))
     (ha : Invariant (fun x => Q.size (rep.ty Replay.Mixed.event) x ≤ width) cap counterCap remaining acc) :

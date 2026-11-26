@@ -33,7 +33,7 @@ private instance : Fact (Nat.Prime 5) := ⟨by decide⟩
 section Native
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase (ZMod 5) (ZMod 5) (ZMod 5) Nat Nat))
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

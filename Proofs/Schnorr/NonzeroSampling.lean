@@ -1,6 +1,7 @@
 import Signatures.Schnorr.Spec.NonzeroNonce
 import Mathlib.FieldTheory.Finite.Basic
 import VCVio.OracleComp.QueryTracking.RandomOracle.DeferredSampling
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-! Repairing a uniform scalar's zero value with an independent uniform unit
 gives exactly a uniform nonzero scalar. A finite bijection proves the law;
@@ -37,25 +38,23 @@ variable [SampleableType F] [SampleableType Fˣ] [Finite F]
 
 /-- Equality of the complete sampling laws, including the zero branch. -/
 theorem repair_uniform :
-    𝒮[do let r ← ($ᵗ F); let u ← ($ᵗ Fˣ); pure (repair r u)] =
-      𝒮[(fun u : Fˣ => (u : F)) <$> ($ᵗ Fˣ)] := by
-  have he := evalSPMF_map_bijective_uniform_cross (F × Fˣ) repairEquiv repairEquiv.bijective
-  have hf := congrArg (Functor.map (fun p : Fˣ × F => (p.1 : F))) he
-  have hp := congrArg (Functor.map (fun u : Fˣ => (u : F)))
-    (evalSPMF_map_fst_uniformSample_prod (α := Fˣ) (β := F))
-  simp only [← evalSPMF_map, Functor.map_map] at hf hp
-  rw [hf.symm] at hp
-  have hpair : ($ᵗ (F × Fˣ)) = (do let r ← ($ᵗ F); let u ← ($ᵗ Fˣ); pure (r, u)) := by
-    change (Prod.mk <$> ($ᵗ F) <*> ($ᵗ Fˣ)) = _
-    simp only [seq_eq_bind_map, bind_map_left, bind_pure_comp]
-  rw [hpair] at hp
-  simpa only [map_bind, map_pure, repairEquiv_value] using hp
+    (do let r ← ($ᵗ F); let u ← ($ᵗ Fˣ); pure (repair r u)) =ᵈ ((fun u : Fˣ => (u : F)) <$> ($ᵗ Fˣ)) := by
+  have he : (do let r ← ($ᵗ F); let u ← ($ᵗ Fˣ); pure (repairEquiv (r, u))) =ᵈ
+      ($ᵗ (Fˣ × F) : ProbComp (Fˣ × F)) :=
+    SampleableType.evalDistEq_uniformSample_pair_of_bijective
+      (f := fun r u => repairEquiv (r, u)) repairEquiv.bijective
+  have hp : (fun p : Fˣ × F => (p.1 : F)) <$> ($ᵗ (Fˣ × F) : ProbComp (Fˣ × F)) =ᵈ
+      ((fun u : Fˣ => (u : F)) <$> ($ᵗ Fˣ : ProbComp Fˣ)) := by
+    rw [SampleableType.uniformSample_prod_eq_bind]
+    conv_rhs => rw [← bind_pure_comp]
+    simp only [map_bind, map_pure]
+    exact EvalDistEq.bind_right _ fun u => EvalDistEq.bind_const _ _
+  simpa only [map_bind, map_pure, repairEquiv_value] using
+    (he.map (fun p : Fˣ × F => (p.1 : F))).trans hp
 
 /-- The repaired law remains equal under any probabilistic continuation. -/
 theorem repair_uniform_bind {A : Type} (next : F → ProbComp A) :
-    𝒮[do let r ← ($ᵗ F); let u ← ($ᵗ Fˣ); next (repair r u)] =
-      𝒮[do let u ← ($ᵗ Fˣ); next u] := by
-  have h := congrArg (fun law => law >>= fun x => evalSPMF (next x)) (repair_uniform (F := F))
-  simpa only [← evalSPMF_bind, bind_assoc, pure_bind, bind_map_left] using h
+    (do let r ← ($ᵗ F); let u ← ($ᵗ Fˣ); next (repair r u)) =ᵈ (do let u ← ($ᵗ Fˣ); next u) := by
+  simpa only [bind_assoc, pure_bind, bind_map_left] using (repair_uniform (F := F)).bind_left next
 
 end Schnorr.NonzeroNonce

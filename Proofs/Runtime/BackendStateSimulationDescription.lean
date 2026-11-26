@@ -12,7 +12,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   (sizes : DescriptionSize Q) (allowance : Nat)
   (laws : LocalDescriptionLaws sizes allowance)
 

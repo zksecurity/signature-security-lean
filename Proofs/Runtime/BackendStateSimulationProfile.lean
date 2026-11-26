@@ -1,5 +1,5 @@
 import Proofs.Runtime.BackendStateSimulationExecution
-import VCVio.OracleComp.SimSemantics.StateT.Basic.Native
+import VCVio.OracleComp.SimSemantics.StateT.Basic
 
 /-! The source marginal of joint native/profile instrumentation. It is exactly
 the original program's profile under the implemented handler, including the
@@ -17,7 +17,7 @@ def auditView {I B S : Type} (z : Audit I B S) : ExecutionProfile.Result I B × 
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QD : Q.IsDistributive]
+  [Q.HasComposition] [QP : Q.HasProd] [QD : Q.IsDistributive]
   {I J S : Type} {source : OracleSpec I} {target : OracleSpec J}
   {src : Interface (C := C) source} {dst : Interface (C := C) target}
   (store : C.Str S) (control : ControlCosts)
@@ -26,7 +26,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
     (StepClass.HasProd.prod src.response store))
   (H : QueryImpl source (StateT S (OracleComp target)))
 
-omit [Q.HasCategory] QP in
+omit [Q.HasComposition] QP in
 theorem auditLoop_source {A B : Type} (a : C.Str A) (b : C.Str B)
     (body : A × S → OracleComp target (Audit I (B ⊕ A) S))
     (stop : A × S → OracleComp target (Audit I B S))
@@ -54,7 +54,7 @@ theorem auditLoop_source {A B : Type} (a : C.Str A) (b : C.Str B)
           simp only [auditView, h, bind_pure_comp, simulateQ_map, StateT.run_map, ← ih, Functor.map_map]
           rfl
 
-omit QD [C.HasSum] [Q.HasCategory] QP in
+omit QD [C.HasSum] [Q.HasComposition] QP in
 theorem auditIteration_source {A : Type} (a : C.Str A) (counter : C.Str Nat)
     (body : A × S → OracleComp target (Audit I A S))
     (original : A → OracleComp source (ExecutionProfile.Result I A))

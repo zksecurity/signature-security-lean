@@ -16,7 +16,7 @@ variable {F G M : Type} [Field F] [SampleableType F] [SampleableType Fˣ]
   [AddCommGroup G] [Module F G] [SampleableType G] [DecidableEq G] [DecidableEq M]
 
 /-- Schnorr with a nonzero nonce and the full scalar challenge space. -/
-def sigma (g : G) : SigmaProtocol G F G F F F (fun pk sk => decide (sk • g = pk)) :=
+def sigma (g : G) : SigmaProtocol ProbComp G F G F F F (fun pk sk => decide (sk • g = pk)) :=
   { Schnorr.sigma F G g with
     commit := fun _ _ => do
       let a ← $ᵗ Fˣ
@@ -34,7 +34,7 @@ theorem signature_sign (g pk : G) (x : F) (m : M) :
     (signature g).sign pk x m = (do
       let a ← liftComp ($ᵗ Fˣ) (unifSpec + (M × G →ₒ F))
       let R := (a : F) • g
-      let c ← (unifSpec + (M × G →ₒ F)).query (.inr (m, R))
+      let c : F ← (unifSpec + (M × G →ₒ F)).query (.inr (m, R))
       pure (R, (a : F) + c * x)) := by
   simp [signature, sigma, Schnorr.sigma, FiatShamir, monad_norm,
     OracleComp.liftM_eq_liftM_liftM]

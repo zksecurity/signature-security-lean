@@ -17,11 +17,11 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
 
 /-- Backend work for structural local code. The semantic functions in the laws
 are indexed by their executable realizers, including the caller's own code. -/
-structure LocalCostLaws (Q : QuantitativeStepClass.{0, v, w} C) [Q.HasCategory]
+structure LocalCostLaws (Q : QuantitativeStepClass.{0, v, w} C) [Q.HasComposition]
     [QP : Q.HasProd] [QS : Q.HasSum] (overhead : Nat → Nat) : Prop where
   identity : ∀ {A : Type} (a : C.Str A) (input : A),
     Q.cost (Q.identity a) input ≤ overhead (Q.size a input)

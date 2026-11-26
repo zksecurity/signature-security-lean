@@ -15,7 +15,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ K M : Type} [Field F]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂] [DecidableEq K] [DecidableEq M]
@@ -39,7 +39,7 @@ theorem Index.terms_length (index : Index)
 
 include sizes
 
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem Index.terms_rows_size (index : Index)
     (m : index.messageTy.Value (cryptoBase F G₁ G₂ K M)) (width : Nat)
     (hh : header ≤ width) (hm : Q.size (rep.ty index.messageTy) m ≤ width)
@@ -88,7 +88,7 @@ theorem Index.terms_rows_size (index : Index)
     grind only
 
 include lists in
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem Index.terms_size (index : Index)
     (m : index.messageTy.Value (cryptoBase F G₁ G₂ K M)) (width : Nat)
     (hh : header ≤ width) (hm : Q.size (rep.ty index.messageTy) m ≤ width)
@@ -102,7 +102,9 @@ theorem Index.terms_size (index : Index)
   dsimp [Terms.termSpace]
   nlinarith
 
-omit [Q.HasCategory] QP QS in
+-- `dsimp` cannot rewrite `(oops d).bound` inside the `OfNat (Fin _)` instance of the zero index,
+-- so `grind` needs `Index.bound` to identify that zero with the goal's `(0 : Fin (d + 1))`.
+omit [Q.HasComposition] QP QS in
 theorem Index.default_size (index : Index)
     (m : index.messageTy.Value (cryptoBase F G₁ G₂ K M)) (width : Nat)
     (hh : header ≤ width) (hm : Q.size (rep.ty index.messageTy) m ≤ width)
@@ -118,7 +120,7 @@ theorem Index.default_size (index : Index)
       Reply.proximityDefault, Reply.syncDefault, Expr.denote, v0, Var.get, arithmetic, Terms.termTy,
       Weights.oopsKey, Weights.oopsMessage, Weights.proximityKey, Weights.proximityTupleMessage,
       Weights.syncMessage, LanguageRepresentation.ty] at * <;>
-    grind only
+    grind only [Index.bound]
 
 include laws dataLaws primitiveBound mono in
 theorem Index.default_cost (index : Index)
@@ -144,7 +146,7 @@ theorem Index.default_cost (index : Index)
       Expr.denote, v0, Var.get, arithmetic, Terms.termTy, Weights.oopsKey, Weights.oopsMessage,
       Weights.proximityKey, Weights.proximityTupleMessage, Weights.syncMessage, LanguageRepresentation.ty,
       LanguageRepresentation.env] at * <;>
-    grind only
+    grind only [Index.bound]
 
 def Index.termsTime (index : Index) (overhead : Nat → Nat)
     (width indexTime mulTime finZeroTime oneTime : Nat) : Nat :=

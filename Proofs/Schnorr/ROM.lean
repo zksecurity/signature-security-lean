@@ -38,12 +38,16 @@ at zero in ENNReal. Query bounds hold on every reply path and for every public k
 theorem security (g : G) (hgen : Function.Bijective (fun x : F => x • g))
     (A : Adversary (F := F) (M := M) g) (qS qH : Nat)
     (hQ : ∀ pk, FiatShamir.signHashQueryBound (M := M) (oa := A.main pk) qS qH) :
-    let eps := 𝒟[game g A] {true} -
+    let eps := Pr{let x ← game g A}[x = true] -
       (qS : ENNReal) * (qS + qH) * (Fintype.card F : ENNReal)⁻¹
     eps * (eps / (qH + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
-      𝒟[dlogExperiment g (Schnorr.dlogReduction F G g M A qH)] {true} := by
-  rw [game_eq_advantage]
-  simpa only [FiatShamir.challengeSpaceInv, evalDist_apply_singleton] using
+      Pr{let x ← dlogExperiment g (Schnorr.dlogReduction F G g M A qH)}[x = true] := by
+  have hgame : Pr{let x ← game g A}[x = true] =
+      SignatureAlg.unforgeableAdvantage (FiatShamir.runtime (Commit := G) (Chal := F) M) A := by
+    rw [← game_eq_advantage]
+    exact prEvent_eq_evalDist_singleton _ _
+  rw [hgame]
+  simpa only [FiatShamir.challengeSpaceInv] using
     Schnorr.signature_euf_cma F G g hgen M A qS qH hQ
 
 end Schnorr.ROM.Proofs

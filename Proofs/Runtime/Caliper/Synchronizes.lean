@@ -70,8 +70,8 @@ theorem Synchronizes.right_support {relation : A → B → Prop}
     subst value
     exact ⟨_, by simp, h⟩
   | query position _ ih =>
-    obtain ⟨answer, reachable⟩ := Set.mem_iUnion.mp reachable
+    obtain ⟨answer, reachable⟩ := PFunctor.FreeM.mem_support_liftBind.mp reachable
     obtain ⟨source, reached, related⟩ := ih answer reachable
-    exact ⟨source, Set.mem_iUnion.mpr ⟨answer, reached⟩, related⟩
+    exact ⟨source, PFunctor.FreeM.mem_support_liftBind.mpr ⟨answer, reached⟩, related⟩
 
 end Signatures.Runtime.CaliperBackend

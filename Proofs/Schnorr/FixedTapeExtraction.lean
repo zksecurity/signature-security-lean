@@ -1,6 +1,7 @@
 import Proofs.Schnorr.FixedTape
 import Proofs.Runtime.SeededReplay
 import VCVio.CryptoFoundations.FiatShamir.Sigma.Reductions
+import VCVio.OracleComp.EvalDist.Sum
 
 /-! Fixed-private-tape extraction for Fiat--Shamir, specialized to Schnorr by
 the security endpoint. Seed capacity includes the final verification query;
@@ -66,15 +67,16 @@ theorem complete_replay_live_bound (main : OracleComp (Spec F) A)
     seededOracle.isPerIndexQueryBound_run'_takeAtIndex_addValue
       (i := Sum.inr ()) hmain hc slot.castSucc c⟩
 
-noncomputable local instance [Fintype F] [Inhabited F] : IsUniformSpec (Unit →ₒ F) :=
-  IsUniformSpec.ofFintypeInhabited _
+noncomputable local instance [Fintype F] [Inhabited F] :
+    OracleSpec.UniformAnswerMeasure (Unit →ₒ F) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 theorem completeFork_success_bound [Fintype F] [Inhabited F]
     (main : OracleComp (Spec F) A) (privateFamilies : List Nat) (qR qH : Nat)
     (cf : A → Option (Fin (qH + 1))) :
-    let acc : ENNReal := ∑ s, Pr[= some s | cf <$> main]
+    let acc : ENNReal := ∑ s, Pr{let x ← cf <$> main}[x = some s]
     acc * (acc / (qH + 1 : ENNReal) - (Fintype.card F : ENNReal)⁻¹) ≤
-      Pr[fun r => r.isSome | completeFork main privateFamilies qR qH cf] := by
+      Pr{let r ← completeFork main privateFamilies qR qH cf}[r.isSome] := by
   have hcard : Fintype.card ((Spec F).Range (.inr ())) = Fintype.card F :=
     Fintype.card_congr (Equiv.refl F)
   simpa only [completeFork, hcard, Nat.cast_add, Nat.cast_one] using
@@ -112,7 +114,7 @@ end Schnorr.FixedTape
 namespace FiatShamir.FixedTape
 
 variable {Stmt Wit Commit PrvState Chal Resp M : Type} {rel : Stmt → Wit → Bool}
-variable (σ : SigmaProtocol Stmt Wit Commit PrvState Chal Resp rel)
+variable (σ : SigmaProtocol ProbComp Stmt Wit Commit PrvState Chal Resp rel)
   (hr : GenerableRelation Stmt Wit rel) (M : Type)
 variable [DecidableEq M] [DecidableEq Commit] [DecidableEq Chal]
   [SampleableType Wit] [SampleableType Chal]
@@ -158,8 +160,8 @@ private theorem traceInvariant_of_support
 
 variable [Fintype Chal] [Inhabited Chal]
 
-noncomputable local instance : IsUniformSpec (Unit →ₒ Chal) :=
-  IsUniformSpec.ofFintypeInhabited _
+noncomputable local instance : OracleSpec.UniformAnswerMeasure (Unit →ₒ Chal) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 /-- Every supported successful fork invokes special soundness on two accepting
 transcripts with the same commitment and different cached challenges. -/
@@ -168,7 +170,7 @@ theorem branch_success_of_context
     (hss : σ.SpeciallySound) (pk : Stmt) {x₁ x₂ : Fork.Trace Commit Chal Resp M}
     (h : some (x₁, x₂) ∈ support (contextFork (Fork.runTrace σ hr M adv pk)
       (nmaForkBudget qH) (.inr ()) (Fork.forkPoint Commit Chal Resp M qH))) :
-    Pr[fun w => rel pk w = true | nmaForkExtractBranch (M := M) σ (some (x₁, x₂))] = 1 := by
+    Pr{let w ← nmaForkExtractBranch (M := M) σ (some (x₁, x₂))}[rel pk w = true] = 1 := by
   classical
   obtain ⟨log₁, log₂, s, hcf₁, hcf₂, hP₁, hP₂, hneq⟩ :=
     contextFork_propertyTransfer (Fork.runTrace σ hr M adv pk) (nmaForkBudget qH)
@@ -181,34 +183,18 @@ theorem branch_success_of_context
   have hc : x₁.forgery.2.1 = x₂.forgery.2.1 :=
     congrArg Prod.snd (Fork.runTrace_target_eq_of_mem_contextFork σ hr M adv qH pk
       x₁ x₂ s h hcf₁ hcf₂)
-  simp only [nmaForkExtractBranch, hcache₁, hcache₂, dite_eq_left hc, dite_eq_left hne,
-    probEvent_liftComp]
-  exact probEvent_eq_one_iff.2 ⟨probFailure_eq_zero' inferInstance, fun w hw =>
-    SigmaProtocol.extract_sound_of_speciallySoundAt σ (hss pk) hne hverify₁
-      (hc.symm ▸ hverify₂) hw⟩
+  simp only [nmaForkExtractBranch, hcache₁, hcache₂, dite_eq_left hc, dite_eq_left hne]
+  refine prEvent_eq_one_of_forall_mem_support _ _ fun w hw => ?_
+  rw [support_liftComp] at hw
+  exact SigmaProtocol.extract_sound_of_speciallySoundAt σ (hss pk) hne hverify₁
+    (hc.symm ▸ hverify₂) hw
 
 omit [DecidableEq Chal] in
-private theorem probEvent_sample_challenges {A : Type}
+private theorem prEvent_sample_challenges {A : Type}
     (main : OracleComp (unifSpec + (Unit →ₒ Chal)) A) (p : A → Prop) :
-    Pr[p | simulateQ (QueryImpl.ofLift unifSpec ProbComp +
-      uniformSampleImpl (spec := Unit →ₒ Chal)) main] = Pr[p | main] := by
-  classical
-  induction main using OracleComp.inductionOn with
-  | pure x => simp only [simulateQ_pure, probEvent_pure]
-  | query_bind t cont ih =>
-      simp only [simulateQ_bind, simulateQ_query, OracleQuery.cont_query, id_map,
-        OracleQuery.input_query, probEvent_bind_eq_tsum, ih]
-      refine tsum_congr fun u => ?_
-      congr 1
-      cases t with
-      | inl n =>
-          simp only [QueryImpl.add_apply_inl, QueryImpl.ofLift_eq_id', QueryImpl.id'_apply,
-            probOutput_query, ← Nat.card_eq_fintype_card]
-          rfl
-      | inr t =>
-          simp only [QueryImpl.add_apply_inr, uniformSampleImpl]
-          exact probOutput_uniformSample_eq_query (spec := unifSpec + (Unit →ₒ Chal))
-            (.inr t) u
+    Pr{let x ← (simulateQ (QueryImpl.ofLift unifSpec ProbComp +
+      uniformSampleImpl (spec := Unit →ₒ Chal)) main)}[p x] = Pr{let x ← main}[p x] :=
+  (Fork.simulateQ_uniformImpl_evalDistEq main).prEvent_eq p
 
 /-- Fixed-private-tape extraction with the standard `qH + 1` denominator.
 The premise bounds the source query tree on every possible reply path; it does
@@ -218,15 +204,14 @@ theorem pointwise_extraction_bound
     (privateFamilies : List Nat) (qR qH : Nat) (hss : σ.SpeciallySound) (pk : Stmt)
     (hmain : IsPerIndexQueryBound (Fork.runTrace σ hr M adv pk)
       (Schnorr.FixedTape.finiteBounds privateFamilies qR (qH + 1))) :
-    let acc : ENNReal := ∑ s, Pr[= some s |
-      Fork.forkPoint Commit Chal Resp M qH <$> Fork.runTrace σ hr M adv pk]
+    let acc : ENNReal := ∑ s, Pr{let x ← Fork.forkPoint Commit Chal Resp M qH <$> Fork.runTrace σ hr M adv pk}[x = some s]
     acc * (acc / (qH + 1 : ENNReal) - (Fintype.card Chal : ENNReal)⁻¹) ≤
-      Pr[fun w => rel pk w = true | nmaReduction σ hr M adv privateFamilies qR qH pk] := by
+      Pr{let w ← nmaReduction σ hr M adv privateFamilies qR qH pk}[rel pk w = true] := by
   classical
   refine (Schnorr.FixedTape.completeFork_success_bound (Fork.runTrace σ hr M adv pk)
     privateFamilies qR qH (Fork.forkPoint Commit Chal Resp M qH)).trans ?_
-  rw [nmaReduction, probEvent_sample_challenges, nmaForkExtract,
-    probEvent_bind_eq_tsum, probEvent_eq_tsum_ite]
+  rw [nmaReduction, prEvent_sample_challenges, nmaForkExtract,
+    OracleComp.prEvent_bind_eq_tsum, OracleComp.prEvent_eq_tsum_ite]
   refine ENNReal.tsum_le_tsum fun r => ?_
   cases r with
   | none => simp
@@ -241,17 +226,14 @@ theorem pointwise_extraction_bound
             (Fork.runTrace_forkPoint_CfReachable (σ := σ) (hr := hr) (M := M)
               adv qH pk)) hsupp
         rw [branch_success_of_context σ hr M adv qH hss pk hctx, mul_one]
-      · rw [probOutput_eq_zero_of_not_mem_support hsupp, zero_mul]
+      · rw [(prEvent_eq_zero_of_not_mem_support _) hsupp, zero_mul]
 
 private theorem sum_forkPoint_eq_acceptance
     (adv : SignatureAlg.ManagedRoNmaAdversary (inROM σ hr M)) (qH : Nat) (pk : Stmt) :
-    (∑ s, Pr[= some s | Fork.forkPoint Commit Chal Resp M qH <$>
-      Fork.runTrace σ hr M adv pk]) =
-    Pr[fun x => (Fork.forkPoint Commit Chal Resp M qH x).isSome |
-      Fork.runTrace σ hr M adv pk] := by
-  simpa only [probEvent_isSome_eq_tsum_probOutput_some, tsum_fintype, Function.comp_def] using
-    probEvent_map (Fork.runTrace σ hr M adv pk)
-      (Fork.forkPoint Commit Chal Resp M qH) (fun r => r.isSome)
+    (∑ s, Pr{let x ← (Fork.forkPoint Commit Chal Resp M qH <$>
+      Fork.runTrace σ hr M adv pk)}[x = some s]) =
+    Pr{let x ← Fork.runTrace σ hr M adv pk}[(Fork.forkPoint Commit Chal Resp M qH x).isSome] := by
+  simp only [prEvent_isSome_eq_sum, prEvent_map]
 
 /-- Average the fixed-tape extraction bound over generated public statements.
 The same private tape is fixed within each fork, while key generation retains
@@ -263,35 +245,34 @@ theorem nma_to_hard_relation_bound
       (Schnorr.FixedTape.finiteBounds privateFamilies qR (qH + 1))) :
     Fork.advantage σ hr M adv qH *
       (Fork.advantage σ hr M adv qH / (qH + 1 : ENNReal) - challengeSpaceInv Chal) ≤
-    Pr[= true | hardRelationExperiment hr (nmaReduction σ hr M adv privateFamilies qR qH)] := by
+    Pr{let x ← hardRelationExperiment hr (nmaReduction σ hr M adv privateFamilies qR qH)}[x = true] := by
   classical
+  let : MeasurableSpace (Stmt × Wit) := ⊤
   let acc : Stmt → ENNReal := fun pk =>
-    Pr[fun x => (Fork.forkPoint Commit Chal Resp M qH x).isSome | Fork.runTrace σ hr M adv pk]
-  have hAdv : Fork.advantage σ hr M adv qH =
-      ∑' pkw : Stmt × Wit, Pr[= pkw | hr.gen] * acc pkw.1 := by
-    simp only [Fork.advantage, Fork.experiment, ← probEvent_eq_eq_probOutput,
-      probEvent_sample_challenges, probEvent_bind_eq_tsum, bind_pure_comp,
-      probEvent_map, Function.comp_def, probEvent_liftComp, acc]
+    Pr{let x ← Fork.runTrace σ hr M adv pk}[(Fork.forkPoint Commit Chal Resp M qH x).isSome]
+  let B : Stmt × Wit → ENNReal := fun pkw =>
+    Pr{let w ← nmaReduction σ hr M adv privateFamilies qR qH pkw.1}[rel pkw.1 w = true]
+  have hAdv : Fork.advantage σ hr M adv qH = ∫⁻ pkw, acc pkw.1 ∂𝒟[hr.gen] := by
+    rw [Fork.advantage, Fork.experiment, (Fork.simulateQ_uniformImpl_evalDistEq _).prEvent_eq,
+      prEvent_bind_eq_lintegral_of_discrete, OracleComp.evalDist_liftComp_uniform]
+    refine MeasureTheory.lintegral_congr fun pkw => ?_
+    rcases pkw with ⟨pk, w⟩
+    simp only [acc, prEvent_norm]
   have hReduction :
-      Pr[= true | hardRelationExperiment hr (nmaReduction σ hr M adv privateFamilies qR qH)] =
-      ∑' pkw : Stmt × Wit, Pr[= pkw | hr.gen] *
-        Pr[fun w => rel pkw.1 w = true | nmaReduction σ hr M adv privateFamilies qR qH pkw.1] := by
-    simp only [hardRelationExperiment, ← probEvent_eq_eq_probOutput, bind_pure_comp,
-      probEvent_bind_eq_tsum, probEvent_map, Function.comp_def]
+      Pr{let x ← hardRelationExperiment hr (nmaReduction σ hr M adv privateFamilies qR qH)}[x = true] =
+      ∫⁻ pkw, B pkw ∂𝒟[hr.gen] := by
+    rw [hardRelationExperiment, prEvent_bind_eq_lintegral_of_discrete]
+    refine MeasureTheory.lintegral_congr fun pkw => ?_
+    rcases pkw with ⟨pk, w⟩
+    simp only [B, prEvent_norm]
   have hPointwise : ∀ pk, acc pk * (acc pk / (qH + 1 : ENNReal) - challengeSpaceInv Chal) ≤
-      Pr[fun w => rel pk w = true | nmaReduction σ hr M adv privateFamilies qR qH pk] := by
+      Pr{let w ← nmaReduction σ hr M adv privateFamilies qR qH pk}[rel pk w = true] := by
     intro pk
     simpa only [sum_forkPoint_eq_acceptance, challengeSpaceInv, acc] using
       pointwise_extraction_bound σ hr M adv privateFamilies qR qH hss pk (hmain pk)
   rw [hAdv, hReduction]
-  simpa only [DiscreteEvalDistCompatible.lintegral_evalDist _ (g := fun a => a) measurable_id,
-    ← OracleComp.EvalDist.expectedValue_def, OracleComp.EvalDist.expectedValue_map] using
-    OracleComp.EvalDist.marginalized_jensen_forking_bound_map (mx := hr.gen)
-      (acc := fun pkw => acc pkw.1)
-      (B := fun pkw => Pr[fun w => rel pkw.1 w = true |
-        nmaReduction σ hr M adv privateFamilies qR qH pkw.1])
-      (q := (qH : ENNReal) + 1) (hinv := challengeSpaceInv Chal)
-      (fun _ => probEvent_le_one) (fun pkw => hPointwise pkw.1)
+  exact OracleComp.EvalDist.marginalized_jensen_forking_bound_of_discrete hr.gen
+    (fun pkw => acc pkw.1) B _ _ (fun _ => prEvent_le_one _) (fun pkw => hPointwise pkw.1)
 
 /-- The CMA reduction uses the existing signing simulator and the new complete
 private-tape extractor. -/
@@ -304,7 +285,7 @@ def cmaReduction (simTranscript : Stmt → ProbComp (Commit × Chal × Resp))
 theorem euf_cma_bound [Finite Stmt] [SampleableType Stmt]
     (hss : σ.SpeciallySound)
     (simTranscript : Stmt → ProbComp (Commit × Chal × Resp))
-    (ζ : ℝ) (hζ : 0 ≤ ζ) (hhvzk : σ.HVZK simTranscript ζ)
+    (ζ : ENNReal) (hhvzk : σ.HVZK simTranscript ζ)
     (β : ENNReal) (hpred : σ.simCommitPredictability simTranscript β)
     (adv : SignatureAlg.UnforgeableAdversary (inROM σ hr M))
     (privateFamilies : List Nat) (qR qS qH : Nat)
@@ -313,11 +294,11 @@ theorem euf_cma_bound [Finite Stmt] [SampleableType Stmt]
       (Fork.runTrace σ hr M (cmaToNmaAdv σ hr M simTranscript adv) pk)
       (Schnorr.FixedTape.finiteBounds privateFamilies qR (qH + 1))) :
     let eps := SignatureAlg.unforgeableAdvantage (runtime M) adv -
-      (ENNReal.ofReal ((qS : ℝ) * ζ) + (qS : ENNReal) * (qS + qH) * β)
+      ((qS : ENNReal) * ζ + (qS : ENNReal) * (qS + qH) * β)
     eps * (eps / (qH + 1 : ENNReal) - challengeSpaceInv Chal) ≤
-      Pr[= true | hardRelationExperiment hr
-        (cmaReduction σ hr M simTranscript adv privateFamilies qR qH)] := by
-  have hAdv := cma_to_nma_advantage_bound σ hr M simTranscript ζ hζ hhvzk β hpred adv qS qH hQ
+      Pr{let x ← (hardRelationExperiment hr
+        (cmaReduction σ hr M simTranscript adv privateFamilies qR qH))}[x = true] := by
+  have hAdv := cma_to_nma_advantage_bound σ hr M simTranscript ζ hhvzk β hpred adv qS qH hQ
   refine le_trans ?_ (nma_to_hard_relation_bound σ hr M
     (cmaToNmaAdv σ hr M simTranscript adv) privateFamilies qR qH hss hmain)
   gcongr <;> exact tsub_le_iff_right.mpr (by simpa [add_assoc] using hAdv)

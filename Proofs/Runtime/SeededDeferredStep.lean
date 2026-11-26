@@ -1,5 +1,6 @@
 import VCVio.OracleComp.QueryTracking.SeededOracle
 import Proofs.Runtime.SeededMeasure
+import VCVio.OracleComp.EvalDist.Sum
 
 /-! One-step deferred sampling for dependent oracle families. The generated
 seed is a probability-proof artifact. The runtime implementation must not
@@ -34,25 +35,32 @@ private theorem counts_eq (budget : I → Nat) (families : List I)
   · simp [h]
   · rw [List.count_eq_one_of_mem unique (cover i (Nat.pos_of_ne_zero h)), Nat.mul_one]
 
-variable [∀ i, SampleableType (spec.Range i)] [IsUniformSpec spec]
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
+variable [∀ i, SampleableType (spec.Range i)] [OracleSpec.UniformAnswerMeasure spec]
 
 private theorem prepend_probability (budget : I → Nat) (families : List I)
     (unique : families.Nodup) (cover : SeedListCovers budget families)
-    (i : I) (positive : 0 < budget i) (answer : spec.Range i) (rest : QuerySeed spec)
-    [MeasurableSpace (QuerySeed spec)] [MeasurableSingletonClass (QuerySeed spec)] :
-    𝒟[generateSeed spec budget families] {rest.prependValues [answer]} =
-      𝒟[(liftM (spec.query i) : OracleComp spec _)] {answer} *
-        𝒟[generateSeed spec (debit budget i) families] {rest} := by
+    (i : I) (positive : 0 < budget i) (answer : spec.Range i) (rest : QuerySeed spec) :
+    Pr{let s ← generateSeed spec budget families}[s = rest.prependValues [answer]] =
+      Pr{let u ← (liftM (spec.query i) : OracleComp spec _)}[u = answer] *
+        Pr{let s ← generateSeed spec (debit budget i) families}[s = rest] := by
+  classical
+  let : ∀ t, Fintype (spec.Range t) := fun _ => Fintype.ofFinite _
   have hc := counts_eq budget families unique cover
   have hf : (fun j => budget j * families.count j) = budget := funext hc
   have hd : families.dedup = families := List.dedup_eq_self.mpr unique
   have hp : 0 < budget i * families.count i := by simpa only [hc] using positive
-  simpa only [evalDist_apply_singleton, hf, hc, hd, debit, probOutput_query] using
-    probOutput_generateSeed_prependValues spec budget families answer rest hp
+  rw [prEvent_liftM_query_eq_card_div i (· = answer), Finset.filter_eq' Finset.univ answer,
+    ite_eq_left (Finset.mem_univ answer), Finset.card_singleton, Nat.cast_one, one_div]
+  simpa only [hf, hc, hd, debit] using
+    prEvent_generateSeed_prependValues spec budget families answer rest hp
 
 variable [unifSpec ⊂ₒ spec] [unifSpec ˡ⊂ₒ spec]
   [MeasurableSpace A]
+
+/-- Lifting along a uniform inclusion preserves point masses. -/
+private theorem prEvent_liftComp_eq {B : Type} (mx : ProbComp B) (b : B) :
+    Pr{let x ← liftComp mx spec}[x = b] = Pr{let x ← mx}[x = b] :=
+  (evalDistEq_liftComp_uniform mx).prEvent_eq _
 
 /-- Move the next queried reply out of the preallocated seed. The continuation
 may inspect the entire residual seed, so this preserves its joint law with the
@@ -69,36 +77,32 @@ theorem generate_bind_step (budget : I → Nat) (families : List I)
       next (rest.prependValues [answer])] := by
   classical
   apply measure_of_compat
-  apply congrArg SPMF.toMeasure
-  apply evalSPMF_ext
+  apply evalDistEq_of_forall_prEvent_eq_output
   intro result
-  let : MeasurableSpace (QuerySeed spec) := ⊤
-  let : MeasurableSpace (spec.Range i) := ⊤
-  let : MeasurableSpace A := ⊤
-  rw [probOutput_bind_eq_tsum, probOutput_bind_eq_tsum]
-  simp_rw [probOutput_liftComp]
+  rw [OracleComp.prEvent_bind_eq_tsum, OracleComp.prEvent_bind_eq_tsum]
+  simp_rw [prEvent_liftComp_eq]
   have hrange : Function.support (fun seed : QuerySeed spec =>
-      𝒟[generateSeed spec budget families] {seed} * 𝒟[next seed] {result}) ⊆
+      Pr{let s ← generateSeed spec budget families}[s = seed] *
+        Pr{let y ← next seed}[y = result]) ⊆
       Set.range (fun p : spec.Range i × QuerySeed spec => p.2.prependValues [p.1]) := by
     intro seed hs
-    simp only [evalDist_apply_singleton] at hs
     have hmem : seed ∈ support (generateSeed spec budget families) := by
       by_contra h
-      exact hs (by simp [(probOutput_eq_zero_iff _ _).mpr h])
+      exact Function.mem_support.mp hs (by
+        rw [(prEvent_eq_zero_iff (generateSeed spec budget families) (· = seed)).mpr
+          (fun x hx (hxs : x = seed) => h (hxs ▸ hx)), zero_mul])
     have hpos : 0 < budget i * families.count i := by
       simpa only [counts_eq budget families unique cover] using positive
     obtain ⟨answer, rest, hcons⟩ := exists_cons_of_mem_support_generateSeed
       spec budget families seed i hmem hpos
     exact ⟨(answer, seed.update i rest),
       QuerySeed.eq_prependValues_of_pop_eq_some (QuerySeed.pop_eq_some_of_cons seed i answer rest hcons)⟩
-  simp only [evalDist_apply_singleton] at hrange
   rw [← (QuerySeed.prependValues_singleton_injective i).tsum_eq hrange,
     ENNReal.tsum_prod']
   have hp := fun (answer : spec.Range i) (rest : QuerySeed spec) =>
     prepend_probability (spec := spec) budget families unique cover i positive answer rest
-  simp only [evalDist_apply_singleton] at hp
   simp_rw [hp, mul_assoc,
-    ENNReal.tsum_mul_left, probOutput_bind_eq_tsum, probOutput_liftComp]
+    ENNReal.tsum_mul_left, OracleComp.prEvent_bind_eq_tsum, prEvent_liftComp_eq]
 
 /-- Consuming that freshly exposed seed head leaves precisely the independent
 seed with one fewer entry in its family. -/

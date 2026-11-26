@@ -60,7 +60,7 @@ theorem forgeryBound_of_output_size (recovery : OutputRecovery (Q := Q) rep bd)
   forgeryBound_of_size rep sizes lengths payloads out _
     ((recovery.encoded out).trans (recovery.monotone ho))
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   [QO : Q.HasOption] [OC : OptionCode (Q := Q)]
   [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]

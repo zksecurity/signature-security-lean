@@ -94,19 +94,24 @@ theorem run_queries (n w k : Nat) :
 
 open scoped ENNReal
 
+/-- Mathlib dropped `PMF.monad_pure_eq_pure`/`PMF.monad_bind_eq_bind`; both are `rfl`. -/
+@[simp] private theorem pmf_pure_eq {α : Type} (a : α) : (pure a : PMF α) = PMF.pure a := rfl
+@[simp] private theorem pmf_bind_eq {α β : Type} (p : PMF α) (f : α → PMF β) :
+    p >>= f = p.bind f := rfl
+
 /-- Padding changes only the encoding width, not the sampled value or flag. -/
 theorem distribution (n w k : Nat) (hfit : n ≤ 2^w) :
-    (simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool) (run (compile n w k))).map Run.value =
+    (simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool) (run (compile n w k))).map Run.value =
       (RejectionSampling.sample n (width n w) k).map
         (fun x => ((x.map (fun y => natBits w y.val)).getD (natBits w 0), x.isNone)) := by
-  let fair : QueryImpl BitRejection.bitSpec PMF := fun _ => PMF.uniformOfFintype Bool
+  let fair : QueryImpl BitRejection.bitSpec PMF := fun _ => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool
   have hz := (BitRejection.zeroWord_spec (List.replicate (w-width n w) ())).1
   simp only [List.length_replicate] at hz
   calc
     _ = ((simulateQ fair (BitRejection.executeDefault (BitRejection.compile n (width n w) k))).map
         Run.value).map (fun p => (p.1 ++ natBits (w-width n w) 0, p.2)) := by
-      simp only [run, compile, simulateQ_bind, simulateQ_pure, PMF.monad_bind_eq_bind,
-        PMF.monad_pure_eq_pure, PMF.map_bind, PMF.pure_map, PMF.map_comp,
+      simp only [run, compile, simulateQ_bind, simulateQ_pure, pmf_bind_eq,
+        pmf_pure_eq, PMF.map_bind, PMF.pure_map, PMF.map_comp,
         Function.comp_def, append_value, hz]
       rfl
     _ = _ := by
@@ -122,17 +127,17 @@ theorem distribution (n w k : Nat) (hfit : n ≤ 2^w) :
         rw [pad_bits _ _ _ (width_le n w) (x.isLt.trans_le (fits n w hfit))]
 
 theorem bad_eq (n w k : Nat) (hfit : n ≤ 2^w) :
-    ((simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool) (run (compile n w k))).map
+    ((simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool) (run (compile n w k))).map
       (fun out => out.value.2)) true = (1-n*(2^(width n w) : ℝ≥0∞)⁻¹)^k := by
   have hm := PMF.map_comp (Run.value : Run (List Bool × Bool) → List Bool × Bool)
-    (simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool) (run (compile n w k))) Prod.snd
+    (simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool) (run (compile n w k))) Prod.snd
   simp only [Function.comp_def] at hm
   rw [← hm, distribution n w k hfit, PMF.map_comp, PMF.map_apply]
   simp only [Function.comp_def, Bool.true_eq, Option.isNone_iff_eq_none]
   simpa using RejectionSampling.failure n (width n w) k (fits n w hfit)
 
 theorem bad_le (n w k : Nat) (hn : 0 < n) (hfit : n ≤ 2^w) :
-    ((simulateQ (fun _ : Unit => PMF.uniformOfFintype Bool) (run (compile n w k))).map
+    ((simulateQ (fun _ : Unit => Signatures.Runtime.RejectionSampling.uniformOfFintype Bool) (run (compile n w k))).map
       (fun out => out.value.2)) true ≤ (1/2 : ℝ≥0∞)^k := by
   rw [bad_eq n w k hfit, ← RejectionSampling.failure n (width n w) k (fits n w hfit)]
   exact RejectionSampling.failure_le_half n (width n w) k (fits n w hfit) (half n w hn)

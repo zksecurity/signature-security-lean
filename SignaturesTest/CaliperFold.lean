@@ -50,10 +50,10 @@ example : (Caliper.run .unit RandomTape.zero 3000 fold.code
 example : (Caliper.run .unit RandomTape.zero 3000 fold.code
     ((input 3 (by decide) (by decide)).initial (⟨[7], by decide⟩, ((1, (2, 3)), 99)))).map
     (fun (state, time, net, peak) => (state.bufs 0, time, net, peak)) =
-    some (#[2, 7, 99], 297, -5, 10) := by decide
+    some (#[2, 7, 99], 297, -5, 10) := by decide +kernel
 example : (Caliper.run .unit RandomTape.zero 3000 fold.code
     ((input 3 (by decide) (by decide)).initial (⟨[7, 11], by decide⟩, ((1, (2, 3)), 99)))).map
-    (fun (state, time, _, _) => (state.bufs 0, time)) = some (#[7, 11, 99], 540) := by decide
+    (fun (state, time, _, _) => (state.bufs 0, time)) = some (#[7, 11, 99], 540) := by decide +kernel
 
 private def fullInput : State 8 :=
   let initial := (input 3 (by decide) (by decide)).initial (⟨[7, 11, 13], by decide⟩, ((1, (2, 3)), 99))

@@ -20,7 +20,7 @@ private abbrev F := ZMod 5
 section Execution
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
   {iface : Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F F F Nat Nat))
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

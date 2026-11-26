@@ -42,7 +42,13 @@ theorem schnorr_eufcma_of_dlog_machine_hardness
     -- The extra hash slot is the final verification query; a repeated challenge costs 1/|F|.
     eps * (eps / (qH + 1 : ENNReal) - (Nat.card F : ENNReal)⁻¹) ≤ epsilon := by
   let : Fintype F := Fintype.ofFinite F
-  simpa only [Nat.card_eq_fintype_card] using (Schnorr.ROM.Proofs.security g hgen adv qS qH hQ).trans
-    (hhard _ (cert.within sampling g qH))
+  have hgame : Pr{let x ← Schnorr.ROM.game g adv}[x = true] = 𝒟[Schnorr.ROM.game g adv] {true} :=
+    prEvent_eq_evalDist_singleton _ _
+  have hdlog : Pr{let x ← dlogExperiment g (Schnorr.dlogReduction F G g M adv qH)}[x = true] =
+      𝒟[dlogExperiment g (Schnorr.dlogReduction F G g M adv qH)] {true} :=
+    prEvent_eq_evalDist_singleton _ _
+  have hsecurity := Schnorr.ROM.Proofs.security g hgen adv qS qH hQ
+  simp only [hgame, hdlog] at hsecurity
+  simpa only [Nat.card_eq_fintype_card] using hsecurity.trans (hhard _ (cert.within sampling g qH))
 
 end Schnorr.Statement

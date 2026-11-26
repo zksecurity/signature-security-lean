@@ -33,7 +33,7 @@ theorem LocalBound.atomic {I : Type} {spec : OracleSpec I} {iface : Interface (C
 
 namespace Language
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {S : Type} {overhead : Nat → Nat} (laws : LocalCostLaws Q overhead)
 
 def contextReturnBound {B E : Type} (b : C.Str B) (e : C.Str E) (store : C.Str S) :

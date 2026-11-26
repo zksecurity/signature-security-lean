@@ -1,12 +1,12 @@
 import Proofs.Schnorr.AGMSigningSimulation
 import Proofs.Schnorr.AGMSourceGame
-import VCVio.OracleComp.Constructions.SampleableType.MeasureCompatibility
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-! Adaptive, single-pass Schnorr security in the algebraic group model.
 The theorem concerns the original source game, including malformed requests,
 shared lazy hashes, signing history, and final verification. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 open scoped ENNReal
 
 namespace Schnorr.AGM
@@ -17,7 +17,7 @@ variable {F G M : Type} [Field F] [AddCommGroup G] [Module F G]
 /-- Honest instrumentation preserves the entire Boolean output distribution. -/
 theorem honestGame_dist (g : G) (A : Adversary F G M) :
     𝒟[Reduction.honestGame g A] = 𝒟[game g A] := by
-  exact evalDist_eq_of_evalSPMF_eq _ _ (Reduction.honestGame_eq g A)
+  exact (Reduction.honestGame_eq g A).evalDist_eq
 
 /-- The actual single-pass solver loses at most the signing-collision term and
 one inverse-field-size term per adversarial hash or final verification query.

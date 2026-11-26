@@ -30,6 +30,7 @@ theorem source_original (input : layout.input.Value) (valid : ready layout fuel 
     (PrivateSampler.Pair.scalar_source layout.sampler caller zeroValid fuel terminates samples (tapes layout input) valid)
   simp only [source, Functor.map_map, map_bind, bind_pure_comp, result, finishValue, coreValue, context, tapes] at same ⊢
   convert same using 1
+  rfl
 
 theorem observe_original (tape : RandomTape w) (input : layout.input.Value) (valid : ready layout fuel input)
     (before : State w) (holds : layout.input.representation.Holds input before) :

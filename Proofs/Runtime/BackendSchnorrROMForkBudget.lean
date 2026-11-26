@@ -54,7 +54,7 @@ theorem output_size (width managedCap liveCap : Nat) (hh : header ≤ width)
   unfold controllerWidth
   nlinarith only [h, hh]
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
   [Q.HasOption] [OptionCode (Q := Q)]
   [Field F] [SampleableType F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]

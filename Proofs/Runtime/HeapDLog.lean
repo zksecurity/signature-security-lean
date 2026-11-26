@@ -24,7 +24,7 @@ def dlogWithin (w : Nat) (H : AddSubgroup W.Point) (codeBudget budget : Nat) (pa
 
 noncomputable def dlogAdvantage {r : Nat} [Fact r.Prime] {H : AddSubgroup W.Point}
     [Module (ZMod r) H] (w : Nat) (g : H) (pack : Package) : ℝ≥0∞ :=
-  ((PMF.uniformOfFintype (ZMod r)).bind (fun x =>
+  ((Signatures.Runtime.RejectionSampling.uniformOfFintype (ZMod r)).bind (fun x =>
     (scalarLaw r w pack ((x • g : H) : W.Point)).map (fun out => decide (out.1 = x)))) true
 
 end Signatures.Runtime.HeapMachine

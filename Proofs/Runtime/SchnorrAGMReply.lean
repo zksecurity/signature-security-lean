@@ -6,7 +6,7 @@ charged by the handlers that use them. -/
 
 namespace Signatures.Runtime.SchnorrAGM.Native
 
-open AlgebraicGroupModel.Interaction
+open GroupModel.Interaction
 
 abbrev groupReplyTy (dataTy : Ty CryptoAtom) : Ty CryptoAtom := .pair dataTy (.list point₁)
 abbrev scalarGroupReplyTy : Ty CryptoAtom := groupReplyTy scalar

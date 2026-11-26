@@ -26,7 +26,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
 
 include sizes hrun
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QD : Q.IsDistributive]
   [QO : Q.HasOption] [OC : OptionCode (Q := Q)]
   [Field F] [SampleableType F] [SampleableType Fˣ] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₂] [DecidableEq K]

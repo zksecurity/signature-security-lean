@@ -26,7 +26,7 @@ namespace Caller
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   {I A B S : Type} {source : OracleSpec I} [DecidableEq I]
   {bd : Boundary C source.toPFunctor A B}
@@ -115,7 +115,7 @@ variable (control : ControlCosts) (controlLaws : RoutingCostLaws control overhea
 
 include controlLaws
 
-omit localLaws dispatchLaws [Q.HasCategory] QP QS QO QD OC in
+omit localLaws dispatchLaws [Q.HasComposition] QP QS QO QD OC in
 theorem routeControl_of_width (input : R.machine.State × S)
     (width : Nat) (hh : header ≤ width) (hs : Q.size R.state input.1 ≤ width)
     (hw : Q.size store input.2 ≤ width) (hv : Q.size bd.head (R.machine.head input.1) ≤ width) :
@@ -325,7 +325,7 @@ theorem queryWork_of_width (state : R.machine.State) (saved saved' : S) (i : I)
   dsimp only [frame, Boundary.stateIdx, Sum.elim] at *
   omega
 
-omit localLaws dispatchLaws [Q.HasCategory] QP QS QO QD OC in
+omit localLaws dispatchLaws [Q.HasComposition] QP QS QO QD OC in
 theorem initWork_of_width (input : A × S) (width : Nat)
     (hh : header ≤ width)
     (hs : Q.size store input.2 ≤ width)

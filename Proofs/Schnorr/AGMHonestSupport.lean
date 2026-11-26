@@ -3,7 +3,7 @@ import Proofs.Schnorr.AGMHonest
 /-! Honest instrumentation has only paths already covered by the reduction's
 representation invariant. Its padded challenge is irrelevant on cache hits. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction OracleComp.DeferredSampling
+open OracleComp OracleSpec GroupModel.Interaction OracleComp.DeferredSampling
 
 namespace Schnorr.AGM.Reduction
 
@@ -16,20 +16,19 @@ theorem shiftedCommit (g : G) (x c r : F) :
   rw [add_smul, mul_smul, add_sub_cancel_right]
 
 theorem honestSign_normal (g : G) (x : F) (s : State F G M) (m : M) :
-    𝒮[honestSign g x s m] = 𝒮[do
+    honestSign g x s m =ᵈ (do
       let r ← $ᵗ F
       let c ← match s.cache (m, r • g) with
         | some e => pure e.challenge
         | none => $ᵗ F
-      pure (signingOutput g (x • g) s m c (r + c * x))] := by
-  rw [honestSign, evalSPMF_bind_comm]
-  apply evalSPMF_bind_congr_left
-  intro r
+      pure (signingOutput g (x • g) s m c (r + c * x))) := by
+  rw [honestSign]
+  refine (EvalDistEq.bind_bind_swap _ _ _).trans (EvalDistEq.bind_right _ fun r => ?_)
   cases hc : s.cache (m, r • g) with
-  | none => simp only [Option.map_none, Option.getD_none]
+  | none => simp only [Option.map_none, Option.getD_none]; exact .rfl
   | some e =>
       simp only [Option.map_some, Option.getD_some, pure_bind]
-      exact evalSPMF_bind_const_neverFails ($ᵗ F) (by simp) _
+      exact EvalDistEq.bind_const ($ᵗ F) _
 
 theorem honestSign_support (g : G) (x : F) (s : State F G M) (m : M)
     (p : Message F (Group G) × State F G M) (hp : p ∈ support (honestSign g x s m)) :

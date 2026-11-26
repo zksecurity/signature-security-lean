@@ -114,8 +114,8 @@ theorem finalHash_run (k : M × G) (saved : Store F G M) :
 
 theorem signing_run (msg : M) (saved : Store F G M) :
     (interpret (handler (G₂ := G₂) (K := K) (.inr msg))).run saved = (do
-      let first ← tapeRun (privateImpl (.inr ())) saved.2
-      let second ← tapeRun (privateImpl (.inr ())) first.2
+      let first : F × Tape F ← tapeRun (privateImpl (.inr ())) saved.2
+      let second : F × Tape F ← tapeRun (privateImpl (.inr ())) first.2
       let commitment := second.1 • saved.1.1.1 - first.1 • saved.1.1.2
       let updated := (cacheProgram (val := scalar) hashEq).denote (arithmetic F G G₂ K M PrimitiveCosts.unit)
         ((msg, commitment), first.1, saved.1.2.1, ())
@@ -128,6 +128,5 @@ theorem signing_run (msg : M) (saved : Store F G M) :
   rw [taggedSign_denote]
   simp only [simulateQ_bind, simulateQ_pure, simulateQ_spec_query, Replay.expandPrivate,
     tapeRun_bind, tapeRun_pure, map_bind, map_pure, Expr.run_value]
-  rfl
 
 end Signatures.Runtime.Schnorr.ListROM.Shared

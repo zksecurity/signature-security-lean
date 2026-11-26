@@ -3,7 +3,7 @@ import Proofs.Schnorr.AGMCacheGrowth
 /-! Adaptive composition of the honest/simulated signing comparison.
 Cache growth consumes hash/signing budgets; private randomness is unrestricted. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 open scoped ENNReal
 
 namespace Schnorr.AGM.Reduction
@@ -24,6 +24,15 @@ private theorem signing_slack (k qS qH : Nat) (hS : 0 < qS) (delta : ENNReal) :
         ((k + qS + qH : Nat) : ENNReal) * delta := by gcongr
     _ = _ := by rw [hc]; ring
 
+/-- Pointwise comparison of two continuations after a common draw. -/
+private theorem prEvent_bind_le_add_of_forall {α β : Type} (mx : ProbComp α)
+    {f g : α → ProbComp β} {q : β → Prop} {ε : ENNReal}
+    (h : ∀ a ∈ support mx, Pr{let y ← f a}[q y] ≤ Pr{let y ← g a}[q y] + ε) :
+    Pr{let y ← mx >>= f}[q y] ≤ Pr{let y ← mx >>= g}[q y] + ε := by
+  have := prEvent_bind_le_add_of_disagree (mx := mx) (D := fun _ => False) (ε₁ := 0)
+    (prEvent_eq_zero_of_forall_not _ _ fun _ => id).le fun a ha _ => h a ha
+  simpa only [add_zero] using this
+
 /-- Comparison for any final probabilistic observation, preserving adaptive branching. -/
 theorem compare_observe {B : Type}
     (g : G) (hg : Function.Injective (fun x : F => x • g)) (x : F)
@@ -35,8 +44,8 @@ theorem compare_observe {B : Type}
     (s : State F G M) (hk : CacheBound s k)
     (observe : Explained F (M × F) (Group G) → State F G M → ProbComp B)
     (event : B → Prop) :
-    Pr[event | (simulateQ (honestHandler g x) program).run s >>= fun p => observe p.1 p.2] ≤
-      Pr[event | (simulateQ (handler g (x • g)) program).run s >>= fun p => observe p.1 p.2] +
+    Pr{let y ← (simulateQ (honestHandler g x) program).run s >>= fun p => observe p.1 p.2}[event y] ≤
+      Pr{let y ← (simulateQ (handler g (x • g)) program).run s >>= fun p => observe p.1 p.2}[event y] +
         (qS : ENNReal) * ((k + qS + qH : Nat) : ENNReal) * (Fintype.card F : ENNReal)⁻¹ := by
   induction program using OracleComp.inductionOn generalizing qS qH k s with
   | pure out =>
@@ -49,14 +58,14 @@ theorem compare_observe {B : Type}
       cases request with
       | random n =>
           simp [signRequest, hashRequest] at hS hH
-          apply probEvent_bind_congr_le_add
+          apply prEvent_bind_le_add_of_forall
           intro p hp
           have hcache := handler_cacheBound g (x • g) s k hk
             ⟨⟨Request.random n, groups⟩, coeffs⟩ p.1 p.2 hp
           exact ih p.1 qS qH k (hS p.1) (hH p.1) p.2 (by simpa [cacheCharge] using hcache)
       | hash m =>
           simp [signRequest, hashRequest] at hS hH
-          apply probEvent_bind_congr_le_add
+          apply prEvent_bind_le_add_of_forall
           intro p hp
           have hcache := handler_cacheBound g (x • g) s k hk
             ⟨⟨Request.hash m, groups⟩, coeffs⟩ p.1 p.2 hp
@@ -68,10 +77,10 @@ theorem compare_observe {B : Type}
           have ht : k + 1 + (qS - 1) + qH = k + qS + qH := by omega
           by_cases he : groups () = []
           · simp only [honestHandler, handler, StateT.run, he, ne_eq, not_true_eq_false, ite_false]
-            change Pr[event | honestSign g x s m >>= fun p =>
-                (simulateQ (honestHandler g x) (next p.1)).run p.2 >>= fun z => observe z.1 z.2] ≤
-              Pr[event | simulatedSign g (x • g) s m >>= fun p =>
-                (simulateQ (handler g (x • g)) (next p.1)).run p.2 >>= fun z => observe z.1 z.2] + _
+            change Pr{let y ← (honestSign g x s m >>= fun p =>
+                (simulateQ (honestHandler g x) (next p.1)).run p.2 >>= fun z => observe z.1 z.2)}[event y] ≤
+              Pr{let y ← (simulatedSign g (x • g) s m >>= fun p =>
+                (simulateQ (handler g (x • g)) (next p.1)).run p.2 >>= fun z => observe z.1 z.2)}[event y] + _
             have hstep := honestSign_bind_le g hg x s m k hk
               (fun p => (simulateQ (honestHandler g x) (next p.1)).run p.2 >>= fun z => observe z.1 z.2)
               (fun p => (simulateQ (handler g (x • g)) (next p.1)).run p.2 >>= fun z => observe z.1 z.2)
@@ -101,10 +110,9 @@ theorem honest_simulated (g : G) (hg : Function.Injective (fun x : F => x • g)
     (hH : ∀ pk, IsQueryBoundP (adv.main (initial g pk)) (fun q => hashRequest q = true) qH) :
     𝒟[honestGame g adv] {true} ≤ 𝒟[simulatedGame g adv] {true} +
       (qS : ENNReal) * (qS + qH) * (Fintype.card F : ENNReal)⁻¹ := by
-  rw [evalDist_apply_singleton, evalDist_apply_singleton,
-    ← probEvent_eq_eq_probOutput, ← probEvent_eq_eq_probOutput]
+  rw [← prEvent_eq_evalDist_singleton, ← prEvent_eq_evalDist_singleton]
   simp only [honestGame, simulatedGame, honestRun, run, StateT.run_bind, bind_assoc]
-  apply probEvent_bind_congr_le_add
+  apply prEvent_bind_le_add_of_forall
   intro x _
   simpa only [zero_add, Nat.cast_add] using compare_observe g hg x
     (adv.main (initial g (x • g))) qS qH 0 (hS (x • g)) (hH (x • g)) {}

@@ -114,7 +114,7 @@ theorem random_bound (pre post : S → Prop) (width frameWidth adapterTime sampl
     Q.size (StepClass.HasProd.prod ports.randomReply store) mid.value ≤ 32 * frameWidth by omega)
   exact ⟨⟨hout.1, hpreserve out.value.2 hout.2⟩, by dsimp only [fee] at *; omega⟩
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   (localLaws : LocalCostLaws Q overhead)
 
 include localLaws

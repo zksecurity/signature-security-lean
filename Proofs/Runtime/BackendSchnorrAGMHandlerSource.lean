@@ -5,7 +5,7 @@ import Proofs.Runtime.GeneralCallerRefinement
 and the established finite-list reduction. The caller is a general quantitative
 realization; it is not required to be an arithmetic-language program. -/
 
-open OracleComp OracleSpec PFunctor AlgebraicGroupModel.Interaction Schnorr.AGM
+open OracleComp OracleSpec PFunctor GroupModel.Interaction Schnorr.AGM
 open PFunctor.DynSystem.DynComputation
 
 namespace Signatures.Runtime.SchnorrAGM.Native.Handler
@@ -16,7 +16,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {F G₁ G₂ K M Input Output : Type} [Field F] [SampleableType F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]

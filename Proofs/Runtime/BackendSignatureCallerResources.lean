@@ -90,7 +90,7 @@ theorem resource_step (width : Nat) (hwidth : recovery.recover bound.peakHeadSiz
   refine ⟨?_, fun reply => GeneralCaller.reachable_step R state hs i next hv reply⟩
   rcases i with (r | m) | m <;> exact hr.trans hwidth
 
-variable [Zero G₁] [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
+variable [Zero G₁] [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption]
   [QD : Q.IsDistributive] [OC : OptionCode (Q := Q)]
   {iface : Interface (C := C) unifSpec} {S : Type}
   (ports : NativePorts (Q := Q) rep bd) (sampler : BoundedSampler rep bd ports (iface := iface))

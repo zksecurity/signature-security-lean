@@ -48,13 +48,13 @@ theorem security [Fintype F] (g : G)
   let : Inhabited F := ⟨0⟩
   let : Finite G := Finite.of_surjective _ generates.surjective
   have h := FiatShamir.LazyTape.security (sigma g) (dlogGenerable F g) M
-    (sigma_speciallySound g) (simTranscript g) 0 le_rfl
+    (sigma_speciallySound g) (simTranscript g) 0
     ((ChallengeVerifyProtocol.perfectHVZK_iff_hvzk_zero _ _).mp (sigma_hvzk g generates.injective))
     (((Fintype.card F - 1 : Nat) : ENNReal)⁻¹) (sigma_simCommitPredictability g generates)
     adv qS qH queries
   rw [experiment_eq g generates adv qH] at h
   rw [game_eq_advantage]
-  simpa only [mul_zero, ENNReal.ofReal_zero, zero_add, FiatShamir.challengeSpaceInv,
+  simpa only [mul_zero, zero_add, FiatShamir.challengeSpaceInv,
     signature, FiatShamir.inROM] using h
 
 end Schnorr.NonzeroNonce.LazyROM

@@ -61,23 +61,27 @@ theorem collisionExperiment_table (g₂ : G₂)
 theorem collision_eq_realGame (g₂ : G₂)
     (A : Adversary F (Option (Fin ℓ) × S) ((Fin ℓ → F) × S) G₁ G₂) :
     𝒟[collisionGame g₂ A] {true} =
-      Pr[fun x => x.1.Fresh ∧ ¬ Proximity.Proofs.Noncollision x.1 |
-        realGameDynAdaptive (Proximity.Proofs.coordinateWeight ℓ) g₂ (extracted A)] := by
+      Pr{let x ← realGameDynAdaptive (Proximity.Proofs.coordinateWeight ℓ) g₂ (extracted A)}[x.1.Fresh ∧ ¬ Proximity.Proofs.Noncollision x.1] := by
   classical
-  have hd := BLS.CoCDH.evalSPMF_lazyCoin_eq_table (collisionExperiment g₂ A) ∅
+  have hd := BLS.CoCDH.evalDistEq_lazyCoin_eq_table (collisionExperiment g₂ A) ∅
   simp only [tableExtending_empty, collisionExperiment_table] at hd
-  change 𝒮[collisionGame g₂ A] = _ at hd
-  rw [DeferredSampling.evalSPMF_bind_comm] at hd
-  rw [evalDist_apply_singleton, probOutput_congr rfl hd, ← probEvent_true_eq_probOutput]
+  change collisionGame g₂ A =ᵈ _ at hd
+  replace hd := hd.trans (EvalDistEq.bind_bind_swap _ _ _)
+  rw [← prEvent_eq_evalDist_singleton, hd.prEvent_eq]
   unfold realGameDynAdaptive extracted
-  simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply,
-    probEvent_bind_eq_tsum]
+  simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply]
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun α => ?_
   congr 1
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun H => ?_
   congr 1
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun z => ?_
-  simp only [probEvent_pure, decide_eq_true_eq, collision_toForgery]
+  simp only [prEvent_pure, decide_eq_true_eq, collision_toForgery]
 
 theorem security (g₁ : G₁) (g₂ : G₂)
     (A : Adversary F (Option (Fin ℓ) × S) ((Fin ℓ → F) × S) G₁ G₂)

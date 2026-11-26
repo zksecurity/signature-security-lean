@@ -16,7 +16,7 @@ private abbrev F := ZMod 7
 section Native
 
 variable {C : StepClass} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.IsDistributive]
   {iface : BackendProgram.Interface (C := C) unifSpec}
   (rep : LanguageRepresentation C (cryptoBase F F F Nat Nat))
   (bd : Boundary C (sourceSpec F F Nat).toPFunctor F F)

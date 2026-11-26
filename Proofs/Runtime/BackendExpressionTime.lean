@@ -16,7 +16,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {Atom : Type} {base : Atom → Type} {Op : Ty Atom → Ty Atom → Type}
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)
   (P : Primitives base Op)
@@ -34,7 +34,7 @@ def frameFee (overhead : Nat → Nat) (W : Nat) : Nat := overhead (16 * W)
 
 include sizes
 
-omit mono [Q.HasCategory] QP QS in
+omit mono [Q.HasComposition] QP QS in
 /-- A variable's value is no larger than its environment. -/
 theorem var_size {Γ a} (v : Var Γ a) (env : Env base Γ) :
     Q.size (rep.ty a) (v.get env) ≤ Q.size (rep.env Γ) env := by

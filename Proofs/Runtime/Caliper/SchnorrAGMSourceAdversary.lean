@@ -5,7 +5,7 @@ Represented initial inputs and replies keep their exact continuations. Other
 inputs and replies return a universally algebraic fallback only in the source
 extension; the implemented handler never takes those branches. -/
 namespace Signatures.Runtime.CaliperBackend.SchnorrAGM.Full.Caller.Partial
-open Caliper OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open Caliper OracleComp OracleSpec GroupModel.Interaction
 open Signatures.Runtime.SchnorrAGM.Native
 variable {w qH qS randomBound : Nat} {M F G A : Type}
     (layout : CallerExtraction.Layouts w M F G qH qS randomBound A)

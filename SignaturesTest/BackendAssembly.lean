@@ -67,7 +67,7 @@ example (m : Nat) :
 -- A hit uses no sampling implementation, even in the actual costed compiled
 -- program. Replacing every effect therefore preserves both output and time.
 example {C : StepClass} [C.HasProd] [C.HasSum]
-    {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+    {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum]
     {I S Atom : Type} {spec : OracleSpec I} {iface : Interface (C := C) spec}
     {base : Atom → Type} {Op Cmd : Ty Atom → Ty Atom → Type} {key val : Ty Atom}
     (rep : LanguageRepresentation C base) (data : DataCode Q rep.data) (P : Primitives base Op)
@@ -90,7 +90,7 @@ section CallerExecution
 open PFunctor.DynSystem.DynComputation
 
 variable {C : StepClass} [C.HasProd] [C.HasSum] [C.HasOption]
-  {Q : QuantitativeStepClass C} [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption]
+  {Q : QuantitativeStepClass C} [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption]
   [Q.IsDistributive] [OptionCode (Q := Q)]
   {I A B S J : Type} {source : OracleSpec I} [DecidableEq I]
   {bd : Boundary C source.toPFunctor A B}

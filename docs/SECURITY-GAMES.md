@@ -100,7 +100,7 @@ For `qS = 0`, the factor is one. This is programmable-ROM security, not standard
 
 ## Algebraic interaction
 
-[Interaction.lean](https://github.com/zksecurity/agm-lean/blob/c207f29d1bba8b36fd6c09a0a3a6b4e82148b402/AlgebraicGroupModel/Interaction.lean)
+[Interaction.lean](https://github.com/Verified-zkEVM/VCVio/blob/70c422d63c07fd3401dd85c51e8b3ed8fd587718/VCVio/CryptoFoundations/GroupModel/Interaction.lean)
 is the sole generic adversary interface. It supports an indexed family of group types:
 one adaptive program, with a separate chronological input list and same-sort explanations
 for each group. One-group protocols use `Tag := Unit`, not a separate implementation.
@@ -149,8 +149,9 @@ that arbitrary code has a free conversion, nor establish a conventional-machine
 instantiation. The existing solver composition proofs charge the remainder. Schnorr and
 the non-AGM BLS co-CDH game are unchanged.
 
-The minimal generic interface and its tests live in the pinned, public
-`agm-lean` dependency. Token/output utilities and signature adapters live here.
+The minimal generic interface and its tests live upstream in VCVio
+(`VCVio/CryptoFoundations/GroupModel/Interaction.lean`, originally the `agm-lean`
+package). Token/output utilities and signature adapters live here.
 
 ## Query-only lazy AGM
 

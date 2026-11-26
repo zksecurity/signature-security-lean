@@ -1,4 +1,4 @@
-import Examples.Schnorr.Signature
+import VCVio.Schemes.Schnorr.Signature
 
 /-!
 # Schnorr source game

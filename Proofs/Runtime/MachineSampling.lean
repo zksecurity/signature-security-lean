@@ -175,8 +175,8 @@ noncomputable def real : (q : (spec (ZMod r)).Domain) → PMF ((spec (ZMod r)).R
   | some n => PaddedSampling.decoded (n+1) w k
 
 noncomputable def ideal : QueryImpl (spec (ZMod r)) PMF
-  | none => PMF.uniformOfFintype (ZMod r)
-  | some n => PMF.uniformOfFintype (Fin (n+1))
+  | none => Signatures.Runtime.RejectionSampling.uniformOfFintype (ZMod r)
+  | some n => Signatures.Runtime.RejectionSampling.uniformOfFintype (Fin (n+1))
 
 theorem real_good (sampling : Machine.SamplingCosts) (B : Nat) (hB : B ≤ w)
     (hr : r ≤ 2^w) (hsampling : ∀ n, n < 2^(sampling.uniform n))
@@ -185,7 +185,7 @@ theorem real_good (sampling : Machine.SamplingCosts) (B : Nat) (hB : B ≤ w)
   cases q with
   | none =>
     have h := (PaddedSampling.decoded_good_le r w k hr).map (ZMod.finEquiv r)
-    have he := PMF.uniformOfFintype_map_of_bijective (ZMod.finEquiv r) (ZMod.finEquiv r).bijective
+    have he := Signatures.Runtime.RejectionSampling.uniformOfFintype_map_of_bijective (ZMod.finEquiv r) (ZMod.finEquiv r).bijective
     simpa only [real, ideal, he] using h
   | some n =>
     apply PaddedSampling.decoded_good_le

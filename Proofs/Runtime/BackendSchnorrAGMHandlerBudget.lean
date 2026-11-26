@@ -102,7 +102,7 @@ structure PrimitiveCaps (width basisCap arityCap : Nat) (t : Times) : Prop where
   sample : Bounds control queryCost sampler (fun _ => True)
     (fun f => Q.size (rep.ty Signatures.Runtime.scalar) f ≤ width) t.sampleTime
 
-variable [C.HasOption] [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [C.HasOption] [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [QD : Q.IsDistributive] [QO : Q.HasOption] [OC : OptionCode (Q := Q)]
   (bd : Boundary C (sourceSpec F G₁ M).toPFunctor Input Output) (ports : Ports (Q := Q) rep bd)
   (data : DataCode Q rep.data)

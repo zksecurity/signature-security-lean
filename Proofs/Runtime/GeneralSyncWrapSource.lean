@@ -168,9 +168,9 @@ theorem map_simulateQ_translate (g : In → In') (h : Out → Out')
         List.singleton_append] at this
     · rw [translate_sign, simulateQ_generalSource_hash, simulateQ_generalSource_sign, map_queryBind,
         map_queryBind, SynchronizedPS.Wrapped.translate_sign]
-      refine congrArg (OracleComp.queryBind _) (funext fun point => ?_)
+      refine congrArg (OracleComp.queryBind _) (funext fun (point : G₁) => ?_)
       rw [simulateQ_generalSource_sign, map_queryBind]
-      refine congrArg (OracleComp.queryBind _) (funext fun σ => ?_)
+      refine congrArg (OracleComp.queryBind _) (funext fun (σ : G₁) => ?_)
       have := ih (σ + correction m • point) (events ++ [.sign m])
       rwa [List.map_append, List.map_singleton, List.reverse_append, List.reverse_singleton,
         List.singleton_append] at this

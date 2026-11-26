@@ -67,7 +67,7 @@ def step : D × Core M.State In E G₁ →
   | (d, .ready s marks) => readyStep M mark finalIndex d s marks
   | (d, .gotHash s h marks) =>
     match M.view s with
-    | .inr ⟨.inr m, next⟩ => .inr ⟨.inr m, fun σ => enter M mark d (next (σ + corr d m • h)) marks⟩
+    | .inr ⟨.inr m, next⟩ => .inr ⟨.inr m, fun (σ : G₁) => enter M mark d (next (σ + corr d m • h)) marks⟩
     | _ => readyStep M mark finalIndex d s marks
   | (d, .final result marks) => .inr ⟨.inl (.inr (finalIndex result)), fun _ => (d, .done result marks)⟩
   | (d, .done result marks) => .inl (fin d result marks)
@@ -106,7 +106,7 @@ theorem readyStep_sign {m : Period × F} {next : G₁ → M.State} (h : M.view s
 theorem step_ready : step M corr mark finalIndex fin (d, .ready s marks) = readyStep M mark finalIndex d s marks := rfl
 theorem step_gotHash {m : Period × F} {next : G₁ → M.State} (h : M.view s = .inr ⟨.inr m, next⟩) (point : G₁) :
     step M corr mark finalIndex fin (d, .gotHash s point marks) =
-      .inr ⟨.inr m, fun σ => enter M mark d (next (σ + corr d m • point)) marks⟩ := by
+      .inr ⟨.inr m, fun (σ : G₁) => enter M mark d (next (σ + corr d m • point)) marks⟩ := by
   dsimp only [step]; rw [h]
 theorem step_final (result : In) :
     step M corr mark finalIndex fin (d, .final result marks) = .inr ⟨.inl (.inr (finalIndex result)), fun _ => (d, .done result marks)⟩ := rfl
@@ -145,7 +145,7 @@ theorem translate_hash (u : U) (t : Period)
 theorem translate_sign (u : U) (m : Period × F)
     (k : G₁ → OracleComp (advSpec Period (Period × F) G₁) In) (events : List (Event F Period)) :
     translate finalIndex correction finish u (OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inr m) k) events =
-      OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inl (.inr m.1)) fun h => OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inr m) fun σ =>
+      OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inl (.inr m.1)) fun (h : G₁) => OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inr m) fun (σ : G₁) =>
         translate finalIndex correction finish u (k (σ + correction u m • h)) (events ++ [.sign m]) := rfl
 
 /-- The synchronized PS wrapper is `translate` around the attacker's proof view. -/
@@ -239,7 +239,7 @@ def Rel : D × Core M.State In E G₁ → OracleComp (advSpec Period (Period × 
       proj u = d ∧ M.toDynSystem.behavior s = FreeM.toResumption (OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inr m) k) ∧
       (OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inr m) k).IsTotalRollBound n ∧ events.length + n ≤ cap ∧
       marks = (events ++ [Event.sign m]).map (mark d) ∧
-      Q = OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inr m) fun σ =>
+      Q = OracleComp.queryBind (spec := advSpec Period (Period × F) G₁) (.inr m) fun (σ : G₁) =>
         translate finalIndex correction finish u (k (σ + correction u m • h)) (events ++ [Event.sign m])
   | (d, .final result marks), Q => ∃ (u : U) (events : List (Event F Period)), proj u = d ∧ events.length ≤ cap ∧
       marks = events.map (mark d) ∧ Q = translate finalIndex correction finish u (pure result) events
@@ -294,7 +294,7 @@ theorem steps : Machine.Steps (machine M split proj corr mark finalIndex fin)
     obtain ⟨u, m, k, events, n, rfl, hb, hn, room, rfl, rfl⟩ := hR
     obtain ⟨next, hv, hk⟩ := Model.Machine.view_of_behavior_liftBind M hb
     rw [FreeM.isTotalRollBound_liftBind_iff] at hn
-    refine Or.inr ⟨.inr m, fun σ => enter M mark (proj u) (next (σ + corr (proj u) m • h)) ((events ++ [Event.sign m]).map (mark (proj u))), _, ?_,
+    refine Or.inr ⟨.inr m, fun (σ : G₁) => enter M mark (proj u) (next (σ + corr (proj u) m • h)) ((events ++ [Event.sign m]).map (mark (proj u))), _, ?_,
       rfl, fun σ => ?_⟩
     · simp [machine, step, hv]
     · rw [corrLaw]

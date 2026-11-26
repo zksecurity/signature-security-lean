@@ -17,7 +17,7 @@ class ExecutionModel (curve : Model.CyclicCurve) where
   [sums : steps.HasSum]
   [options : steps.HasOption]
   quantitative : QuantitativeStepClass.{0, v, w} steps
-  [category : quantitative.HasCategory]
+  [category : quantitative.HasComposition]
   [quantitativeProducts : quantitative.HasProd]
   [quantitativeSums : quantitative.HasSum]
   [quantitativeOptions : quantitative.HasOption]

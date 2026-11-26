@@ -4,7 +4,7 @@ import Proofs.Schnorr.AGM
 /-! Flatten the actual AGM interface's coefficient vectors over the chronological
 received basis. Outgoing requests never extend this basis. -/
 
-open AlgebraicGroupModel.Interaction
+open GroupModel.Interaction
 
 namespace Schnorr.AGM
 

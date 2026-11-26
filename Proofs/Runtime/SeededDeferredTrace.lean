@@ -19,8 +19,7 @@ theorem logged_bound (main : OracleComp spec A) (budget : I → Nat)
       rw [withQueryLog, QueryImpl.fst_map_run_withLogging, simulateQ_ofLift_eq_self])).mpr
   exact bound
 
-variable [∀ i, SampleableType (spec.Range i)] [IsUniformSpec spec]
-  [∀ i, MeasurableSpace (spec.Range i)] [∀ i, DiscreteMeasurableSpace (spec.Range i)]
+variable [∀ i, SampleableType (spec.Range i)] [OracleSpec.UniformAnswerMeasure spec]
   [unifSpec ⊂ₒ spec] [unifSpec ˡ⊂ₒ spec] [MeasurableSpace B]
 
 /-- The continuation can inspect the entire original seed. After deferral it
@@ -43,10 +42,9 @@ theorem defer_original_seed (main : OracleComp spec A) (budget : I → Nat)
     let result ← (simulateQ seededOracle main.withQueryLog).run seed
     next result.1 (SeededTrace.restore result.1.2 result.2)]
   · apply measure_of_compat
-    apply congrArg SPMF.toMeasure
-    apply evalSPMF_bind_congr
+    apply EvalDistEq.bind_congr_of_support
     intro seed hseed
-    apply evalSPMF_bind_congr
+    apply EvalDistEq.bind_congr_of_support
     intro result hresult
     have capacity : ∀ i, budget i ≤ (seed i).length :=
       generateSeed_covers_queryBound budget families cover (by simpa only [support_liftComp] using hseed)

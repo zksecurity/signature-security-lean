@@ -14,7 +14,7 @@ theorem inl_time (value : A) : (inlRealizer .unit (by decide) left right hw fits
   have bound := code_time_unit_le (Construction.taggedOperands (w := w) 0 left.encoding.words
     (max left.encoding.words right.encoding.words - left.encoding.words))
   rw [Construction.prefix_length] at bound
-  change (code _).staticTime .unit ≤ _
+  change (Assembly.code _).staticTime .unit ≤ _
   convert bound using 1; omega
 
 theorem inr_time (value : B) : (inrRealizer .unit (by decide) left right hw fits).time value ≤
@@ -22,7 +22,7 @@ theorem inr_time (value : B) : (inrRealizer .unit (by decide) left right hw fits
   have bound := code_time_unit_le (Construction.taggedOperands (w := w) 1 right.encoding.words
     (max left.encoding.words right.encoding.words - right.encoding.words))
   rw [Construction.prefix_length] at bound
-  change (code _).staticTime .unit ≤ _
+  change (Assembly.code _).staticTime .unit ≤ _
   convert bound using 1; omega
 
 theorem inl_words : descriptionWords (inlRealizer .unit (by decide) left right hw fits).code ≤
@@ -30,7 +30,7 @@ theorem inl_words : descriptionWords (inlRealizer .unit (by decide) left right h
   have bound := code_descriptionWords_le (Construction.taggedOperands (w := w) 0 left.encoding.words
     (max left.encoding.words right.encoding.words - left.encoding.words))
   rw [Construction.prefix_length] at bound
-  change descriptionWords (code _) ≤ _
+  change descriptionWords (Assembly.code _) ≤ _
   convert bound using 1; omega
 
 theorem inr_words : descriptionWords (inrRealizer .unit (by decide) left right hw fits).code ≤
@@ -38,7 +38,7 @@ theorem inr_words : descriptionWords (inrRealizer .unit (by decide) left right h
   have bound := code_descriptionWords_le (Construction.taggedOperands (w := w) 1 right.encoding.words
     (max left.encoding.words right.encoding.words - right.encoding.words))
   rw [Construction.prefix_length] at bound
-  change descriptionWords (code _) ≤ _
+  change descriptionWords (Assembly.code _) ≤ _
   convert bound using 1; omega
 
 theorem Construction.prefix_sources (tag : Word w) (payload padding : Nat) :

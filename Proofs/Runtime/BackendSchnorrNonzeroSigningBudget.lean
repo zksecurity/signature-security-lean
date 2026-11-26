@@ -22,7 +22,7 @@ universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [Q.HasProd] [Q.HasSum]
+  [Q.HasComposition] [Q.HasProd] [Q.HasSum]
   {F G₁ G₂ K M S : Type} [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
@@ -43,7 +43,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
 
 include sizes lists
 
-omit [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Field F]
+omit [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Field F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M] in
 private theorem frame_bounds (width cap : Nat) (hh : header ≤ width)

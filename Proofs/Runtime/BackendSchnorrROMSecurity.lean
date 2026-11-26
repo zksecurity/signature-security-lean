@@ -22,7 +22,7 @@ variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
 
 variable {header : Nat} (sizes : SizeLaws Q header) (lists : ListSizeLaws Q rep.data header)
 
-variable [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
+variable [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum] [Q.IsDistributive]
   [Q.HasOption] [OptionCode (Q := Q)]
   [Field F] [SampleableType F]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]

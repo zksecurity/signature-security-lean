@@ -39,7 +39,7 @@ example : goodTotalBound 10 0 0 0 0 1 = 93 := rfl
 example : badTotalBound 10 0 0 0 1 = 123 := rfl
 
 private def adaptive : OracleComp (BLS.ROM.advSpec Unit Bool) (Unit × Bool) := do
-  let h ← liftM ((BLS.ROM.advSpec Unit Bool).query (.inl (.inr ())))
+  let h : Bool ← liftM ((BLS.ROM.advSpec Unit Bool).query (.inl (.inr ())))
   if h then
     let _ ← liftM ((BLS.ROM.advSpec Unit Bool).query (.inl (.inr ())))
     pure ((), h)

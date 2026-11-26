@@ -174,7 +174,7 @@ end Size
 
 section Code
 
-variable [C.HasSum] [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+variable [C.HasSum] [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   [Field F] [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
   (data : DataCode Q rep.data) (cost : PrimitiveCosts)

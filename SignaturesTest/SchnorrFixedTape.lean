@@ -8,8 +8,8 @@ namespace SignaturesTest.SchnorrFixedTape
 
 private abbrev Spec := Schnorr.FixedTape.Spec (Fin 2)
 
-noncomputable local instance : IsUniformSpec (Unit →ₒ Fin 2) :=
-  IsUniformSpec.ofFintypeInhabited _
+noncomputable local instance : OracleSpec.UniformAnswerMeasure (Unit →ₒ Fin 2) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 private def afterHash : OracleComp Spec (Fin 2 × Fin 2) := do
   let c ← Spec.query (.inr ())
@@ -41,11 +41,14 @@ private def finalOnly : OracleComp Spec (Fin 2) := Spec.query (.inr ())
 
 /-- Even with no adversarial hash calls, the final verifier query supplies one
 real fork position. Additional seed capacity must not turn its denominator into two. -/
-example : (1 / 2 : ENNReal) ≤ Pr[fun r => r.isSome |
-    Schnorr.FixedTape.completeFork finalOnly [] 0 0 (fun _ => some (0 : Fin 1))] := by
+example : (1 / 2 : ENNReal) ≤ Pr{let r ← Schnorr.FixedTape.completeFork finalOnly [] 0 0 (fun _ => some (0 : Fin 1))}[r.isSome] := by
   have h := Schnorr.FixedTape.completeFork_success_bound finalOnly [] 0 0
     (fun _ => some (0 : Fin 1))
   norm_num at h ⊢
+  have hacc : (∑ x : Fin 1, Pr{let a ← finalOnly}[(0 : Fin 1) = x]) = 1 := by
+    simp [OracleComp.prEvent_true_eq_one]
+  rw [hacc] at h
+  norm_num at h
   exact h
 
 open Signatures.Runtime Signatures.Runtime.Schnorr in

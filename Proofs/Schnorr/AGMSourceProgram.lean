@@ -2,7 +2,7 @@ import Proofs.Schnorr.AGMSourceErasure
 
 /-! The source-game correspondence composes over every adaptive algebraic path. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 
 set_option backward.isDefEq.respectTransparency false
 
@@ -20,10 +20,9 @@ theorem simulate_observe {B : Type} (g : G) (x : F)
     (obsR : Explained F (M × F) (Group G) → ClosedState F G M → ProbComp B)
     (hobs : ∀ out t, t.Valid g (x • g) →
       out.Valid (representedBasis g (x • g) t.representations) →
-      𝒮[obsL out t] = 𝒮[obsR out (erase t)]) :
-    𝒮[(simulateQ (honestHandler g x) program).run s >>= fun p => obsL p.1 p.2] =
-      𝒮[(simulateQ (fun q => close (Schnorr.AGM.handler g x q.value)) program).run
-        (erase s) >>= fun p => obsR p.1 p.2] := by
+      obsL out t =ᵈ obsR out (erase t)) :
+    ((simulateQ (honestHandler g x) program).run s >>= fun p => obsL p.1 p.2) =ᵈ ((simulateQ (fun q => close (Schnorr.AGM.handler g x q.value)) program).run
+        (erase s) >>= fun p => obsR p.1 p.2) := by
   induction program using OracleComp.inductionOn generalizing s with
   | pure out =>
       simp only [simulateQ_pure, StateT.run_pure, pure_bind]
@@ -31,10 +30,9 @@ theorem simulate_observe {B : Type} (g : G) (x : F)
   | query_bind q next ih =>
       obtain ⟨hq, hn⟩ := (isAlgebraic_query _ _ _).mp halg
       simp only [simulateQ_bind, simulateQ_spec_query, StateT.run_bind, bind_assoc]
-      conv_rhs =>
-        rw [evalSPMF_bind, ← handler_erase g x s q hq, ← evalSPMF_bind]
+      refine EvalDistEq.trans ?_ ((handler_erase g x s q hq).bind_left _)
       rw [bind_map_left]
-      apply evalSPMF_bind_congr
+      apply EvalDistEq.bind_congr_of_support
       rintro ⟨reply, t⟩ ht
       have hstep := handler_spec g (x • g) s hs q hq reply t
         (honestHandler_support g x s q (reply, t) ht)
@@ -58,7 +56,7 @@ theorem run_project {N : Type → Type} [Monad N] [LawfulMonad N]
     (A : Adversary F G M) (h : QueryImpl (plainSpec (Group G) (Request M) (Reply F M)) N)
     (input : Message Unit (Group G)) :
     Prod.fst <$> A.run h input = simulateQ (fun q => h q.value) (A.main input) := by
-  unfold AlgebraicGroupModel.Interaction.Adversary.run
+  unfold GroupModel.Interaction.Adversary.run
   generalize A.main input = program
   generalize input.groups = basis
   induction program using OracleComp.inductionOn generalizing basis with

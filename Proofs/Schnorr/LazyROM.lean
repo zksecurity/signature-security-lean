@@ -20,11 +20,8 @@ variable [MeasurableSpace F] [DiscreteMeasurableSpace F]
 
 local instance securityInhabited : Inhabited F := ⟨0⟩
 
-noncomputable local instance securityUniformChallenges : IsUniformSpec (Unit →ₒ F) :=
-  IsUniformSpec.ofFintypeInhabited _
-
-noncomputable local instance securityNativeMeasure : IsUniformMeasureSpec (FixedTape.Spec F) :=
-  OracleSpec.instIsUniformMeasureSpecOfIsUniformSpec
+noncomputable local instance securityUniformChallenges : UniformAnswerMeasure (Unit →ₒ F) :=
+  UniformAnswerMeasure.ofFiniteNonempty _
 
 /-- Correspondence includes extraction and the final interpretation of all
 randomness. The reference cover is deduplicated only in the proof experiment. -/
@@ -50,18 +47,15 @@ theorem dlogReduction_eq_fixed (g pk : G) (adv : ROM.Adversary (F := F) (M := M)
           (Schnorr.simTranscript F G g) adv) qH pk)
   have hfork := fork_eq_complete (main g pk adv) privateFamilies qR qH
     (FiatShamir.Fork.forkPoint G F F M qH) bound reachable
-  -- Traces contain function-valued caches and arbitrary messages. Singleton
-  -- equality suffices for these atomic oracle laws; no countability premise
-  -- or discreteness assumption on the product sigma-algebra is needed.
-  apply Signatures.Runtime.SeededDeferred.measure_of_compat
-  apply congrArg SPMF.toMeasure
-  rw [liftM_bind, liftM_bind]
-  congr 1
-  apply evalSPMF_ext
-  intro result
-  have h := congrArg (fun measure : Measure (Option
-    (FiatShamir.Fork.Trace G F F M × FiatShamir.Fork.Trace G F F M)) => measure {result}) hfork
-  simpa only [evalDist_apply_singleton] using h
+  -- Traces contain function-valued caches and arbitrary messages, so the
+  -- product sigma-algebra need not be discrete; but singletons are measurable
+  -- in it, and finite oracle answers make point masses determine the law.
+  have hfork' : fork (main g pk adv) qH (FiatShamir.Fork.forkPoint G F F M qH) =ᵈ
+      FixedTape.completeFork (main g pk adv) privateFamilies.dedup qR qH
+        (FiatShamir.Fork.forkPoint G F F M qH) := by
+    refine evalDistEq_of_forall_prEvent_eq_output fun result => ?_
+    rw [prEvent_eq_evalDist_singleton, prEvent_eq_evalDist_singleton, hfork]
+  exact (hfork'.bind_left _).evalDist_eq
 
 /-- Pointwise equality of the extracted scalars also preserves the complete
 key-averaged DLog experiment, including its equality test. -/

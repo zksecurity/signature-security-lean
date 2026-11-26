@@ -17,7 +17,7 @@ universe v w x
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive] [OptionCode (Q := Q)]
+  [Q.HasComposition] [Q.HasProd] [Q.HasSum] [Q.HasOption] [Q.IsDistributive] [OptionCode (Q := Q)]
   {F G₁ G₂ Gₜ K M : Type} [Field F] [SampleableType F]
   [DecidableEq F] [DecidableEq G₁] [DecidableEq G₂] [DecidableEq K] [DecidableEq M]
   [AddCommGroup G₁] [Module F G₁] [AddCommGroup G₂] [Module F G₂]

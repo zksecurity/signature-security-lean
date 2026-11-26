@@ -1,6 +1,6 @@
 import Proofs.Runtime.SeededForkReachability
 import Proofs.Runtime.SchnorrLazyFork
-import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 import Lean.Util.CollectAxioms
 
 /-! The complete fork must preserve joint adaptive outputs, guard against an
@@ -108,7 +108,7 @@ run_meta do
     forallTelescope (← getConstInfo name).type fun params conclusion => do
       unless conclusion.isAppOf ``Eq do
         throwError "{name}: must preserve a complete distribution"
-      if (conclusion.find? (fun e => e.isConstOf ``instEvalDistSemanticsOfMonadLiftTSPMF)).isSome then
+      unless (conclusion.find? (fun e => e.isConstOf ``OracleComp.instEvalDistSemantics)).isSome do
         throwError "{name}: statement must use native measure semantics"
       for param in params do
         let declaration ← getFVarLocalDecl param

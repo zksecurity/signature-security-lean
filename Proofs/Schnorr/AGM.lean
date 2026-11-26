@@ -1,5 +1,5 @@
 import Signatures.Schnorr.Spec.ROM
-import VCVio.OracleComp.Constructions.SampleableType.NativeMeasure
+import VCVio.OracleComp.Constructions.SampleableType.Measure
 
 /-!
 The straight-line extraction equations for Schnorr in the AGM+ROM.

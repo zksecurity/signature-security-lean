@@ -166,34 +166,36 @@ theorem advantage_eq_realGame (terms : M → List (ι × F)) (w : ι → M → F
     (admissible : M → List M → Prop) (g₁ : G₁) (g₂ : G₂)
     (A : Adversary F ι M G₁ G₂) :
     advantage (Gₜ := Gₜ) terms admissible g₁ g₂ A =
-      Pr[fun x => admissibleForgery admissible x.1 ∧ dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ x |
-        realGameDynAdaptive (G₁ := G₁) w g₂ (extracted A)] := by
+      Pr{let x ← realGameDynAdaptive (G₁ := G₁) w g₂ (extracted A)}[admissibleForgery admissible x.1 ∧ dynForgerySucc (Gₜ := Gₜ) w g₁ g₂ x] := by
   classical
-  have hd := BLS.CoCDH.evalSPMF_lazyCoin_eq_table
+  have hd := BLS.CoCDH.evalDistEq_lazyCoin_eq_table
     (experiment (Gₜ := Gₜ) terms admissible g₁ g₂ A) ∅
   simp only [tableExtending_empty, experiment_table terms w ht] at hd
-  change 𝒮[game (Gₜ := Gₜ) terms admissible g₁ g₂ A] = _ at hd
-  rw [DeferredSampling.evalSPMF_bind_comm] at hd
-  rw [advantage, evalDist_apply_singleton, probOutput_congr rfl hd,
-    ← probEvent_true_eq_probOutput]
+  change game (Gₜ := Gₜ) terms admissible g₁ g₂ A =ᵈ _ at hd
+  replace hd := hd.trans (EvalDistEq.bind_bind_swap _ _ _)
+  rw [advantage, ← prEvent_eq_evalDist_singleton, hd.prEvent_eq]
   unfold realGameDynAdaptive extracted
-  simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply,
-    probEvent_bind_eq_tsum]
+  simp only [map_eq_bind_pure_comp, bind_assoc, pure_bind, Function.comp_apply]
+  -- `simp` with the tsum expansion loops on the singleton events it produces; expand by hand.
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun α => ?_
   congr 1
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun H => ?_
   congr 1
+  rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
+  conv_rhs => rw [OracleComp.prEvent_bind_eq_tsum_prEvent]
   refine tsum_congr fun z => ?_
   by_cases hz : z ∈ support (fixedRun A (α • g₂) H (realSign w α H))
   · have hc := fixed_consistent H (realSign w α H) (A.main (α • g₂)) ([], [])
       (by simp [Consistent]) z hz
-    congr 1
-    simp only [probEvent_pure]
-    apply if_congr _ rfl rfl
+    refine congrArg (fun P : Prop => _ * prEvent (pure P : ProbComp Prop)) (propext ?_)
     simp only [decide_eq_true_eq, admissibleForgery, toForgery_messages, dynForgerySucc]
     rw [materialize_eq g₁ H (realSign w α H) z hc, ← toForgery_fresh]
     rfl
-  · simp [probOutput_eq_zero_of_not_mem_support hz]
+  · simp [(prEvent_eq_zero_of_not_mem_support _) hz]
 
 theorem goodReduction_eq (w : ι → M → F) (A : Adversary F ι M G₁ G₂) :
     goodReduction w A = adaptiveGoodDlogReduction w (extracted A) := by
@@ -227,14 +229,14 @@ theorem badReduction_eq (w : ι → M → F) (A : Adversary F ι M G₁ G₂) :
 theorem goodAdvantage_eq (w : ι → M → F) (g₁ : G₁) (g₂ : G₂)
     (A : Adversary F ι M G₁ G₂) :
     Model.dlog11Advantage g₁ g₂ (goodReduction w A) =
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction w (extracted A))] := by
-  rw [Model.dlog11Advantage, goodReduction_eq, evalDist_apply_singleton]
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction w (extracted A))}[x = true] := by
+  rw [Model.dlog11Advantage, goodReduction_eq, ← prEvent_eq_evalDist_singleton]
 
 theorem badAdvantage_eq (w : ι → M → F) (g₁ : G₁) (g₂ : G₂)
     (A : Adversary F ι M G₁ G₂) :
     Model.dlog11Advantage g₁ g₂ (badReduction w A) =
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w (extracted A))] := by
-  rw [Model.dlog11Advantage, badReduction_eq, evalDist_apply_singleton]
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction w (extracted A))}[x = true] := by
+  rw [Model.dlog11Advantage, badReduction_eq, ← prEvent_eq_evalDist_singleton]
 
 /-- Lazy-ROM security, with explicit solvers and no assumed game-equivalence premise. -/
 theorem security (terms : M → List (ι × F)) (w : ι → M → F)

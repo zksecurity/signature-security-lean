@@ -16,7 +16,7 @@ open BackendProgram Interface
 universe v w
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
-  {Q : QuantitativeStepClass.{0, v, w} C} [Q.HasCategory] [QP : Q.HasProd]
+  {Q : QuantitativeStepClass.{0, v, w} C} [Q.HasComposition] [QP : Q.HasProd]
   {F G₁ G₂ K M Input : Type}
   (rep : LanguageRepresentation C (cryptoBase F G₁ G₂ K M))
   (bd : Boundary C (sourceSpec F G₁ M).toPFunctor Input (SourceForgery F G₁ M))

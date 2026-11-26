@@ -2,7 +2,7 @@ import Proofs.Schnorr.AGMRunSound
 
 /-! Finite cache support and the collision probability of an honest signing nonce. -/
 
-open OracleComp OracleSpec AlgebraicGroupModel.Interaction
+open OracleComp OracleSpec GroupModel.Interaction
 open scoped ENNReal
 
 namespace Schnorr.AGM.Reduction
@@ -71,11 +71,11 @@ omit [DecidableEq F] [DecidableEq G] [DecidableEq M] in
 theorem nonce_collision [Fintype F] (g : G)
     (hg : Function.Injective (fun x : F => x • g))
     (s : State F G M) (k : Nat) (hk : CacheBound s k) (m : M) :
-    Pr[fun r => s.cache (m, r • g) ≠ none | $ᵗ F] ≤
+    Pr{let r ← $ᵗ F}[s.cache (m, r • g) ≠ none] ≤
       (k : ENNReal) * (Fintype.card F : ENNReal)⁻¹ := by
   classical
   obtain ⟨keys, hkeys, hs⟩ := hk
-  rw [probEvent_uniformSample, div_eq_mul_inv]
+  rw [SampleableType.prEvent_uniformSample, div_eq_mul_inv]
   gcongr
   apply le_trans _ hkeys
   apply Finset.card_le_card_of_injOn (fun r : F => (m, r • g))

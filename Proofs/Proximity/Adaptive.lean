@@ -54,13 +54,11 @@ theorem adaptive_security (g₁ : G₁) (g₂ : G₂)
     (adv : AdaptiveAdv F ((Fin ℓ → F) × S) (Option (Fin ℓ) × S) G₁ G₂)
     (hgen : Function.Bijective (fun ρ : F => ρ • g₁))
     (hpair : Function.Injective (fun c : F => c • (pairing (F := F) g₁ g₂ : Gₜ))) :
-    Pr[dynForgerySucc (Gₜ := Gₜ) (coordinateWeight ℓ) g₁ g₂ |
-        realGameDynAdaptive (coordinateWeight ℓ) g₂ adv] ≤
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction (coordinateWeight ℓ) adv)] +
-      Pr[= true | dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (coordinateWeight ℓ) adv)] +
+    Pr{let x ← realGameDynAdaptive (coordinateWeight ℓ) g₂ adv}[(dynForgerySucc (Gₜ := Gₜ) (coordinateWeight ℓ) g₁ g₂) x] ≤
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveGoodDlogReduction (coordinateWeight ℓ) adv)}[x = true] +
+      Pr{let x ← dlog11Exp g₁ g₂ (adaptiveBadDlogReduction (coordinateWeight ℓ) adv)}[x = true] +
       1 / (Fintype.card F : ENNReal) +
-      Pr[fun x => x.1.Fresh ∧ ¬ Noncollision x.1 |
-        realGameDynAdaptive (coordinateWeight ℓ) g₂ adv] := by
+      Pr{let x ← realGameDynAdaptive (coordinateWeight ℓ) g₂ adv}[x.1.Fresh ∧ ¬ Noncollision x.1] := by
   classical
   let jk : DynForgery F ((Fin ℓ → F) × S) (Option (Fin ℓ) × S) → Option (Fin ℓ) × S :=
     fun fo => if h : ∃ i, dynDenomCoeff (coordinateWeight ℓ) fo i ≠ 0
@@ -70,11 +68,11 @@ theorem adaptive_security (g₁ : G₁) (g₂ : G₂)
     intro fo h _
     have hex := noncollision_coeff fo h
     simpa only [jk, dite_eq_left hex] using hex.choose_spec
-  refine le_trans (le_trans (probEvent_mono ?_)
-    (probEvent_or_le (realGameDynAdaptive (coordinateWeight ℓ) g₂ adv)
+  refine le_trans (le_trans (prEvent_mono _ _ _ ?_)
+    (prEvent_or_le (realGameDynAdaptive (coordinateWeight ℓ) g₂ adv)
       (fun x => Noncollision x.1 ∧ dynForgerySucc (Gₜ := Gₜ) (coordinateWeight ℓ) g₁ g₂ x)
       (fun x => x.1.Fresh ∧ ¬ Noncollision x.1))) ?_
-  · intro x _ hsucc
+  · intro x hsucc
     by_cases h : Noncollision x.1
     · exact Or.inl ⟨h, hsucc⟩
     · exact Or.inr ⟨hsucc.2, h⟩

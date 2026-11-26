@@ -5,9 +5,8 @@ Field/group routines operate on explicit word encodings and carry correctness,
 time, buffer-memory and code-footprint contracts. Attacker code can inspect those
 encodings. AGM explanations remain a separate restriction on group outputs.
 
-The source is pinned to Caliper `b62f7c8be35df0aa728e5a6aac7bae85eef67449`, using
-the existing Lean 4.34 compatibility port recorded in `vendor/caliper/UPSTREAM.md`.
-Existing Mathlib, VCVio, PolyFun and AGM dependency revisions are retained.
+The source is Caliper's `lean-4.36` branch (upstream `b62f7c8b` ported to Lean 4.36 and
+Mathlib v4.36.0). Mathlib and PolyFun revisions follow the VCVio pin.
 
 Implemented and checked:
 

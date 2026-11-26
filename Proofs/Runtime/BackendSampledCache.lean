@@ -22,7 +22,7 @@ inductive Draw {Atom : Type} (value : Ty Atom) : Ty Atom → Ty Atom → Type
 
 variable {C : StepClass.{0, v}} [C.HasProd] [C.HasSum]
   {Q : QuantitativeStepClass.{0, v, w} C}
-  [Q.HasCategory] [QP : Q.HasProd] [QS : Q.HasSum]
+  [Q.HasComposition] [QP : Q.HasProd] [QS : Q.HasSum]
   {Atom I S : Type} {base : Atom → Type} {Op : Ty Atom → Ty Atom → Type}
   {spec : OracleSpec I} {iface : Interface (C := C) spec}
   (rep : LanguageRepresentation C base) (data : DataCode Q rep.data)
@@ -42,7 +42,7 @@ def effect {a b : Ty Atom} (draw : Draw val a b) :
       (StepClass.HasProd.prod (rep.ty (.pair val (.list (.pair key val)))) store) :=
   Language.compile rep data P primitive store (effect rep store sampler) (cacheGet eq .sample)
 
-omit [Q.HasCategory] QP QS in
+omit [Q.HasComposition] QP QS in
 theorem lookupValue_lookup [DecidableEq (key.Value base)]
     (k : key.Value base) (default : val.Value base) (xs : List (key.Value base × val.Value base)) :
     lookupValue k default xs =
